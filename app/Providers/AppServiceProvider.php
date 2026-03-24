@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Console\Commands\MakeFilamentUser;
 use App\Models\Client;
 use App\Models\Project;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -24,7 +25,13 @@ class AppServiceProvider extends ServiceProvider
     {
         Relation::enforceMorphMap([
             'projects' => Project::class,
-            'clients'  => Client::class,
+            'clients' => Client::class,
         ]);
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                MakeFilamentUser::class
+            ]);
+        }
     }
 }
