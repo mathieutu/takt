@@ -4,23 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class User extends Model
+class Organization extends Model
 {
     public $incrementing = false;
     public $keyType = 'string';
     public $timestamps = false;
 
-    protected $fillable = ['id', 'first_name', 'last_name'];
+    protected $fillable = ['id', 'name'];
 
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class, 'id', 'id');
-    }
-
-    public function clients(): HasMany
-    {
-        return $this->hasMany(Client::class, 'user_id', 'id');
     }
 }
