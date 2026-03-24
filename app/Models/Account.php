@@ -54,10 +54,12 @@ class Account extends Authenticatable implements FilamentUser, HasName
     }
     public function getFilamentName(): string
     {
-        if ($this->type === AccountType::User) {
-            return Str::ucfirst($this->user->first_name) . " " . Str::upper($this->user->last_name);
+        if ($this->type === AccountType::User && $user = $this->user) {
+            return Str::ucfirst($user->first_name) . " " . Str::upper($user->last_name);
+        } else if ($this->type === AccountType::Organization && $organization = $this->organization) {
+            return Str::ucwords($organization->name);
         } else {
-            return Str::ucwords($this->organization->name);
+            return "Unknown";
         }
     }
 }
