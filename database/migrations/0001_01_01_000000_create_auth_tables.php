@@ -5,8 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         Schema::create('accounts', function (Blueprint $table) {
@@ -14,6 +13,7 @@ return new class extends Migration
             $table->enum('type', ['user', 'organization']);
             $table->string('email')->unique();
             $table->string('password');
+            $table->char('remember_token', 100)->nullable();
             $table->timestamps();
         });
 
