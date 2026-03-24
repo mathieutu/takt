@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enum\AccountType;
+use App\Enums\AccountType;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasName;
 use Filament\Panel;
@@ -24,6 +24,7 @@ class Account extends Authenticatable implements FilamentUser, HasName
     {
         return [
             'password' => 'hashed',
+            'type' => AccountType::class
         ];
     }
 
