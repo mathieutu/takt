@@ -24,52 +24,237 @@
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
+    --primary: oklch(0.546 0.245 262.881);
     --primary-foreground: oklch(0.985 0 0);
     --secondary: oklch(0.97 0 0);
     --secondary-foreground: oklch(0.205 0 0);
     --muted: oklch(0.97 0 0);
     --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
+    --accent: oklch(0.95 0.02 262);
     --accent-foreground: oklch(0.205 0 0);
     --destructive: oklch(0.577 0.245 27.325);
     --border: oklch(0.922 0 0);
     --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
+    --ring: oklch(0.546 0.245 262.881);
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary: oklch(0.546 0.245 262.881);
     --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent: oklch(0.95 0.02 262);
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --sidebar-ring: oklch(0.546 0.245 262.881);
     --radius-base: 0.625rem;
 }
 
-.dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
+/* ═══════════════════════════════════════════════════════════
+   Filament theme overrides
+   app.css est chargé après @filamentStyles → cascade wins
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Layout global ── */
+body.fi-body {
+    background-color: var(--background);
+    color: var(--foreground);
+}
+
+.fi-layout,
+.fi-main,
+.fi-main-ctn {
+    background-color: var(--background);
+}
+
+/* ── Sidebar wrapper (Vue remplace le contenu, mais l'<aside> Filament reste) ── */
+.fi-sidebar.fi-main-sidebar {
+    background-color: var(--sidebar) !important;
+    border-right-color: var(--border) !important;
+}
+
+/* ── Topbar wrapper (Vue remplace le contenu) ── */
+.fi-topbar {
+    background-color: var(--background) !important;
+    border-bottom-color: var(--border) !important;
+    box-shadow: none !important;
+}
+
+/* ── Page & page header ── */
+.fi-page,
+.fi-page-header-ctn,
+.fi-header-heading {
+    background-color: var(--background);
+    color: var(--foreground);
+}
+
+.fi-page > header {
+    border-bottom-color: var(--border);
+    background-color: var(--background);
+}
+
+.fi-breadcrumbs li,
+.fi-breadcrumbs a,
+.fi-breadcrumbs button {
+    color: var(--muted-foreground);
+}
+
+/* ── Sections / panels ── */
+.fi-section,
+.fi-section-content,
+.fi-section-header {
+    background-color: var(--card);
+    border-color: var(--border);
+    color: var(--foreground);
+}
+
+/* ── Tables ── */
+.fi-ta-ctn {
+    background-color: var(--background);
+    border-color: var(--border);
+}
+
+.fi-ta-header-ctn,
+.fi-ta-filters-ctn {
+    background-color: var(--background);
+    border-bottom-color: var(--border);
+}
+
+.fi-ta-row {
+    border-bottom-color: var(--border);
+}
+
+.fi-ta-row:hover td {
+    background-color: var(--accent);
+}
+
+.fi-ta-col-header {
+    background-color: var(--secondary);
+    color: var(--muted-foreground);
+    border-bottom-color: var(--border);
+}
+
+/* ── Formulaires ── */
+.fi-input,
+.fi-fo-field-wrp input,
+.fi-fo-field-wrp select,
+.fi-fo-field-wrp textarea {
+    background-color: var(--background);
+    border-color: var(--input);
+    color: var(--foreground);
+}
+
+.fi-input:focus,
+.fi-fo-field-wrp input:focus,
+.fi-fo-field-wrp select:focus,
+.fi-fo-field-wrp textarea:focus {
+    border-color: var(--ring);
+    outline-color: var(--ring);
+}
+
+.fi-fo-field-wrp-label,
+.fi-fo-field-wrp label {
+    color: var(--foreground);
+}
+
+.fi-fo-helper-text,
+.fi-fo-hint {
+    color: var(--muted-foreground);
+}
+
+/* ── Modales ── */
+.fi-modal-window {
+    background-color: var(--background);
+    border-color: var(--border);
+    color: var(--foreground);
+}
+
+.fi-modal-header,
+.fi-modal-footer {
+    border-color: var(--border);
+    background-color: var(--background);
+}
+
+/* ── Dropdowns ── */
+.fi-dropdown-panel,
+.fi-dropdown-list {
+    background-color: var(--background);
+    border-color: var(--border);
+    box-shadow: 0 4px 16px oklch(0 0 0 / 0.08);
+}
+
+.fi-dropdown-list-item-label,
+.fi-dropdown-list-item button {
+    color: var(--foreground);
+}
+
+.fi-dropdown-list-item button:hover {
+    background-color: var(--accent);
+}
+
+/* ── Notifications ── */
+.fi-notification {
+    background-color: var(--background);
+    border-color: var(--border);
+    color: var(--foreground);
+}
+
+/* ── Global search ── */
+.fi-global-search-field input {
+    background-color: var(--background);
+    border-color: var(--input);
+    color: var(--foreground);
+}
+
+/* ── Login / simple layout ── */
+.fi-simple-layout,
+.fi-simple-layout-logo {
+    background-color: var(--background);
+}
+
+.fi-simple-main {
+    background-color: var(--card);
+    border-color: var(--border);
+    color: var(--foreground);
+}
+
+/* ── Focus ring global ── */
+.fi *:focus-visible {
+    outline-color: var(--ring);
+}
+
+/* ── Livewire progress bar ── */
+html.fi {
+    --livewire-progress-bar-color: var(--primary);
+}
+
+/* ── Aligner sidebar et header en haut ── */
+
+/* Filament décale la sidebar vers le bas quand fi-body-has-topbar est présent
+   (pour laisser la place à son topbar fixe). Notre Header est dans le flux normal
+   → on remet la sidebar à top: 0 */
+.fi-sidebar.fi-main-sidebar,
+.fi-body-has-topbar .fi-sidebar.fi-main-sidebar {
+    top: 0 !important;
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* ── Supprimer tout espace au-dessus du contenu ── */
+
+/* Le topbar Vue est dans le flux normal, pas sticky → retirer la compensation padding */
+.fi-body-has-topbar .fi-main,
+.fi-body-has-topbar .fi-main-ctn > main {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* Le topbar lui-même ne doit pas être fixed/sticky */
+.fi-topbar {
+    position: relative !important;
+    top: auto !important;
+}
+
+/* Masquer l'en-tête de page Filament (breadcrumbs + titre) sur toutes les pages */
+.fi-page > header,
+.fi-page-header,
+.fi-page-header-ctn {
+    display: none !important;
 }

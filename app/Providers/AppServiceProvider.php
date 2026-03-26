@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\Project;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Schema;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +24,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+
+        Schema::defaultStringLength(191);
+
         Relation::enforceMorphMap([
             'projects' => Project::class,
             'clients' => Client::class,
