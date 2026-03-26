@@ -10,13 +10,13 @@ defineEmits<{
 </script>
 
 <template>
-  <div class="flex gap-1 rounded-lg bg-muted p-1">
+  <div class="flex gap-1 rounded-lg bg-muted p-1 min-w-72">
     <button
       v-for="tab in tabs"
       :key="tab.value"
       type="button"
       :class="[
-        'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none',
+        'w-fit rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none',
         modelValue === tab.value
           ? 'bg-background text-foreground shadow-sm'
           : 'text-muted-foreground hover:text-foreground',

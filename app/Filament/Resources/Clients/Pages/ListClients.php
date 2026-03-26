@@ -10,6 +10,8 @@ class ListClients extends ListRecords
 {
     protected static string $resource = ClientResource::class;
 
+    protected string $view = 'filament.resources.clients.list-clients';
+
     protected function getHeaderActions(): array
     {
         return [

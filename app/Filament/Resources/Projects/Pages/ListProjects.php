@@ -10,6 +10,8 @@ class ListProjects extends ListRecords
 {
     protected static string $resource = ProjectResource::class;
 
+    protected string $view = 'filament.resources.projects.list-projects';
+
     protected function getHeaderActions(): array
     {
         return [
