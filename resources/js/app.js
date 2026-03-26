@@ -1,10 +1,5 @@
-import './bootstrap';
-import { createApp } from 'vue';
+import './bootstrap'
+import { createApp } from 'vue'
+import Layout from './components/layout.vue'
 
-import HomePage from './views/HomePage.vue';
-
-const app = createApp({});
-
-app.component('home-page', HomePage);
-
-app.mount('#app');
+createApp(Layout).mount('#vue-layout-app')
