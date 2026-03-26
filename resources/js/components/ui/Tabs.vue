@@ -16,7 +16,7 @@ defineEmits<{
       :key="tab.value"
       type="button"
       :class="[
-        'flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none',
+        'w-fit rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none',
         modelValue === tab.value
           ? 'bg-background text-foreground shadow-sm'
           : 'text-muted-foreground hover:text-foreground',
