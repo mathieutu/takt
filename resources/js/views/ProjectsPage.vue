@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Plus, Search } from 'lucide-vue-next'
+import { Plus, Search, UserPlus } from 'lucide-vue-next'
 import { useToast } from '../composables/useToast'
 import type { Project, Client, CRAEntry } from '../types'
 import Card from '../components/ui/Card.vue'
@@ -26,6 +26,7 @@ const emit = defineEmits<{
 const { toast } = useToast()
 
 const localProjects = ref<Project[]>([...props.projects])
+const localClients = ref<Client[]>([...props.clients])
 
 const search = ref('')
 const activeTab = ref<'all' | 'active' | 'paused' | 'completed'>('all')
@@ -43,6 +44,7 @@ const STATUS_LABELS: Record<Project['status'], string> = {
     completed: 'Terminé',
 }
 
+// ── Project dialog ──────────────────────────────────────────
 const dialogOpen = ref(false)
 const editingProject = ref<Project | null>(null)
 const deleteDialogOpen = ref(false)
@@ -58,7 +60,47 @@ const form = ref({
     endDate: '',
 })
 
-function getClient(id: string) { return props.clients.find(c => c.id === id) }
+// ── New client dialog ───────────────────────────────────────
+const newClientDialogOpen = ref(false)
+const newClientName = ref('')
+const newClientLoading = ref(false)
+
+function openNewClient() {
+    newClientName.value = ''
+    newClientDialogOpen.value = true
+}
+
+async function createClient() {
+    const name = newClientName.value.trim()
+    if (!name) return
+
+    newClientLoading.value = true
+    try {
+        const res = await fetch('/api/clients', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '',
+            },
+            body: JSON.stringify({ name }),
+        })
+
+        if (!res.ok) throw new Error()
+
+        const client: Client = await res.json()
+        localClients.value.push(client)
+        form.value.clientId = client.id
+        newClientDialogOpen.value = false
+        toast(`Client « ${client.name} » créé et sélectionné`, 'success')
+    } catch {
+        toast('Erreur lors de la création du client', 'error')
+    } finally {
+        newClientLoading.value = false
+    }
+}
+
+// ── Helpers ─────────────────────────────────────────────────
+function getClient(id: string) { return localClients.value.find(c => c.id === id) }
 
 const filteredProjects = computed(() =>
     localProjects.value.filter(p => {
@@ -74,7 +116,7 @@ function openCreate() {
     editingProject.value = null
     form.value = {
         name: '',
-        clientId: props.clients[0]?.id ?? '',
+        clientId: localClients.value[0]?.id ?? '',
         description: '',
         status: 'active',
         tjm: '',
@@ -234,6 +276,7 @@ function statusVariant(status: Project['status']) {
         </div>
     </div>
 
+    <!-- ── Dialog projet ── -->
     <Dialog :open="dialogOpen" :title="editingProject ? 'Modifier le projet' : 'Nouveau projet'" max-width="max-w-lg" @close="dialogOpen = false">
         <form class="space-y-4" @submit.prevent="saveProject">
             <div class="flex flex-col gap-1.5">
@@ -243,9 +286,20 @@ function statusVariant(status: Project['status']) {
 
             <div class="grid grid-cols-2 gap-4">
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Client *</label>
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm font-medium text-foreground">Client *</label>
+                        <button
+                            type="button"
+                            class="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                            @click="openNewClient"
+                        >
+                            <UserPlus class="h-3.5 w-3.5" />
+                            Nouveau client
+                        </button>
+                    </div>
                     <select v-model="form.clientId" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring">
-                        <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
+                        <option value="" disabled>Sélectionner un client</option>
+                        <option v-for="client in localClients" :key="client.id" :value="client.id">{{ client.name }}</option>
                     </select>
                 </div>
                 <div class="flex flex-col gap-1.5">
@@ -281,6 +335,48 @@ function statusVariant(status: Project['status']) {
             <div class="flex justify-end gap-2 pt-2">
                 <button type="button" class="h-9 px-4 text-sm font-medium rounded-md border border-border bg-background hover:bg-accent transition-colors" @click="dialogOpen = false">Annuler</button>
                 <button type="submit" class="h-9 px-4 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">{{ editingProject ? 'Enregistrer' : 'Créer' }}</button>
+            </div>
+        </form>
+    </Dialog>
+
+    <!-- ── Dialog nouveau client ── -->
+    <Dialog
+        :open="newClientDialogOpen"
+        title="Nouveau client"
+        description="Créez rapidement un client et sélectionnez-le pour votre projet."
+        @close="newClientDialogOpen = false"
+    >
+        <form class="space-y-4" @submit.prevent="createClient">
+            <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-foreground">Nom du client *</label>
+                <input
+                    v-model="newClientName"
+                    type="text"
+                    autofocus
+                    placeholder="Acme Corp"
+                    class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+            </div>
+
+            <p class="text-xs text-muted-foreground">
+                Vous pourrez compléter les informations du client (email, téléphone…) depuis la page Clients.
+            </p>
+
+            <div class="flex justify-end gap-2 pt-1">
+                <button
+                    type="button"
+                    class="h-9 px-4 text-sm font-medium rounded-md border border-border bg-background hover:bg-accent transition-colors"
+                    @click="newClientDialogOpen = false"
+                >
+                    Annuler
+                </button>
+                <button
+                    type="submit"
+                    :disabled="newClientLoading || !newClientName.trim()"
+                    class="h-9 px-4 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    {{ newClientLoading ? 'Création…' : 'Créer et sélectionner' }}
+                </button>
             </div>
         </form>
     </Dialog>

@@ -10,7 +10,7 @@ defineEmits<{
 </script>
 
 <template>
-  <div class="flex gap-1 rounded-lg bg-muted p-1 min-w-72">
+  <div class="flex gap-1 rounded-lg bg-muted p-1">
     <button
       v-for="tab in tabs"
       :key="tab.value"
