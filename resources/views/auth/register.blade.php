@@ -11,7 +11,7 @@
 </head>
 
 <body>
-  <form action="{{ route('login') }}" method="post" x-data="{ account_type: '{{ AccountType::User->value }}' }">
+  <form action="{{ route('register') }}" method="post" x-data="{ account_type: '{{ AccountType::User->value }}' }">
     @csrf
 
     <input type="email" name="email" placeholder="L'email">
