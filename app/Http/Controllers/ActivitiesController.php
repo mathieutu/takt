@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use App\Models\ActivityTime;
 use App\Models\Project;
-use DB;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rules\Exists;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\GoneHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -15,20 +15,32 @@ class ActivitiesController
 {
     public function find(Request $request)
     {
-        $account = Account::authenticated();
-        $project = Project::find($request->query('project_id'));
+        $project = $this->getProject($request->query('project_id'));
 
-        if (!$project || $project->client->user_id !== $account->id)
+        if (!$project)
             throw new NotFoundHttpException('You must provide a valid project id.');
 
-        $from = $request->query('from', -INF);
-        $to = $request->query('to', INF);
+        $from = $request->query('from');
+        $to = $request->query('to');
 
         return
-            ActivityTime::where('start_date', '>=', $from)
-                ->where(DB::raw('(start_date + day_coverage * 3600 * 24)'), '<=', $to)
-                ->where('project_id', $project)
+            $project->activityTimes()
+                ->when($from, fn(Builder $query) => (
+                    $query->where('start_date', '>=', $from)
+                ))
+                ->when($to, fn(Builder $query) => (
+                    $query->where(
+                        '(start_date + day_coverage * 3600 * 24)',
+                        '<=',
+                        $to
+                    )
+                ))
                 ->get();
+    }
+
+    public function getProject(?string $id): ?Project
+    {
+        return Project::whereRelation('client', 'user_id', Account::authenticated()->id)->find($id);
     }
 
     public function get(string $id): ActivityTime
@@ -45,8 +57,12 @@ class ActivitiesController
      */
     public function index(Request $request)
     {
-        return view('dashboard.activity_reports.index', [
-            'reports' => $this->find($request)
+        $project = $this->getProject($request->query('project_id'));
+
+        return view('dashboard.singletons.activity-reports', [
+            'reports' => $project ? $this->find($request) : null,
+            'project' => $project,
+            'projects' => Project::whereRelation('client', 'user_id', Account::authenticated()->id)->get()
         ]);
     }
 
@@ -55,13 +71,14 @@ class ActivitiesController
      */
     public function store(Request $request)
     {
-        $account = Account::authenticated();
-
         $validated = $request->validate([
             'project_id' => [
                 'required',
-                (new Exists((new Project)->getTable()))
-                    ->where('client.user_id', $account->id)
+                Rule::exists('projects', 'id')
+                    ->whereIn(
+                        'id',
+                        Project::whereRelation('client', 'user_id', Account::authenticated()->id)->get('id')
+                    )
             ],
             'label' => [
                 'nullable',
@@ -74,8 +91,7 @@ class ActivitiesController
             'day_coverage' => [
                 'nullable',
                 'integer',
-                'min:0',
-                'max:100'
+                'between:0,100',
             ],
             'comments' => [
                 'nullable',
@@ -83,7 +99,7 @@ class ActivitiesController
             ]
         ]);
 
-        return Project::create($validated);
+        return ActivityTime::create($validated);
     }
 
     /**
@@ -103,8 +119,7 @@ class ActivitiesController
             'day_coverage' => [
                 'nullable',
                 'integer',
-                'min:0',
-                'max:100'
+                'between:0,100',
             ],
             'comments' => [
                 'nullable',
