@@ -10,7 +10,8 @@ class AccountController
 {
     public function delete()
     {
-        Auth::logout();
+        (new AuthController)->logout();
+
         Account::authenticated()->delete();
 
         return redirect('/')->with([
