@@ -1,201 +1,204 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { User, Activity } from 'lucide-vue-next'
-import { useToast } from '../composables/useToast'
-import type { User as UserType } from '../types'
+import { Clock } from 'lucide-vue-next'
 import Card from '../components/ui/Card.vue'
 import CardHeader from '../components/ui/CardHeader.vue'
 import CardTitle from '../components/ui/CardTitle.vue'
 import CardContent from '../components/ui/CardContent.vue'
-import ToastContainer from '../components/ui/ToastContainer.vue'
 
-interface Stats {
-    clients: number
-    activeClients: number
-    projects: number
-    activeProjects: number
-    entries: number
-    totalDays: number
-    totalRevenue: number
-}
-
-const props = defineProps<{
-    user: UserType
-    stats: Stats
-}>()
-
-const emit = defineEmits<{
-    'update-profile': [data: { name: string; email: string; role: string }]
-    'update-tjm': [tjm: number]
-}>()
-
-const { toast } = useToast()
-
-const profileForm = ref({
-    name: props.user.name,
-    email: props.user.email,
-    role: props.user.role,
+const props = withDefaults(defineProps<{
+    action?: string
+    csrfToken?: string
+    type?: string
+    email?: string
+    firstName?: string
+    lastName?: string
+    orgName?: string
+    errors?: Record<string, string[]>
+    success?: boolean
+}>(), {
+    action: '/dashboard/settings',
+    csrfToken: '',
+    type: 'user',
+    email: '',
+    firstName: '',
+    lastName: '',
+    orgName: '',
+    errors: () => ({}),
+    success: false,
 })
 
-const activityForm = ref({
-    tjm: props.user.tjm,
+const email = ref(props.email)
+const password = ref('')
+const passwordConfirmation = ref('')
+const firstName = ref(props.firstName)
+const lastName = ref(props.lastName)
+const orgName = ref(props.orgName)
+
+const isUser = computed(() => props.type === 'user')
+
+const initials = computed(() => {
+    if (isUser.value) {
+        return ((firstName.value[0] ?? '') + (lastName.value[0] ?? '')).toUpperCase()
+    }
+    return (orgName.value[0] ?? '').toUpperCase()
 })
 
-const initials = computed(() =>
-    profileForm.value.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
+const displayName = computed(() =>
+    isUser.value ? `${firstName.value} ${lastName.value}`.trim() : orgName.value
 )
 
-function saveProfile() {
-    if (!profileForm.value.name.trim() || !profileForm.value.email.trim()) {
-        toast('Nom et email sont requis', 'error')
-        return
-    }
-    emit('update-profile', {
-        name: profileForm.value.name,
-        email: profileForm.value.email,
-        role: profileForm.value.role,
-    })
-    toast('Profil mis à jour')
-}
-
-function saveActivity() {
-    if (!activityForm.value.tjm || activityForm.value.tjm <= 0) {
-        toast('Le TJM doit être supérieur à 0', 'error')
-        return
-    }
-    emit('update-tjm', Number(activityForm.value.tjm))
-    toast('Paramètres d\'activité mis à jour')
-}
-
-function formatCurrency(amount: number) {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(amount)
+function fieldError(key: string): string | null {
+    return props.errors[key]?.[0] ?? null
 }
 </script>
 
 <template>
-    <div class="space-y-6">
-        <div>
-            <h1 class="text-lg font-semibold text-foreground">Paramètres</h1>
-            <p class="text-sm text-muted-foreground">Gérez votre profil et les préférences de l'application</p>
-        </div>
+    <div class="flex min-h-screen flex-col bg-background">
+        <header class="border-b border-border bg-card px-6 py-4">
+            <div class="flex items-center gap-2">
+                <div class="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
+                    <Clock class="h-4 w-4 text-primary-foreground" />
+                </div>
+                <span class="text-base font-semibold text-foreground">AssoFlow</span>
+            </div>
+        </header>
 
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div class="lg:col-span-2 space-y-6">
-                <Card>
-                    <CardHeader>
-                        <div class="flex items-center gap-2">
-                            <User class="h-4 w-4 text-muted-foreground" />
-                            <CardTitle>Profil</CardTitle>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <form class="space-y-4" @submit.prevent="saveProfile">
-                            <div class="flex items-center gap-4">
-                                <div class="flex h-14 w-14 items-center justify-center rounded-full bg-secondary text-lg font-semibold text-secondary-foreground">
+        <main class="flex-1 px-6 py-8">
+            <div class="mx-auto max-w-2xl space-y-6">
+                <div>
+                    <h1 class="text-lg font-semibold text-foreground">Paramètres</h1>
+                    <p class="text-sm text-muted-foreground">Gérez votre profil et vos informations</p>
+                </div>
+
+                <div
+                    v-if="success"
+                    class="rounded-md bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700"
+                >
+                    Vos informations ont été mises à jour.
+                </div>
+
+                <form :action="action" method="POST" class="space-y-6">
+                    <input type="hidden" name="_token" :value="csrfToken" />
+                    <input type="hidden" name="_method" value="PUT" />
+
+                    <Card>
+                        <CardHeader>
+                            <div class="flex items-center gap-3">
+                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground">
                                     {{ initials }}
                                 </div>
                                 <div>
-                                    <p class="text-sm font-medium text-foreground">{{ profileForm.name }}</p>
-                                    <p class="text-xs text-muted-foreground">{{ profileForm.email }}</p>
+                                    <p class="text-sm font-medium text-foreground">{{ displayName }}</p>
+                                    <p class="text-xs text-muted-foreground">{{ email }}</p>
                                 </div>
                             </div>
-                            <div class="grid grid-cols-2 gap-4">
+                        </CardHeader>
+                        <CardContent>
+                            <div class="space-y-4">
                                 <div class="flex flex-col gap-1.5">
-                                    <label class="text-sm font-medium text-foreground">Nom complet *</label>
-                                    <input v-model="profileForm.name" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" placeholder="Thomas Durand" />
+                                    <label class="text-sm font-medium text-foreground">Adresse e-mail</label>
+                                    <input
+                                        v-model="email"
+                                        name="email"
+                                        type="email"
+                                        autocomplete="email"
+                                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                        :class="{ 'border-destructive focus:ring-destructive': fieldError('email') }"
+                                    />
+                                    <p v-if="fieldError('email')" class="text-xs text-destructive">{{ fieldError('email') }}</p>
                                 </div>
+
+                                <template v-if="isUser">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="flex flex-col gap-1.5">
+                                            <label class="text-sm font-medium text-foreground">Prénom</label>
+                                            <input
+                                                v-model="firstName"
+                                                name="user[first_name]"
+                                                type="text"
+                                                autocomplete="given-name"
+                                                class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                                :class="{ 'border-destructive focus:ring-destructive': fieldError('user.first_name') }"
+                                            />
+                                            <p v-if="fieldError('user.first_name')" class="text-xs text-destructive">{{ fieldError('user.first_name') }}</p>
+                                        </div>
+                                        <div class="flex flex-col gap-1.5">
+                                            <label class="text-sm font-medium text-foreground">Nom de famille</label>
+                                            <input
+                                                v-model="lastName"
+                                                name="user[last_name]"
+                                                type="text"
+                                                autocomplete="family-name"
+                                                class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                                :class="{ 'border-destructive focus:ring-destructive': fieldError('user.last_name') }"
+                                            />
+                                            <p v-if="fieldError('user.last_name')" class="text-xs text-destructive">{{ fieldError('user.last_name') }}</p>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <template v-else>
+                                    <div class="flex flex-col gap-1.5">
+                                        <label class="text-sm font-medium text-foreground">Nom de l'organisation</label>
+                                        <input
+                                            v-model="orgName"
+                                            name="organization[name]"
+                                            type="text"
+                                            autocomplete="organization"
+                                            class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                            :class="{ 'border-destructive focus:ring-destructive': fieldError('organization.name') }"
+                                        />
+                                        <p v-if="fieldError('organization.name')" class="text-xs text-destructive">{{ fieldError('organization.name') }}</p>
+                                    </div>
+                                </template>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Mot de passe</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div class="space-y-4">
                                 <div class="flex flex-col gap-1.5">
-                                    <label class="text-sm font-medium text-foreground">Email *</label>
-                                    <input v-model="profileForm.email" type="email" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" placeholder="thomas@freelance.fr" />
+                                    <label class="text-sm font-medium text-foreground">Nouveau mot de passe</label>
+                                    <input
+                                        v-model="password"
+                                        :name="password ? 'password' : undefined"
+                                        type="password"
+                                        autocomplete="new-password"
+                                        placeholder="Laisser vide pour ne pas modifier"
+                                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                        :class="{ 'border-destructive focus:ring-destructive': fieldError('password') }"
+                                    />
+                                    <p v-if="fieldError('password')" class="text-xs text-destructive">{{ fieldError('password') }}</p>
+                                </div>
+                                <div v-if="password" class="flex flex-col gap-1.5">
+                                    <label class="text-sm font-medium text-foreground">Confirmer le mot de passe</label>
+                                    <input
+                                        v-model="passwordConfirmation"
+                                        name="password_confirmation"
+                                        type="password"
+                                        autocomplete="new-password"
+                                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                    />
                                 </div>
                             </div>
-                            <div class="flex flex-col gap-1.5">
-                                <label class="text-sm font-medium text-foreground">Métier / Rôle</label>
-                                <input v-model="profileForm.role" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" placeholder="Développeur web fullstack" />
-                            </div>
-                            <div class="flex justify-end">
-                                <button type="submit" class="h-9 px-4 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">Enregistrer le profil</button>
-                            </div>
-                        </form>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
 
-                <Card>
-                    <CardHeader>
-                        <div class="flex items-center gap-2">
-                            <Activity class="h-4 w-4 text-muted-foreground" />
-                            <CardTitle>Paramètres d'activité</CardTitle>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <form class="space-y-4" @submit.prevent="saveActivity">
-                            <div class="flex flex-col gap-1.5">
-                                <label class="text-sm font-medium text-foreground">TJM par défaut (€/jour)</label>
-                                <div class="flex items-center gap-2">
-                                    <input v-model="activityForm.tjm" type="number" min="0" step="10" class="h-9 w-36 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" placeholder="550" />
-                                    <span class="text-sm text-muted-foreground">€ / jour</span>
-                                </div>
-                                <p class="text-xs text-muted-foreground">Utilisé pour les projets sans TJM spécifique. Actuellement : {{ user.tjm }} €/j</p>
-                            </div>
-                            <div class="flex justify-end">
-                                <button type="submit" class="h-9 px-4 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">Enregistrer</button>
-                            </div>
-                        </form>
-                    </CardContent>
-                </Card>
+                    <div class="flex justify-end">
+                        <button
+                            type="submit"
+                            class="h-9 px-4 rounded-md bg-primary text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                        >
+                            Enregistrer
+                        </button>
+                    </div>
+                </form>
             </div>
-
-            <div class="space-y-4">
-                <Card>
-                    <CardHeader><CardTitle>Résumé</CardTitle></CardHeader>
-                    <CardContent>
-                        <dl class="space-y-2">
-                            <div class="flex justify-between text-sm">
-                                <dt class="text-muted-foreground">Clients</dt>
-                                <dd class="font-medium text-foreground">{{ stats.clients }} ({{ stats.activeClients }} actifs)</dd>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <dt class="text-muted-foreground">Projets</dt>
-                                <dd class="font-medium text-foreground">{{ stats.projects }} ({{ stats.activeProjects }} actifs)</dd>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <dt class="text-muted-foreground">Saisies CRA</dt>
-                                <dd class="font-medium text-foreground">{{ stats.entries }}</dd>
-                            </div>
-                            <div class="border-t border-border pt-2 flex justify-between text-sm">
-                                <dt class="text-muted-foreground">Total jours</dt>
-                                <dd class="font-medium text-foreground">{{ stats.totalDays }}</dd>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <dt class="text-muted-foreground">CA total</dt>
-                                <dd class="font-semibold text-foreground">{{ formatCurrency(stats.totalRevenue) }}</dd>
-                            </div>
-                        </dl>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader><CardTitle>À propos</CardTitle></CardHeader>
-                    <CardContent>
-                        <dl class="space-y-2 text-xs">
-                            <div class="flex justify-between">
-                                <dt class="text-muted-foreground">Application</dt>
-                                <dd class="text-foreground font-medium">AssoFlow</dd>
-                            </div>
-                            <div class="flex justify-between">
-                                <dt class="text-muted-foreground">Version</dt>
-                                <dd class="text-foreground">1.0.0</dd>
-                            </div>
-                            <div class="flex justify-between">
-                                <dt class="text-muted-foreground">Stack</dt>
-                                <dd class="text-foreground">Laravel 12 + Vue 3</dd>
-                            </div>
-                        </dl>
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
+        </main>
     </div>
-
-    <ToastContainer />
 </template>
