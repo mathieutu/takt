@@ -73,5 +73,5 @@ class ClientController
 
         $client->delete();
 
-        return redirect()->route('dashboard.clients');    }
+        return to_route('dashboard.clients');    }
 }
