@@ -32,7 +32,7 @@ class ClientController
 
         $client = $request->validate([
             'name' => 'required|max:255',
-            'daily_rate' => 'required'
+            'daily_rate' => 'required|between:0,100'
         ]);
 
         Client::create([
