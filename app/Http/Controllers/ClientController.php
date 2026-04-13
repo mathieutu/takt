@@ -46,7 +46,7 @@ class ClientController
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Client $client)
     {
         $validated = $request->validate([
             'name' => 'required|max:255',
