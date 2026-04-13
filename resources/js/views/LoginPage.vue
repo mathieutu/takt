@@ -2,17 +2,19 @@
 import { ref } from 'vue'
 import { Clock } from 'lucide-vue-next'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
     action?: string
     csrfToken?: string
     error?: string
+    oldEmail?: string
 }>(), {
     action: '/login',
     csrfToken: '',
     error: '',
+    oldEmail: '',
 })
 
-const email = ref('')
+const email = ref(props.oldEmail)
 const password = ref('')
 </script>
 
@@ -56,7 +58,7 @@ const password = ref('')
                         />
                     </div>
 
-                    <p v-if="error" class="text-sm text-destructive">{{ error }}</p>
+                    <p v-if="error" class="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ error }}</p>
 
                     <button
                         type="submit"
@@ -65,6 +67,11 @@ const password = ref('')
                         Se connecter
                     </button>
                 </form>
+
+                <p class="mt-4 text-center text-sm text-muted-foreground">
+                    Pas encore de compte ?
+                    <a href="/register" class="font-medium text-primary hover:underline">Créer un compte</a>
+                </p>
             </div>
         </div>
     </div>
