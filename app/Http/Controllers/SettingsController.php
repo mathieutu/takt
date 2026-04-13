@@ -59,8 +59,14 @@ class SettingsController
 
         $auth->update($entries);
 
+        match ($auth->type) {
+            AccountType::User => $auth->user()->updateOrCreate(['id' => $auth->id], $entries['user']),
+            AccountType::Organization => $auth->organization()->updateOrCreate(['id' => $auth->id], $entries['organization']),
+            default => null,
+        };
+
         return view('dashboard.singletons.settings', [
-            'account' => $auth,
+            'account' => $auth->fresh(['user', 'organization']),
             'success' => true
         ]);
     }
