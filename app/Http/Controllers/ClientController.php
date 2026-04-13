@@ -6,6 +6,8 @@ use App\Models\Account;
 use App\Models\Client;
 use Auth;
 use Illuminate\Http\Request;
+use Symfony\Component\Finder\Exception\AccessDeniedException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ClientController
 {
@@ -53,10 +55,12 @@ class ClientController
             'daily_rate' => 'required'
         ]);
 
-        $client = Client::findOrFail($id);
-
         if ($client->user_id !== Account::authenticated()->id) {
-            throw new BadRequestException();
+            throw new AccessDeniedException();
+        }
+
+        if (! Gate::allows('update', $client)) {
+            abort(403);
         }
 
         $client->update($validated);
@@ -67,10 +71,11 @@ class ClientController
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Client $client)
     {
-        $client = Client::find($id);
-
+        if ($client->user_id !== Account::authenticated()->id) {
+            throw new NotFoundHttpException();
+        }
         $client->delete();
 
         return to_route('dashboard.clients');    }
