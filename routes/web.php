@@ -1,9 +1,20 @@
 <?php
 
-use App\Http\Controllers\HomeController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\SettingsController;
 
-Route::get('/', [HomeController::class, 'index']);
+Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(function () {
+    Route::prefix('/settings')->name('.settings')->group(function () {
+        Route::get('/', [SettingsController::class, 'edit']);
+        Route::put('/', [SettingsController::class, 'update']);
+    });
+});
 
-Route::middleware(['web', \Filament\Http\Middleware\Authenticate::class])
-    ->post('/api/clients', [\App\Http\Controllers\Api\ClientController::class, 'store']);
+Route::prefix('/login')->name('login')->middleware('guest')->group(function () {
+    Route::view('/', 'auth.login');
+    Route::post('/', [AuthController::class, 'login']);
+});
+Route::prefix('/register')->name('login')->middleware('guest')->group(function () {
+    Route::view('/', 'auth.register');
+    Route::post('/', [AuthController::class, 'register']);
+});
