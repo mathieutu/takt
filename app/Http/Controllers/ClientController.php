@@ -29,8 +29,7 @@ class ClientController
     public function store(Request $request)
     {
 
-    $user = Account::authenticated();
-
+        $user = Account::authenticated();
 
         $client = $request->validate([
             'name' => 'required|max:255',
@@ -42,7 +41,7 @@ class ClientController
             'user_id' => $user->id
         ]);
 
-        return redirect()->route('dashboard.clients');
+        return to_route('dashboard.clients');
     }
 
     /**
@@ -57,10 +56,6 @@ class ClientController
 
         if ($client->user_id !== Account::authenticated()->id) {
             throw new AccessDeniedException();
-        }
-
-        if (! Gate::allows('update', $client)) {
-            abort(403);
         }
 
         $client->update($validated);
@@ -78,5 +73,6 @@ class ClientController
         }
         $client->delete();
 
-        return to_route('dashboard.clients');    }
+        return to_route('dashboard.clients');
+    }
 }
