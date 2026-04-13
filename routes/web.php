@@ -4,6 +4,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ActivitiesController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SettingsController;
 use App\Models\Account;
 use App\Models\ActivityTime;
@@ -36,6 +37,13 @@ Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(functi
         Route::post('/', [ClientController::class, 'store'])->name('.store');
         Route::put('/{client}', [ClientController::class, 'update'])->name('.update');
         Route::delete('/{client}', [ClientController::class, 'destroy'])->name('.destroy');
+    });
+
+    Route::prefix('/projects')->name('.projects')->group(function () {
+        Route::get('/', [ProjectController::class, 'index']);
+        Route::post('/', [ProjectController::class, 'store'])->name('.store');
+        Route::put('/{project}', [ProjectController::class, 'update'])->name('.update');
+        Route::delete('/{project}', [ProjectController::class, 'destroy'])->name('.destroy');
     });
 });
 
