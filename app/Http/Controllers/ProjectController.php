@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Account;
 use App\Models\Client;
 use App\Models\Project;
 use Illuminate\Http\Request;
@@ -28,8 +27,6 @@ class ProjectController
      */
     public function store(Request $request)
     {
-        $user = Account::authenticated();
-
         $projet = $request->validate([
             'name' => 'required|max:255',
             'description' => 'required|max:255',
