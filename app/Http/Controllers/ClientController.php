@@ -56,7 +56,7 @@ class ClientController
         $client = Client::findOrFail($id);
 
         if ($client->user_id !== Account::authenticated()->id) {
-            abort(403);
+            throw new BadRequestException();
         }
 
         $client->update($validated);
