@@ -7,14 +7,23 @@ use App\Models\Account;
 use App\Models\Organization;
 use App\Models\User;
 use Auth;
-use Illuminate\Http\Request;
+use Request;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\Rules\Password;
 
 class AuthController
 {
-    public function login(Request $request)
+    public function logout()
+    {
+        Auth::logout();
+
+        Request::session()->invalidate();
+        Request::session()->regenerateToken();
+
+        return redirect('/');
+    }
+
+    public function login(\Illuminate\Http\Request $request)
     {
         $credentials = $request->validate([
             'email' => 'required|email',
@@ -34,7 +43,7 @@ class AuthController
         ]);
     }
 
-    public function register(Request $request)
+    public function register(\Illuminate\Http\Request $request)
     {
         $validated = $request->validate([
             'email' => 'required|email|unique:' . Account::class . ',email',
