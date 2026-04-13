@@ -6,8 +6,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'AssoFlow') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @yield('head')
 </head>
 <body>
-    <div id="app"></div>
+    <div id="app">@yield('content')</div>
 </body>
 </html>
