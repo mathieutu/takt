@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\SettingsController;
 
 Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(function () {
@@ -13,6 +14,13 @@ Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(functi
     });
     Route::prefix("/activities")->name('.activity')->group(function () {
 
+    });
+
+    Route::prefix('/clients')->name('.clients')->group(function () {
+        Route::get('/', [ClientController::class, 'index']);
+        Route::post('/', [ClientController::class, 'store'])->name('.store');
+        Route::put('/{client}', [ClientController::class, 'update'])->name('.update');
+        Route::delete('/{client}', [ClientController::class, 'destroy'])->name('.destroy');
     });
 });
 

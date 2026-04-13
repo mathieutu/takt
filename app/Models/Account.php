@@ -14,6 +14,32 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Str;
 use function Pest\Laravel\instance;
 
+/**
+ * @property string $id
+ * @property AccountType $type
+ * @property string $email
+ * @property string $password
+ * @property string|null $remember_token
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\Organization|null $organization
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SharedClient> $sharedClients
+ * @property-read int|null $shared_clients_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SharedProject> $sharedProjects
+ * @property-read int|null $shared_projects_count
+ * @property-read \App\Models\User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Account newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Account newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Account query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Account whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Account whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Account whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Account wherePassword($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Account whereRememberToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Account whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Account whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
 class Account extends Authenticatable
 {
     use HasUuids;
