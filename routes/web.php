@@ -1,12 +1,20 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\SettingsController;
 
 Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(function () {
     Route::prefix('/settings')->name('.settings')->group(function () {
         Route::get('/', [SettingsController::class, 'edit']);
         Route::put('/', [SettingsController::class, 'update']);
+    });
+
+    Route::prefix('/clients')->name('.clients')->group(function () {
+        Route::get('/', [ClientController::class, 'index']);
+        Route::post('/', [ClientController::class, 'store'])->name('.store');
+        Route::put('/{id}', [ClientController::class, 'update'])->name('.update');
+        Route::delete('/{id}', [ClientController::class, 'destroy'])->name('.destroy');
     });
 });
 
