@@ -19,7 +19,7 @@ Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(functi
     Route::prefix('/clients')->name('.clients')->group(function () {
         Route::get('/', [ClientController::class, 'index']);
         Route::post('/', [ClientController::class, 'store'])->name('.store');
-        Route::put('/{id}', [ClientController::class, 'update'])->name('.update');
+        Route::put('/{client}', [ClientController::class, 'update'])->name('.update');
         Route::delete('/{id}', [ClientController::class, 'destroy'])->name('.destroy');
     });
 });
