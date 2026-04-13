@@ -73,7 +73,7 @@ function fieldError(key: string): string | null {
 
                 <div
                     v-if="success"
-                    class="rounded-md bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700"
+                    class="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
                 >
                     Vos informations ont été mises à jour.
                 </div>

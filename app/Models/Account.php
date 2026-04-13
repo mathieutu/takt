@@ -7,6 +7,7 @@ use Auth;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasName;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -41,6 +42,8 @@ use function Pest\Laravel\instance;
  */
 class Account extends Authenticatable
 {
+    use HasUuids;
+
     public $incrementing = false;
     public $keyType = 'string';
 
