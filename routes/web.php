@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SettingsController;
 
@@ -17,4 +18,7 @@ Route::prefix('/login')->name('login')->middleware('guest')->group(function () {
 Route::prefix('/register')->name('login')->middleware('guest')->group(function () {
     Route::view('/', 'auth.register');
     Route::post('/', [AuthController::class, 'register']);
+});
+Route::prefix("/me")->name('account')->middleware('auth')->group(function () {
+    Route::delete('/', [AccountController::class, 'delete'])->name('.delete');
 });
