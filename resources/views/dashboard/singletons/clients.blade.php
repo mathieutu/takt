@@ -11,7 +11,7 @@ Champs : name (string), daily_rate (number)
     <input type="text" name="name">
 
     <label for="daily_rate">TJM (en €)</label>
-    <input type="number" placeholder="80 €" min="0" name="daily_rate">
+    <input type="number" placeholder="80 €" min="0" max="100" name="daily_rate">
 
     <button type="submit">
         Créer un utilisateur
