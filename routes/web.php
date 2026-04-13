@@ -1,8 +1,11 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\ActivitiesController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SettingsController;
+use App\Models\Account;
+use App\Models\ActivityTime;
 
 Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(function () {
     Route::view('/', 'dashboard.index');
@@ -11,8 +14,16 @@ Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(functi
         Route::get('/', [SettingsController::class, 'edit']);
         Route::put('/', [SettingsController::class, 'update']);
     });
-    Route::prefix("/activities")->name('.activity')->group(function () {
 
+    Route::name('.activity_reports.')->group(function () {
+        Route::resource('reports', ActivitiesController::class)->names('')->only([
+            'index',
+            'store',
+            'update',
+            'destroy'
+        ]);
+        Route::get('/reports/{id}', [ActivitiesController::class, 'get'])->name('get');
+        Route::get('/reports/find', [ActivitiesController::class, 'find'])->name('find');
     });
 });
 
