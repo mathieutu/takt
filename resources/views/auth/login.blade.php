@@ -1,21 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Se connecter</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Se connecter — AssoFlow</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body>
-<form action="{{ route('login') }}" method="post">
-    @csrf
-    @error("#global")
-        {{ $message }}
-    @enderror
-
-    <input type="email" name="email" placeholder="L'email">
-    <input type="password" name="password" placeholder="Le mdp">
-
-    <button type="submit">Se connecter</button>
-</form>
+<body class="min-h-screen bg-background">
+    <div
+        id="vue-login"
+        data-props="{{ json_encode([
+            'action'   => route('login'),
+            'csrfToken' => csrf_token(),
+            'error'    => $errors->first('#global'),
+            'oldEmail' => old('email', ''),
+        ]) }}"
+    ></div>
 </body>
 </html>

@@ -2,6 +2,8 @@ import './bootstrap'
 import { createApp } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import Header from './components/Header.vue'
+import LoginPage from './views/LoginPage.vue'
+import RegisterPage from './views/RegisterPage.vue'
 import DashboardPage from './views/DashboardPage.vue'
 import CRAPage from './views/CRAPage.vue'
 import ClientsPage from './views/ClientsPage.vue'
@@ -21,6 +23,8 @@ if (headerEl) {
 }
 
 const pages = {
+    'vue-login': LoginPage,
+    'vue-register': RegisterPage,
     'vue-dashboard': DashboardPage,
     'vue-cra': CRAPage,
     'vue-clients': ClientsPage,

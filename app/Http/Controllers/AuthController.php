@@ -79,7 +79,7 @@ class AuthController
         $model_validated = $request->validate([
             'model' => $model_info['validation']
         ])['model'];
-        $model_info['model']::create($model_validated);
+        $model_info['model']::create(['id' => $account->id, ...$model_validated]);
 
         Auth::login($account);
         $request->session()->regenerate();
