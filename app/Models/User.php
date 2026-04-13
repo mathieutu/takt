@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class User extends Model
 {
@@ -22,5 +23,10 @@ class User extends Model
     public function clients(): HasMany
     {
         return $this->hasMany(Client::class, 'user_id', 'id');
+    }
+
+    public function projects(): HasManyThrough
+    {
+        return $this->hasManyThrough(Project::class, Client::class, 'user_id', 'client_id');
     }
 }

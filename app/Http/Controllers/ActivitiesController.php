@@ -10,12 +10,35 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\GoneHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use function Pest\Laravel\instance;
 
 class ActivitiesController
 {
+    public function get(string|ActivityTime $report): ActivityTime
+    {
+        $account_id = Account::authenticated()->id;
+
+        if ($report instanceof ActivityTime) {
+            if ($report->project->client->user_id != $account_id) {
+                $report = null;
+            }
+        } else {
+            $report = ActivityTime::whereRelation('project.client', 'user_id', $account_id)->find($report);
+        }
+
+        if (!$report)
+            throw new NotFoundHttpException();
+
+        return $report;
+    }
+
     public function find(Request $request)
     {
-        $project = $this->getProject($request->query('project_id'));
+        $project =
+            Account::authenticated()
+                ->user
+                ->projects()
+                ->find($request->query('project_id'));
 
         if (!$project)
             throw new NotFoundHttpException('You must provide a valid project id.');
@@ -38,31 +61,47 @@ class ActivitiesController
                 ->get();
     }
 
-    public function getProject(?string $id): ?Project
-    {
-        return Project::whereRelation('client', 'user_id', Account::authenticated()->id)->find($id);
-    }
-
-    public function get(string $id): ActivityTime
-    {
-        $found = ActivityTime::whereRelation('project.client', 'user_id', Account::authenticated()->id)->find($id);
-        if (!$found)
-            throw new NotFoundHttpException("$id not found");
-
-        return $found;
-    }
-
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $project = $this->getProject($request->query('project_id'));
+        $auth = Account::authenticated();
+        $projects = $auth->user->projects;
+
+        if (!$request->query->has('project_id')) {
+            return view('dashboard.singletons.activity-reports', [
+                'projects' => $projects,
+                'account' => $auth,
+                'project' => null
+            ]);
+        }
+
+        $selected = $projects->find($request->query('project_id'));
+        if (!$selected)
+            throw new NotFoundHttpException('You must provide a valid project id.');
+
+        $from = $request->query('from');
+        $to = $request->query('to');
+        $reports = $selected
+            ->activityTimes()
+            ->when($from, fn(Builder $query) => (
+                $query->where('start_date', '>=', $from)
+            ))
+            ->when($to, fn(Builder $query) => (
+                $query->where(
+                    '(start_date + day_coverage * 3600 * 24)',
+                    '<=',
+                    $to
+                )
+            ))
+            ->get();
 
         return view('dashboard.singletons.activity-reports', [
-            'reports' => $project ? $this->find($request) : null,
-            'project' => $project,
-            'projects' => Project::whereRelation('client', 'user_id', Account::authenticated()->id)->get()
+            'reports' => $reports,
+            'project' => $selected,
+            'projects' => $projects,
+            'account' => $auth
         ]);
     }
 

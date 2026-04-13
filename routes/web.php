@@ -16,14 +16,18 @@ Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(functi
     });
 
     Route::name('.activity_reports.')->group(function () {
-        Route::resource('reports', ActivitiesController::class)->names('')->only([
-            'index',
-            'store',
-            'update',
-            'destroy'
-        ]);
-        Route::get('/reports/{id}', [ActivitiesController::class, 'get'])->name('get');
-        Route::get('/reports/find', [ActivitiesController::class, 'find'])->name('find');
+        Route::resource(
+            'reports',
+            ActivitiesController::class
+        )
+            ->names('')
+            ->except([
+                'edit',
+                'show',
+                'create'
+            ]);
+
+        Route::get('/reports/{report}', [ActivitiesController::class, 'get'])->name('get');
     });
 });
 
