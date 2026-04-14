@@ -16,7 +16,7 @@ class ClientController
      */
     public function index()
     {
-        $clients = Client::all();
+        $clients = Client::where('user_id', Account::authenticated()->id)->get();
 
         return view('dashboard.singletons.clients', [
             'clients' => $clients,
