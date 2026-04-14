@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
 use App\Models\Client;
 use App\Models\Project;
 use Illuminate\Http\Request;
@@ -13,8 +14,10 @@ class ProjectController
      */
     public function index()
     {
-        $projects = Project::all();
-        $clients = Client::all();
+        $userId = Account::authenticated()->id;
+
+        $projects = Project::whereHas('client', fn($q) => $q->where('user_id', $userId))->get();
+        $clients = Client::where('user_id', $userId)->get();
 
         return view('dashboard.singletons.projects', [
             'projects' => $projects,
