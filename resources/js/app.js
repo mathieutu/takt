@@ -10,6 +10,7 @@ import ClientsPage from './views/ClientsPage.vue'
 import ProjectsPage from './views/ProjectsPage.vue'
 import RecapPage from './views/RecapPage.vue'
 import ExportPage from './views/ExportPage.vue'
+import ActivityReportPage from './views/ActivityReportPage.vue'
 import SettingsPage from './views/SettingsPage.vue'
 
 const sidebarEl = document.getElementById('vue-sidebar')
@@ -31,6 +32,7 @@ const pages = {
     'vue-projects': ProjectsPage,
     'vue-recap': RecapPage,
     'vue-export': ExportPage,
+    'vue-activity-reports': ActivityReportPage,
     'vue-settings': SettingsPage,
 }
 
