@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use Illuminate\Http\Request;
 
-class VuesController
+class ExportsController
 {
     /**
      * Display a listing of the resource.

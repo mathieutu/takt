@@ -4,11 +4,9 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ActivitiesController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ExportsController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\VuesController;
-use App\Models\Account;
-use App\Models\ActivityTime;
 
 Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(function () {
     Route::view('/', 'dashboard.index');
@@ -48,7 +46,7 @@ Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(functi
     });
 
     Route::prefix('/exports')->name('.exports.')->group(function () {
-        Route::resource('/', VuesController::class);
+        Route::resource('/', ExportsController::class);
     });
 });
 
