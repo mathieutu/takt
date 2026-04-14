@@ -1,322 +1,219 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { Plus, Search, MoreVertical, Mail, Phone, MapPin } from 'lucide-vue-next'
-import { useToast } from '../composables/useToast'
-import type { Client, Project } from '../types'
-import Card from '../components/ui/Card.vue'
-import Badge from '../components/ui/Badge.vue'
+import { Plus, MoreVertical } from 'lucide-vue-next'
 import Dialog from '../components/ui/Dialog.vue'
-import AlertDialog from '../components/ui/AlertDialog.vue'
-import Switch from '../components/ui/Switch.vue'
-import ToastContainer from '../components/ui/ToastContainer.vue'
+import DropdownMenu from '../components/ui/DropdownMenu.vue'
 
-const props = defineProps<{
-    clients: Client[]
-    projects: Project[]
-}>()
+type Client = {
+    id: number
+    name: string
+    daily_rate: number
+    created_at: string
+}
 
-const emit = defineEmits<{
-    'client-create': [client: Omit<Client, 'id' | 'createdAt'>]
-    'client-update': [id: string, data: Partial<Client>]
-    'client-delete': [id: string]
-}>()
-
-const { toast } = useToast()
-
-const localClients = ref<Client[]>([...props.clients])
-
-const search = ref('')
-const showInactive = ref(false)
-
-const dialogOpen = ref(false)
-const editingClient = ref<Client | null>(null)
-const deleteDialogOpen = ref(false)
-const clientToDelete = ref<Client | null>(null)
-
-const form = ref({
-    name: '',
-    contactName: '',
-    email: '',
-    phone: '',
-    address: '',
-    color: '#6366f1',
-    active: true,
+const props = withDefaults(defineProps<{
+    storeAction?: string
+    baseAction?: string
+    csrfToken?: string
+    clients?: Client[]
+    errors?: Record<string, string[]>
+    old?: Record<string, string>
+}>(), {
+    storeAction: '/dashboard/clients',
+    baseAction: '/dashboard/clients',
+    csrfToken: '',
+    clients: () => [],
+    errors: () => ({}),
+    old: () => ({}),
 })
 
-const COLOR_PRESETS = [
-    '#6366f1', '#0ea5e9', '#10b981', '#f59e0b',
-    '#ef4444', '#8b5cf6', '#f97316', '#14b8a6',
-    '#ec4899', '#84cc16',
-]
+const search = ref('')
+const createOpen = ref(false)
+const editingClient = ref<Client | null>(null)
+const deletingClient = ref<Client | null>(null)
 
-const filteredClients = computed(() =>
-    localClients.value.filter(c => {
-        const matchSearch = !search.value
-            || c.name.toLowerCase().includes(search.value.toLowerCase())
-            || c.contactName.toLowerCase().includes(search.value.toLowerCase())
-            || c.email.toLowerCase().includes(search.value.toLowerCase())
-        const matchActive = showInactive.value ? true : c.active
-        return matchSearch && matchActive
-    })
+const createName = ref(props.old?.name ?? '')
+const createRate = ref(props.old?.daily_rate ?? '')
+
+const filtered = computed(() =>
+    props.clients.filter(c =>
+        c.name.toLowerCase().includes(search.value.toLowerCase())
+    )
 )
 
-function openCreate() {
-    editingClient.value = null
-    form.value = { name: '', contactName: '', email: '', phone: '', address: '', color: '#6366f1', active: true }
-    dialogOpen.value = true
+const avatarColors = [
+    'bg-blue-100 text-blue-700',
+    'bg-violet-100 text-violet-700',
+    'bg-emerald-100 text-emerald-700',
+    'bg-amber-100 text-amber-700',
+    'bg-rose-100 text-rose-700',
+    'bg-cyan-100 text-cyan-700',
+]
+
+function avatarColor(name: string) {
+    let hash = 0
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+    return avatarColors[Math.abs(hash) % avatarColors.length]
+}
+
+function initials(name: string) {
+    return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
 }
 
 function openEdit(client: Client) {
-    editingClient.value = client
-    form.value = {
-        name: client.name,
-        contactName: client.contactName,
-        email: client.email,
-        phone: client.phone ?? '',
-        address: client.address ?? '',
-        color: client.color,
-        active: client.active,
-    }
-    dialogOpen.value = true
+    editingClient.value = { ...client }
 }
 
-function saveClient() {
-    if (!form.value.name.trim() || !form.value.email.trim()) {
-        toast('Nom et email sont requis', 'error')
-        return
-    }
-    const data = {
-        name: form.value.name,
-        contactName: form.value.contactName,
-        email: form.value.email,
-        phone: form.value.phone || undefined,
-        address: form.value.address || undefined,
-        color: form.value.color,
-        active: form.value.active,
-    }
-    if (editingClient.value) {
-        const idx = localClients.value.findIndex(c => c.id === editingClient.value!.id)
-        if (idx !== -1) localClients.value[idx] = { ...localClients.value[idx], ...data }
-        emit('client-update', editingClient.value.id, data)
-        toast('Client modifié avec succès')
-    } else {
-        const newClient: Client = {
-            id: `c${Date.now()}`,
-            createdAt: new Date().toISOString().slice(0, 10),
-            ...data,
-        }
-        localClients.value.push(newClient)
-        emit('client-create', data)
-        toast('Client créé avec succès')
-    }
-    dialogOpen.value = false
+function fieldError(key: string): string | null {
+    return props.errors[key]?.[0] ?? null
 }
 
-function confirmDelete(client: Client) {
-    clientToDelete.value = client
-    deleteDialogOpen.value = true
-}
+const hasCreateErrors = computed(() => !!fieldError('name') || !!fieldError('daily_rate'))
 
-function doDelete() {
-    if (!clientToDelete.value) return
-    localClients.value = localClients.value.filter(c => c.id !== clientToDelete.value!.id)
-    emit('client-delete', clientToDelete.value.id)
-    toast(`Client "${clientToDelete.value.name}" supprimé`, 'info')
-    deleteDialogOpen.value = false
-    clientToDelete.value = null
-}
-
-function toggleActive(client: Client) {
-    const idx = localClients.value.findIndex(c => c.id === client.id)
-    if (idx !== -1) localClients.value[idx] = { ...localClients.value[idx], active: !client.active }
-    emit('client-update', client.id, { active: !client.active })
-    toast(client.active ? 'Client désactivé' : 'Client réactivé')
-}
-
-function getProjectCount(clientId: string) {
-    return props.projects.filter(p => p.clientId === clientId).length
-}
-
-function formatDate(date: string) {
-    return new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+function menuItems(client: Client) {
+    return [
+        { label: 'Modifier', action: () => openEdit(client) },
+        { label: 'Supprimer', action: () => { deletingClient.value = client }, variant: 'destructive' as const },
+    ]
 }
 </script>
 
 <template>
-    <div class="space-y-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-lg font-semibold text-foreground">Clients</h1>
-                <p class="text-sm text-muted-foreground">{{ localClients.length }} clients au total</p>
-            </div>
-            <button
-                type="button"
-                class="inline-flex items-center gap-2 h-9 px-4 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                @click="openCreate"
-            >
-                <Plus class="h-4 w-4" />
-                Nouveau client
-            </button>
-        </div>
+    <div class="flex min-h-screen flex-col bg-background">
+        <main class="flex-1 px-6 py-8">
+            <div class="mx-auto max-w-5xl space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-lg font-semibold text-foreground">Clients</h1>
+                        <p class="text-sm text-muted-foreground">{{ clients.length }} client{{ clients.length !== 1 ? 's' : '' }} au total</p>
+                    </div>
+                    <button
+                        type="button"
+                        class="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                        @click="createOpen = true"
+                    >
+                        <Plus class="h-4 w-4" />
+                        Nouveau client
+                    </button>
+                </div>
 
-        <div class="flex items-center gap-4">
-            <div class="relative flex-1 max-w-sm">
-                <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                    v-model="search"
-                    type="text"
-                    placeholder="Rechercher un client..."
-                    class="h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                />
-            </div>
-            <Switch v-model="showInactive" label="Afficher inactifs" />
-        </div>
+                <div class="flex items-center gap-3">
+                    <input
+                        v-model="search"
+                        type="text"
+                        placeholder="Rechercher un client..."
+                        class="h-9 w-72 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                </div>
 
-        <div v-if="filteredClients.length > 0" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Card v-for="client in filteredClients" :key="client.id">
-                <div class="p-5">
-                    <div class="flex items-start justify-between">
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
-                                :style="{ backgroundColor: client.color }"
-                            >
-                                {{ client.name.slice(0, 2).toUpperCase() }}
+                <p v-if="filtered.length === 0 && search" class="text-sm text-muted-foreground">
+                    Aucun client ne correspond à votre recherche.
+                </p>
+
+                <p v-else-if="clients.length === 0" class="text-sm text-muted-foreground">
+                    Aucun client pour l'instant.
+                </p>
+
+                <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div
+                        v-for="client in filtered"
+                        :key="client.id"
+                        class="rounded-lg border border-border bg-card p-5"
+                    >
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+                                    :class="avatarColor(client.name)"
+                                >
+                                    {{ initials(client.name) }}
+                                </div>
+                                <div>
+                                    <p class="text-sm font-semibold text-foreground">{{ client.name }}</p>
+                                    <p class="text-xs text-muted-foreground">{{ client.daily_rate }} €/jour</p>
+                                </div>
                             </div>
-                            <div class="min-w-0">
-                                <p class="font-medium text-foreground leading-tight">{{ client.name }}</p>
-                                <p class="text-xs text-muted-foreground">{{ client.contactName }}</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-1">
-                            <Badge :variant="client.active ? 'success' : 'secondary'">
-                                {{ client.active ? 'Actif' : 'Inactif' }}
-                            </Badge>
-                            <div class="relative group">
+                            <DropdownMenu :items="menuItems(client)">
                                 <button
                                     type="button"
-                                    class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                                    @click.stop
+                                    class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                                 >
                                     <MoreVertical class="h-4 w-4" />
                                 </button>
-                                <div class="absolute right-0 top-full z-20 mt-1 hidden w-36 rounded-md border border-border bg-background shadow-md py-1 group-focus-within:block">
-                                    <button type="button" class="w-full px-3 py-1.5 text-left text-sm hover:bg-accent transition-colors" @click="openEdit(client)">Modifier</button>
-                                    <button type="button" class="w-full px-3 py-1.5 text-left text-sm hover:bg-accent transition-colors" @click="toggleActive(client)">{{ client.active ? 'Désactiver' : 'Réactiver' }}</button>
-                                    <button type="button" class="w-full px-3 py-1.5 text-left text-sm text-destructive hover:bg-destructive/10 transition-colors" @click="confirmDelete(client)">Supprimer</button>
-                                </div>
-                            </div>
+                            </DropdownMenu>
                         </div>
-                    </div>
 
-                    <div class="mt-3 space-y-1.5">
-                        <div class="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Mail class="h-3 w-3 shrink-0" />
-                            <span class="truncate">{{ client.email }}</span>
-                        </div>
-                        <div v-if="client.phone" class="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Phone class="h-3 w-3 shrink-0" />
-                            <span>{{ client.phone }}</span>
-                        </div>
-                        <div v-if="client.address" class="flex items-center gap-2 text-xs text-muted-foreground">
-                            <MapPin class="h-3 w-3 shrink-0" />
-                            <span class="truncate">{{ client.address }}</span>
-                        </div>
-                    </div>
-
-                    <div class="mt-3 flex items-center justify-between border-t border-border pt-3">
-                        <span class="text-xs text-muted-foreground">{{ getProjectCount(client.id) }} projet(s)</span>
-                        <span class="text-xs text-muted-foreground">Depuis {{ formatDate(client.createdAt) }}</span>
-                    </div>
-
-                    <div class="mt-2 flex gap-2">
-                        <button
-                            type="button"
-                            class="flex-1 h-7 rounded-md border border-border text-xs text-foreground hover:bg-accent transition-colors"
-                            @click="openEdit(client)"
-                        >
-                            Modifier
-                        </button>
-                        <button
-                            type="button"
-                            class="h-7 px-2 rounded-md border border-destructive/30 text-xs text-destructive hover:bg-destructive/10 transition-colors"
-                            @click="confirmDelete(client)"
-                        >
-                            Supprimer
-                        </button>
-                    </div>
-                </div>
-            </Card>
-        </div>
-
-        <div v-else class="flex flex-col items-center justify-center py-16 text-center">
-            <p class="text-sm text-muted-foreground">Aucun client trouvé</p>
-            <button type="button" class="mt-3 text-sm text-primary hover:underline" @click="openCreate">Créer un nouveau client</button>
-        </div>
-    </div>
-
-    <Dialog :open="dialogOpen" :title="editingClient ? 'Modifier le client' : 'Nouveau client'" max-width="max-w-lg" @close="dialogOpen = false">
-        <form class="space-y-4" @submit.prevent="saveClient">
-            <div class="grid grid-cols-2 gap-4">
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Nom de l'entreprise *</label>
-                    <input v-model="form.name" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" placeholder="Agence Nova" />
-                </div>
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Contact</label>
-                    <input v-model="form.contactName" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" placeholder="Sophie Martin" />
-                </div>
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-foreground">Email *</label>
-                <input v-model="form.email" type="email" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" placeholder="contact@client.fr" />
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Téléphone</label>
-                    <input v-model="form.phone" type="tel" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" placeholder="01 23 45 67 89" />
-                </div>
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Statut</label>
-                    <div class="flex h-9 items-center">
-                        <Switch v-model="form.active" :label="form.active ? 'Actif' : 'Inactif'" />
+                        <p v-if="client.created_at" class="mt-4 text-xs text-muted-foreground">
+                            Créé le {{ client.created_at }}
+                        </p>
                     </div>
                 </div>
             </div>
-            <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-foreground">Adresse</label>
-                <input v-model="form.address" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" placeholder="12 rue Example, Paris" />
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-foreground">Couleur</label>
-                <div class="flex flex-wrap gap-2">
-                    <button
-                        v-for="color in COLOR_PRESETS"
-                        :key="color"
-                        type="button"
-                        :style="{ backgroundColor: color }"
-                        :class="['h-7 w-7 rounded-full border-2 transition-transform hover:scale-110', form.color === color ? 'border-foreground scale-110' : 'border-transparent']"
-                        @click="form.color = color"
+        </main>
+
+        <Dialog :open="createOpen || hasCreateErrors" title="Nouveau client" @close="createOpen = false">
+            <form :action="storeAction" method="POST" class="space-y-4">
+                <input type="hidden" name="_token" :value="csrfToken" />
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-foreground">Nom</label>
+                    <input
+                        v-model="createName"
+                        name="name"
+                        type="text"
+                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                        :class="{ 'border-destructive focus:ring-destructive': fieldError('name') }"
                     />
-                    <input v-model="form.color" type="color" class="h-7 w-7 rounded-full cursor-pointer border border-border" />
+                    <p v-if="fieldError('name')" class="text-xs text-destructive">{{ fieldError('name') }}</p>
                 </div>
-            </div>
-            <div class="flex justify-end gap-2 pt-2">
-                <button type="button" class="h-9 px-4 text-sm font-medium rounded-md border border-border bg-background hover:bg-accent transition-colors" @click="dialogOpen = false">Annuler</button>
-                <button type="submit" class="h-9 px-4 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">{{ editingClient ? 'Enregistrer' : 'Créer' }}</button>
-            </div>
-        </form>
-    </Dialog>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-foreground">TJM (€/jour)</label>
+                    <input
+                        v-model="createRate"
+                        name="daily_rate"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                        :class="{ 'border-destructive focus:ring-destructive': fieldError('daily_rate') }"
+                    />
+                    <p v-if="fieldError('daily_rate')" class="text-xs text-destructive">{{ fieldError('daily_rate') }}</p>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="createOpen = false">Annuler</button>
+                    <button type="submit" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">Créer</button>
+                </div>
+            </form>
+        </Dialog>
 
-    <AlertDialog
-        :open="deleteDialogOpen"
-        title="Supprimer le client"
-        :description="`Êtes-vous sûr de vouloir supprimer le client « ${clientToDelete?.name} » ? Tous ses projets et saisies CRA seront également supprimés. Cette action est irréversible.`"
-        confirm-label="Supprimer"
-        variant="destructive"
-        @confirm="doDelete"
-        @cancel="deleteDialogOpen = false"
-    />
+        <Dialog :open="editingClient !== null" title="Modifier le client" @close="editingClient = null">
+            <form v-if="editingClient" :action="`${baseAction}/${editingClient.id}`" method="POST" class="space-y-4">
+                <input type="hidden" name="_token" :value="csrfToken" />
+                <input type="hidden" name="_method" value="PUT" />
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-foreground">Nom</label>
+                    <input v-model="editingClient.name" name="name" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-foreground">TJM (€/jour)</label>
+                    <input v-model="editingClient.daily_rate" name="daily_rate" type="number" min="0" step="0.01" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="editingClient = null">Annuler</button>
+                    <button type="submit" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">Enregistrer</button>
+                </div>
+            </form>
+        </Dialog>
 
-    <ToastContainer />
+        <Dialog :open="deletingClient !== null" title="Supprimer le client" @close="deletingClient = null">
+            <p class="text-sm text-muted-foreground">
+                Supprimer <span class="font-medium text-foreground">{{ deletingClient?.name }}</span> ? Cette action est irréversible.
+            </p>
+            <form v-if="deletingClient" :action="`${baseAction}/${deletingClient.id}`" method="POST" class="mt-4 flex justify-end gap-2">
+                <input type="hidden" name="_token" :value="csrfToken" />
+                <input type="hidden" name="_method" value="DELETE" />
+                <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="deletingClient = null">Annuler</button>
+                <button type="submit" class="h-9 rounded-md bg-destructive px-4 text-sm font-medium text-white transition-colors hover:bg-destructive/90">Supprimer</button>
+            </form>
+        </Dialog>
+    </div>
 </template>
