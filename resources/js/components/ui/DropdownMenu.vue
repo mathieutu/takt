@@ -37,14 +37,14 @@ onUnmounted(() => document.removeEventListener('mousedown', handleOutside))
     >
       <div
         v-if="open"
-        class="absolute right-0 top-full z-50 mt-1 min-w-[140px] rounded-md border border-border bg-background shadow-md py-1"
+        class="absolute right-0 top-full z-50 mt-1 min-w-[140px] overflow-hidden rounded-md border border-border bg-background shadow-md"
       >
         <button
           v-for="(item, i) in items"
           :key="i"
           type="button"
           :class="[
-            'flex w-full items-center gap-2 px-3 py-1.5 text-sm transition-colors',
+            'flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors',
             item.variant === 'destructive'
               ? 'text-destructive hover:bg-destructive/10'
               : 'text-foreground hover:bg-accent',
