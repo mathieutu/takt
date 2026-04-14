@@ -120,20 +120,20 @@ function menuItems(client: Client) {
                         :key="client.id"
                         class="rounded-lg border border-border bg-card p-5"
                     >
-                        <div class="flex items-start justify-between">
-                            <div class="flex items-center gap-3">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex min-w-0 flex-1 items-center gap-3">
                                 <div
                                     class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
                                     :class="avatarColor(client.name)"
                                 >
                                     {{ initials(client.name) }}
                                 </div>
-                                <div>
-                                    <p class="text-sm font-semibold text-foreground">{{ client.name }}</p>
+                                <div class="min-w-0">
+                                    <p class="truncate text-sm font-semibold text-foreground">{{ client.name }}</p>
                                     <p class="text-xs text-muted-foreground">{{ client.daily_rate }} €/jour</p>
                                 </div>
                             </div>
-                            <DropdownMenu :items="menuItems(client)">
+                            <DropdownMenu :items="menuItems(client)" class="shrink-0">
                                 <button
                                     type="button"
                                     class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
