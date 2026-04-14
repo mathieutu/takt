@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\VuesController;
 use App\Models\Account;
 use App\Models\ActivityTime;
 
@@ -44,6 +45,10 @@ Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(functi
         Route::post('/', [ProjectController::class, 'store'])->name('.store');
         Route::put('/{project}', [ProjectController::class, 'update'])->name('.update');
         Route::delete('/{project}', [ProjectController::class, 'destroy'])->name('.destroy');
+    });
+
+    Route::prefix('/exports')->name('.exports.')->group(function () {
+        Route::resource('/', VuesController::class);
     });
 });
 
