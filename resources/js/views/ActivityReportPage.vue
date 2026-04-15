@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight, ChevronDown, Pencil } from 'lucide-vue-next'
+import Dialog from '../components/ui/Dialog.vue'
 
 type Project = { id: number; name: string; client_name: string; daily_rate: number }
 type Report  = { id: number; start_date: string; day_coverage: number; label: string; comments: string }
@@ -33,6 +34,8 @@ const displayYear         = ref(props.currentYear)
 const displayMonth        = ref(props.currentMonth)
 const projectSelectorOpen = ref(false)
 const switching           = ref(false)
+const editingReport       = ref<Report | null>(null)
+const editForm            = ref({ label: '', comments: '', day_coverage: 50 })
 
 const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
 const DAYS_FR   = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim']
@@ -162,11 +165,39 @@ async function clickDay(dateStr: string) {
 }
 
 function coverageLabel(v: number) {
-    return v >= 100 ? '1j' : '½j'
+    if (v === 100) return '1j'
+    if (v === 50)  return '½j'
+    return `${v}%`
 }
 
 function dayFromDate(dateStr: string) {
     return parseInt(dateStr.split('-')[2])
+}
+
+function openEdit(report: Report) {
+    editingReport.value = report
+    editForm.value = { label: report.label ?? '', comments: report.comments ?? '', day_coverage: report.day_coverage }
+}
+
+async function saveEdit() {
+    if (!editingReport.value || editingReport.value.id < 0) return
+    const report = editingReport.value
+    const res = await fetch(`${props.baseUrl}/${report.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': props.csrfToken, 'Accept': 'application/json' },
+        body: JSON.stringify(editForm.value),
+    })
+    if (res.ok) {
+        const updated = await res.json()
+        const idx = localReports.value.findIndex(r => r.id === report.id)
+        if (idx !== -1) localReports.value[idx] = {
+            ...localReports.value[idx],
+            label: updated.label ?? '',
+            comments: updated.comments ?? '',
+            day_coverage: updated.day_coverage ?? report.day_coverage,
+        }
+        editingReport.value = null
+    }
 }
 </script>
 
@@ -242,13 +273,13 @@ function dayFromDate(dateStr: string) {
                         <div
                             v-for="(cell, i) in calendarCells"
                             :key="i"
-                            class="relative border-b border-r border-border transition-colors"
+                            class="group relative border-b border-r border-border transition-colors"
                             :class="[
                                 i % 7 === 0 ? 'border-l border-border' : '',
                                 cell.type === 'day' && activeProject ? 'cursor-pointer hover:bg-accent/50' : '',
                                 cell.type === 'day' && cell.dateStr === todayStr ? 'ring-2 ring-inset ring-primary' : '',
-                                cell.type === 'day' && reportByDate.get(cell.dateStr!)?.day_coverage === 100 ? 'bg-primary/25' : '',
-                                cell.type === 'day' && reportByDate.get(cell.dateStr!)?.day_coverage === 50  ? 'bg-primary/12' : '',
+                                cell.type === 'day' && (reportByDate.get(cell.dateStr!)?.day_coverage ?? 0) >= 100 ? 'bg-primary/25' : '',
+                                cell.type === 'day' && (reportByDate.get(cell.dateStr!)?.day_coverage ?? 0) > 0 && (reportByDate.get(cell.dateStr!)?.day_coverage ?? 0) < 100 ? 'bg-primary/10' : '',
                             ]"
                             @click="cell.type === 'day' && cell.dateStr ? clickDay(cell.dateStr) : null"
                         >
@@ -259,12 +290,23 @@ function dayFromDate(dateStr: string) {
                                 >
                                     {{ cell.day }}
                                 </span>
-                                <span
-                                    v-if="reportByDate.get(cell.dateStr!)"
-                                    class="absolute bottom-1.5 right-2 text-xs font-medium text-primary"
+                                <button
+                                    v-if="reportByDate.get(cell.dateStr!) && reportByDate.get(cell.dateStr!)!.id > 0"
+                                    type="button"
+                                    class="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded opacity-0 transition-opacity group-hover:opacity-100 hover:bg-primary/20"
+                                    @click.stop="openEdit(reportByDate.get(cell.dateStr!)!)"
                                 >
-                                    {{ coverageLabel(reportByDate.get(cell.dateStr!)!.day_coverage) }}
-                                </span>
+                                    <Pencil class="h-3 w-3 text-primary" />
+                                </button>
+                                <template v-if="reportByDate.get(cell.dateStr!)">
+                                    <span class="absolute bottom-1.5 right-2 text-xs font-medium text-primary">
+                                        {{ coverageLabel(reportByDate.get(cell.dateStr!)!.day_coverage) }}
+                                    </span>
+                                    <span
+                                        v-if="reportByDate.get(cell.dateStr!)!.label || reportByDate.get(cell.dateStr!)!.comments"
+                                        class="absolute bottom-1.5 left-2 h-1.5 w-1.5 rounded-full bg-primary"
+                                    />
+                                </template>
                             </template>
                         </div>
                     </div>
@@ -306,4 +348,52 @@ function dayFromDate(dateStr: string) {
             </aside>
         </div>
     </div>
+
+    <Dialog :open="editingReport !== null" :title="`${editingReport ? dayFromDate(editingReport.start_date) : ''} ${editingReport ? MONTHS_FR[parseInt(editingReport.start_date.split('-')[1]) - 1] : ''}`" @close="editingReport = null">
+        <div class="space-y-4">
+            <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-foreground">Titre</label>
+                <input
+                    v-model="editForm.label"
+                    type="text"
+                    placeholder="Ex : Développement feature X"
+                    class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-foreground">Description</label>
+                <textarea
+                    v-model="editForm.comments"
+                    rows="3"
+                    placeholder="Détails de l'activité…"
+                    class="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+                />
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <div class="flex items-center justify-between">
+                    <label class="text-sm font-medium text-foreground">Durée</label>
+                    <span class="text-sm font-semibold text-primary">{{ editForm.day_coverage }}%</span>
+                </div>
+                <input
+                    v-model.number="editForm.day_coverage"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    class="w-full accent-primary"
+                />
+                <div class="flex justify-between text-xs text-muted-foreground">
+                    <span>0%</span>
+                    <span>25%</span>
+                    <span>50%</span>
+                    <span>75%</span>
+                    <span>100%</span>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="editingReport = null">Annuler</button>
+                <button type="button" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90" @click="saveEdit">Enregistrer</button>
+            </div>
+        </div>
+    </Dialog>
 </template>
