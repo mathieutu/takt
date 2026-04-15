@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { ChevronLeft, ChevronRight, ChevronDown, Pencil } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight, ChevronDown, Pencil, Eye } from 'lucide-vue-next'
 import Dialog from '../components/ui/Dialog.vue'
 
 type Project = { id: number; name: string; client_name: string; daily_rate: number }
@@ -36,6 +36,7 @@ const projectSelectorOpen = ref(false)
 const switching           = ref(false)
 const editingReport       = ref<Report | null>(null)
 const editForm            = ref({ label: '', comments: '', day_coverage: 50 })
+const viewingReport       = ref<Report | null>(null)
 
 const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
 const DAYS_FR   = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim']
@@ -302,10 +303,14 @@ async function saveEdit() {
                                     <span class="absolute bottom-1.5 right-2 text-xs font-medium text-primary">
                                         {{ coverageLabel(reportByDate.get(cell.dateStr!)!.day_coverage) }}
                                     </span>
-                                    <span
+                                    <button
                                         v-if="reportByDate.get(cell.dateStr!)!.label || reportByDate.get(cell.dateStr!)!.comments"
-                                        class="absolute bottom-1.5 left-2 h-1.5 w-1.5 rounded-full bg-primary"
-                                    />
+                                        type="button"
+                                        class="absolute bottom-1 left-1.5 flex h-5 w-5 items-center justify-center rounded transition-colors hover:bg-primary/20"
+                                        @click.stop="viewingReport = reportByDate.get(cell.dateStr!)!"
+                                    >
+                                        <Eye class="h-3 w-3 text-primary" />
+                                    </button>
                                 </template>
                             </template>
                         </div>
@@ -348,6 +353,23 @@ async function saveEdit() {
             </aside>
         </div>
     </div>
+
+    <Dialog :open="viewingReport !== null" :title="`${viewingReport ? dayFromDate(viewingReport.start_date) : ''} ${viewingReport ? MONTHS_FR[parseInt(viewingReport.start_date.split('-')[1]) - 1] : ''}`" @close="viewingReport = null">
+        <div class="space-y-3">
+            <div v-if="viewingReport?.label" class="flex flex-col gap-0.5">
+                <span class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Titre</span>
+                <span class="text-sm text-foreground">{{ viewingReport.label }}</span>
+            </div>
+            <div v-if="viewingReport?.comments" class="flex flex-col gap-0.5">
+                <span class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Description</span>
+                <span class="text-sm text-foreground whitespace-pre-wrap">{{ viewingReport.comments }}</span>
+            </div>
+            <div class="flex flex-col gap-0.5">
+                <span class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Durée</span>
+                <span class="text-sm text-foreground">{{ coverageLabel(viewingReport?.day_coverage ?? 0) }}</span>
+            </div>
+        </div>
+    </Dialog>
 
     <Dialog :open="editingReport !== null" :title="`${editingReport ? dayFromDate(editingReport.start_date) : ''} ${editingReport ? MONTHS_FR[parseInt(editingReport.start_date.split('-')[1]) - 1] : ''}`" @close="editingReport = null">
         <div class="space-y-4">
