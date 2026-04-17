@@ -5,11 +5,8 @@ import Header from './components/Header.vue'
 import LoginPage from './views/LoginPage.vue'
 import RegisterPage from './views/RegisterPage.vue'
 import DashboardPage from './views/DashboardPage.vue'
-import CRAPage from './views/CRAPage.vue'
 import ClientsPage from './views/ClientsPage.vue'
 import ProjectsPage from './views/ProjectsPage.vue'
-import RecapPage from './views/RecapPage.vue'
-import ExportPage from './views/ExportPage.vue'
 import ActivityReportPage from './views/ActivityReportPage.vue'
 import SettingsPage from './views/SettingsPage.vue'
 
@@ -27,11 +24,8 @@ const pages = {
     'vue-login': LoginPage,
     'vue-register': RegisterPage,
     'vue-dashboard': DashboardPage,
-    'vue-cra': CRAPage,
     'vue-clients': ClientsPage,
     'vue-projects': ProjectsPage,
-    'vue-recap': RecapPage,
-    'vue-export': ExportPage,
     'vue-activity-reports': ActivityReportPage,
     'vue-settings': SettingsPage,
 }
