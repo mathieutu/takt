@@ -122,6 +122,24 @@ class ExportsController
             'date_end' => $date_end
         ] = $this->getAllProjects($request);
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'projects' => $projects->map(fn($p) => [
+                    'id'          => $p->id,
+                    'name'        => $p->name,
+                    'client_name' => $p->client->name,
+                    'daily_rate'  => (float) ($p->daily_rate ?? $p->client->daily_rate ?? 0),
+                    'entries'     => $p->activityTimes->map(fn($a) => [
+                        'id'           => $a->id,
+                        'start_date'   => $a->start_date->format('Y-m-d'),
+                        'day_coverage' => (int) $a->day_coverage,
+                        'label'        => $a->label ?? '',
+                        'comments'     => $a->comments ?? '',
+                    ])->values(),
+                ])->values(),
+            ]);
+        }
+
         return view('dashboard.singletons.exports', [
             'auth' => $auth,
             'user' => $auth->user,
