@@ -5,16 +5,11 @@
     $currentMonth = $currentDate->month;
 @endphp
 
-@extends('layouts.html')
+@extends('layouts.dashboard')
 
 @section('title', 'Saisie CRA — ' . config('app.name', 'AssoFlow'))
-@section('body-class', 'min-h-screen bg-background')
 
-@push('head')
-    @vite(['resources/js/app.js'])
-@endpush
-
-@push('body')
+@section('content')
     <div
         id="vue-activity-reports"
         data-props="{{ json_encode([
@@ -49,4 +44,4 @@
             ])->values() : [],
         ]) }}"
     ></div>
-@endpush
+@endsection

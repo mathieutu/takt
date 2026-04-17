@@ -1,6 +1,6 @@
-@extends('layouts.html', [
-    'title' => 'Exporter',
-])
+@extends('layouts.dashboard')
+
+@section('title', 'Exporter — ' . config('app.name', 'AssoFlow'))
 
 @push('head')
     <style>
@@ -99,7 +99,7 @@
     </style>
 @endpush
 
-@push('body')
+@section('content')
     {{-- ── Formulaire de filtres ── --}}
     <form method="get" class="p-4 bg-white rounded shadow mb-6 flex flex-wrap gap-4 items-end">
         <label class="flex flex-col gap-1">
@@ -268,4 +268,4 @@
             </table>
         </div>
     @endif
-@endpush
+@endsection

@@ -1,13 +1,8 @@
-@extends('layouts.html')
+@extends('layouts.dashboard')
 
 @section('title', 'Projets — ' . config('app.name', 'AssoFlow'))
-@section('body-class', 'min-h-screen bg-background')
 
-@push('head')
-    @vite(['resources/js/app.js'])
-@endpush
-
-@push('body')
+@section('content')
     <div
         id="vue-projects"
         data-props="{{ json_encode([
@@ -31,4 +26,4 @@
             'old'    => old(),
         ]) }}"
     ></div>
-@endpush
+@endsection
