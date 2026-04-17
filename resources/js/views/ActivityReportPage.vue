@@ -254,10 +254,10 @@ async function saveEdit() {
 
                 <div class="flex-1 overflow-x-auto" :class="{ 'opacity-60 pointer-events-none': switching }">
                     <div class="flex h-full min-w-160 flex-col">
-                        <div class="grid grid-cols-7 border border-border">
+                        <div class="grid grid-cols-7">
                             <div v-for="(day, idx) in DAYS_FR" :key="day"
-                                class="py-2 text-center text-xs font-medium text-muted-foreground"
-                                :class="idx > 0 ? 'border-l border-border' : ''">
+                                class="py-2 text-center text-xs font-medium text-muted-foreground border-t border-b border-r border-border"
+                                :class="idx === 0 ? 'border-l border-border' : ''">
                                 {{ day }}
                             </div>
                         </div>
