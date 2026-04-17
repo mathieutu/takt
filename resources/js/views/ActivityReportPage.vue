@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, ChevronDown, Pencil, Eye } from 'lucide-vue-
 import Dialog from '../components/ui/Dialog.vue'
 
 type Project = { id: number; name: string; client_name: string; daily_rate: number }
-type Report  = { id: number; start_date: string; day_coverage: number; label: string; comments: string }
+type Report = { id: number; start_date: string; day_coverage: number; label: string; comments: string }
 
 const props = withDefaults(defineProps<{
     indexUrl?: string
@@ -28,24 +28,24 @@ const props = withDefaults(defineProps<{
     reports: () => [],
 })
 
-const localReports        = ref<Report[]>([...props.reports])
-const activeProject       = ref<Project | null>(props.selectedProject ?? null)
-const displayYear         = ref(props.currentYear)
-const displayMonth        = ref(props.currentMonth)
+const localReports = ref<Report[]>([...props.reports])
+const activeProject = ref<Project | null>(props.selectedProject ?? null)
+const displayYear = ref(props.currentYear)
+const displayMonth = ref(props.currentMonth)
 const projectSelectorOpen = ref(false)
-const switching           = ref(false)
-const editingReport       = ref<Report | null>(null)
-const editForm            = ref({ label: '', comments: '', day_coverage: 50 })
-const viewingReport       = ref<Report | null>(null)
+const switching = ref(false)
+const editingReport = ref<Report | null>(null)
+const editForm = ref({ label: '', comments: '' })
+const viewingReport = ref<Report | null>(null)
 
-const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
-const DAYS_FR   = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim']
+const MONTHS_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+const DAYS_FR = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
 
-const today    = new Date()
-const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
+const today = new Date()
+const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
 
 const monthReports = computed(() => {
-    const prefix = `${displayYear.value}-${String(displayMonth.value).padStart(2,'0')}-`
+    const prefix = `${displayYear.value}-${String(displayMonth.value).padStart(2, '0')}-`
     return localReports.value.filter(r => r.start_date.startsWith(prefix))
 })
 
@@ -58,14 +58,14 @@ const reportByDate = computed(() => {
 const calendarCells = computed(() => {
     const y = displayYear.value
     const m = displayMonth.value
-    const firstDay  = new Date(y, m - 1, 1)
-    const lastDate  = new Date(y, m, 0).getDate()
+    const firstDay = new Date(y, m - 1, 1)
+    const lastDate = new Date(y, m, 0).getDate()
     const startOffset = (firstDay.getDay() + 6) % 7
 
     const cells: { type: 'pad' | 'day'; dateStr?: string; day?: number }[] = []
     for (let i = 0; i < startOffset; i++) cells.push({ type: 'pad' })
     for (let d = 1; d <= lastDate; d++) {
-        const dateStr = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+        const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
         cells.push({ type: 'day', dateStr, day: d })
     }
     const remainder = cells.length % 7
@@ -104,8 +104,8 @@ async function selectProject(project: Project) {
     try {
         const res = await fetch(`${props.indexUrl}?project_id=${project.id}`)
         const html = await res.text()
-        const doc  = new DOMParser().parseFromString(html, 'text/html')
-        const el   = doc.getElementById('vue-activity-reports')
+        const doc = new DOMParser().parseFromString(html, 'text/html')
+        const el = doc.getElementById('vue-activity-reports')
         if (el) {
             const data = JSON.parse(el.dataset.props ?? '{}')
             localReports.value = data.reports ?? []
@@ -167,8 +167,8 @@ async function clickDay(dateStr: string) {
 
 function coverageLabel(v: number) {
     if (v === 100) return '1j'
-    if (v === 50)  return '½j'
-    return `${v}%`
+    if (v === 50) return '½j'
+    return ''
 }
 
 function dayFromDate(dateStr: string) {
@@ -177,7 +177,7 @@ function dayFromDate(dateStr: string) {
 
 function openEdit(report: Report) {
     editingReport.value = report
-    editForm.value = { label: report.label ?? '', comments: report.comments ?? '', day_coverage: report.day_coverage }
+    editForm.value = { label: report.label ?? '', comments: report.comments ?? '' }
 }
 
 async function saveEdit() {
@@ -211,50 +211,42 @@ async function saveEdit() {
                         <span class="shrink-0 text-sm text-muted-foreground">Projet actif :</span>
 
                         <div class="relative min-w-0">
-                            <button
-                                type="button"
+                            <button type="button"
                                 class="inline-flex h-8 max-w-52 items-center gap-2 truncate rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50 sm:max-w-none"
-                                :disabled="switching"
-                                @click="projectSelectorOpen = !projectSelectorOpen"
-                            >
+                                :disabled="switching" @click="projectSelectorOpen = !projectSelectorOpen">
                                 <span v-if="activeProject" class="h-2 w-2 shrink-0 rounded-full bg-primary"></span>
                                 {{ activeProject ? activeProject.name : 'Sélectionner un projet' }}
                                 <ChevronDown class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                             </button>
-                            <div
-                                v-if="projectSelectorOpen"
-                                class="absolute left-0 top-full z-50 mt-1 min-w-55 overflow-hidden rounded-md border border-border bg-background shadow-md"
-                            >
-                                <button
-                                    v-for="p in projects"
-                                    :key="p.id"
-                                    type="button"
+                            <div v-if="projectSelectorOpen"
+                                class="absolute left-0 top-full z-50 mt-1 min-w-55 overflow-hidden rounded-md border border-border bg-background shadow-md">
+                                <button v-for="p in projects" :key="p.id" type="button"
                                     class="flex w-full flex-col px-3 py-2 text-left transition-colors hover:bg-accent"
-                                    :class="activeProject?.id === p.id ? 'bg-accent' : ''"
-                                    @click="selectProject(p)"
-                                >
+                                    :class="activeProject?.id === p.id ? 'bg-accent' : ''" @click="selectProject(p)">
                                     <span class="text-sm font-medium text-foreground">{{ p.name }}</span>
                                     <span class="text-xs text-muted-foreground">{{ p.client_name }}</span>
                                 </button>
                             </div>
                         </div>
 
-                        <span
-                            v-if="activeProject"
-                            class="hidden truncate rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-foreground sm:inline"
-                        >
+                        <span v-if="activeProject"
+                            class="hidden truncate rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-foreground sm:inline">
                             {{ activeProject.client_name }}
                         </span>
                     </div>
 
                     <div class="flex shrink-0 items-center justify-center gap-2 sm:justify-end">
-                        <button type="button" class="flex h-7 w-7 items-center justify-center rounded-md hover:bg-accent" @click="prevMonth">
+                        <button type="button"
+                            class="flex h-7 w-7 items-center justify-center rounded-md hover:bg-accent"
+                            @click="prevMonth">
                             <ChevronLeft class="h-4 w-4 text-muted-foreground" />
                         </button>
                         <span class="min-w-35 text-center text-sm font-medium text-foreground">
                             {{ MONTHS_FR[displayMonth - 1] }} {{ displayYear }}
                         </span>
-                        <button type="button" class="flex h-7 w-7 items-center justify-center rounded-md hover:bg-accent" @click="nextMonth">
+                        <button type="button"
+                            class="flex h-7 w-7 items-center justify-center rounded-md hover:bg-accent"
+                            @click="nextMonth">
                             <ChevronRight class="h-4 w-4 text-muted-foreground" />
                         </button>
                     </div>
@@ -262,60 +254,50 @@ async function saveEdit() {
 
                 <div class="flex-1 overflow-x-auto" :class="{ 'opacity-60 pointer-events-none': switching }">
                     <div class="flex h-full min-w-160 flex-col">
-                    <div class="grid grid-cols-7 border border-border">
-                        <div v-for="(day, idx) in DAYS_FR" :key="day"
-                            class="py-2 text-center text-xs font-medium text-muted-foreground"
-                            :class="idx > 0 ? 'border-l border-border' : ''"
-                        >
-                            {{ day }}
+                        <div class="grid grid-cols-7 border border-border">
+                            <div v-for="(day, idx) in DAYS_FR" :key="day"
+                                class="py-2 text-center text-xs font-medium text-muted-foreground"
+                                :class="idx > 0 ? 'border-l border-border' : ''">
+                                {{ day }}
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="grid flex-1 grid-cols-7" style="grid-auto-rows: 1fr">
-                        <div
-                            v-for="(cell, i) in calendarCells"
-                            :key="i"
-                            class="group relative border-b border-r border-border transition-colors"
-                            :class="[
-                                i % 7 === 0 ? 'border-l border-border' : '',
-                                cell.type === 'day' && activeProject ? 'cursor-pointer hover:bg-accent/50' : '',
-                                cell.type === 'day' && cell.dateStr === todayStr ? 'ring-2 ring-inset ring-primary' : '',
-                                cell.type === 'day' && (reportByDate.get(cell.dateStr!)?.day_coverage ?? 0) >= 100 ? 'bg-primary/25' : '',
-                                cell.type === 'day' && (reportByDate.get(cell.dateStr!)?.day_coverage ?? 0) > 0 && (reportByDate.get(cell.dateStr!)?.day_coverage ?? 0) < 100 ? 'bg-primary/10' : '',
-                            ]"
-                            @click="cell.type === 'day' && cell.dateStr ? clickDay(cell.dateStr) : null"
-                        >
-                            <template v-if="cell.type === 'day'">
-                                <span
-                                    class="absolute left-1 top-1 text-xs sm:left-2 sm:top-1.5"
-                                    :class="cell.dateStr === todayStr ? 'font-semibold text-primary' : 'text-foreground'"
-                                >
-                                    {{ cell.day }}
-                                </span>
-                                <button
-                                    v-if="reportByDate.get(cell.dateStr!) && reportByDate.get(cell.dateStr!)!.id > 0"
-                                    type="button"
-                                    class="absolute right-0.5 top-0.5 flex h-7 w-7 items-center justify-center rounded transition-opacity hover:bg-primary/20 sm:right-1.5 sm:top-1.5 sm:h-5 sm:w-5 md:opacity-0 md:group-hover:opacity-100"
-                                    @click.stop="openEdit(reportByDate.get(cell.dateStr!)!)"
-                                >
-                                    <Pencil class="h-4 w-4 text-primary sm:h-3 sm:w-3" />
-                                </button>
-                                <template v-if="reportByDate.get(cell.dateStr!)">
-                                    <span class="absolute bottom-1 right-1 text-xs font-medium text-primary sm:bottom-1.5 sm:right-2">
-                                        {{ coverageLabel(reportByDate.get(cell.dateStr!)!.day_coverage) }}
+                        <div class="grid flex-1 grid-cols-7 select-none" style="grid-auto-rows: 1fr">
+                            <div v-for="(cell, i) in calendarCells" :key="i"
+                                class="group relative border-b border-r border-border transition-colors" :class="[
+                                    i % 7 === 0 ? 'border-l border-border' : '',
+                                    cell.type === 'day' && activeProject ? 'cursor-pointer hover:bg-accent/50' : '',
+                                    cell.type === 'day' && cell.dateStr === todayStr ? 'ring-2 ring-inset ring-primary' : '',
+                                    cell.type === 'day' && (reportByDate.get(cell.dateStr!)?.day_coverage ?? 0) >= 100 ? 'bg-primary/25' : '',
+                                    cell.type === 'day' && (reportByDate.get(cell.dateStr!)?.day_coverage ?? 0) > 0 && (reportByDate.get(cell.dateStr!)?.day_coverage ?? 0) < 100 ? 'bg-primary/10' : '',
+                                ]" @click="cell.type === 'day' && cell.dateStr ? clickDay(cell.dateStr) : null">
+                                <template v-if="cell.type === 'day'">
+                                    <span class="absolute left-1 top-1 text-xs sm:left-2 sm:top-1.5"
+                                        :class="cell.dateStr === todayStr ? 'font-semibold text-primary' : 'text-foreground'">
+                                        {{ cell.day }}
                                     </span>
                                     <button
-                                        v-if="reportByDate.get(cell.dateStr!)!.label || reportByDate.get(cell.dateStr!)!.comments"
+                                        v-if="reportByDate.get(cell.dateStr!) && reportByDate.get(cell.dateStr!)!.id > 0"
                                         type="button"
-                                        class="absolute bottom-0.5 left-0.5 flex h-7 w-7 items-center justify-center rounded transition-colors hover:bg-primary/20 sm:bottom-1 sm:left-1.5 sm:h-5 sm:w-5"
-                                        @click.stop="viewingReport = reportByDate.get(cell.dateStr!)!"
-                                    >
-                                        <Eye class="h-4 w-4 text-primary sm:h-3 sm:w-3" />
+                                        class="absolute right-0.5 top-0.5 flex h-7 w-7 items-center justify-center rounded transition-opacity hover:bg-primary/20 sm:right-1.5 sm:top-1.5 sm:h-5 sm:w-5 md:opacity-0 md:group-hover:opacity-100"
+                                        @click.stop="openEdit(reportByDate.get(cell.dateStr!)!)">
+                                        <Pencil class="h-4 w-4 text-primary sm:h-3 sm:w-3" />
                                     </button>
+                                    <template v-if="reportByDate.get(cell.dateStr!)">
+                                        <span class="absolute bottom-1 right-1 text-xs font-medium text-primary sm:bottom-1.5 sm:right-2">
+                                            {{ coverageLabel(reportByDate.get(cell.dateStr!)!.day_coverage) }}
+                                        </span>
+                                        <button
+                                            v-if="reportByDate.get(cell.dateStr!)!.label || reportByDate.get(cell.dateStr!)!.comments"
+                                            type="button"
+                                            class="absolute bottom-0.5 left-0.5 flex h-7 w-7 items-center justify-center rounded transition-colors hover:bg-primary/20 sm:bottom-1 sm:left-1.5 sm:h-5 sm:w-5"
+                                            @click.stop="viewingReport = reportByDate.get(cell.dateStr!)!">
+                                            <Eye class="h-4 w-4 text-primary sm:h-3 sm:w-3" />
+                                        </button>
+                                    </template>
                                 </template>
-                            </template>
+                            </div>
                         </div>
-                    </div>
                     </div>
                 </div>
 
@@ -331,7 +313,9 @@ async function saveEdit() {
                 </div>
 
                 <div class="mt-2 flex items-center justify-between border-t border-border pt-2 md:hidden">
-                    <span class="text-sm text-muted-foreground">{{ totalDays % 1 === 0 ? totalDays : totalDays.toFixed(1) }}j saisis</span>
+                    <span class="text-sm text-muted-foreground">{{ totalDays % 1 === 0 ? totalDays :
+                        totalDays.toFixed(1) }}j
+                        saisis</span>
                     <span class="text-sm font-semibold text-foreground">{{ caEstime.toLocaleString('fr-FR') }} €</span>
                 </div>
             </main>
@@ -341,7 +325,9 @@ async function saveEdit() {
                 <div class="space-y-2">
                     <div class="flex items-center justify-between text-sm">
                         <span class="text-muted-foreground">Jours saisis</span>
-                        <span class="font-semibold text-foreground">{{ totalDays % 1 === 0 ? totalDays : totalDays.toFixed(1) }}j</span>
+                        <span class="font-semibold text-foreground">{{ totalDays % 1 === 0 ? totalDays :
+                            totalDays.toFixed(1)
+                            }}j</span>
                     </div>
                     <div class="flex items-center justify-between text-sm">
                         <span class="text-muted-foreground">CA estimé</span>
@@ -349,10 +335,13 @@ async function saveEdit() {
                     </div>
                 </div>
                 <div class="mt-4 border-t border-border pt-4">
-                    <p v-if="sortedEntries.length === 0" class="text-xs text-muted-foreground">Aucune saisie ce mois.</p>
+                    <p v-if="sortedEntries.length === 0" class="text-xs text-muted-foreground">Aucune saisie ce mois.
+                    </p>
                     <ul v-else class="space-y-1.5">
                         <li v-for="r in sortedEntries" :key="r.id" class="flex items-center justify-between text-xs">
-                            <span class="text-muted-foreground">{{ dayFromDate(r.start_date) }} {{ MONTHS_FR[displayMonth - 1].slice(0, 3) }}.</span>
+                            <span class="text-muted-foreground">{{ dayFromDate(r.start_date) }} {{
+                                MONTHS_FR[displayMonth -
+                                1].slice(0, 3) }}.</span>
                             <span class="font-medium text-foreground">{{ coverageLabel(r.day_coverage) }}</span>
                         </li>
                     </ul>
@@ -361,7 +350,9 @@ async function saveEdit() {
         </div>
     </div>
 
-    <Dialog :open="viewingReport !== null" :title="`${viewingReport ? dayFromDate(viewingReport.start_date) : ''} ${viewingReport ? MONTHS_FR[parseInt(viewingReport.start_date.split('-')[1]) - 1] : ''}`" @close="viewingReport = null">
+    <Dialog :open="viewingReport !== null"
+        :title="`${viewingReport ? dayFromDate(viewingReport.start_date) : ''} ${viewingReport ? MONTHS_FR[parseInt(viewingReport.start_date.split('-')[1]) - 1] : ''}`"
+        @close="viewingReport = null">
         <div class="space-y-3">
             <div v-if="viewingReport?.label" class="flex flex-col gap-0.5">
                 <span class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Titre</span>
@@ -378,50 +369,27 @@ async function saveEdit() {
         </div>
     </Dialog>
 
-    <Dialog :open="editingReport !== null" :title="`${editingReport ? dayFromDate(editingReport.start_date) : ''} ${editingReport ? MONTHS_FR[parseInt(editingReport.start_date.split('-')[1]) - 1] : ''}`" @close="editingReport = null">
+    <Dialog :open="editingReport !== null"
+        :title="`${editingReport ? dayFromDate(editingReport.start_date) : ''} ${editingReport ? MONTHS_FR[parseInt(editingReport.start_date.split('-')[1]) - 1] : ''}`"
+        @close="editingReport = null">
         <div class="space-y-4">
             <div class="flex flex-col gap-1.5">
                 <label class="text-sm font-medium text-foreground">Titre</label>
-                <input
-                    v-model="editForm.label"
-                    type="text"
-                    placeholder="Ex : Développement feature X"
-                    class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                />
+                <input v-model="editForm.label" type="text" placeholder="Ex : Développement feature X"
+                    class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
             </div>
             <div class="flex flex-col gap-1.5">
                 <label class="text-sm font-medium text-foreground">Description</label>
-                <textarea
-                    v-model="editForm.comments"
-                    rows="3"
-                    placeholder="Détails de l'activité…"
-                    class="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
-                />
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <div class="flex items-center justify-between">
-                    <label class="text-sm font-medium text-foreground">Durée</label>
-                    <span class="text-sm font-semibold text-primary">{{ editForm.day_coverage }}%</span>
-                </div>
-                <input
-                    v-model.number="editForm.day_coverage"
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="5"
-                    class="w-full accent-primary"
-                />
-                <div class="flex justify-between text-xs text-muted-foreground">
-                    <span>0%</span>
-                    <span>25%</span>
-                    <span>50%</span>
-                    <span>75%</span>
-                    <span>100%</span>
-                </div>
+                <textarea v-model="editForm.comments" rows="3" placeholder="Détails de l'activité…"
+                    class="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none" />
             </div>
             <div class="flex justify-end gap-2 pt-2">
-                <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="editingReport = null">Annuler</button>
-                <button type="button" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90" @click="saveEdit">Enregistrer</button>
+                <button type="button"
+                    class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent"
+                    @click="editingReport = null">Annuler</button>
+                <button type="button"
+                    class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                    @click="saveEdit">Enregistrer</button>
             </div>
         </div>
     </Dialog>
