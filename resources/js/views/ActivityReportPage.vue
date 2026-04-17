@@ -261,7 +261,7 @@ async function saveEdit() {
                 </div>
 
                 <div class="flex-1 overflow-x-auto" :class="{ 'opacity-60 pointer-events-none': switching }">
-                    <div class="flex h-full min-w-105 flex-col">
+                    <div class="flex h-full min-w-160 flex-col">
                     <div class="grid grid-cols-7 border border-border">
                         <div v-for="(day, idx) in DAYS_FR" :key="day"
                             class="py-2 text-center text-xs font-medium text-muted-foreground"
@@ -295,10 +295,10 @@ async function saveEdit() {
                                 <button
                                     v-if="reportByDate.get(cell.dateStr!) && reportByDate.get(cell.dateStr!)!.id > 0"
                                     type="button"
-                                    class="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded transition-opacity hover:bg-primary/20 sm:right-1.5 sm:top-1.5 md:opacity-0 md:group-hover:opacity-100"
+                                    class="absolute right-0.5 top-0.5 flex h-7 w-7 items-center justify-center rounded transition-opacity hover:bg-primary/20 sm:right-1.5 sm:top-1.5 sm:h-5 sm:w-5 md:opacity-0 md:group-hover:opacity-100"
                                     @click.stop="openEdit(reportByDate.get(cell.dateStr!)!)"
                                 >
-                                    <Pencil class="h-3 w-3 text-primary" />
+                                    <Pencil class="h-4 w-4 text-primary sm:h-3 sm:w-3" />
                                 </button>
                                 <template v-if="reportByDate.get(cell.dateStr!)">
                                     <span class="absolute bottom-1 right-1 text-xs font-medium text-primary sm:bottom-1.5 sm:right-2">
@@ -307,10 +307,10 @@ async function saveEdit() {
                                     <button
                                         v-if="reportByDate.get(cell.dateStr!)!.label || reportByDate.get(cell.dateStr!)!.comments"
                                         type="button"
-                                        class="absolute bottom-0.5 left-0.5 flex h-5 w-5 items-center justify-center rounded transition-colors hover:bg-primary/20 sm:bottom-1 sm:left-1.5"
+                                        class="absolute bottom-0.5 left-0.5 flex h-7 w-7 items-center justify-center rounded transition-colors hover:bg-primary/20 sm:bottom-1 sm:left-1.5 sm:h-5 sm:w-5"
                                         @click.stop="viewingReport = reportByDate.get(cell.dateStr!)!"
                                     >
-                                        <Eye class="h-3 w-3 text-primary" />
+                                        <Eye class="h-4 w-4 text-primary sm:h-3 sm:w-3" />
                                     </button>
                                 </template>
                             </template>
