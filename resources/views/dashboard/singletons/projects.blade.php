@@ -1,13 +1,13 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Projets — {{ config('app.name', 'AssoFlow') }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="min-h-screen bg-background">
+@extends('layouts.html')
+
+@section('title', 'Projets — ' . config('app.name', 'AssoFlow'))
+@section('body-class', 'min-h-screen bg-background')
+
+@push('head')
+    @vite(['resources/js/app.js'])
+@endpush
+
+@push('body')
     <div
         id="vue-projects"
         data-props="{{ json_encode([
@@ -31,5 +31,4 @@
             'old'    => old(),
         ]) }}"
     ></div>
-</body>
-</html>
+@endpush

@@ -1,13 +1,13 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Paramètres — {{ config('app.name', 'AssoFlow') }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="min-h-screen bg-background">
+@extends('layouts.html')
+
+@section('title', 'Paramètres — ' . config('app.name', 'AssoFlow'))
+@section('body-class', 'min-h-screen bg-background')
+
+@push('head')
+    @vite(['resources/js/app.js'])
+@endpush
+
+@push('body')
     <div
         id="vue-settings"
         data-props="{{ json_encode([
@@ -22,5 +22,4 @@
             'success'   => $success ?? false,
         ]) }}"
     ></div>
-</body>
-</html>
+@endpush
