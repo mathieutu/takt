@@ -205,25 +205,25 @@ async function saveEdit() {
 <template>
     <div class="flex h-screen flex-col overflow-hidden bg-background">
         <div class="flex flex-1 overflow-hidden">
-            <main class="flex flex-1 flex-col overflow-hidden px-6 py-6">
-                <div class="mb-4 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <span class="text-sm text-muted-foreground">Projet actif :</span>
+            <main class="flex flex-1 flex-col overflow-hidden px-3 py-4 md:px-6 md:py-6">
+                <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex min-w-0 items-center gap-2">
+                        <span class="shrink-0 text-sm text-muted-foreground">Projet actif :</span>
 
-                        <div class="relative">
+                        <div class="relative min-w-0">
                             <button
                                 type="button"
-                                class="inline-flex h-8 items-center gap-2 rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50"
+                                class="inline-flex h-8 max-w-52 items-center gap-2 truncate rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50 sm:max-w-none"
                                 :disabled="switching"
                                 @click="projectSelectorOpen = !projectSelectorOpen"
                             >
-                                <span v-if="activeProject" class="h-2 w-2 rounded-full bg-primary"></span>
+                                <span v-if="activeProject" class="h-2 w-2 shrink-0 rounded-full bg-primary"></span>
                                 {{ activeProject ? activeProject.name : 'Sélectionner un projet' }}
-                                <ChevronDown class="h-3.5 w-3.5 text-muted-foreground" />
+                                <ChevronDown class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                             </button>
                             <div
                                 v-if="projectSelectorOpen"
-                                class="absolute left-0 top-full z-50 mt-1 min-w-[220px] overflow-hidden rounded-md border border-border bg-background shadow-md"
+                                class="absolute left-0 top-full z-50 mt-1 min-w-55 overflow-hidden rounded-md border border-border bg-background shadow-md"
                             >
                                 <button
                                     v-for="p in projects"
@@ -241,17 +241,17 @@ async function saveEdit() {
 
                         <span
                             v-if="activeProject"
-                            class="rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-foreground"
+                            class="hidden truncate rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-foreground sm:inline"
                         >
                             {{ activeProject.client_name }}
                         </span>
                     </div>
 
-                    <div class="flex items-center gap-2">
+                    <div class="flex shrink-0 items-center justify-center gap-2 sm:justify-end">
                         <button type="button" class="flex h-7 w-7 items-center justify-center rounded-md hover:bg-accent" @click="prevMonth">
                             <ChevronLeft class="h-4 w-4 text-muted-foreground" />
                         </button>
-                        <span class="min-w-[140px] text-center text-sm font-medium text-foreground">
+                        <span class="min-w-35 text-center text-sm font-medium text-foreground">
                             {{ MONTHS_FR[displayMonth - 1] }} {{ displayYear }}
                         </span>
                         <button type="button" class="flex h-7 w-7 items-center justify-center rounded-md hover:bg-accent" @click="nextMonth">
@@ -260,7 +260,8 @@ async function saveEdit() {
                     </div>
                 </div>
 
-                <div class="flex-1" :class="{ 'opacity-60 pointer-events-none': switching }">
+                <div class="flex-1 overflow-x-auto" :class="{ 'opacity-60 pointer-events-none': switching }">
+                    <div class="flex h-full min-w-105 flex-col">
                     <div class="grid grid-cols-7 border border-border">
                         <div v-for="(day, idx) in DAYS_FR" :key="day"
                             class="py-2 text-center text-xs font-medium text-muted-foreground"
@@ -270,7 +271,7 @@ async function saveEdit() {
                         </div>
                     </div>
 
-                    <div class="grid h-[calc(100%-37px)] grid-cols-7" style="grid-auto-rows: 1fr">
+                    <div class="grid flex-1 grid-cols-7" style="grid-auto-rows: 1fr">
                         <div
                             v-for="(cell, i) in calendarCells"
                             :key="i"
@@ -286,7 +287,7 @@ async function saveEdit() {
                         >
                             <template v-if="cell.type === 'day'">
                                 <span
-                                    class="absolute left-2 top-1.5 text-xs"
+                                    class="absolute left-1 top-1 text-xs sm:left-2 sm:top-1.5"
                                     :class="cell.dateStr === todayStr ? 'font-semibold text-primary' : 'text-foreground'"
                                 >
                                     {{ cell.day }}
@@ -294,19 +295,19 @@ async function saveEdit() {
                                 <button
                                     v-if="reportByDate.get(cell.dateStr!) && reportByDate.get(cell.dateStr!)!.id > 0"
                                     type="button"
-                                    class="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded opacity-0 transition-opacity group-hover:opacity-100 hover:bg-primary/20"
+                                    class="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded transition-opacity hover:bg-primary/20 sm:right-1.5 sm:top-1.5 md:opacity-0 md:group-hover:opacity-100"
                                     @click.stop="openEdit(reportByDate.get(cell.dateStr!)!)"
                                 >
                                     <Pencil class="h-3 w-3 text-primary" />
                                 </button>
                                 <template v-if="reportByDate.get(cell.dateStr!)">
-                                    <span class="absolute bottom-1.5 right-2 text-xs font-medium text-primary">
+                                    <span class="absolute bottom-1 right-1 text-xs font-medium text-primary sm:bottom-1.5 sm:right-2">
                                         {{ coverageLabel(reportByDate.get(cell.dateStr!)!.day_coverage) }}
                                     </span>
                                     <button
                                         v-if="reportByDate.get(cell.dateStr!)!.label || reportByDate.get(cell.dateStr!)!.comments"
                                         type="button"
-                                        class="absolute bottom-1 left-1.5 flex h-5 w-5 items-center justify-center rounded transition-colors hover:bg-primary/20"
+                                        class="absolute bottom-0.5 left-0.5 flex h-5 w-5 items-center justify-center rounded transition-colors hover:bg-primary/20 sm:bottom-1 sm:left-1.5"
                                         @click.stop="viewingReport = reportByDate.get(cell.dateStr!)!"
                                     >
                                         <Eye class="h-3 w-3 text-primary" />
@@ -315,9 +316,10 @@ async function saveEdit() {
                             </template>
                         </div>
                     </div>
+                    </div>
                 </div>
 
-                <div class="mt-3 flex items-center gap-6">
+                <div class="mt-3 hidden items-center gap-6 sm:flex">
                     <div class="flex items-center gap-1.5">
                         <span class="h-3.5 w-3.5 rounded-sm border border-border bg-primary/25"></span>
                         <span class="text-xs text-muted-foreground">½ ou 1 jour — projet sélectionné</span>
@@ -327,9 +329,14 @@ async function saveEdit() {
                         <span class="text-xs text-muted-foreground">Aujourd'hui</span>
                     </div>
                 </div>
+
+                <div class="mt-2 flex items-center justify-between border-t border-border pt-2 md:hidden">
+                    <span class="text-sm text-muted-foreground">{{ totalDays % 1 === 0 ? totalDays : totalDays.toFixed(1) }}j saisis</span>
+                    <span class="text-sm font-semibold text-foreground">{{ caEstime.toLocaleString('fr-FR') }} €</span>
+                </div>
             </main>
 
-            <aside class="w-60 shrink-0 border-l border-border px-5 py-6">
+            <aside class="hidden w-60 shrink-0 border-l border-border px-5 py-6 md:block">
                 <p class="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Récap du mois</p>
                 <div class="space-y-2">
                     <div class="flex items-center justify-between text-sm">
