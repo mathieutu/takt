@@ -46,6 +46,7 @@ Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(functi
     });
 
     Route::prefix('/exports')->name('.exports.')->group(function () {
+        Route::get('/csv', [ExportsController::class, 'exportCsv'])->name('csv');
         Route::resource('/', ExportsController::class);
     });
 });
