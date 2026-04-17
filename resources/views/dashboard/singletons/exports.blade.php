@@ -1,12 +1,8 @@
-@extends('layouts.html')
+@extends('layouts.dashboard')
 
 @section('title', 'Exports — ' . config('app.name', 'AssoFlow'))
 
-@push('head')
-    @vite(['resources/js/app.js'])
-@endpush
-
-@push('body')
+@section('content')
     @php
         $allProjectsData = collect();
         foreach ($user->clients as $client) {
@@ -43,4 +39,4 @@
             ])->values(),
         ]) }}"
     ></div>
-@endpush
+@endsection

@@ -140,9 +140,8 @@ function coverageLabel(v: number) {
 </script>
 
 <template>
-    <div class="flex min-h-screen flex-col bg-background">
-        <main class="flex-1 px-6 py-8">
-            <div class="mx-auto max-w-5xl space-y-6">
+    <div class="px-6 py-8">
+        <div class="mx-auto max-w-5xl space-y-6">
 
                 <div class="flex items-center justify-between">
                     <div>
@@ -321,7 +320,6 @@ function coverageLabel(v: number) {
                     </table>
                 </div>
 
-            </div>
-        </main>
+        </div>
     </div>
 </template>
