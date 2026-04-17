@@ -10,8 +10,8 @@
   @stack('head')
 </head>
 
-<body class="@yield('body-class')">
-  @stack('body')
+<body x-data="{}">
+@stack('body')
 </body>
 
 </html>
