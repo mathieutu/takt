@@ -5,7 +5,6 @@ import {
     CalendarDays,
     Users,
     FolderKanban,
-    BarChart3,
     Download,
     Settings,
     LogOut,
@@ -25,12 +24,11 @@ const props = defineProps<{
 const path = computed(() => props.currentPath ?? window.location.pathname)
 
 const navItems = [
-    { route: '/dashboard',          label: 'Tableau de bord',  icon: LayoutDashboard, exact: true },
-    { route: '/dashboard/cra',      label: 'Saisie CRA',       icon: CalendarDays },
-    { route: '/dashboard/clients',  label: 'Clients',          icon: Users },
-    { route: '/dashboard/projects', label: 'Projets',          icon: FolderKanban },
-    { route: '/dashboard/recap',    label: 'Récapitulatif',    icon: BarChart3 },
-    { route: '/dashboard/export',   label: 'Export',           icon: Download },
+    { route: '/dashboard',          label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
+    { route: '/dashboard/reports',  label: 'Saisie CRA',      icon: CalendarDays },
+    { route: '/dashboard/clients',  label: 'Clients',         icon: Users },
+    { route: '/dashboard/projects', label: 'Projets',         icon: FolderKanban },
+    { route: '/dashboard/exports',  label: 'Export',          icon: Download },
 ]
 
 function isActive(item: (typeof navItems)[0]): boolean {
@@ -38,23 +36,11 @@ function isActive(item: (typeof navItems)[0]): boolean {
     return path.value.startsWith(item.route)
 }
 
-const initials = computed(() =>
-    props.user.name
-        .split(' ')
-        .map(n => n[0])
-        .slice(0, 2)
-        .join('')
-        .toUpperCase()
-)
-
-// Tooltip
 const activeTooltip = ref<string | null>(null)
 let tooltipTimer: ReturnType<typeof setTimeout> | null = null
 
 function showTooltip(id: string) {
-    tooltipTimer = setTimeout(() => {
-        activeTooltip.value = id
-    }, 200)
+    tooltipTimer = setTimeout(() => { activeTooltip.value = id }, 200)
 }
 
 function hideTooltip() {
@@ -63,23 +49,13 @@ function hideTooltip() {
 }
 
 function logout() {
-    const form = document.createElement('form')
-    form.method = 'POST'
-    form.action = '/logout'
-    const input = document.createElement('input')
-    input.type = 'hidden'
-    input.name = '_token'
-    input.value = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? ''
-    form.appendChild(input)
-    document.body.appendChild(form)
-    form.submit()
+    window.location.href = '/me/logout'
 }
 </script>
 
 <template>
     <aside class="flex h-full w-14 flex-col items-center border-r border-border bg-sidebar py-3">
 
-        <!-- Navigation principale -->
         <nav class="flex flex-1 flex-col items-center gap-1">
             <div
                 v-for="item in navItems"
@@ -108,15 +84,8 @@ function logout() {
             </div>
         </nav>
 
-        <!-- Section bas -->
         <div class="mt-auto flex flex-col items-center gap-1">
-
-            <!-- Paramètres -->
-            <div
-                class="relative"
-                @mouseenter="showTooltip('settings')"
-                @mouseleave="hideTooltip"
-            >
+            <div class="relative" @mouseenter="showTooltip('settings')" @mouseleave="hideTooltip">
                 <a
                     href="/dashboard/settings"
                     class="flex h-9 w-9 items-center justify-center rounded-md transition-colors"
@@ -136,15 +105,10 @@ function logout() {
                 </Transition>
             </div>
 
-            <!-- Déconnexion -->
-            <div
-                class="relative"
-                @mouseenter="showTooltip('logout')"
-                @mouseleave="hideTooltip"
-            >
+            <div class="relative" @mouseenter="showTooltip('logout')" @mouseleave="hideTooltip">
                 <button
                     type="button"
-                    class="flex h-9 w-9 items-center justify-center rounded-md transition-colors text-muted-foreground hover:bg-red-50 hover:text-destructive"
+                    class="flex h-9 w-9 items-center justify-center rounded-md cursor-pointer transition-colors text-muted-foreground hover:bg-red-50 hover:text-destructive"
                     @click="logout"
                 >
                     <LogOut class="h-4 w-4" />
@@ -158,34 +122,9 @@ function logout() {
                     </div>
                 </Transition>
             </div>
-
-            <!-- Séparateur -->
-            <div class="my-1 h-px w-8 bg-border" />
-
-            <!-- Avatar -->
-            <div
-                class="relative"
-                @mouseenter="showTooltip('avatar')"
-                @mouseleave="hideTooltip"
-            >
-                <a
-                    href="/dashboard/settings"
-                    class="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-xs font-medium text-secondary-foreground"
-                >
-                    {{ initials }}
-                </a>
-                <Transition name="tooltip">
-                    <div
-                        v-if="activeTooltip === 'avatar'"
-                        class="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded px-2 py-1 text-xs bg-foreground text-background"
-                    >
-                        <p class="font-medium">{{ user.name }}</p>
-                        <p class="text-muted-foreground">{{ user.role }}</p>
-                    </div>
-                </Transition>
-            </div>
         </div>
     </aside>
+
 </template>
 
 <style scoped>
