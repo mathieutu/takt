@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import {
-    Clock,
     Menu,
     X,
     LayoutDashboard,
@@ -55,8 +54,8 @@ function logout() {
     <header class="fixed top-0 left-0 right-0 z-50 flex h-14 items-center justify-between border-b border-border bg-sidebar px-4">
         <!-- Logo -->
         <div class="flex items-center gap-2">
-            <div class="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
-                <Clock class="h-4 w-4 text-primary-foreground" />
+            <div class="flex h-7 w-7 items-center justify-center rounded-md object-cover">
+                <img src="/public/images/logo.png" class="w-full h-full object-cover">
             </div>
             <span class="text-sm font-semibold text-foreground">AssoFlow</span>
         </div>
@@ -85,8 +84,8 @@ function logout() {
             <nav class="relative flex h-full w-64 flex-col bg-sidebar border-r border-border py-4 px-4">
                 <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center gap-2">
-                        <div class="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
-                            <Clock class="h-4 w-4 text-primary-foreground" />
+                        <div class="flex h-7 w-7 items-center justify-center rounded-md">
+                            <img src="/public/images/logo.png" class="w-full h-full object-cover">
                         </div>
                         <span class="text-sm font-semibold text-foreground">AssoFlow</span>
                     </div>
