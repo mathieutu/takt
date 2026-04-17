@@ -1,13 +1,8 @@
-@extends('layouts.html')
+@extends('layouts.dashboard')
 
 @section('title', 'Paramètres — ' . config('app.name', 'AssoFlow'))
-@section('body-class', 'min-h-screen bg-background')
 
-@push('head')
-    @vite(['resources/js/app.js'])
-@endpush
-
-@push('body')
+@section('content')
     <div
         id="vue-settings"
         data-props="{{ json_encode([
@@ -22,4 +17,4 @@
             'success'   => $success ?? false,
         ]) }}"
     ></div>
-@endpush
+@endsection
