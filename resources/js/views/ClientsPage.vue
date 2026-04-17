@@ -178,7 +178,7 @@ function menuItems(client: Client) {
                     />
                     <p v-if="fieldError('daily_rate')" class="text-xs text-destructive">{{ fieldError('daily_rate') }}</p>
                 </div>
-                <div class="flex justify-end gap-2 pt-2">
+                <div class="flex flex-col sm:flex-row justify-end gap-2 pt-2">
                     <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="createOpen = false">Annuler</button>
                     <button type="submit" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">Créer</button>
                 </div>
