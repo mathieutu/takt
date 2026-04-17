@@ -100,7 +100,7 @@ function fieldError(key: string): string | null {
 
                     <div class="flex flex-col gap-2">
                         <label class="text-sm font-medium text-foreground">Type de compte</label>
-                        <div class="grid grid-cols-2 gap-2">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <label
                                 class="flex cursor-pointer items-center justify-center rounded-md border px-3 py-2 text-sm transition-colors"
                                 :class="isUser

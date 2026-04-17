@@ -85,12 +85,12 @@ function fieldError(key: string): string | null {
                     <Card>
                         <CardHeader>
                             <div class="flex items-center gap-3">
-                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground">
+                                <div class="hidden sm:flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground">
                                     {{ initials }}
                                 </div>
-                                <div>
-                                    <p class="text-sm font-medium text-foreground">{{ displayName }}</p>
-                                    <p class="text-xs text-muted-foreground">{{ email }}</p>
+                                <div class="w-fit overflow-hidden">
+                                    <p class="text-sm font-medium text-foreground truncate">{{ displayName }}</p>
+                                    <p class="text-xs text-muted-foreground truncate">{{ email }}</p>
                                 </div>
                             </div>
                         </CardHeader>
@@ -110,7 +110,7 @@ function fieldError(key: string): string | null {
                                 </div>
 
                                 <template v-if="isUser">
-                                    <div class="grid grid-cols-2 gap-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div class="flex flex-col gap-1.5">
                                             <label class="text-sm font-medium text-foreground">Prénom</label>
                                             <input
