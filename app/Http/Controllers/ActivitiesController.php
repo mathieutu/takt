@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use App\Models\ActivityTime;
 use App\Models\Project;
+use App\Models\SharedProject;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -67,7 +68,15 @@ class ActivitiesController
     public function index(Request $request)
     {
         $auth = Account::authenticated();
-        $projects = $auth->user->projects()->with('client')->get();
+        $userId = $auth->id;
+
+        $ownedIds = Project::whereHas('client', fn($q) => $q->where('user_id', $userId))->pluck('id');
+        $sharedIds = SharedProject::where('account_id', $userId)->pluck('project_id');
+
+        $projects = Project::with('client')
+            ->whereIn('id', $ownedIds->merge($sharedIds)->unique())
+            ->get()
+            ->map(fn($p) => tap($p, fn($p) => $p->is_owner = $ownedIds->contains($p->id)));
 
         $reports = ActivityTime::whereIn('project_id', $projects->pluck('id'))->get();
 
