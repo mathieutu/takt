@@ -67,41 +67,14 @@ class ActivitiesController
     public function index(Request $request)
     {
         $auth = Account::authenticated();
-        $projects = $auth->user->projects;
+        $projects = $auth->user->projects()->with('client')->get();
 
-        if (!$request->query->has('project_id')) {
-            return view('dashboard.singletons.activity-reports', [
-                'projects' => $projects,
-                'account' => $auth,
-                'project' => null
-            ]);
-        }
-
-        $selected = $projects->find($request->query('project_id'));
-        if (!$selected)
-            throw new NotFoundHttpException('You must provide a valid project id.');
-
-        $from = $request->query('from');
-        $to = $request->query('to');
-        $reports = $selected
-            ->activityTimes()
-            ->when($from, fn(Builder $query) => (
-                $query->where('start_date', '>=', $from)
-            ))
-            ->when($to, fn(Builder $query) => (
-                $query->where(
-                    '(start_date + day_coverage * 3600 * 24)',
-                    '<=',
-                    $to
-                )
-            ))
-            ->get();
+        $reports = ActivityTime::whereIn('project_id', $projects->pluck('id'))->get();
 
         return view('dashboard.singletons.activity-reports', [
-            'reports' => $reports,
-            'project' => $selected,
             'projects' => $projects,
-            'account' => $auth
+            'reports' => $reports,
+            'account' => $auth,
         ]);
     }
 
