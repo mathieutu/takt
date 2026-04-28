@@ -40,7 +40,7 @@ class Share extends Model
 
     public function url()
     {
-        return route('share', [
+        return route('share.apply', [
             'share' => $this
         ]);
     }

@@ -66,6 +66,6 @@ Route::prefix("/me")->name('account')->middleware('auth')->group(function () {
     Route::get('/logout', [AuthController::class, 'logout']);
 });
 
-Route::prefix('/share')->name('share')->middleware(('auth'))->group(function () {
-    Route::get('/:share', [ShareController::class, 'apply']);
+Route::prefix('/share')->name('share')->middleware('auth')->group(function () {
+    Route::get('/:share', [ShareController::class, 'apply'])->name('.apply');
 });
