@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExportsController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\ShareController;
 
 Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index']);
@@ -66,5 +67,5 @@ Route::prefix("/me")->name('account')->middleware('auth')->group(function () {
 });
 
 Route::prefix('/share')->name('share')->middleware(('auth'))->group(function () {
-    Route::get('/:share', null);
+    Route::get('/:share', [ShareController::class, 'apply']);
 });
