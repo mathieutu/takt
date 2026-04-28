@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { ChevronLeft, ChevronRight, Pencil } from 'lucide-vue-next'
 import Dialog from '../components/ui/Dialog.vue'
 
@@ -32,44 +32,36 @@ const editForm = ref({ label: '', comments: '' })
 
 const MONTHS_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
 
-function easterDate(y: number): Date {
-    const a = y % 19, b = Math.floor(y / 100), c = y % 100
-    const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25)
-    const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30
-    const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7
-    const m = Math.floor((a + 11 * h + 22 * l) / 451)
-    const month = Math.floor((h + l - 7 * m + 114) / 31)
-    const day = ((h + l - 7 * m + 114) % 31) + 1
-    return new Date(y, month - 1, day)
-}
-
-function buildHolidays(y: number): Map<string, string> {
-    const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    const shift = (d: Date, n: number) => new Date(d.getTime() + n * 86400000)
-    const easter = easterDate(y)
-    return new Map([
-        [`${y}-01-01`, 'Jour de l\'An'],
-        [fmt(shift(easter, 1)), 'Lundi de Pâques'],
-        [`${y}-05-01`, 'Fête du Travail'],
-        [`${y}-05-08`, 'Victoire 1945'],
-        [fmt(shift(easter, 39)), 'Ascension'],
-        [fmt(shift(easter, 50)), 'Lundi de Pentecôte'],
-        [`${y}-07-14`, 'Fête Nationale'],
-        [`${y}-08-15`, 'Assomption'],
-        [`${y}-11-01`, 'Toussaint'],
-        [`${y}-11-11`, 'Armistice'],
-        [`${y}-12-25`, 'Noël'],
-    ])
-}
-
 const today = new Date()
 const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+
+const holidaysCache = new Map<number, Map<string, string>>()
+const holidays = ref<Map<string, string>>(new Map())
+
+async function loadHolidays(year: number) {
+    if (holidaysCache.has(year)) {
+        holidays.value = holidaysCache.get(year)!
+        return
+    }
+    try {
+        const res = await fetch(`https://calendrier.api.gouv.fr/jours-feries/metropole/${year}.json`)
+        if (res.ok) {
+            const data: Record<string, string> = await res.json()
+            const map = new Map(Object.entries(data))
+            holidaysCache.set(year, map)
+            holidays.value = map
+        }
+    } catch {
+        // en cas d'échec réseau, on reste avec une map vide
+    }
+}
+
+onMounted(() => loadHolidays(displayYear.value))
+watch(displayYear, (year) => loadHolidays(year))
 
 const monthPrefix = computed(() =>
     `${displayYear.value}-${String(displayMonth.value).padStart(2, '0')}-`
 )
-
-const holidays = computed(() => buildHolidays(displayYear.value))
 
 const daysInMonth = computed(() => {
     const y = displayYear.value
