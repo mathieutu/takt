@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Plus, MoreVertical } from 'lucide-vue-next'
 import Dialog from '../components/ui/Dialog.vue'
 import DropdownMenu from '../components/ui/DropdownMenu.vue'
@@ -34,6 +34,10 @@ const deletingClient = ref<Client | null>(null)
 
 const createName = ref(props.old?.name ?? '')
 const createRate = ref(props.old?.daily_rate ?? '')
+
+onMounted(() => {
+    if (props.clients.length === 0) createOpen.value = true
+})
 
 const filtered = computed(() =>
     props.clients.filter(c =>
