@@ -1,91 +1,114 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { ChevronLeft, ChevronRight, ChevronDown, Pencil, Eye } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight, Pencil } from 'lucide-vue-next'
 import Dialog from '../components/ui/Dialog.vue'
 
 type Project = { id: number; name: string; client_name: string; daily_rate: number }
-type Report = { id: number; start_date: string; day_coverage: number; label: string; comments: string }
+type Report = { id: number; project_id: number; start_date: string; day_coverage: number; label: string; comments: string }
 
 const props = withDefaults(defineProps<{
-    indexUrl?: string
     storeUrl?: string
     baseUrl?: string
     csrfToken?: string
     currentYear?: number
     currentMonth?: number
     projects?: Project[]
-    selectedProject?: Project | null
     reports?: Report[]
 }>(), {
-    indexUrl: '/dashboard/reports',
     storeUrl: '/dashboard/reports',
     baseUrl: '/dashboard/reports',
     csrfToken: '',
     currentYear: () => new Date().getFullYear(),
     currentMonth: () => new Date().getMonth() + 1,
     projects: () => [],
-    selectedProject: null,
     reports: () => [],
 })
 
 const localReports = ref<Report[]>([...props.reports])
-const activeProject = ref<Project | null>(props.selectedProject ?? null)
 const displayYear = ref(props.currentYear)
 const displayMonth = ref(props.currentMonth)
-const projectSelectorOpen = ref(false)
-const switching = ref(false)
 const editingReport = ref<Report | null>(null)
 const editForm = ref({ label: '', comments: '' })
-const viewingReport = ref<Report | null>(null)
 
 const MONTHS_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
-const DAYS_FR = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+
+function easterDate(y: number): Date {
+    const a = y % 19, b = Math.floor(y / 100), c = y % 100
+    const d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25)
+    const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30
+    const i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7
+    const m = Math.floor((a + 11 * h + 22 * l) / 451)
+    const month = Math.floor((h + l - 7 * m + 114) / 31)
+    const day = ((h + l - 7 * m + 114) % 31) + 1
+    return new Date(y, month - 1, day)
+}
+
+function buildHolidays(y: number): Map<string, string> {
+    const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const shift = (d: Date, n: number) => new Date(d.getTime() + n * 86400000)
+    const easter = easterDate(y)
+    return new Map([
+        [`${y}-01-01`, 'Jour de l\'An'],
+        [fmt(shift(easter, 1)), 'Lundi de Pâques'],
+        [`${y}-05-01`, 'Fête du Travail'],
+        [`${y}-05-08`, 'Victoire 1945'],
+        [fmt(shift(easter, 39)), 'Ascension'],
+        [fmt(shift(easter, 50)), 'Lundi de Pentecôte'],
+        [`${y}-07-14`, 'Fête Nationale'],
+        [`${y}-08-15`, 'Assomption'],
+        [`${y}-11-01`, 'Toussaint'],
+        [`${y}-11-11`, 'Armistice'],
+        [`${y}-12-25`, 'Noël'],
+    ])
+}
 
 const today = new Date()
 const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
 
-const monthReports = computed(() => {
-    const prefix = `${displayYear.value}-${String(displayMonth.value).padStart(2, '0')}-`
-    return localReports.value.filter(r => r.start_date.startsWith(prefix))
+const monthPrefix = computed(() =>
+    `${displayYear.value}-${String(displayMonth.value).padStart(2, '0')}-`
+)
+
+const holidays = computed(() => buildHolidays(displayYear.value))
+
+const daysInMonth = computed(() => {
+    const y = displayYear.value
+    const m = displayMonth.value
+    const count = new Date(y, m, 0).getDate()
+    const DAY_LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S']
+    return Array.from({ length: count }, (_, i) => {
+        const d = i + 1
+        const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+        const dow = new Date(y, m - 1, d).getDay()
+        return { d, dateStr, isWeekend: dow === 0 || dow === 6, letter: DAY_LETTERS[dow] }
+    })
 })
 
-const reportByDate = computed(() => {
+const reportByKey = computed(() => {
     const map = new Map<string, Report>()
-    for (const r of monthReports.value) map.set(r.start_date, r)
+    for (const r of localReports.value) {
+        if (r.start_date.startsWith(monthPrefix.value)) {
+            map.set(`${r.project_id}:${r.start_date}`, r)
+        }
+    }
     return map
 })
 
-const calendarCells = computed(() => {
-    const y = displayYear.value
-    const m = displayMonth.value
-    const firstDay = new Date(y, m - 1, 1)
-    const lastDate = new Date(y, m, 0).getDate()
-    const startOffset = (firstDay.getDay() + 6) % 7
-
-    const cells: { type: 'pad' | 'day'; dateStr?: string; day?: number }[] = []
-    for (let i = 0; i < startOffset; i++) cells.push({ type: 'pad' })
-    for (let d = 1; d <= lastDate; d++) {
-        const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-        cells.push({ type: 'day', dateStr, day: d })
-    }
-    const remainder = cells.length % 7
-    if (remainder > 0) {
-        for (let i = 0; i < 7 - remainder; i++) cells.push({ type: 'pad' })
-    }
-    return cells
-})
-
-const totalDays = computed(() =>
-    monthReports.value.reduce((sum, r) => sum + r.day_coverage / 100, 0)
+const projectStats = computed(() =>
+    (props.projects ?? []).map(p => {
+        const days = localReports.value
+            .filter(r => r.project_id === p.id && r.start_date.startsWith(monthPrefix.value))
+            .reduce((s, r) => s + r.day_coverage / 100, 0)
+        return { project: p, days, ca: days * p.daily_rate }
+    })
 )
 
-const caEstime = computed(() =>
-    activeProject.value ? totalDays.value * activeProject.value.daily_rate : 0
-)
+const totalDays = computed(() => projectStats.value.reduce((s, ps) => s + ps.days, 0))
+const totalCa = computed(() => projectStats.value.reduce((s, ps) => s + ps.ca, 0))
 
-const sortedEntries = computed(() =>
-    [...monthReports.value].filter(r => r.day_coverage > 0).sort((a, b) => a.start_date.localeCompare(b.start_date))
-)
+function fmtDays(v: number) {
+    return `${v % 1 === 0 ? v : v.toFixed(1)}j`
+}
 
 function prevMonth() {
     if (displayMonth.value === 1) { displayMonth.value = 12; displayYear.value-- }
@@ -97,44 +120,31 @@ function nextMonth() {
     else displayMonth.value++
 }
 
-async function selectProject(project: Project) {
-    if (switching.value) return
-    switching.value = true
-    projectSelectorOpen.value = false
-    try {
-        const res = await fetch(`${props.indexUrl}?project_id=${project.id}`)
-        const html = await res.text()
-        const doc = new DOMParser().parseFromString(html, 'text/html')
-        const el = doc.getElementById('vue-activity-reports')
-        if (el) {
-            const data = JSON.parse(el.dataset.props ?? '{}')
-            localReports.value = data.reports ?? []
-            activeProject.value = data.selectedProject ?? project
-        }
-    } finally {
-        switching.value = false
-    }
-}
-
-async function clickDay(dateStr: string) {
-    if (!activeProject.value) return
-    const existing = localReports.value.find(r => r.start_date === dateStr) ?? null
+async function clickDay(projectId: number, dateStr: string) {
+    const existing = localReports.value.find(r => r.project_id === projectId && r.start_date === dateStr) ?? null
 
     if (existing && existing.id < 0) return
 
     if (!existing) {
         const tempId = -Date.now()
-        localReports.value.push({ id: tempId, start_date: dateStr, day_coverage: 50, label: '', comments: '' })
+        localReports.value.push({ id: tempId, project_id: projectId, start_date: dateStr, day_coverage: 50, label: '', comments: '' })
         try {
             const res = await fetch(props.storeUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': props.csrfToken, 'Accept': 'application/json' },
-                body: JSON.stringify({ project_id: activeProject.value.id, start_date: dateStr, day_coverage: 50 }),
+                body: JSON.stringify({ project_id: projectId, start_date: dateStr, day_coverage: 50 }),
             })
             if (res.ok) {
                 const created = await res.json()
                 const idx = localReports.value.findIndex(r => r.id === tempId)
-                if (idx !== -1) localReports.value[idx] = { id: created.id, start_date: (created.start_date ?? dateStr).slice(0, 10), day_coverage: created.day_coverage ?? 50, label: created.label ?? '', comments: created.comments ?? '' }
+                if (idx !== -1) localReports.value[idx] = {
+                    id: created.id,
+                    project_id: projectId,
+                    start_date: (created.start_date ?? dateStr).slice(0, 10),
+                    day_coverage: created.day_coverage ?? 50,
+                    label: created.label ?? '',
+                    comments: created.comments ?? '',
+                }
             } else {
                 localReports.value = localReports.value.filter(r => r.id !== tempId)
             }
@@ -171,10 +181,6 @@ function coverageLabel(v: number) {
     return ''
 }
 
-function dayFromDate(dateStr: string) {
-    return parseInt(dateStr.split('-')[2])
-}
-
 function openEdit(report: Report) {
     editingReport.value = report
     editForm.value = { label: report.label ?? '', comments: report.comments ?? '' }
@@ -206,36 +212,10 @@ async function saveEdit() {
     <div class="flex h-screen flex-col overflow-hidden bg-background">
         <div class="flex flex-1 overflow-hidden">
             <main class="flex flex-1 flex-col overflow-hidden px-3 py-4 md:px-6 md:py-6">
-                <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div class="flex min-w-0 items-center gap-2">
-                        <span class="shrink-0 text-sm text-muted-foreground">Projet actif :</span>
 
-                        <div class="relative min-w-0">
-                            <button type="button"
-                                class="inline-flex h-8 max-w-52 items-center gap-2 truncate rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50 sm:max-w-none"
-                                :disabled="switching" @click="projectSelectorOpen = !projectSelectorOpen">
-                                <span v-if="activeProject" class="h-2 w-2 shrink-0 rounded-full bg-primary"></span>
-                                {{ activeProject ? activeProject.name : 'Sélectionner un projet' }}
-                                <ChevronDown class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                            </button>
-                            <div v-if="projectSelectorOpen"
-                                class="absolute left-0 top-full z-50 mt-1 min-w-55 overflow-hidden rounded-md border border-border bg-background shadow-md">
-                                <button v-for="p in projects" :key="p.id" type="button"
-                                    class="flex w-full flex-col px-3 py-2 text-left transition-colors hover:bg-accent"
-                                    :class="activeProject?.id === p.id ? 'bg-accent' : ''" @click="selectProject(p)">
-                                    <span class="text-sm font-medium text-foreground">{{ p.name }}</span>
-                                    <span class="text-xs text-muted-foreground">{{ p.client_name }}</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <span v-if="activeProject"
-                            class="hidden truncate rounded-full border border-border px-2.5 py-0.5 text-xs font-medium text-foreground sm:inline">
-                            {{ activeProject.client_name }}
-                        </span>
-                    </div>
-
-                    <div class="flex shrink-0 items-center justify-center gap-2 sm:justify-end">
+                <div class="mb-4 flex items-center justify-between">
+                    <h2 class="text-sm font-semibold text-foreground">Compte-rendu d'activité</h2>
+                    <div class="flex shrink-0 items-center gap-2">
                         <button type="button"
                             class="flex h-7 w-7 items-center justify-center rounded-md hover:bg-accent"
                             @click="prevMonth">
@@ -252,125 +232,139 @@ async function saveEdit() {
                     </div>
                 </div>
 
-                <div class="flex-1 overflow-x-auto" :class="{ 'opacity-60 pointer-events-none': switching }">
-                    <div class="flex h-full min-w-160 flex-col">
-                        <div class="grid grid-cols-7">
-                            <div v-for="(day, idx) in DAYS_FR" :key="day"
-                                class="py-2 text-center text-xs font-medium text-muted-foreground border-t border-b border-r border-border"
-                                :class="idx === 0 ? 'border-l border-border' : ''">
-                                {{ day }}
-                            </div>
-                        </div>
-
-                        <div class="grid flex-1 grid-cols-7 select-none" style="grid-auto-rows: 1fr">
-                            <div v-for="(cell, i) in calendarCells" :key="i"
-                                class="group relative border-b border-r border-border transition-colors" :class="[
-                                    i % 7 === 0 ? 'border-l border-border' : '',
-                                    cell.type === 'day' && activeProject ? 'cursor-pointer hover:bg-accent/50' : '',
-                                    cell.type === 'day' && cell.dateStr === todayStr ? 'ring-2 ring-inset ring-primary' : '',
-                                    cell.type === 'day' && (reportByDate.get(cell.dateStr!)?.day_coverage ?? 0) >= 100 ? 'bg-primary/25' : '',
-                                    cell.type === 'day' && (reportByDate.get(cell.dateStr!)?.day_coverage ?? 0) > 0 && (reportByDate.get(cell.dateStr!)?.day_coverage ?? 0) < 100 ? 'bg-primary/10' : '',
-                                ]" @click="cell.type === 'day' && cell.dateStr ? clickDay(cell.dateStr) : null">
-                                <template v-if="cell.type === 'day'">
-                                    <span class="absolute left-1 top-1 text-xs sm:left-2 sm:top-1.5"
-                                        :class="cell.dateStr === todayStr ? 'font-semibold text-primary' : 'text-foreground'">
-                                        {{ cell.day }}
+                <div class="flex-1 overflow-auto rounded-md border border-border">
+                    <table class="border-collapse" style="table-layout: fixed; width: max-content; min-width: 100%;">
+                        <colgroup>
+                            <col style="width: 160px; min-width: 160px;" />
+                            <col v-for="day in daysInMonth" :key="day.d" style="width: 56px; min-width: 56px;" />
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th class="sticky left-0 top-0 z-30 border-b border-r border-border bg-background px-3 py-2 text-left text-xs font-medium text-muted-foreground">
+                                    Projet
+                                </th>
+                                <th v-for="day in daysInMonth" :key="day.d"
+                                    class="sticky top-0 z-10 border-b border-r border-border px-0 py-1.5 text-center"
+                                    :class="[
+                                        holidays.has(day.dateStr) ? 'bg-destructive/10' : day.isWeekend ? 'bg-muted-foreground/10' : 'bg-background',
+                                        day.dateStr === todayStr ? 'bg-primary/15!' : '',
+                                    ]"
+                                    :title="holidays.get(day.dateStr)">
+                                    <div class="text-xs font-semibold leading-none"
+                                        :class="day.dateStr === todayStr ? 'text-primary' : holidays.has(day.dateStr) ? 'text-destructive' : 'text-foreground'">
+                                        {{ day.d }}
+                                    </div>
+                                    <div class="mt-0.5 text-[10px] leading-none"
+                                        :class="day.dateStr === todayStr ? 'text-primary' : holidays.has(day.dateStr) ? 'text-destructive/70' : 'text-muted-foreground'">
+                                        {{ day.letter }}
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-if="!projects?.length">
+                                <td :colspan="daysInMonth.length + 1"
+                                    class="px-4 py-8 text-center text-sm text-muted-foreground">
+                                    Aucun projet disponible.
+                                </td>
+                            </tr>
+                            <tr v-for="project in projects" :key="project.id" class="group/row">
+                                <td class="sticky left-0 z-10 border-b border-r border-border bg-background px-3 py-2">
+                                    <div class="truncate text-sm font-medium text-foreground">{{ project.name }}</div>
+                                    <div class="truncate text-xs text-muted-foreground">{{ project.client_name }}</div>
+                                </td>
+                                <td v-for="day in daysInMonth" :key="day.dateStr"
+                                    class="group/cell relative cursor-pointer border-b border-r border-border transition-colors select-none overflow-hidden"
+                                    style="height: 52px;"
+                                    :class="[
+                                        !(reportByKey.get(`${project.id}:${day.dateStr}`)) && holidays.has(day.dateStr) ? 'bg-destructive/10' : '',
+                                        !(reportByKey.get(`${project.id}:${day.dateStr}`)) && !holidays.has(day.dateStr) && day.isWeekend ? 'bg-muted-foreground/10' : '',
+                                        (reportByKey.get(`${project.id}:${day.dateStr}`)?.day_coverage ?? 0) >= 100 ? 'bg-primary/25 hover:bg-primary/30' : '',
+                                        (reportByKey.get(`${project.id}:${day.dateStr}`)?.day_coverage ?? 0) > 0 && (reportByKey.get(`${project.id}:${day.dateStr}`)?.day_coverage ?? 0) < 100 ? 'bg-primary/10 hover:bg-primary/15' : '',
+                                        !(reportByKey.get(`${project.id}:${day.dateStr}`)) ? 'hover:bg-accent/60' : '',
+                                        day.dateStr === todayStr && !(reportByKey.get(`${project.id}:${day.dateStr}`)) ? 'ring-1 ring-inset ring-primary/50' : '',
+                                    ]"
+                                    @click="clickDay(project.id, day.dateStr)">
+                                    <span v-if="reportByKey.get(`${project.id}:${day.dateStr}`)"
+                                        class="absolute bottom-2 left-0 right-0 text-center text-sm font-bold text-primary">
+                                        {{ coverageLabel(reportByKey.get(`${project.id}:${day.dateStr}`)!.day_coverage) }}
                                     </span>
                                     <button
-                                        v-if="reportByDate.get(cell.dateStr!) && reportByDate.get(cell.dateStr!)!.id > 0"
+                                        v-if="reportByKey.get(`${project.id}:${day.dateStr}`) && reportByKey.get(`${project.id}:${day.dateStr}`)!.id > 0"
                                         type="button"
-                                        class="absolute right-0.5 top-0.5 flex h-7 w-7 items-center justify-center rounded transition-opacity hover:bg-primary/20 sm:right-1.5 sm:top-1.5 sm:h-5 sm:w-5 md:opacity-0 md:group-hover:opacity-100"
-                                        @click.stop="openEdit(reportByDate.get(cell.dateStr!)!)">
-                                        <Pencil class="h-4 w-4 text-primary sm:h-3 sm:w-3" />
+                                        class="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded opacity-0 cursor-pointer transition-opacity hover:bg-primary/25 group-hover/cell:opacity-100"
+                                        @click.stop="openEdit(reportByKey.get(`${project.id}:${day.dateStr}`)!)">
+                                        <Pencil class="h-3 w-3 text-primary" />
                                     </button>
-                                    <template v-if="reportByDate.get(cell.dateStr!)">
-                                        <span class="absolute bottom-1 right-1 text-xs font-medium text-primary sm:bottom-1.5 sm:right-2">
-                                            {{ coverageLabel(reportByDate.get(cell.dateStr!)!.day_coverage) }}
-                                        </span>
-                                        <button
-                                            v-if="reportByDate.get(cell.dateStr!)!.label || reportByDate.get(cell.dateStr!)!.comments"
-                                            type="button"
-                                            class="absolute bottom-0.5 left-0.5 flex h-7 w-7 items-center justify-center rounded transition-colors hover:bg-primary/20 sm:bottom-1 sm:left-1.5 sm:h-5 sm:w-5"
-                                            @click.stop="viewingReport = reportByDate.get(cell.dateStr!)!">
-                                            <Eye class="h-4 w-4 text-primary sm:h-3 sm:w-3" />
-                                        </button>
-                                    </template>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
+                                    <span
+                                        v-if="reportByKey.get(`${project.id}:${day.dateStr}`)?.label || reportByKey.get(`${project.id}:${day.dateStr}`)?.comments"
+                                        class="absolute left-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary/70 transition-opacity group-hover/cell:opacity-0">
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                <div class="mt-3 hidden items-center gap-6 sm:flex">
+                <div class="mt-3 hidden items-center gap-5 sm:flex">
                     <div class="flex items-center gap-1.5">
-                        <span class="h-3.5 w-3.5 rounded-sm border border-border bg-primary/25"></span>
-                        <span class="text-xs text-muted-foreground">½ ou 1 jour — projet sélectionné</span>
+                        <span class="h-3 w-3 rounded-sm border border-border bg-primary/25"></span>
+                        <span class="text-xs text-muted-foreground">1 jour</span>
                     </div>
                     <div class="flex items-center gap-1.5">
-                        <span class="h-3.5 w-3.5 rounded-full border-2 border-primary"></span>
-                        <span class="text-xs text-muted-foreground">Aujourd'hui</span>
+                        <span class="h-3 w-3 rounded-sm border border-border bg-primary/10"></span>
+                        <span class="text-xs text-muted-foreground">½ jour</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="h-3 w-3 rounded-sm border border-border bg-muted-foreground/10"></span>
+                        <span class="text-xs text-muted-foreground">Week-end</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="h-3 w-3 rounded-sm border border-border bg-destructive/10"></span>
+                        <span class="text-xs text-muted-foreground">Jour férié</span>
                     </div>
                 </div>
 
                 <div class="mt-2 flex items-center justify-between border-t border-border pt-2 md:hidden">
-                    <span class="text-sm text-muted-foreground">{{ totalDays % 1 === 0 ? totalDays :
-                        totalDays.toFixed(1) }}j
-                        saisis</span>
-                    <span class="text-sm font-semibold text-foreground">{{ caEstime.toLocaleString('fr-FR') }} €</span>
+                    <span class="text-sm text-muted-foreground">{{ fmtDays(totalDays) }} saisis</span>
+                    <span class="text-sm font-semibold text-foreground">{{ totalCa.toLocaleString('fr-FR') }} €</span>
                 </div>
             </main>
 
-            <aside class="hidden w-60 shrink-0 border-l border-border px-5 py-6 md:block">
+            <aside class="hidden w-64 shrink-0 border-l border-border px-5 py-6 md:block overflow-y-auto">
                 <p class="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Récap du mois</p>
-                <div class="space-y-2">
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-muted-foreground">Jours saisis</span>
-                        <span class="font-semibold text-foreground">{{ totalDays % 1 === 0 ? totalDays :
-                            totalDays.toFixed(1)
-                            }}j</span>
-                    </div>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-muted-foreground">CA estimé</span>
-                        <span class="font-semibold text-foreground">{{ caEstime.toLocaleString('fr-FR') }} €</span>
+                <div class="space-y-4">
+                    <div v-for="ps in projectStats" :key="ps.project.id">
+                        <p class="mb-1 truncate text-xs font-semibold text-foreground">{{ ps.project.name }}</p>
+                        <div class="space-y-0.5">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-muted-foreground">Jours saisis</span>
+                                <span class="font-medium text-foreground">{{ fmtDays(ps.days) }}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="text-muted-foreground">CA estimé</span>
+                                <span class="font-medium text-foreground">{{ ps.ca.toLocaleString('fr-FR') }} €</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="mt-4 border-t border-border pt-4">
-                    <p v-if="sortedEntries.length === 0" class="text-xs text-muted-foreground">Aucune saisie ce mois.
-                    </p>
-                    <ul v-else class="space-y-1.5">
-                        <li v-for="r in sortedEntries" :key="r.id" class="flex items-center justify-between text-xs">
-                            <span class="text-muted-foreground">{{ dayFromDate(r.start_date) }} {{
-                                MONTHS_FR[displayMonth -
-                                1].slice(0, 3) }}.</span>
-                            <span class="font-medium text-foreground">{{ coverageLabel(r.day_coverage) }}</span>
-                        </li>
-                    </ul>
+                <div class="mt-4 border-t border-border pt-4 space-y-1.5">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="font-semibold text-foreground">Total</span>
+                        <span class="font-semibold text-foreground">{{ fmtDays(totalDays) }}</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-muted-foreground">CA total</span>
+                        <span class="font-semibold text-foreground">{{ totalCa.toLocaleString('fr-FR') }} €</span>
+                    </div>
                 </div>
             </aside>
         </div>
     </div>
 
-    <Dialog :open="viewingReport !== null"
-        :title="`${viewingReport ? dayFromDate(viewingReport.start_date) : ''} ${viewingReport ? MONTHS_FR[parseInt(viewingReport.start_date.split('-')[1]) - 1] : ''}`"
-        @close="viewingReport = null">
-        <div class="space-y-3">
-            <div v-if="viewingReport?.label" class="flex flex-col gap-0.5">
-                <span class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Titre</span>
-                <span class="text-sm text-foreground">{{ viewingReport.label }}</span>
-            </div>
-            <div v-if="viewingReport?.comments" class="flex flex-col gap-0.5">
-                <span class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Description</span>
-                <span class="text-sm text-foreground whitespace-pre-wrap">{{ viewingReport.comments }}</span>
-            </div>
-            <div class="flex flex-col gap-0.5">
-                <span class="text-xs font-medium uppercase tracking-wider text-muted-foreground">Durée</span>
-                <span class="text-sm text-foreground">{{ coverageLabel(viewingReport?.day_coverage ?? 0) }}</span>
-            </div>
-        </div>
-    </Dialog>
-
-    <Dialog :open="editingReport !== null"
-        :title="`${editingReport ? dayFromDate(editingReport.start_date) : ''} ${editingReport ? MONTHS_FR[parseInt(editingReport.start_date.split('-')[1]) - 1] : ''}`"
+    <Dialog
+        :open="editingReport !== null"
+        :title="`${editingReport ? editingReport.start_date.slice(8, 10).replace(/^0/, '') : ''} ${editingReport ? MONTHS_FR[parseInt(editingReport.start_date.slice(5, 7)) - 1] : ''}`"
         @close="editingReport = null">
         <div class="space-y-4">
             <div class="flex flex-col gap-1.5">
