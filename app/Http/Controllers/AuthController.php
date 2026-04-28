@@ -7,9 +7,9 @@ use App\Models\Account;
 use App\Models\Organization;
 use App\Models\User;
 use Auth;
-use Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Request;
 
 class AuthController
 {
@@ -19,8 +19,8 @@ class AuthController
 
         Request::session()->invalidate();
         Request::session()->regenerateToken();
-
-        return redirect('/');
+        
+        return to_route('account.logout');
     }
 
     public function login(\Illuminate\Http\Request $request)
