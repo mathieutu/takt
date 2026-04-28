@@ -58,12 +58,11 @@ class Client extends Model
 
     public function sharer()
     {
-        return $this->morphOne(Share::class, 'sharing');
+        return $this->morphOne(Share::class, 'sharing', 'share_type', 'share_id');
     }
+
     public function share()
     {
-        $this->sharer()->firstOrCreate([
-            'share' => $this
-        ]);
+        return $this->sharer()->firstOrCreate([], ['id' => (string) \Str::uuid()]);
     }
 }

@@ -62,17 +62,16 @@ class Project extends Model
 
     public function sharedTo()
     {
-        return $this->hasManyThrough(Account::class, SharedClient::class, localKey: 'project_id', secondKey: 'account_id');
+        return $this->hasManyThrough(Account::class, SharedProject::class, localKey: 'project_id', secondKey: 'account_id');
     }
 
     public function sharer()
     {
-        return $this->morphOne(Share::class, 'sharing');
+        return $this->morphOne(Share::class, 'sharing', type: 'share_type', id: 'share_id');
     }
-    public function share()
+
+    public function share(): Share
     {
-        $this->sharer()->firstOrCreate([
-            'share' => $this
-        ]);
+        return $this->sharer()->firstOrCreate([], ['id' => (string) \Str::uuid()]);
     }
 }
