@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use App\Models\Client;
 use App\Models\Project;
+use App\Models\SharedClient;
+use App\Models\SharedProject;
 use Illuminate\Http\Request;
 
 class ProjectController
@@ -16,12 +18,31 @@ class ProjectController
     {
         $userId = Account::authenticated()->id;
 
-        $projects = Project::whereHas('client', fn($q) => $q->where('user_id', $userId))->get();
-        $clients = Client::where('user_id', $userId)->get();
+        $ownedIds = Project::whereHas('client', fn($q) => $q->where('user_id', $userId))->pluck('id');
+        $sharedIds = SharedProject::where('account_id', $userId)->pluck('project_id');
+
+        $projects = Project::with('client', 'sharer')
+            ->whereIn('id', $ownedIds->merge($sharedIds)->unique())
+            ->get()
+            ->map(fn($p) => tap($p, function ($p) use ($ownedIds) {
+                $p->is_owner = $ownedIds->contains($p->id);
+                $p->is_shared = $p->sharer !== null;
+            }));
+
+        $ownedClientIds = Client::where('user_id', $userId)->pluck('id');
+        $sharedClientIds = SharedClient::where('account_id', $userId)->pluck('client_id');
+
+        $clients = Client::with('sharer')
+            ->whereIn('id', $ownedClientIds->merge($sharedClientIds)->unique())
+            ->get()
+            ->map(fn($c) => tap($c, function ($c) use ($ownedClientIds) {
+                $c->is_owner = $ownedClientIds->contains($c->id);
+                $c->is_shared = $c->sharer !== null;
+            }));
 
         return view('dashboard.singletons.projects', [
             'projects' => $projects,
-            'clients' => $clients
+            'clients' => $clients,
         ]);
     }
 
