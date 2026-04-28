@@ -36,7 +36,6 @@ Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(functi
     });
 
     Route::prefix('/clients')->name('.clients')->group(function () {
-        Route::get('/', [ClientController::class, 'index']);
         Route::post('/', [ClientController::class, 'store'])->name('.store');
         Route::put('/{client}', [ClientController::class, 'update'])->name('.update');
         Route::delete('/{client}', [ClientController::class, 'destroy'])->name('.destroy');

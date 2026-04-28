@@ -59,7 +59,7 @@ class ClientController
 
         $client->update($validated);
 
-        return redirect()->route('dashboard.clients');
+        return redirect('/dashboard/projects');
     }
 
     /**
