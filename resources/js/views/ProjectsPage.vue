@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { Plus, MoreVertical } from 'lucide-vue-next'
+import { ref, computed, onMounted, watch } from 'vue'
+import { Plus, MoreVertical, Trash2 } from 'lucide-vue-next'
 import Dialog from '../components/ui/Dialog.vue'
 import DropdownMenu from '../components/ui/DropdownMenu.vue'
 
 type Client = {
     id: number
     name: string
+    daily_rate: number
 }
 
 type Project = {
@@ -25,6 +26,7 @@ const props = withDefaults(defineProps<{
     csrfToken?: string
     projects?: Project[]
     clients?: Client[]
+    open?: boolean
     errors?: Record<string, string[]>
     old?: Record<string, string>
 }>(), {
@@ -33,6 +35,7 @@ const props = withDefaults(defineProps<{
     csrfToken: '',
     projects: () => [],
     clients: () => [],
+    open: false,
     errors: () => ({}),
     old: () => ({}),
 })
@@ -41,12 +44,34 @@ const search = ref('')
 const createOpen = ref(false)
 const editingProject = ref<Project | null>(null)
 const deletingProject = ref<Project | null>(null)
+const deletingClient = ref<Client | null>(null)
+
+const defaultClientId = props.old?.client_id ?? (props.clients.length > 0 ? props.clients[0]?.id?.toString() : 'new')
 
 const createForm = ref({
     name: props.old?.name ?? '',
     description: props.old?.description ?? '',
     daily_rate: props.old?.daily_rate ?? '',
-    client_id: props.old?.client_id ?? (props.clients[0]?.id?.toString() ?? ''),
+    client_id: defaultClientId,
+    client_name: props.old?.client_name ?? '',
+    client_rate: props.old?.client_rate ?? '',
+})
+
+const isNewClient = computed(() => createForm.value.client_id === 'new')
+
+watch(() => createForm.value.client_id, (clientId) => {
+    if (clientId === 'new') {
+        createForm.value.daily_rate = ''
+    } else {
+        const client = props.clients.find(c => c.id === Number(clientId))
+        if (client) createForm.value.daily_rate = String(client.daily_rate)
+    }
+}, { immediate: true })
+
+onMounted(() => {
+    if (props.open || props.projects.length === 0) {
+        createOpen.value = true
+    }
 })
 
 const filtered = computed(() =>
@@ -55,6 +80,18 @@ const filtered = computed(() =>
         p.client_name.toLowerCase().includes(search.value.toLowerCase())
     )
 )
+
+const selectedCreateClientRate = computed(() => {
+    if (isNewClient.value) return null
+    const client = props.clients.find(c => c.id === Number(createForm.value.client_id))
+    return client?.daily_rate ?? null
+})
+
+const editClientRate = computed(() => {
+    if (!editingProject.value) return null
+    const client = props.clients.find(c => c.id === editingProject.value!.client_id)
+    return client?.daily_rate ?? null
+})
 
 const avatarColors = [
     'bg-blue-100 text-blue-700',
@@ -84,7 +121,8 @@ function fieldError(key: string): string | null {
 }
 
 const hasCreateErrors = computed(() =>
-    !!fieldError('name') || !!fieldError('description') || !!fieldError('daily_rate') || !!fieldError('client_id')
+    !!fieldError('name') || !!fieldError('description') || !!fieldError('daily_rate') ||
+    !!fieldError('client_id') || !!fieldError('client_name') || !!fieldError('client_rate')
 )
 
 function menuItems(project: Project) {
@@ -115,25 +153,18 @@ function menuItems(project: Project) {
                 </div>
 
                 <input
+                    v-if="projects.length > 0"
                     v-model="search"
                     type="text"
                     placeholder="Rechercher un projet ou un client..."
                     class="h-9 w-80 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                 />
 
-                <p v-if="clients.length === 0" class="text-sm text-muted-foreground">
-                    Créez d'abord un client avant d'ajouter des projets.
-                </p>
-
-                <p v-else-if="projects.length === 0" class="text-sm text-muted-foreground">
-                    Aucun projet pour l'instant.
-                </p>
-
-                <p v-else-if="filtered.length === 0" class="text-sm text-muted-foreground">
+                <p v-if="filtered.length === 0 && search" class="text-sm text-muted-foreground">
                     Aucun projet ne correspond à votre recherche.
                 </p>
 
-                <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div v-if="projects.length > 0" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     <div
                         v-for="project in filtered"
                         :key="project.id"
@@ -171,14 +202,100 @@ function menuItems(project: Project) {
                         </div>
                     </div>
                 </div>
+
+                <div v-if="clients.length > 0" class="space-y-1">
+                    <p class="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Clients</p>
+                    <div
+                        v-for="client in clients"
+                        :key="client.id"
+                        class="flex items-center justify-between rounded-md px-3 py-2 hover:bg-accent"
+                    >
+                        <div class="flex items-center gap-2">
+                            <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium" :class="avatarColor(client.name)">
+                                {{ initials(client.name) }}
+                            </div>
+                            <span class="text-sm text-foreground">{{ client.name }}</span>
+                            <span class="text-xs text-muted-foreground">{{ client.daily_rate }} €/j</span>
+                        </div>
+                        <button
+                            type="button"
+                            class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                            @click="deletingClient = client"
+                        >
+                            <Trash2 class="h-3.5 w-3.5" />
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </main>
+
+        <Dialog :open="deletingClient !== null" title="Supprimer le client" @close="deletingClient = null">
+            <p class="text-sm text-muted-foreground">
+                Supprimer <span class="font-medium text-foreground">{{ deletingClient?.name }}</span> ?
+                Tous les projets et saisies associés seront définitivement supprimés.
+            </p>
+            <form v-if="deletingClient" :action="`/dashboard/clients/${deletingClient.id}`" method="POST" class="mt-4 flex justify-end gap-2">
+                <input type="hidden" name="_token" :value="csrfToken" />
+                <input type="hidden" name="_method" value="DELETE" />
+                <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="deletingClient = null">Annuler</button>
+                <button type="submit" class="h-9 rounded-md bg-destructive px-4 text-sm font-medium text-white transition-colors hover:bg-destructive/90">Supprimer</button>
+            </form>
+        </Dialog>
 
         <Dialog :open="createOpen || hasCreateErrors" title="Nouveau projet" @close="createOpen = false">
             <form :action="storeAction" method="POST" class="space-y-4">
                 <input type="hidden" name="_token" :value="csrfToken" />
+
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Nom</label>
+                    <label class="text-sm font-medium text-foreground">Client</label>
+                    <select
+                        v-model="createForm.client_id"
+                        name="client_id"
+                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                        :class="{ 'border-destructive focus:ring-destructive': fieldError('client_id') }"
+                    >
+                        <optgroup label="Créer">
+                            <option value="new">+ Nouveau client</option>
+                        </optgroup>
+                        <optgroup v-if="clients.length > 0" label="Clients existants">
+                            <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
+                        </optgroup>
+                    </select>
+                    <p v-if="fieldError('client_id')" class="text-xs text-destructive">{{ fieldError('client_id') }}</p>
+                </div>
+
+                <template v-if="isNewClient">
+                    <div class="rounded-md border border-border bg-muted/40 p-3 space-y-3">
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-sm font-medium text-foreground">Nom du client</label>
+                            <input
+                                v-model="createForm.client_name"
+                                name="client_name"
+                                type="text"
+                                class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                :class="{ 'border-destructive focus:ring-destructive': fieldError('client_name') }"
+                            />
+                            <p v-if="fieldError('client_name')" class="text-xs text-destructive">{{ fieldError('client_name') }}</p>
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-sm font-medium text-foreground">TJM du client (€/jour)</label>
+                            <input
+                                v-model="createForm.client_rate"
+                                name="client_rate"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                                :class="{ 'border-destructive focus:ring-destructive': fieldError('client_rate') }"
+                            />
+                            <p v-if="fieldError('client_rate')" class="text-xs text-destructive">{{ fieldError('client_rate') }}</p>
+                        </div>
+                    </div>
+                </template>
+
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-foreground">Nom du projet</label>
                     <input
                         v-model="createForm.name"
                         name="name"
@@ -188,43 +305,32 @@ function menuItems(project: Project) {
                     />
                     <p v-if="fieldError('name')" class="text-xs text-destructive">{{ fieldError('name') }}</p>
                 </div>
+
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Description</label>
+                    <label class="text-sm font-medium text-foreground">Description <span class="font-normal text-muted-foreground">— optionnel</span></label>
                     <input
                         v-model="createForm.description"
                         name="description"
                         type="text"
                         class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                        :class="{ 'border-destructive focus:ring-destructive': fieldError('description') }"
                     />
-                    <p v-if="fieldError('description')" class="text-xs text-destructive">{{ fieldError('description') }}</p>
                 </div>
+
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">TJM spécifique (€/jour) <span class="text-muted-foreground font-normal">— optionnel</span></label>
+                    <label class="text-sm font-medium text-foreground">TJM du projet <span class="font-normal text-muted-foreground">— optionnel</span></label>
                     <input
                         v-model="createForm.daily_rate"
                         name="daily_rate"
                         type="number"
                         min="0"
                         step="0.01"
-                        placeholder="Utilise le TJM du client par défaut"
+                        :placeholder="selectedCreateClientRate !== null ? `${selectedCreateClientRate} €/j (TJM client)` : 'Hérite du TJM client'"
                         class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                         :class="{ 'border-destructive focus:ring-destructive': fieldError('daily_rate') }"
                     />
                     <p v-if="fieldError('daily_rate')" class="text-xs text-destructive">{{ fieldError('daily_rate') }}</p>
                 </div>
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Client</label>
-                    <select
-                        v-model="createForm.client_id"
-                        name="client_id"
-                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                        :class="{ 'border-destructive focus:ring-destructive': fieldError('client_id') }"
-                    >
-                        <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
-                    </select>
-                    <p v-if="fieldError('client_id')" class="text-xs text-destructive">{{ fieldError('client_id') }}</p>
-                </div>
+
                 <div class="flex flex-col sm:flex-row justify-end gap-2 pt-2">
                     <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="createOpen = false">Annuler</button>
                     <button type="submit" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">Créer</button>
@@ -237,22 +343,30 @@ function menuItems(project: Project) {
                 <input type="hidden" name="_token" :value="csrfToken" />
                 <input type="hidden" name="_method" value="PUT" />
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Nom</label>
-                    <input v-model="editingProject.name" name="name" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
-                </div>
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Description</label>
-                    <input v-model="editingProject.description" name="description" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
-                </div>
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">TJM spécifique (€/jour) <span class="text-muted-foreground font-normal">— optionnel</span></label>
-                    <input v-model="editingProject.daily_rate" name="daily_rate" type="number" min="0" step="0.01" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
-                </div>
-                <div class="flex flex-col gap-1.5">
                     <label class="text-sm font-medium text-foreground">Client</label>
                     <select v-model="editingProject.client_id" name="client_id" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring">
                         <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
                     </select>
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-foreground">Nom du projet</label>
+                    <input v-model="editingProject.name" name="name" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-foreground">Description <span class="font-normal text-muted-foreground">— optionnel</span></label>
+                    <input v-model="editingProject.description" name="description" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-foreground">TJM du projet <span class="font-normal text-muted-foreground">— optionnel</span></label>
+                    <input
+                        v-model="editingProject.daily_rate"
+                        name="daily_rate"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        :placeholder="editClientRate !== null ? `${editClientRate} €/j (TJM client)` : 'Hérite du TJM client'"
+                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="editingProject = null">Annuler</button>

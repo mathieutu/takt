@@ -19,9 +19,11 @@
                 'created_at'  => $p->created_at?->translatedFormat('j M Y') ?? '',
             ])->values(),
             'clients'  => $clients->map(fn($c) => [
-                'id'   => $c->id,
-                'name' => $c->name,
+                'id'         => $c->id,
+                'name'       => $c->name,
+                'daily_rate' => (float) $c->daily_rate,
             ])->values(),
+            'open'   => request()->has('open'),
             'errors' => $errors->toArray(),
             'old'    => old(),
         ]) }}"

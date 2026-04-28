@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Account;
 use App\Models\Client;
-use Auth;
 use Illuminate\Http\Request;
 use Symfony\Component\Finder\Exception\AccessDeniedException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -41,7 +40,7 @@ class ClientController
             'user_id' => $user->id
         ]);
 
-        return to_route('dashboard.clients');
+        return redirect('/dashboard/projects?open=1');
     }
 
     /**
@@ -73,6 +72,6 @@ class ClientController
         }
         $client->delete();
 
-        return to_route('dashboard.clients');
+        return redirect('/dashboard/projects');
     }
 }
