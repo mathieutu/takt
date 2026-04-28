@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Download, ChevronDown, X, Trash2 } from 'lucide-vue-next'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { Download, ChevronDown, X, RotateCcw } from 'lucide-vue-next'
 
 type Entry         = { id: number; start_date: string; day_coverage: number; label: string; comments: string }
 type Project       = { id: number; name: string; client_name: string; daily_rate: number; entries: Entry[] }
@@ -9,6 +9,7 @@ type ProjectOption = { id: number; name: string; client_name: string }
 const props = withDefaults(defineProps<{
     indexUrl?:           string
     csvUrl?:             string
+    xlsxUrl?:            string
     allProjects?:        ProjectOption[]
     selectedProjectIds?: number[]
     dateStart?:          string
@@ -17,6 +18,7 @@ const props = withDefaults(defineProps<{
 }>(), {
     indexUrl:           '/dashboard/exports',
     csvUrl:             '/dashboard/exports/csv',
+    xlsxUrl:            '/dashboard/exports/xlsx',
     allProjects:        () => [],
     selectedProjectIds: () => [],
     dateStart:          '',
@@ -29,16 +31,19 @@ const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','A
 const localProjectIds = ref<number[]>([...props.selectedProjectIds])
 const localDateStart  = ref(props.dateStart)
 const localDateEnd    = ref(props.dateEnd)
-const dropdownOpen    = ref(false)
-const dropdownRef     = ref<HTMLElement | null>(null)
+const dropdownOpen        = ref(false)
+const dropdownRef         = ref<HTMLElement | null>(null)
+const exportDropdownOpen  = ref(false)
+const exportDropdownRef   = ref<HTMLElement | null>(null)
 const localProjects   = ref<Project[]>([...props.projects])
 const loading         = ref(false)
 const hasLoaded       = ref(props.projects.length > 0 || props.selectedProjectIds.length > 0)
 
 function handleOutsideClick(e: MouseEvent) {
-    if (dropdownRef.value && !dropdownRef.value.contains(e.target as Node)) {
+    if (dropdownRef.value && !dropdownRef.value.contains(e.target as Node))
         dropdownOpen.value = false
-    }
+    if (exportDropdownRef.value && !exportDropdownRef.value.contains(e.target as Node))
+        exportDropdownOpen.value = false
 }
 onMounted(() => document.addEventListener('mousedown', handleOutsideClick))
 onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
@@ -89,13 +94,16 @@ const totalCA = computed(() =>
     allEntries.value.reduce((s, e) => s + (e.day_coverage / 100) * e.daily_rate, 0)
 )
 
-const xlsxUrl = computed(() => {
+function buildExportParams() {
     const params = new URLSearchParams()
     for (const id of localProjectIds.value) params.append('projects[]', String(id))
     if (localDateStart.value) params.set('date_start', localDateStart.value)
     if (localDateEnd.value)   params.set('date_end',   localDateEnd.value)
-    return `${props.csvUrl}?${params.toString()}`
-})
+    return params.toString()
+}
+
+const exportUrl     = computed(() => `${props.csvUrl}?${buildExportParams()}`)
+const xlsxExportUrl = computed(() => `${props.xlsxUrl}?${buildExportParams()}`)
 
 async function applyFilters() {
     if (localProjectIds.value.length === 0) return
@@ -119,7 +127,28 @@ async function applyFilters() {
     }
 }
 
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+
+function scheduleApply() {
+    if (debounceTimer) clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(applyFilters, 350)
+}
+
+watch(localProjectIds, (val) => {
+    if (val.length === 0) {
+        localProjects.value = []
+        hasLoaded.value = false
+    } else {
+        scheduleApply()
+    }
+}, { deep: true })
+
+watch([localDateStart, localDateEnd], () => {
+    if (localProjectIds.value.length > 0) scheduleApply()
+})
+
 function clearExport() {
+    if (debounceTimer) clearTimeout(debounceTimer)
     localProjects.value = []
     localProjectIds.value = []
     localDateStart.value = ''
@@ -143,30 +172,9 @@ function coverageLabel(v: number) {
     <div class="px-6 py-8">
         <div class="mx-auto max-w-5xl space-y-6">
 
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-lg font-semibold text-foreground">Exports</h1>
-                        <p class="text-sm text-muted-foreground">Prévisualisez et exportez vos activités</p>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button
-                            v-if="hasLoaded"
-                            type="button"
-                            @click="clearExport"
-                            class="inline-flex h-9 items-center gap-2 rounded-md border border-border px-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
-                        >
-                            <Trash2 class="h-4 w-4" />
-                            Réinitialiser
-                        </button>
-                        <a
-                            v-if="hasLoaded && allEntries.length > 0"
-                            :href="xlsxUrl"
-                            class="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                        >
-                            <Download class="h-4 w-4" />
-                            Exporter XLSX
-                        </a>
-                    </div>
+                <div>
+                    <h1 class="text-lg font-semibold text-foreground">Exports</h1>
+                    <p class="text-sm text-muted-foreground">Prévisualisez et exportez vos activités</p>
                 </div>
 
                 <div class="rounded-lg border border-border bg-card p-4 space-y-3">
@@ -236,19 +244,14 @@ function coverageLabel(v: number) {
                         </div>
 
                         <button
+                            v-if="hasLoaded || localProjectIds.length > 0 || localDateStart || localDateEnd"
                             type="button"
-                            :disabled="loading || localProjectIds.length === 0"
-                            class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-                            @click="applyFilters"
+                            :disabled="loading"
+                            class="inline-flex h-9 items-center gap-2 rounded-md border border-border px-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                            @click="clearExport"
                         >
-                            <span v-if="loading" class="flex items-center gap-2">
-                                <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-                                </svg>
-                                Chargement…
-                            </span>
-                            <span v-else>Appliquer</span>
+                            <RotateCcw class="h-4 w-4" />
+                            Réinitialiser
                         </button>
                     </div>
 
@@ -267,18 +270,15 @@ function coverageLabel(v: number) {
                 </div>
 
                 <p v-if="!hasLoaded && localProjectIds.length === 0" class="text-sm text-muted-foreground">
-                    Sélectionnez un ou plusieurs projets puis cliquez sur Appliquer.
-                </p>
-
-                <p v-else-if="!hasLoaded && localProjectIds.length > 0" class="text-sm text-muted-foreground">
-                    Cliquez sur Appliquer pour charger les activités.
+                    Sélectionnez un ou plusieurs projets pour charger les activités.
                 </p>
 
                 <p v-else-if="hasLoaded && allEntries.length === 0" class="text-sm text-muted-foreground">
                     Aucune activité pour les filtres sélectionnés.
                 </p>
 
-                <div v-else-if="hasLoaded" class="overflow-hidden rounded-lg border border-border">
+                <div v-else-if="hasLoaded" class="space-y-3">
+                    <div class="overflow-hidden rounded-lg border border-border">
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b border-border bg-muted/40">
@@ -318,6 +318,49 @@ function coverageLabel(v: number) {
                             </tr>
                         </tfoot>
                     </table>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <div class="relative flex" ref="exportDropdownRef">
+                            <a
+                                :href="exportUrl"
+                                class="inline-flex h-9 items-center gap-2 rounded-l-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                            >
+                                <Download class="h-4 w-4" />
+                                Exporter CSV
+                            </a>
+                            <button
+                                type="button"
+                                @click="exportDropdownOpen = !exportDropdownOpen"
+                                class="inline-flex h-9 w-8 items-center justify-center rounded-r-md border-l border-primary-foreground/20 bg-primary text-primary-foreground transition-colors hover:bg-primary/90"
+                            >
+                                <ChevronDown class="h-4 w-4 transition-transform" :class="exportDropdownOpen ? 'rotate-180' : ''" />
+                            </button>
+
+                            <div
+                                v-if="exportDropdownOpen"
+                                class="absolute bottom-full right-0 z-20 mb-1 w-36 rounded-md border border-border shadow-lg overflow-hidden"
+                                style="background-color: var(--background)"
+                            >
+                                <a
+                                    :href="exportUrl"
+                                    @click="exportDropdownOpen = false"
+                                    class="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent/60 transition-colors"
+                                >
+                                    <Download class="h-3.5 w-3.5 text-muted-foreground" />
+                                    Exporter CSV
+                                </a>
+                                <a
+                                    :href="xlsxExportUrl"
+                                    @click="exportDropdownOpen = false"
+                                    class="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent/60 transition-colors"
+                                >
+                                    <Download class="h-3.5 w-3.5 text-muted-foreground" />
+                                    Exporter XLSX
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
         </div>
