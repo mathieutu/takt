@@ -4,12 +4,13 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ActivitiesController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExportsController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SettingsController;
 
 Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(function () {
-    Route::view('/', 'dashboard.index');
+    Route::get('/', [DashboardController::class, 'index']);
 
     Route::prefix('/settings')->name('.settings')->group(function () {
         Route::get('/', [SettingsController::class, 'edit']);
