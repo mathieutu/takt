@@ -25,6 +25,7 @@
                 'daily_rate'  => $p->daily_rate
                     ? (float) $p->daily_rate
                     : ($p->client?->daily_rate ? (float) $p->client->daily_rate : 0),
+                'is_owner'    => $p->is_owner,
             ])->values(),
             'reports' => $reports->map(fn($r) => [
                 'id'           => $r->id,

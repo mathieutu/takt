@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { ChevronLeft, ChevronRight, Pencil } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight, Pencil, Eye, Users } from 'lucide-vue-next'
 import Dialog from '../components/ui/Dialog.vue'
 
-type Project = { id: number; name: string; client_name: string; daily_rate: number }
+type Project = { id: number; name: string; client_name: string; daily_rate: number; is_owner: boolean }
 type Report = { id: number; project_id: number; start_date: string; day_coverage: number; label: string; comments: string }
 
 const props = withDefaults(defineProps<{
@@ -29,6 +29,7 @@ const displayYear = ref(props.currentYear)
 const displayMonth = ref(props.currentMonth)
 const editingReport = ref<Report | null>(null)
 const editForm = ref({ label: '', comments: '' })
+const viewingReport = ref<Report | null>(null)
 
 const MONTHS_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
 
@@ -95,8 +96,11 @@ const projectStats = computed(() =>
     })
 )
 
-const totalDays = computed(() => projectStats.value.reduce((s, ps) => s + ps.days, 0))
-const totalCa = computed(() => projectStats.value.reduce((s, ps) => s + ps.ca, 0))
+const ownedStats = computed(() => projectStats.value.filter(ps => ps.project.is_owner))
+const sharedStats = computed(() => projectStats.value.filter(ps => !ps.project.is_owner))
+
+const totalDays = computed(() => ownedStats.value.reduce((s, ps) => s + ps.days, 0))
+const totalCa = computed(() => ownedStats.value.reduce((s, ps) => s + ps.ca, 0))
 
 function fmtDays(v: number) {
     return `${v % 1 === 0 ? v : v.toFixed(1)}j`
@@ -264,29 +268,41 @@ async function saveEdit() {
                                 <td class="sticky left-0 z-10 border-b border-r border-border bg-background px-3 py-2">
                                     <div class="truncate text-sm font-medium text-foreground">{{ project.name }}</div>
                                     <div class="truncate text-xs text-muted-foreground">{{ project.client_name }}</div>
+                                    <span v-if="!project.is_owner" class="mt-1 inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+                                        <Users class="h-3 w-3" />
+                                        Partagé avec moi
+                                    </span>
                                 </td>
                                 <td v-for="day in daysInMonth" :key="day.dateStr"
-                                    class="group/cell relative cursor-pointer border-b border-r border-border transition-colors select-none overflow-hidden"
+                                    class="group/cell relative border-b border-r border-border transition-colors select-none overflow-hidden"
                                     style="height: 52px;"
                                     :class="[
+                                        project.is_owner ? 'cursor-pointer' : 'cursor-default',
                                         !(reportByKey.get(`${project.id}:${day.dateStr}`)) && holidays.has(day.dateStr) ? 'bg-destructive/10' : '',
                                         !(reportByKey.get(`${project.id}:${day.dateStr}`)) && !holidays.has(day.dateStr) && day.isWeekend ? 'bg-muted-foreground/10' : '',
                                         (reportByKey.get(`${project.id}:${day.dateStr}`)?.day_coverage ?? 0) >= 100 ? 'bg-primary/25 hover:bg-primary/30' : '',
                                         (reportByKey.get(`${project.id}:${day.dateStr}`)?.day_coverage ?? 0) > 0 && (reportByKey.get(`${project.id}:${day.dateStr}`)?.day_coverage ?? 0) < 100 ? 'bg-primary/10 hover:bg-primary/15' : '',
-                                        !(reportByKey.get(`${project.id}:${day.dateStr}`)) ? 'hover:bg-accent/60' : '',
+                                        project.is_owner && !(reportByKey.get(`${project.id}:${day.dateStr}`)) ? 'hover:bg-accent/60' : '',
                                         day.dateStr === todayStr && !(reportByKey.get(`${project.id}:${day.dateStr}`)) ? 'ring-1 ring-inset ring-primary/50' : '',
                                     ]"
-                                    @click="clickDay(project.id, day.dateStr)">
+                                    @click="project.is_owner && clickDay(project.id, day.dateStr)">
                                     <span v-if="reportByKey.get(`${project.id}:${day.dateStr}`)"
                                         class="absolute bottom-2 left-0 right-0 text-center text-sm font-bold text-primary">
                                         {{ coverageLabel(reportByKey.get(`${project.id}:${day.dateStr}`)!.day_coverage) }}
                                     </span>
                                     <button
-                                        v-if="reportByKey.get(`${project.id}:${day.dateStr}`) && reportByKey.get(`${project.id}:${day.dateStr}`)!.id > 0"
+                                        v-if="project.is_owner && reportByKey.get(`${project.id}:${day.dateStr}`) && reportByKey.get(`${project.id}:${day.dateStr}`)!.id > 0"
                                         type="button"
                                         class="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded opacity-0 cursor-pointer transition-opacity hover:bg-primary/25 group-hover/cell:opacity-100"
                                         @click.stop="openEdit(reportByKey.get(`${project.id}:${day.dateStr}`)!)">
                                         <Pencil class="h-3 w-3 text-primary" />
+                                    </button>
+                                    <button
+                                        v-else-if="!project.is_owner && reportByKey.get(`${project.id}:${day.dateStr}`) && (reportByKey.get(`${project.id}:${day.dateStr}`)!.label || reportByKey.get(`${project.id}:${day.dateStr}`)!.comments)"
+                                        type="button"
+                                        class="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded opacity-0 cursor-pointer transition-opacity hover:bg-primary/25 group-hover/cell:opacity-100"
+                                        @click.stop="viewingReport = reportByKey.get(`${project.id}:${day.dateStr}`)!">
+                                        <Eye class="h-3 w-3 text-primary" />
                                     </button>
                                     <span
                                         v-if="reportByKey.get(`${project.id}:${day.dateStr}`)?.label || reportByKey.get(`${project.id}:${day.dateStr}`)?.comments"
@@ -325,8 +341,9 @@ async function saveEdit() {
 
             <aside class="hidden w-64 shrink-0 border-l border-border px-5 py-6 md:block overflow-y-auto">
                 <p class="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Récap du mois</p>
+
                 <div class="space-y-4">
-                    <div v-for="ps in projectStats" :key="ps.project.id">
+                    <div v-for="ps in ownedStats" :key="ps.project.id">
                         <p class="mb-1 truncate text-xs font-semibold text-foreground">{{ ps.project.name }}</p>
                         <div class="space-y-0.5">
                             <div class="flex items-center justify-between text-xs">
@@ -340,6 +357,7 @@ async function saveEdit() {
                         </div>
                     </div>
                 </div>
+
                 <div class="mt-4 border-t border-border pt-4 space-y-1.5">
                     <div class="flex items-center justify-between text-sm">
                         <span class="font-semibold text-foreground">Total</span>
@@ -350,9 +368,51 @@ async function saveEdit() {
                         <span class="font-semibold text-foreground">{{ totalCa.toLocaleString('fr-FR') }} €</span>
                     </div>
                 </div>
+
+                <template v-if="sharedStats.length > 0">
+                    <div class="mt-6 border-t border-border pt-4">
+                        <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-violet-600">Partagés avec moi</p>
+                        <div class="space-y-4">
+                            <div v-for="ps in sharedStats" :key="ps.project.id">
+                                <p class="mb-1 truncate text-xs font-semibold text-foreground">{{ ps.project.name }}</p>
+                                <div class="space-y-0.5">
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-muted-foreground">Jours saisis</span>
+                                        <span class="font-medium text-foreground">{{ fmtDays(ps.days) }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-muted-foreground">CA estimé</span>
+                                        <span class="font-medium text-foreground">{{ ps.ca.toLocaleString('fr-FR') }} €</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
             </aside>
         </div>
     </div>
+
+    <Dialog
+        :open="viewingReport !== null"
+        :title="`${viewingReport ? viewingReport.start_date.slice(8, 10).replace(/^0/, '') : ''} ${viewingReport ? MONTHS_FR[parseInt(viewingReport.start_date.slice(5, 7)) - 1] : ''}`"
+        @close="viewingReport = null">
+        <div class="space-y-4">
+            <div v-if="viewingReport?.label" class="flex flex-col gap-1">
+                <p class="text-xs font-medium text-muted-foreground">Titre</p>
+                <p class="text-sm text-foreground">{{ viewingReport.label }}</p>
+            </div>
+            <div v-if="viewingReport?.comments" class="flex flex-col gap-1">
+                <p class="text-xs font-medium text-muted-foreground">Description</p>
+                <p class="text-sm text-foreground whitespace-pre-wrap">{{ viewingReport.comments }}</p>
+            </div>
+            <div class="flex justify-end pt-2">
+                <button type="button"
+                    class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent"
+                    @click="viewingReport = null">Fermer</button>
+            </div>
+        </div>
+    </Dialog>
 
     <Dialog
         :open="editingReport !== null"
