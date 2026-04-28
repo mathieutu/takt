@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\SharedClient;
 use App\Models\SharedProject;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ProjectController
 {
@@ -85,6 +86,10 @@ class ProjectController
      */
     public function update(Request $request, Project $project)
     {
+        if ($project->client->user_id !== Account::authenticated()->id) {
+            throw new NotFoundHttpException();
+        }
+
         $validated = $request->validate([
             'name' => 'required|max:255',
             'description' => 'nullable|max:255',
@@ -102,6 +107,10 @@ class ProjectController
      */
     public function destroy(Project $project)
     {
+        if ($project->client->user_id !== Account::authenticated()->id) {
+            throw new NotFoundHttpException();
+        }
+
         $project->delete();
 
         return to_route('dashboard.projects');
