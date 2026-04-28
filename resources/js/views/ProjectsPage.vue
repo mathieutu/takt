@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Plus, MoreVertical, Trash2, Pencil } from 'lucide-vue-next'
+import { Plus, MoreVertical, Trash2, Share2, Users, Pencil } from 'lucide-vue-next'
 import Dialog from '../components/ui/Dialog.vue'
 import DropdownMenu from '../components/ui/DropdownMenu.vue'
 
@@ -8,6 +8,8 @@ type Client = {
     id: number
     name: string
     daily_rate: number
+    is_owner: boolean
+    is_shared: boolean
 }
 
 type Project = {
@@ -18,6 +20,8 @@ type Project = {
     client_id: number
     client_name: string
     created_at: string
+    is_owner: boolean
+    is_shared: boolean
 }
 
 const props = withDefaults(defineProps<{
@@ -45,6 +49,11 @@ const createOpen = ref(false)
 const editingProject = ref<Project | null>(null)
 const deletingProject = ref<Project | null>(null)
 const deletingClient = ref<Client | null>(null)
+const sharingProject = ref<Project | null>(null)
+const sharingClient = ref<Client | null>(null)
+const shareUrl = ref('')
+const copied = ref(false)
+const shareLoading = ref(false)
 const editingClient = ref<Client | null>(null)
 
 const defaultClientId = props.old?.client_id ?? (props.clients.length > 0 ? props.clients[0]?.id?.toString() : 'new')
@@ -132,6 +141,54 @@ function menuItems(project: Project) {
         { label: 'Supprimer', action: () => { deletingProject.value = project }, variant: 'destructive' as const },
     ]
 }
+
+async function openShare(project: Project) {
+    sharingProject.value = project
+    shareUrl.value = ''
+    copied.value = false
+    shareLoading.value = true
+    try {
+        const res = await fetch(`${props.baseAction}/${project.id}/share`, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': props.csrfToken, 'Accept': 'application/json' },
+        })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const data = await res.json()
+        shareUrl.value = data.url
+    } catch (e) {
+        shareUrl.value = ''
+        console.error('Erreur lors de la génération du lien de partage', e)
+    } finally {
+        shareLoading.value = false
+    }
+}
+
+async function openShareClient(client: Client) {
+    sharingClient.value = client
+    shareUrl.value = ''
+    copied.value = false
+    shareLoading.value = true
+    try {
+        const res = await fetch(`/dashboard/clients/${client.id}/share`, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': props.csrfToken, 'Accept': 'application/json' },
+        })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const data = await res.json()
+        shareUrl.value = data.url
+    } catch (e) {
+        shareUrl.value = ''
+        console.error('Erreur lors de la génération du lien de partage', e)
+    } finally {
+        shareLoading.value = false
+    }
+}
+
+function copyShareUrl() {
+    navigator.clipboard.writeText(shareUrl.value)
+    copied.value = true
+    setTimeout(() => { copied.value = false }, 2000)
+}
 </script>
 
 <template>
@@ -184,21 +241,48 @@ function menuItems(project: Project) {
                                     <p class="truncate text-xs text-muted-foreground">{{ project.client_name }}</p>
                                 </div>
                             </div>
-                            <DropdownMenu :items="menuItems(project)" class="shrink-0">
+                            <div class="flex shrink-0 items-center gap-1">
                                 <button
+                                    v-if="project.is_owner"
                                     type="button"
                                     class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                    @click="openShare(project)"
                                 >
-                                    <MoreVertical class="h-4 w-4" />
+                                    <Share2 class="h-4 w-4" />
                                 </button>
-                            </DropdownMenu>
+                                <DropdownMenu :items="menuItems(project)" class="shrink-0">
+                                    <button
+                                        type="button"
+                                        class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                    >
+                                        <MoreVertical class="h-4 w-4" />
+                                    </button>
+                                </DropdownMenu>
+                            </div>
                         </div>
 
                         <p v-if="project.description" class="mt-3 text-xs text-muted-foreground line-clamp-2">{{ project.description }}</p>
 
                         <div class="mt-3 flex items-center justify-between">
-                            <span v-if="project.daily_rate" class="text-xs font-medium text-foreground">{{ project.daily_rate }} €/jour</span>
-                            <span v-else class="text-xs text-muted-foreground">TJM client</span>
+                            <div class="flex items-center gap-2">
+                                <span v-if="project.daily_rate" class="text-xs font-medium text-foreground">{{ project.daily_rate }} €/jour</span>
+                                <span v-else class="text-xs text-muted-foreground">TJM client</span>
+                                <span
+                                    v-if="!project.is_owner"
+                                    class="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700"
+                                >
+                                    <Users class="h-3 w-3" />
+                                    Partagé avec moi
+                                </span>
+                                <span
+                                    v-else-if="project.is_shared"
+                                    class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                                    title="Ce projet est partagé"
+                                >
+                                    <Users class="h-3 w-3" />
+                                    Partagé
+                                </span>
+                            </div>
                             <span v-if="project.created_at" class="text-xs text-muted-foreground">{{ project.created_at }}</span>
                         </div>
                     </div>
@@ -217,8 +301,31 @@ function menuItems(project: Project) {
                             </div>
                             <span class="text-sm text-foreground">{{ client.name }}</span>
                             <span class="text-xs text-muted-foreground">{{ client.daily_rate }} €/j</span>
+                            <span
+                                v-if="!client.is_owner"
+                                class="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700"
+                            >
+                                <Users class="h-3 w-3" />
+                                Partagé avec moi
+                            </span>
+                            <span
+                                v-else-if="client.is_shared"
+                                class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                            >
+                                <Users class="h-3 w-3" />
+                                Partagé
+                            </span>
                         </div>
                         <div class="flex items-center gap-1">
+                            <button
+                                v-if="client.is_owner"
+                                type="button"
+                                class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                @click="openShareClient(client)"
+                            >
+                                <Share2 class="h-3.5 w-3.5" />
+                            </button>
+                            <div class="flex items-center gap-1">
                             <button
                                 type="button"
                                 class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
@@ -227,12 +334,14 @@ function menuItems(project: Project) {
                                 <Pencil class="h-3.5 w-3.5" />
                             </button>
                             <button
-                                type="button"
-                                class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                                @click="deletingClient = client"
-                            >
-                                <Trash2 class="h-3.5 w-3.5" />
-                            </button>
+                                v-if="client.is_owner"
+                                    type="button"
+                                    class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                    @click="deletingClient = client"
+                                >
+                                    <Trash2 class="h-3.5 w-3.5" />
+                                </button>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -287,8 +396,8 @@ function menuItems(project: Project) {
                         <optgroup label="Créer">
                             <option value="new">+ Nouveau client</option>
                         </optgroup>
-                        <optgroup v-if="clients.length > 0" label="Clients existants">
-                            <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
+                        <optgroup v-if="clients.some(c => c.is_owner)" label="Clients existants">
+                            <option v-for="client in clients.filter(c => c.is_owner)" :key="client.id" :value="client.id">{{ client.name }}</option>
                         </optgroup>
                     </select>
                     <p v-if="fieldError('client_id')" class="text-xs text-destructive">{{ fieldError('client_id') }}</p>
@@ -374,7 +483,7 @@ function menuItems(project: Project) {
                 <div class="flex flex-col gap-1.5">
                     <label class="text-sm font-medium text-foreground">Client</label>
                     <select v-model="editingProject.client_id" name="client_id" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring">
-                        <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.name }}</option>
+                        <option v-for="client in clients.filter(c => c.is_owner)" :key="client.id" :value="client.id">{{ client.name }}</option>
                     </select>
                 </div>
                 <div class="flex flex-col gap-1.5">
@@ -402,6 +511,50 @@ function menuItems(project: Project) {
                     <button type="submit" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">Enregistrer</button>
                 </div>
             </form>
+        </Dialog>
+
+        <Dialog :open="sharingProject !== null" title="Partager le projet" @close="sharingProject = null">
+            <p class="text-sm text-muted-foreground">
+                Copiez ce lien et envoyez-le à la personne avec qui vous souhaitez partager
+                <span class="font-medium text-foreground">{{ sharingProject?.name }}</span>.
+            </p>
+            <div class="mt-4 flex gap-2">
+                <input
+                    :value="shareLoading ? 'Chargement…' : shareUrl"
+                    readonly
+                    class="h-9 min-w-0 flex-1 rounded-md border border-input bg-muted px-3 text-sm text-foreground focus:outline-none"
+                />
+                <button
+                    type="button"
+                    :disabled="shareLoading || !shareUrl"
+                    class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                    @click="copyShareUrl"
+                >
+                    {{ copied ? 'Copié !' : 'Copier' }}
+                </button>
+            </div>
+        </Dialog>
+
+        <Dialog :open="sharingClient !== null" title="Partager le client" @close="sharingClient = null">
+            <p class="text-sm text-muted-foreground">
+                Copiez ce lien et envoyez-le à la personne avec qui vous souhaitez partager
+                <span class="font-medium text-foreground">{{ sharingClient?.name }}</span>.
+            </p>
+            <div class="mt-4 flex gap-2">
+                <input
+                    :value="shareLoading ? 'Chargement…' : shareUrl"
+                    readonly
+                    class="h-9 min-w-0 flex-1 rounded-md border border-input bg-muted px-3 text-sm text-foreground focus:outline-none"
+                />
+                <button
+                    type="button"
+                    :disabled="shareLoading || !shareUrl"
+                    class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                    @click="copyShareUrl"
+                >
+                    {{ copied ? 'Copié !' : 'Copier' }}
+                </button>
+            </div>
         </Dialog>
 
         <Dialog :open="deletingProject !== null" title="Supprimer le projet" @close="deletingProject = null">
