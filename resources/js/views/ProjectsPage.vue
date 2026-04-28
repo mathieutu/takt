@@ -250,7 +250,7 @@ function copyShareUrl() {
                                 >
                                     <Share2 class="h-4 w-4" />
                                 </button>
-                                <DropdownMenu :items="menuItems(project)" class="shrink-0">
+                                <DropdownMenu v-if="project.is_owner" :items="menuItems(project)" class="shrink-0">
                                     <button
                                         type="button"
                                         class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
@@ -327,6 +327,7 @@ function copyShareUrl() {
                             </button>
                             <div class="flex items-center gap-1">
                             <button
+                                v-if="client.is_owner"
                                 type="button"
                                 class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                                 @click="editingClient = { ...client }"
