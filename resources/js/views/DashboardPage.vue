@@ -185,47 +185,22 @@ const barChartOptions = {
         <main class="flex-1 px-6 py-8">
             <div class="mx-auto max-w-5xl space-y-6">
 
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-lg font-semibold text-foreground">Tableau de bord</h1>
-                        <p class="text-sm text-muted-foreground">Vue d'ensemble de votre activité</p>
-                    </div>
-                    <a
-                        href="/dashboard/projects?open=1"
-                        class="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                    >
-                        <Plus class="h-4 w-4" />
-                        Nouveau projet
-                    </a>
+                <div>
+                    <h1 class="text-lg font-semibold text-foreground">Tableau de bord</h1>
+                    <p class="text-sm text-muted-foreground">Vue d'ensemble de votre activité</p>
                 </div>
 
-                <div v-if="clients.length === 0" class="rounded-lg border border-border bg-card p-5">
+                <div class="rounded-lg border border-border bg-card p-5">
                     <div class="flex items-start gap-4">
                         <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10">
                             <FolderKanban class="h-4 w-4 text-primary" />
                         </div>
                         <div>
-                            <p class="text-sm font-medium text-foreground">Créez votre premier projet</p>
-                            <p class="mt-0.5 text-sm text-muted-foreground">Ajoutez un projet pour commencer à suivre votre activité. Vous pourrez créer un client en même temps.</p>
-                            <a href="/dashboard/projects" class="mt-3 inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90">
-                                <Plus class="h-3.5 w-3.5" />
-                                Créer un projet
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div v-else-if="projects.length === 0" class="rounded-lg border border-border bg-card p-5">
-                    <div class="flex items-start gap-4">
-                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10">
-                            <FolderKanban class="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-foreground">Créez votre premier projet</p>
-                            <p class="mt-0.5 text-sm text-muted-foreground">Associez un projet à un client pour commencer à saisir votre activité.</p>
+                            <p class="text-sm font-medium text-foreground">{{ projects.length === 0 ? 'Créez votre premier projet' : 'Nouveau projet' }}</p>
+                            <p class="mt-0.5 text-sm text-muted-foreground">{{ projects.length === 0 ? 'Ajoutez un projet pour commencer à suivre votre activité. Vous pourrez créer un client en même temps.' : 'Ajoutez un nouveau projet à l\'un de vos clients.' }}</p>
                             <a href="/dashboard/projects?open=1" class="mt-3 inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90">
                                 <Plus class="h-3.5 w-3.5" />
-                                Créer un projet
+                                {{ projects.length === 0 ? 'Créer un projet' : 'Nouveau projet' }}
                             </a>
                         </div>
                     </div>
