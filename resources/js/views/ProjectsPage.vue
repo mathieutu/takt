@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { Plus, MoreVertical, Trash2, Share2, Users } from 'lucide-vue-next'
+import { Plus, MoreVertical, Trash2, Share2, Users, Pencil } from 'lucide-vue-next'
 import Dialog from '../components/ui/Dialog.vue'
 import DropdownMenu from '../components/ui/DropdownMenu.vue'
 
@@ -54,6 +54,7 @@ const sharingClient = ref<Client | null>(null)
 const shareUrl = ref('')
 const copied = ref(false)
 const shareLoading = ref(false)
+const editingClient = ref<Client | null>(null)
 
 const defaultClientId = props.old?.client_id ?? (props.clients.length > 0 ? props.clients[0]?.id?.toString() : 'new')
 
@@ -324,20 +325,48 @@ function copyShareUrl() {
                             >
                                 <Share2 class="h-3.5 w-3.5" />
                             </button>
+                            <div class="flex items-center gap-1">
+                            <button
+                                type="button"
+                                class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                @click="editingClient = { ...client }"
+                            >
+                                <Pencil class="h-3.5 w-3.5" />
+                            </button>
                             <button
                                 v-if="client.is_owner"
-                                type="button"
-                                class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                                @click="deletingClient = client"
-                            >
-                                <Trash2 class="h-3.5 w-3.5" />
-                            </button>
+                                    type="button"
+                                    class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                    @click="deletingClient = client"
+                                >
+                                    <Trash2 class="h-3.5 w-3.5" />
+                                </button>
+                        </div>
                         </div>
                     </div>
                 </div>
 
             </div>
         </main>
+
+        <Dialog :open="editingClient !== null" title="Modifier le client" @close="editingClient = null">
+            <form v-if="editingClient" :action="`/dashboard/clients/${editingClient.id}`" method="POST" class="space-y-4">
+                <input type="hidden" name="_token" :value="csrfToken" />
+                <input type="hidden" name="_method" value="PUT" />
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-foreground">Nom</label>
+                    <input v-model="editingClient.name" name="name" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-sm font-medium text-foreground">TJM (€/jour)</label>
+                    <input v-model="editingClient.daily_rate" name="daily_rate" type="number" min="0" step="0.01" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="editingClient = null">Annuler</button>
+                    <button type="submit" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">Enregistrer</button>
+                </div>
+            </form>
+        </Dialog>
 
         <Dialog :open="deletingClient !== null" title="Supprimer le client" @close="deletingClient = null">
             <p class="text-sm text-muted-foreground">
