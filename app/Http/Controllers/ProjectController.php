@@ -30,14 +30,31 @@ class ProjectController
      */
     public function store(Request $request)
     {
-        $projet = $request->validate([
-            'name' => 'required|max:255',
-            'description' => 'required|max:255',
-            'daily_rate' => 'numeric|min:0',
-            'client_id' => 'required',
+        $account = Account::authenticated();
+
+        if ($request->client_id === 'new') {
+            $clientData = $request->validate([
+                'client_name' => 'required|max:255',
+                'client_rate' => 'required|numeric|min:0',
+            ]);
+
+            $client = Client::create([
+                'name'       => $clientData['client_name'],
+                'daily_rate' => $clientData['client_rate'],
+                'user_id'    => $account->id,
+            ]);
+
+            $request->merge(['client_id' => $client->id]);
+        }
+
+        $project = $request->validate([
+            'name'        => 'required|max:255',
+            'description' => 'nullable|max:255',
+            'daily_rate'  => 'nullable|numeric|min:0',
+            'client_id'   => 'required|exists:clients,id',
         ]);
 
-        Project::create($projet);
+        Project::create($project);
 
         return to_route('dashboard.projects');
     }
@@ -49,8 +66,8 @@ class ProjectController
     {
         $validated = $request->validate([
             'name' => 'required|max:255',
-            'description' => 'required|max:255',
-            'daily_rate' => 'numeric|min:0',
+            'description' => 'nullable|max:255',
+            'daily_rate' => 'nullable|numeric|min:0',
             'client_id' => 'required',
         ]);
 

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Clock } from 'lucide-vue-next'
 
 const props = withDefaults(defineProps<{
     action?: string
@@ -21,8 +20,8 @@ const password = ref('')
 <template>
     <div class="flex min-h-screen flex-col items-center justify-center bg-background px-4">
         <div class="mb-8 flex items-center gap-2">
-            <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <Clock class="h-5 w-5 text-primary-foreground" />
+            <div class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg">
+                <img src="/public/images/logo.png" class="h-full w-full object-cover" />
             </div>
             <span class="text-xl font-semibold tracking-tight text-foreground">AssoFlow</span>
         </div>
