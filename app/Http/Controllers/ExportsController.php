@@ -15,7 +15,58 @@ class ExportsController
 {
     public function exportCsv(Request $request)
     {
-        $auth = Account::authenticated();
+        Account::authenticated();
+
+        ['projects' => $projects] = $this->getAllProjects($request);
+
+        $filename = 'export_' . now()->format('Y-m-d') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function () use ($projects) {
+            $handle = fopen('php://output', 'w');
+
+            // BOM UTF-8 pour Excel
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            fputcsv($handle, ['Projet', 'Client', 'Date', 'Label', 'Couverture (%)', 'Taux / j (€)', 'Montant (€)', 'Commentaires'], ';');
+
+            foreach ($projects as $project) {
+                $rate = $project->daily_rate ?? $project->client->daily_rate ?? 0;
+
+                if ($project->activityTimes->isEmpty()) {
+                    fputcsv($handle, [$project->name, $project->client->name, '', '', '', '', '', ''], ';');
+                    continue;
+                }
+
+                foreach ($project->activityTimes as $activity) {
+                    $montant = round(($activity->day_coverage / 100) * $rate, 2);
+
+                    fputcsv($handle, [
+                        $project->name,
+                        $project->client->name,
+                        $activity->start_date->format('d/m/Y'),
+                        $activity->label ?? '',
+                        $activity->day_coverage,
+                        $rate,
+                        $montant,
+                        $activity->comments ?? '',
+                    ], ';');
+                }
+            }
+
+            fclose($handle);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function exportXlsx(Request $request)
+    {
+        Account::authenticated();
 
         ['projects' => $projects] = $this->getAllProjects($request);
 
@@ -23,7 +74,6 @@ class ExportsController
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Export');
 
-        // En-têtes
         $headers = ['Projet', 'Client', 'Date', 'Label', 'Couverture (%)', 'Taux / j (€)', 'Montant (€)', 'Commentaires'];
         $sheet->fromArray($headers, null, 'A1');
 
@@ -61,12 +111,10 @@ class ExportsController
                     $activity->comments ?? '',
                 ], null, "A{$row}");
 
-                // Formatage numérique
                 $sheet->getStyle("F{$row}")->getNumberFormat()->setFormatCode('#,##0.00 "€"');
                 $sheet->getStyle("G{$row}")->getNumberFormat()->setFormatCode('#,##0.00 "€"');
                 $sheet->getStyle("E{$row}:G{$row}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_RIGHT);
 
-                // Zébrure
                 if ($row % 2 === 0) {
                     $sheet->getStyle("A{$row}:H{$row}")->getFill()
                         ->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF3F4F6');
@@ -75,7 +123,6 @@ class ExportsController
                 $row++;
             }
 
-            // Colonne Projet en bleu clair avec bordure gauche
             $projectRange = "A{$projectStartRow}:B" . ($row - 1);
             $sheet->getStyle($projectRange)->getFill()
                 ->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFEFF6FF');
@@ -84,13 +131,11 @@ class ExportsController
                 ->setBorderStyle(Border::BORDER_MEDIUM)->getColor()->setARGB('FF3B82F6');
         }
 
-        // Bordures globales
         if ($row > 2) {
             $sheet->getStyle("A1:H" . ($row - 1))->getBorders()->getAllBorders()
                 ->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFD1D5DB');
         }
 
-        // Largeurs de colonnes
         foreach (['A' => 22, 'B' => 18, 'C' => 13, 'D' => 20, 'E' => 14, 'F' => 14, 'G' => 14, 'H' => 35] as $col => $width) {
             $sheet->getColumnDimension($col)->setWidth($width);
         }
