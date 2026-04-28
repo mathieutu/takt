@@ -64,3 +64,7 @@ Route::prefix("/me")->name('account')->middleware('auth')->group(function () {
     Route::delete('/', [AccountController::class, 'delete'])->name('.delete');
     Route::get('/logout', [AuthController::class, 'logout']);
 });
+
+Route::prefix('/share')->name('share')->middleware(('auth'))->group(function () {
+    Route::get('/:share', null);
+});

@@ -46,13 +46,20 @@ class Client extends Model
         return $this->hasMany(Project::class);
     }
 
-    public function shares(): HasMany
+    public function shared()
     {
         return $this->hasMany(SharedClient::class);
     }
 
-    public function shared(): MorphOne
+    public function sharedTo()
     {
-        return $this->morphOne(Share::class, 'sharing');
+        return $this->hasManyThrough(Account::class, SharedClient::class, localKey: 'client_id', secondKey: 'account_id');
+    }
+
+    public function share()
+    {
+        return $this->morphOne(Share::class, 'sharing')->firstOrCreate([
+            'share' => $this
+        ]);
     }
 }

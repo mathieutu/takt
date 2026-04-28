@@ -29,8 +29,19 @@ class Share extends Model
 
     protected $fillable = ['id', 'share_type', 'share_id'];
 
+    protected $casts = [
+        'id' => 'uuid'
+    ];
+
     public function sharing(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function url()
+    {
+        return route('share', [
+            'share' => $this
+        ]);
     }
 }
