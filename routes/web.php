@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExportsController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\ShareController;
 
 Route::redirect('/', '/dashboard');
 
@@ -66,4 +67,8 @@ Route::prefix('/register')->name('register')->middleware('guest')->group(functio
 Route::prefix("/me")->name('account')->middleware('auth')->group(function () {
     Route::delete('/', [AccountController::class, 'delete'])->name('.delete');
     Route::get('/logout', [AuthController::class, 'logout'])->name('.logout');
+});
+
+Route::prefix('/share')->name('share')->middleware('auth')->group(function () {
+    Route::get('/:share', [ShareController::class, 'apply'])->name('.apply');
 });
