@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { Plus, MoreVertical, Trash2, Share2, Users, Pencil } from 'lucide-vue-next'
+import { MoreVertical, Pencil, Plus, Share2, Trash2, Users } from 'lucide-vue-next'
+import { computed, onMounted, ref, watch } from 'vue'
 import Dialog from '../components/ui/Dialog.vue'
 import DropdownMenu from '../components/ui/DropdownMenu.vue'
 
@@ -394,9 +394,7 @@ function copyShareUrl() {
                         class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                         :class="{ 'border-destructive focus:ring-destructive': fieldError('client_id') }"
                     >
-                        <optgroup label="Créer">
-                            <option value="new">+ Nouveau client</option>
-                        </optgroup>
+                        <option value="new">+ Nouveau client</option>
                         <optgroup v-if="clients.some(c => c.is_owner)" label="Clients existants">
                             <option v-for="client in clients.filter(c => c.is_owner)" :key="client.id" :value="client.id">{{ client.name }}</option>
                         </optgroup>
