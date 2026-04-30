@@ -9,6 +9,7 @@ use App\Http\Controllers\ExportsController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ShareController;
+use App\Http\Controllers\TrackingController;
 
 Route::redirect('/', '/dashboard');
 
@@ -48,6 +49,13 @@ Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(functi
         Route::put('/{project}', [ProjectController::class, 'update'])->name('.update');
         Route::delete('/{project}', [ProjectController::class, 'destroy'])->name('.destroy');
         Route::post('/{project}/share', [ShareController::class, 'generate'])->name('.share');
+    });
+
+    Route::prefix('/tracking')->name('.tracking')->group(function () {
+        Route::get('/', [TrackingController::class, 'index'])->name('.index');
+        Route::post('/billing', [TrackingController::class, 'storeBilling'])->name('.billing.store');
+        Route::put('/billing/{entry}', [TrackingController::class, 'updateBilling'])->name('.billing.update');
+        Route::put('/projects/{project}/max-budget', [TrackingController::class, 'updateProjectBudget'])->name('.project.budget');
     });
 
     Route::prefix('/exports')->name('.exports.')->group(function () {

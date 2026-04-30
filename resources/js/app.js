@@ -10,6 +10,7 @@ import ProjectsPage from './views/ProjectsPage.vue'
 import ActivityReportPage from './views/ActivityReportPage.vue'
 import SettingsPage from './views/SettingsPage.vue'
 import ExportPage from './views/ExportPage.vue'
+import TrackingPage from './views/TrackingPage.vue'
 
 const sidebarEl = document.getElementById('vue-sidebar')
 if (sidebarEl) {
@@ -29,7 +30,8 @@ const pages = {
     'vue-projects': ProjectsPage,
     'vue-activity-reports': ActivityReportPage,
     'vue-settings': SettingsPage,
-    'vue-export':   ExportPage,
+    'vue-export':    ExportPage,
+    'vue-tracking':  TrackingPage,
 }
 
 for (const [id, component] of Object.entries(pages)) {
