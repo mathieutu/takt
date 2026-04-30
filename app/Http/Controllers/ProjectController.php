@@ -73,7 +73,10 @@ class ProjectController
             'name'        => 'required|max:255',
             'description' => 'nullable|max:255',
             'daily_rate'  => 'nullable|numeric|min:0',
-            'client_id'   => 'required|exists:clients,id',
+            'client_id'   => [
+                'required',
+                \Illuminate\Validation\Rule::exists('clients', 'id')->where('user_id', $account->id),
+            ],
         ]);
 
         Project::create($project);
@@ -91,10 +94,13 @@ class ProjectController
         }
 
         $validated = $request->validate([
-            'name' => 'required|max:255',
+            'name'        => 'required|max:255',
             'description' => 'nullable|max:255',
-            'daily_rate' => 'nullable|numeric|min:0',
-            'client_id' => 'required',
+            'daily_rate'  => 'nullable|numeric|min:0',
+            'client_id'   => [
+                'required',
+                \Illuminate\Validation\Rule::exists('clients', 'id')->where('user_id', Account::authenticated()->id),
+            ],
         ]);
 
         $project->update($validated);
