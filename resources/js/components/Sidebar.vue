@@ -4,6 +4,7 @@ import {
     LayoutDashboard,
     CalendarDays,
     FolderKanban,
+    ReceiptText,
     Download,
     Settings,
     LogOut,
@@ -25,8 +26,9 @@ const path = computed(() => props.currentPath ?? window.location.pathname)
 const navItems = [
     { route: '/dashboard',          label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
     { route: '/dashboard/reports',  label: 'Saisie CRA',      icon: CalendarDays },
-    { route: '/dashboard/projects', label: 'Projets',         icon: FolderKanban },
-    { route: '/dashboard/exports',  label: 'Export',          icon: Download },
+    { route: '/dashboard/projects', label: 'Projets',           icon: FolderKanban },
+    { route: '/dashboard/tracking', label: 'Suivi facturation', icon: ReceiptText },
+    { route: '/dashboard/exports',  label: 'Export',            icon: Download },
 ]
 
 function isActive(item: (typeof navItems)[0]): boolean {

@@ -38,7 +38,7 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  */
 class Project extends Model
 {
-    protected $fillable = ['name', 'client_id', 'daily_rate', 'description'];
+    protected $fillable = ['name', 'client_id', 'daily_rate', 'description', 'max_budget'];
 
     public function client(): BelongsTo
     {
@@ -63,6 +63,11 @@ class Project extends Model
     public function sharedTo()
     {
         return $this->hasManyThrough(Account::class, SharedProject::class, localKey: 'project_id', secondKey: 'account_id');
+    }
+
+    public function billingEntries(): HasMany
+    {
+        return $this->hasMany(BillingEntry::class);
     }
 
     public function sharer()
