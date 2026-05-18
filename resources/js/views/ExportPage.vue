@@ -28,9 +28,20 @@ const props = withDefaults(defineProps<{
 
 const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']
 
-const localProjectIds = ref<number[]>([...props.selectedProjectIds])
-const localDateStart  = ref(props.dateStart)
-const localDateEnd    = ref(props.dateEnd)
+function readUrlParams() {
+    const p = new URLSearchParams(window.location.search)
+    const ids = p.getAll('projects[]').map(Number).filter(Boolean)
+    return {
+        ids:       ids.length ? ids : [...props.selectedProjectIds],
+        dateStart: p.get('date_start') ?? props.dateStart,
+        dateEnd:   p.get('date_end')   ?? props.dateEnd,
+    }
+}
+
+const _init = readUrlParams()
+const localProjectIds = ref<number[]>(_init.ids)
+const localDateStart  = ref(_init.dateStart)
+const localDateEnd    = ref(_init.dateEnd)
 const dropdownOpen        = ref(false)
 const dropdownRef         = ref<HTMLElement | null>(null)
 const exportDropdownOpen  = ref(false)
@@ -105,10 +116,19 @@ function buildExportParams() {
 const exportUrl     = computed(() => `${props.csvUrl}?${buildExportParams()}`)
 const xlsxExportUrl = computed(() => `${props.xlsxUrl}?${buildExportParams()}`)
 
+function syncUrl() {
+    const params = new URLSearchParams()
+    for (const id of localProjectIds.value) params.append('projects[]', String(id))
+    if (localDateStart.value) params.set('date_start', localDateStart.value)
+    if (localDateEnd.value)   params.set('date_end',   localDateEnd.value)
+    const qs = params.toString()
+    history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname)
+}
+
 async function applyFilters() {
     if (localProjectIds.value.length === 0) return
     loading.value = true
-    dropdownOpen.value = false
+    syncUrl()
     const params = new URLSearchParams()
     for (const id of localProjectIds.value) params.append('projects[]', String(id))
     if (localDateStart.value) params.set('date_start', localDateStart.value)
@@ -138,6 +158,7 @@ watch(localProjectIds, (val) => {
     if (val.length === 0) {
         localProjects.value = []
         hasLoaded.value = false
+        history.replaceState(null, '', window.location.pathname)
     } else {
         scheduleApply()
     }
@@ -145,6 +166,7 @@ watch(localProjectIds, (val) => {
 
 watch([localDateStart, localDateEnd], () => {
     if (localProjectIds.value.length > 0) scheduleApply()
+    else syncUrl()
 })
 
 function clearExport() {
@@ -154,6 +176,7 @@ function clearExport() {
     localDateStart.value = ''
     localDateEnd.value = ''
     hasLoaded.value = false
+    history.replaceState(null, '', window.location.pathname)
 }
 
 function formatDate(dateStr: string) {
@@ -180,7 +203,7 @@ function coverageLabel(v: number) {
                 <div class="rounded-lg border border-border bg-card p-4 space-y-3">
                     <div class="flex flex-wrap items-end gap-3">
 
-                        <div class="flex flex-col gap-1.5 relative min-w-[260px]" ref="dropdownRef">
+                        <div class="flex flex-col gap-1.5 relative min-w-65" ref="dropdownRef">
                             <label class="text-xs font-medium text-muted-foreground">Projets</label>
                             <button
                                 type="button"
@@ -195,7 +218,7 @@ function coverageLabel(v: number) {
 
                             <div
                                 v-if="dropdownOpen"
-                                class="absolute top-full left-0 z-20 mt-1 w-full min-w-[260px] rounded-md border border-border shadow-lg"
+                                class="absolute top-full left-0 z-20 mt-1 w-full min-w-65 rounded-md border border-border shadow-lg"
                                 style="background-color: var(--background)"
                             >
                                 <div class="max-h-52 overflow-y-auto p-1">

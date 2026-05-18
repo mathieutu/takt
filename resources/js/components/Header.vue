@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { Link, usePage } from '@inertiajs/vue3'
 import {
     Menu,
     X,
@@ -18,15 +19,15 @@ interface User {
 }
 
 const props = defineProps<{
-    user: User
-    currentPath?: string
+    user: User | null
 }>()
 
-const path = computed(() => props.currentPath ?? window.location.pathname)
+const page = usePage()
+const path = computed(() => page.url.split('?')[0])
 
 const greeting = computed(() => {
-    const first = props.user.name.split(' ')[0]
-    return first || props.user.email
+    const first = props.user?.name?.split(' ')[0]
+    return first || props.user?.email || ''
 })
 
 const navItems = [
@@ -42,10 +43,6 @@ function isActive(item: (typeof navItems)[0]): boolean {
 }
 
 const drawerOpen = ref(false)
-
-function logout() {
-    window.location.href = '/me/logout'
-}
 </script>
 
 <template>
@@ -97,7 +94,7 @@ function logout() {
                 </div>
 
                 <div class="flex flex-1 flex-col gap-1">
-                    <a
+                    <Link
                         v-for="item in navItems"
                         :key="item.route"
                         :href="item.route"
@@ -105,31 +102,35 @@ function logout() {
                         :class="isActive(item)
                             ? 'bg-primary text-primary-foreground'
                             : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
+                        @click="drawerOpen = false"
                     >
                         <component :is="item.icon" class="h-4 w-4 shrink-0" />
                         {{ item.label }}
-                    </a>
+                    </Link>
                 </div>
 
                 <div class="flex flex-col gap-1 pt-4 border-t border-border">
-                    <a
+                    <Link
                         href="/dashboard/settings"
                         class="flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors"
                         :class="path.startsWith('/dashboard/settings')
                             ? 'bg-primary text-primary-foreground'
                             : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
+                        @click="drawerOpen = false"
                     >
                         <Settings class="h-4 w-4 shrink-0" />
                         Paramètres
-                    </a>
-                    <button
+                    </Link>
+                    <Link
+                        href="/me/logout"
+                        method="get"
+                        as="button"
                         type="button"
-                        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm cursor-pointer transition-colors text-muted-foreground hover:bg-red-50 hover:text-destructive"
-                        @click="logout"
+                        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors text-muted-foreground hover:bg-red-50 hover:text-destructive"
                     >
                         <LogOut class="h-4 w-4 shrink-0" />
                         Se déconnecter
-                    </button>
+                    </Link>
                 </div>
             </nav>
         </div>

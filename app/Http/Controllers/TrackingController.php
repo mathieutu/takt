@@ -6,9 +6,9 @@ use App\Models\Account;
 use App\Models\BillingEntry;
 use App\Models\Client;
 use App\Models\Project;
-use App\Models\SharedClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class TrackingController
@@ -17,11 +17,7 @@ class TrackingController
     {
         $userId = Account::authenticated()->id;
 
-        $ownedClientIds  = Client::where('user_id', $userId)->pluck('id');
-        $sharedClientIds = SharedClient::where('account_id', $userId)->pluck('client_id');
-        $allClientIds    = $ownedClientIds->merge($sharedClientIds)->unique();
-
-        $clients = Client::whereIn('id', $allClientIds)
+        $clients = Client::where('user_id', $userId)
             ->orderBy('name')
             ->get(['id', 'name', 'daily_rate']);
 
@@ -75,10 +71,17 @@ class TrackingController
             }
         }
 
-        return view('dashboard.singletons.tracking', [
-            'clients'          => $clients,
-            'selectedClientId' => $selectedClientId,
-            'projects'         => $projects,
+        return Inertia::render('TrackingPage', [
+            'clients'            => $clients->map(fn($c) => [
+                'id'         => $c->id,
+                'name'       => $c->name,
+                'daily_rate' => (float) $c->daily_rate,
+            ])->values(),
+            'selectedClientId'   => $selectedClientId,
+            'projects'           => $projects->values(),
+            'billingStoreAction' => url('/dashboard/tracking/billing'),
+            'billingBaseAction'  => url('/dashboard/tracking/billing'),
+            'projectBudgetBase'  => url('/dashboard/tracking/projects'),
         ]);
     }
 
