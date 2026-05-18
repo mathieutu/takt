@@ -6,9 +6,11 @@ use App\Models\Account;
 use App\Models\ActivityTime;
 use App\Models\Project;
 use App\Models\SharedProject;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 use Symfony\Component\HttpKernel\Exception\GoneHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -61,11 +63,11 @@ class ActivitiesController
                 ->get();
     }
 
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
+        $fromParam = $request->query('from');
+        $currentDate = $fromParam ? Carbon::parse($fromParam) : Carbon::now();
+
         $auth = Account::authenticated();
         $userId = $auth->id;
 
@@ -79,16 +81,31 @@ class ActivitiesController
 
         $reports = ActivityTime::whereIn('project_id', $projects->pluck('id'))->get();
 
-        return view('dashboard.singletons.activity-reports', [
-            'projects' => $projects,
-            'reports' => $reports,
-            'account' => $auth,
+        return Inertia::render('ActivityReportPage', [
+            'storeUrl'     => url('/dashboard/reports'),
+            'baseUrl'      => url('/dashboard/reports'),
+            'currentYear'  => $currentDate->year,
+            'currentMonth' => $currentDate->month,
+            'projects'     => $projects->map(fn($p) => [
+                'id'          => $p->id,
+                'name'        => $p->name,
+                'client_name' => $p->client?->name ?? '',
+                'daily_rate'  => $p->daily_rate
+                    ? (float) $p->daily_rate
+                    : ($p->client?->daily_rate ? (float) $p->client->daily_rate : 0),
+                'is_owner'    => $p->is_owner,
+            ])->values(),
+            'reports'      => $reports->map(fn($r) => [
+                'id'           => $r->id,
+                'project_id'   => $r->project_id,
+                'start_date'   => $r->start_date->format('Y-m-d'),
+                'day_coverage' => $r->day_coverage ?? 0,
+                'label'        => $r->label ?? '',
+                'comments'     => $r->comments ?? '',
+            ])->values(),
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -122,9 +139,6 @@ class ActivitiesController
         return ActivityTime::create($validated);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
         $validated = $request->validate([
@@ -153,9 +167,6 @@ class ActivitiesController
         return $model;
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         $model = $this->get($id);

@@ -5,16 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use App\Models\Client;
 use App\Models\Project;
-use App\Models\SharedClient;
 use App\Models\SharedProject;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ProjectController
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $userId = Account::authenticated()->id;
@@ -30,26 +27,32 @@ class ProjectController
                 $p->is_shared = $p->sharer !== null;
             }));
 
-        $ownedClientIds = Client::where('user_id', $userId)->pluck('id');
-        $sharedClientIds = SharedClient::where('account_id', $userId)->pluck('client_id');
+        $clients = Client::where('user_id', $userId)->get();
 
-        $clients = Client::with('sharer')
-            ->whereIn('id', $ownedClientIds->merge($sharedClientIds)->unique())
-            ->get()
-            ->map(fn($c) => tap($c, function ($c) use ($ownedClientIds) {
-                $c->is_owner = $ownedClientIds->contains($c->id);
-                $c->is_shared = $c->sharer !== null;
-            }));
-
-        return view('dashboard.singletons.projects', [
-            'projects' => $projects,
-            'clients' => $clients,
+        return Inertia::render('ProjectsPage', [
+            'storeAction' => route('dashboard.projects.store'),
+            'baseAction'  => url('/dashboard/projects'),
+            'projects'    => $projects->map(fn($p) => [
+                'id'          => $p->id,
+                'name'        => $p->name,
+                'description' => $p->description ?? '',
+                'daily_rate'  => $p->daily_rate ? (float) $p->daily_rate : null,
+                'client_id'   => $p->client_id,
+                'client_name' => $p->client->name,
+                'created_at'  => $p->created_at?->translatedFormat('j M Y') ?? '',
+                'is_owner'    => $p->is_owner,
+                'is_shared'   => $p->is_shared,
+            ])->values(),
+            'clients' => $clients->map(fn($c) => [
+                'id'         => $c->id,
+                'name'       => $c->name,
+                'daily_rate' => (float) $c->daily_rate,
+                'is_owner'   => true,
+            ])->values(),
+            'open' => request()->has('open'),
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $account = Account::authenticated();
@@ -84,9 +87,6 @@ class ProjectController
         return to_route('dashboard.projects');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Project $project)
     {
         if ($project->client->user_id !== Account::authenticated()->id) {
@@ -105,12 +105,9 @@ class ProjectController
 
         $project->update($validated);
 
-        return to_route('dashboard.projects');
+        return redirect()->back();
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Project $project)
     {
         if ($project->client->user_id !== Account::authenticated()->id) {
@@ -119,6 +116,6 @@ class ProjectController
 
         $project->delete();
 
-        return to_route('dashboard.projects');
+        return redirect()->back();
     }
 }

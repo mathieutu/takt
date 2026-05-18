@@ -23,8 +23,6 @@ use function Pest\Laravel\instance;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \App\Models\Organization|null $organization
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SharedClient> $sharedClients
- * @property-read int|null $shared_clients_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SharedProject> $sharedProjects
  * @property-read int|null $shared_projects_count
  * @property-read \App\Models\User|null $user
@@ -74,14 +72,9 @@ class Account extends Authenticatable
         return $this->hasMany(SharedProject::class);
     }
 
-    public function sharedClients(): HasMany
-    {
-        return $this->hasMany(SharedClient::class);
-    }
-
     public static function authenticated(): ?Account
     {
-        $auth = Auth::getUser();
+        $auth = Auth::user();
         if (!$auth) {
             return null;
         }

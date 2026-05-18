@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { Pencil } from 'lucide-vue-next'
 import Dialog from '../components/ui/Dialog.vue'
+import Select from '../components/ui/Select.vue'
 
 type ClientOption = { id: number; name: string; daily_rate: number }
 
@@ -149,8 +150,12 @@ async function saveBudget() {
     }
 }
 
-function selectClient(e: Event) {
-    const id = (e.target as HTMLSelectElement).value
+const clientOptions = computed(() =>
+    props.clients.map(c => ({ value: c.id, label: `${c.name} — ${c.daily_rate} €/j` }))
+)
+
+function selectClient(id: string | number | null) {
+    if (!id) return
     window.location.href = `/dashboard/tracking?client_id=${id}`
 }
 
@@ -184,7 +189,7 @@ function projectSummary(project: ProjectData) {
         totalEffectif,
         maxBudget,
         resteAFacturer:  totalTheorique - totalEffectif,
-        resteAConsommer: maxBudget !== null ? maxBudget - totalEffectif : null,
+        resteAConsommer: maxBudget !== null ? maxBudget - totalTheorique : null,
     }
 }
 
@@ -200,7 +205,7 @@ function localMaxBudget(projectId: number): number | null {
 <template>
     <div class="flex min-h-screen flex-col bg-background">
         <main class="flex-1 px-6 py-8">
-            <div class="mx-auto max-w-6xl space-y-8">
+            <div class="mx-auto max-w-5xl space-y-6">
 
                 <!-- Header -->
                 <div>
@@ -211,16 +216,14 @@ function localMaxBudget(projectId: number): number | null {
                 <!-- Client dropdown -->
                 <div class="flex items-center gap-3">
                     <label class="text-sm font-medium text-foreground">Client</label>
-                    <select
-                        :value="selectedClientId ?? ''"
-                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                        @change="selectClient"
-                    >
-                        <option value="" disabled>Choisir un client…</option>
-                        <option v-for="c in clients" :key="c.id" :value="c.id">
-                            {{ c.name }} — {{ c.daily_rate }} €/j
-                        </option>
-                    </select>
+                    <div class="w-72">
+                        <Select
+                            :model-value="selectedClientId"
+                            :options="clientOptions"
+                            placeholder="Choisir un client…"
+                            @change="selectClient"
+                        />
+                    </div>
                 </div>
 
                 <!-- Empty states -->
@@ -232,7 +235,7 @@ function localMaxBudget(projectId: number): number | null {
                 </p>
 
                 <!-- Project cards -->
-                <div v-else class="space-y-8">
+                <div v-else class="space-y-6">
                     <div
                         v-for="project in localProjects"
                         :key="project.id"
@@ -269,7 +272,6 @@ function localMaxBudget(projectId: number): number | null {
                                         <th class="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Fact. théorique</th>
                                         <th class="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Fact. effectif</th>
                                         <th class="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Max théorique</th>
-                                        <th class="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Écart théo/max</th>
                                         <th class="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Écart eff/théo</th>
                                         <th class="px-4 py-2 w-10"></th>
                                     </tr>
@@ -291,12 +293,6 @@ function localMaxBudget(projectId: number): number | null {
                                             {{ localMaxBudget(project.id) !== null ? fmt(localMaxBudget(project.id)!) : '—' }}
                                         </td>
                                         <td class="px-4 py-2.5 text-right"
-                                            :class="localMaxBudget(project.id) !== null && (month.days_worked * project.daily_rate) > localMaxBudget(project.id)! ? 'text-destructive' : 'text-foreground'">
-                                            {{ localMaxBudget(project.id) !== null
-                                                ? fmt((month.days_worked * project.daily_rate) - localMaxBudget(project.id)!)
-                                                : '—' }}
-                                        </td>
-                                        <td class="px-4 py-2.5 text-right"
                                             :class="month.amount_billed - (month.days_worked * project.daily_rate) < 0 ? 'text-amber-600' : 'text-emerald-600'">
                                             {{ fmt(month.amount_billed - (month.days_worked * project.daily_rate)) }}
                                         </td>
@@ -311,7 +307,7 @@ function localMaxBudget(projectId: number): number | null {
                                         </td>
                                     </tr>
                                     <tr v-if="localMonths(project.id).length === 0">
-                                        <td colspan="8" class="px-4 py-6 text-center text-sm text-muted-foreground">
+                                        <td colspan="7" class="px-4 py-6 text-center text-sm text-muted-foreground">
                                             Aucune entrée CRA pour ce projet.
                                         </td>
                                     </tr>
@@ -372,7 +368,7 @@ function localMaxBudget(projectId: number): number | null {
                 </p>
 
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Montant facturé (€)</label>
+                    <label class="text-sm font-medium text-foreground">Montant facturé (€)<span class="text-destructive ml-0.5">*</span></label>
                     <input
                         v-model="billingForm.amount_billed"
                         type="number"
@@ -383,10 +379,7 @@ function localMaxBudget(projectId: number): number | null {
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">
-                        Date de paiement
-                        <span class="font-normal text-muted-foreground">— optionnel</span>
-                    </label>
+                    <label class="text-sm font-medium text-foreground">Date de paiement</label>
                     <input
                         v-model="billingForm.payment_date"
                         type="date"
@@ -395,10 +388,7 @@ function localMaxBudget(projectId: number): number | null {
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">
-                        Notes
-                        <span class="font-normal text-muted-foreground">— optionnel</span>
-                    </label>
+                    <label class="text-sm font-medium text-foreground">Notes</label>
                     <textarea
                         v-model="billingForm.notes"
                         rows="3"
