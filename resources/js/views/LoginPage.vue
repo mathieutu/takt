@@ -1,20 +1,16 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { useForm } from '@inertiajs/vue3'
 
-const props = withDefaults(defineProps<{
-    action?: string
-    csrfToken?: string
-    error?: string
-    oldEmail?: string
-}>(), {
-    action: '/login',
-    csrfToken: '',
-    error: '',
-    oldEmail: '',
+defineOptions({ layout: null })
+
+const form = useForm({
+    email: '',
+    password: '',
 })
 
-const email = ref(props.oldEmail)
-const password = ref('')
+function submit() {
+    form.post('/login', { preserveScroll: true })
+}
 </script>
 
 <template>
@@ -32,24 +28,24 @@ const password = ref('')
                 <p class="mt-1 text-sm text-muted-foreground">Accédez à votre espace de gestion</p>
             </div>
             <div class="p-6 pt-0">
-                <form :action="action" method="POST" class="flex flex-col gap-4">
-                    <input type="hidden" name="_token" :value="csrfToken" />
-
+                <form @submit.prevent="submit" class="flex flex-col gap-4">
                     <div class="flex flex-col gap-1.5">
-                        <label class="text-sm font-medium text-foreground">Adresse e-mail</label>
+                        <label class="text-sm font-medium text-foreground">Adresse e-mail<span class="text-destructive ml-0.5">*</span></label>
                         <input
-                            v-model="email"
+                            v-model="form.email"
                             name="email"
                             type="email"
                             autocomplete="email"
                             class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                            :class="{ 'border-destructive focus:ring-destructive': form.errors.email }"
                         />
+                        <p v-if="form.errors.email" class="text-xs text-destructive">{{ form.errors.email }}</p>
                     </div>
 
                     <div class="flex flex-col gap-1.5">
-                        <label class="text-sm font-medium text-foreground">Mot de passe</label>
+                        <label class="text-sm font-medium text-foreground">Mot de passe<span class="text-destructive ml-0.5">*</span></label>
                         <input
-                            v-model="password"
+                            v-model="form.password"
                             name="password"
                             type="password"
                             autocomplete="current-password"
@@ -57,11 +53,14 @@ const password = ref('')
                         />
                     </div>
 
-                    <p v-if="error" class="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ error }}</p>
+                    <p v-if="form.errors['#global']" class="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                        {{ form.errors['#global'] }}
+                    </p>
 
                     <button
                         type="submit"
-                        class="h-9 w-full rounded-md bg-primary text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                        :disabled="form.processing"
+                        class="h-9 w-full rounded-md bg-primary text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
                     >
                         Se connecter
                     </button>

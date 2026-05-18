@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { MoreVertical, Pencil, Plus, Share2, Trash2, Users } from 'lucide-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
+import { router } from '@inertiajs/vue3'
 import Dialog from '../components/ui/Dialog.vue'
 import DropdownMenu from '../components/ui/DropdownMenu.vue'
+import Select from '../components/ui/Select.vue'
 
 type Client = {
     id: number
     name: string
     daily_rate: number
     is_owner: boolean
-    is_shared: boolean
 }
 
 type Project = {
@@ -50,7 +51,6 @@ const editingProject = ref<Project | null>(null)
 const deletingProject = ref<Project | null>(null)
 const deletingClient = ref<Client | null>(null)
 const sharingProject = ref<Project | null>(null)
-const sharingClient = ref<Client | null>(null)
 const shareUrl = ref('')
 const copied = ref(false)
 const shareLoading = ref(false)
@@ -163,31 +163,25 @@ async function openShare(project: Project) {
     }
 }
 
-async function openShareClient(client: Client) {
-    sharingClient.value = client
-    shareUrl.value = ''
-    copied.value = false
-    shareLoading.value = true
-    try {
-        const res = await fetch(`/dashboard/clients/${client.id}/share`, {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': props.csrfToken, 'Accept': 'application/json' },
-        })
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const data = await res.json()
-        shareUrl.value = data.url
-    } catch (e) {
-        shareUrl.value = ''
-        console.error('Erreur lors de la génération du lien de partage', e)
-    } finally {
-        shareLoading.value = false
-    }
-}
-
 function copyShareUrl() {
     navigator.clipboard.writeText(shareUrl.value)
     copied.value = true
     setTimeout(() => { copied.value = false }, 2000)
+}
+
+async function revokeShare() {
+    if (!sharingProject.value) return
+    try {
+        await fetch(`${props.baseAction}/${sharingProject.value.id}/share`, {
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': props.csrfToken, 'Accept': 'application/json' },
+        })
+        sharingProject.value = null
+        shareUrl.value = ''
+        router.reload({ only: ['projects'] })
+    } catch (e) {
+        console.error('Erreur lors de la révocation du partage', e)
+    }
 }
 </script>
 
@@ -301,30 +295,8 @@ function copyShareUrl() {
                             </div>
                             <span class="text-sm text-foreground">{{ client.name }}</span>
                             <span class="text-xs text-muted-foreground">{{ client.daily_rate }} €/j</span>
-                            <span
-                                v-if="!client.is_owner"
-                                class="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700"
-                            >
-                                <Users class="h-3 w-3" />
-                                Partagé avec moi
-                            </span>
-                            <span
-                                v-else-if="client.is_shared"
-                                class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-                            >
-                                <Users class="h-3 w-3" />
-                                Partagé
-                            </span>
                         </div>
                         <div class="flex items-center gap-1">
-                            <button
-                                v-if="client.is_owner"
-                                type="button"
-                                class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                @click="openShareClient(client)"
-                            >
-                                <Share2 class="h-3.5 w-3.5" />
-                            </button>
                             <div class="flex items-center gap-1">
                             <button
                                 v-if="client.is_owner"
@@ -355,11 +327,11 @@ function copyShareUrl() {
                 <input type="hidden" name="_token" :value="csrfToken" />
                 <input type="hidden" name="_method" value="PUT" />
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Nom</label>
+                    <label class="text-sm font-medium text-foreground">Nom<span class="text-destructive ml-0.5">*</span></label>
                     <input v-model="editingClient.name" name="name" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
                 </div>
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">TJM (€/jour)</label>
+                    <label class="text-sm font-medium text-foreground">TJM (€/jour)<span class="text-destructive ml-0.5">*</span></label>
                     <input v-model="editingClient.daily_rate" name="daily_rate" type="number" min="0" step="0.01" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
@@ -387,25 +359,23 @@ function copyShareUrl() {
                 <input type="hidden" name="_token" :value="csrfToken" />
 
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Client</label>
-                    <select
+                    <label class="text-sm font-medium text-foreground">Client<span class="text-destructive ml-0.5">*</span></label>
+                    <Select
                         v-model="createForm.client_id"
                         name="client_id"
-                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                        :class="{ 'border-destructive focus:ring-destructive': fieldError('client_id') }"
-                    >
-                        <option value="new">+ Nouveau client</option>
-                        <optgroup v-if="clients.some(c => c.is_owner)" label="Clients existants">
-                            <option v-for="client in clients.filter(c => c.is_owner)" :key="client.id" :value="client.id">{{ client.name }}</option>
-                        </optgroup>
-                    </select>
+                        :options="[
+                            { value: 'new', label: '+ Nouveau client' },
+                            ...clients.filter(c => c.is_owner).map(c => ({ value: c.id, label: c.name, group: 'Clients existants' })),
+                        ]"
+                        :error="!!fieldError('client_id')"
+                    />
                     <p v-if="fieldError('client_id')" class="text-xs text-destructive">{{ fieldError('client_id') }}</p>
                 </div>
 
                 <template v-if="isNewClient">
                     <div class="rounded-md border border-border bg-muted/40 p-3 space-y-3">
                         <div class="flex flex-col gap-1.5">
-                            <label class="text-sm font-medium text-foreground">Nom du client</label>
+                            <label class="text-sm font-medium text-foreground">Nom du client<span class="text-destructive ml-0.5">*</span></label>
                             <input
                                 v-model="createForm.client_name"
                                 name="client_name"
@@ -416,7 +386,7 @@ function copyShareUrl() {
                             <p v-if="fieldError('client_name')" class="text-xs text-destructive">{{ fieldError('client_name') }}</p>
                         </div>
                         <div class="flex flex-col gap-1.5">
-                            <label class="text-sm font-medium text-foreground">TJM du client (€/jour)</label>
+                            <label class="text-sm font-medium text-foreground">TJM du client (€/jour)<span class="text-destructive ml-0.5">*</span></label>
                             <input
                                 v-model="createForm.client_rate"
                                 name="client_rate"
@@ -432,7 +402,7 @@ function copyShareUrl() {
                 </template>
 
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Nom du projet</label>
+                    <label class="text-sm font-medium text-foreground">Nom du projet<span class="text-destructive ml-0.5">*</span></label>
                     <input
                         v-model="createForm.name"
                         name="name"
@@ -444,7 +414,7 @@ function copyShareUrl() {
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Description <span class="font-normal text-muted-foreground">— optionnel</span></label>
+                    <label class="text-sm font-medium text-foreground">Description</label>
                     <input
                         v-model="createForm.description"
                         name="description"
@@ -454,7 +424,7 @@ function copyShareUrl() {
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">TJM du projet <span class="font-normal text-muted-foreground">— optionnel</span></label>
+                    <label class="text-sm font-medium text-foreground">TJM du projet</label>
                     <input
                         v-model="createForm.daily_rate"
                         name="daily_rate"
@@ -480,21 +450,23 @@ function copyShareUrl() {
                 <input type="hidden" name="_token" :value="csrfToken" />
                 <input type="hidden" name="_method" value="PUT" />
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Client</label>
-                    <select v-model="editingProject.client_id" name="client_id" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring">
-                        <option v-for="client in clients.filter(c => c.is_owner)" :key="client.id" :value="client.id">{{ client.name }}</option>
-                    </select>
+                    <label class="text-sm font-medium text-foreground">Client<span class="text-destructive ml-0.5">*</span></label>
+                    <Select
+                        v-model="editingProject.client_id"
+                        name="client_id"
+                        :options="clients.filter(c => c.is_owner).map(c => ({ value: c.id, label: c.name }))"
+                    />
                 </div>
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Nom du projet</label>
+                    <label class="text-sm font-medium text-foreground">Nom du projet<span class="text-destructive ml-0.5">*</span></label>
                     <input v-model="editingProject.name" name="name" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
                 </div>
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Description <span class="font-normal text-muted-foreground">— optionnel</span></label>
+                    <label class="text-sm font-medium text-foreground">Description</label>
                     <input v-model="editingProject.description" name="description" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
                 </div>
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">TJM du projet <span class="font-normal text-muted-foreground">— optionnel</span></label>
+                    <label class="text-sm font-medium text-foreground">TJM du projet</label>
                     <input
                         v-model="editingProject.daily_rate"
                         name="daily_rate"
@@ -532,26 +504,13 @@ function copyShareUrl() {
                     {{ copied ? 'Copié !' : 'Copier' }}
                 </button>
             </div>
-        </Dialog>
-
-        <Dialog :open="sharingClient !== null" title="Partager le client" @close="sharingClient = null">
-            <p class="text-sm text-muted-foreground">
-                Copiez ce lien et envoyez-le à la personne avec qui vous souhaitez partager
-                <span class="font-medium text-foreground">{{ sharingClient?.name }}</span>.
-            </p>
-            <div class="mt-4 flex gap-2">
-                <input
-                    :value="shareLoading ? 'Chargement…' : shareUrl"
-                    readonly
-                    class="h-9 min-w-0 flex-1 rounded-md border border-input bg-muted px-3 text-sm text-foreground focus:outline-none"
-                />
+            <div v-if="shareUrl" class="mt-3 flex justify-end border-t border-border pt-3">
                 <button
                     type="button"
-                    :disabled="shareLoading || !shareUrl"
-                    class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                    @click="copyShareUrl"
+                    class="text-xs text-muted-foreground underline-offset-2 hover:text-destructive hover:underline transition-colors"
+                    @click="revokeShare"
                 >
-                    {{ copied ? 'Copié !' : 'Copier' }}
+                    Désactiver ce lien de partage
                 </button>
             </div>
         </Dialog>

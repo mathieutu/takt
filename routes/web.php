@@ -40,7 +40,6 @@ Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(functi
         Route::post('/', [ClientController::class, 'store'])->name('.store');
         Route::put('/{client}', [ClientController::class, 'update'])->name('.update');
         Route::delete('/{client}', [ClientController::class, 'destroy'])->name('.destroy');
-        Route::post('/{client}/share', [ShareController::class, 'generateForClient'])->name('.share');
     });
 
     Route::prefix('/projects')->name('.projects')->group(function () {
@@ -49,6 +48,7 @@ Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(functi
         Route::put('/{project}', [ProjectController::class, 'update'])->name('.update');
         Route::delete('/{project}', [ProjectController::class, 'destroy'])->name('.destroy');
         Route::post('/{project}/share', [ShareController::class, 'generate'])->name('.share');
+        Route::delete('/{project}/share', [ShareController::class, 'revoke'])->name('.share.revoke');
     });
 
     Route::prefix('/tracking')->name('.tracking')->group(function () {
@@ -66,18 +66,20 @@ Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(functi
 });
 
 Route::prefix('/login')->name('login')->middleware('guest')->group(function () {
-    Route::view('/', 'auth.login');
+    Route::get('/', [AuthController::class, 'showLogin']);
     Route::post('/', [AuthController::class, 'login']);
 });
+
 Route::prefix('/register')->name('register')->middleware('guest')->group(function () {
-    Route::view('/', 'auth.register');
+    Route::get('/', [AuthController::class, 'showRegister']);
     Route::post('/', [AuthController::class, 'register']);
 });
+
 Route::prefix("/me")->name('account')->middleware('auth')->group(function () {
     Route::delete('/', [AccountController::class, 'delete'])->name('.delete');
     Route::get('/logout', [AuthController::class, 'logout'])->name('.logout');
 });
 
-Route::prefix('/share')->name('share')->middleware('auth')->group(function () {
+Route::prefix('/share')->name('share')->group(function () {
     Route::get('/{share}', [ShareController::class, 'apply'])->name('.apply');
 });
