@@ -184,7 +184,7 @@ function projectSummary(project: ProjectData) {
         totalEffectif,
         maxBudget,
         resteAFacturer:  totalTheorique - totalEffectif,
-        resteAConsommer: maxBudget !== null ? maxBudget - totalEffectif : null,
+        resteAConsommer: maxBudget !== null ? maxBudget - totalTheorique : null,
     }
 }
 
@@ -269,7 +269,6 @@ function localMaxBudget(projectId: number): number | null {
                                         <th class="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Fact. théorique</th>
                                         <th class="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Fact. effectif</th>
                                         <th class="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Max théorique</th>
-                                        <th class="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Écart théo/max</th>
                                         <th class="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Écart eff/théo</th>
                                         <th class="px-4 py-2 w-10"></th>
                                     </tr>
@@ -291,12 +290,6 @@ function localMaxBudget(projectId: number): number | null {
                                             {{ localMaxBudget(project.id) !== null ? fmt(localMaxBudget(project.id)!) : '—' }}
                                         </td>
                                         <td class="px-4 py-2.5 text-right"
-                                            :class="localMaxBudget(project.id) !== null && (month.days_worked * project.daily_rate) > localMaxBudget(project.id)! ? 'text-destructive' : 'text-foreground'">
-                                            {{ localMaxBudget(project.id) !== null
-                                                ? fmt((month.days_worked * project.daily_rate) - localMaxBudget(project.id)!)
-                                                : '—' }}
-                                        </td>
-                                        <td class="px-4 py-2.5 text-right"
                                             :class="month.amount_billed - (month.days_worked * project.daily_rate) < 0 ? 'text-amber-600' : 'text-emerald-600'">
                                             {{ fmt(month.amount_billed - (month.days_worked * project.daily_rate)) }}
                                         </td>
@@ -311,7 +304,7 @@ function localMaxBudget(projectId: number): number | null {
                                         </td>
                                     </tr>
                                     <tr v-if="localMonths(project.id).length === 0">
-                                        <td colspan="8" class="px-4 py-6 text-center text-sm text-muted-foreground">
+                                        <td colspan="7" class="px-4 py-6 text-center text-sm text-muted-foreground">
                                             Aucune entrée CRA pour ce projet.
                                         </td>
                                     </tr>
