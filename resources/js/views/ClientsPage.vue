@@ -159,7 +159,7 @@ function menuItems(client: Client) {
             <form :action="storeAction" method="POST" class="space-y-4">
                 <input type="hidden" name="_token" :value="csrfToken" />
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Nom</label>
+                    <label class="text-sm font-medium text-foreground">Nom<span class="text-destructive ml-0.5">*</span></label>
                     <input
                         v-model="createName"
                         name="name"
@@ -170,7 +170,7 @@ function menuItems(client: Client) {
                     <p v-if="fieldError('name')" class="text-xs text-destructive">{{ fieldError('name') }}</p>
                 </div>
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">TJM (€/jour)</label>
+                    <label class="text-sm font-medium text-foreground">TJM (€/jour)<span class="text-destructive ml-0.5">*</span></label>
                     <input
                         v-model="createRate"
                         name="daily_rate"
@@ -194,11 +194,11 @@ function menuItems(client: Client) {
                 <input type="hidden" name="_token" :value="csrfToken" />
                 <input type="hidden" name="_method" value="PUT" />
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Nom</label>
+                    <label class="text-sm font-medium text-foreground">Nom<span class="text-destructive ml-0.5">*</span></label>
                     <input v-model="editingClient.name" name="name" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
                 </div>
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">TJM (€/jour)</label>
+                    <label class="text-sm font-medium text-foreground">TJM (€/jour)<span class="text-destructive ml-0.5">*</span></label>
                     <input v-model="editingClient.daily_rate" name="daily_rate" type="number" min="0" step="0.01" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
                 </div>
                 <div class="flex justify-end gap-2 pt-2">

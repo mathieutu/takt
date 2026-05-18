@@ -30,7 +30,7 @@ function submit() {
             <div class="p-6 pt-0">
                 <form @submit.prevent="submit" class="flex flex-col gap-4">
                     <div class="flex flex-col gap-1.5">
-                        <label class="text-sm font-medium text-foreground">Adresse e-mail</label>
+                        <label class="text-sm font-medium text-foreground">Adresse e-mail<span class="text-destructive ml-0.5">*</span></label>
                         <input
                             v-model="form.email"
                             name="email"
@@ -43,7 +43,7 @@ function submit() {
                     </div>
 
                     <div class="flex flex-col gap-1.5">
-                        <label class="text-sm font-medium text-foreground">Mot de passe</label>
+                        <label class="text-sm font-medium text-foreground">Mot de passe<span class="text-destructive ml-0.5">*</span></label>
                         <input
                             v-model="form.password"
                             name="password"

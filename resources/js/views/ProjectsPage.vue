@@ -327,11 +327,11 @@ async function revokeShare() {
                 <input type="hidden" name="_token" :value="csrfToken" />
                 <input type="hidden" name="_method" value="PUT" />
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Nom</label>
+                    <label class="text-sm font-medium text-foreground">Nom<span class="text-destructive ml-0.5">*</span></label>
                     <input v-model="editingClient.name" name="name" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
                 </div>
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">TJM (€/jour)</label>
+                    <label class="text-sm font-medium text-foreground">TJM (€/jour)<span class="text-destructive ml-0.5">*</span></label>
                     <input v-model="editingClient.daily_rate" name="daily_rate" type="number" min="0" step="0.01" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
                 </div>
                 <div class="flex justify-end gap-2 pt-2">
@@ -359,7 +359,7 @@ async function revokeShare() {
                 <input type="hidden" name="_token" :value="csrfToken" />
 
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Client</label>
+                    <label class="text-sm font-medium text-foreground">Client<span class="text-destructive ml-0.5">*</span></label>
                     <Select
                         v-model="createForm.client_id"
                         name="client_id"
@@ -375,7 +375,7 @@ async function revokeShare() {
                 <template v-if="isNewClient">
                     <div class="rounded-md border border-border bg-muted/40 p-3 space-y-3">
                         <div class="flex flex-col gap-1.5">
-                            <label class="text-sm font-medium text-foreground">Nom du client</label>
+                            <label class="text-sm font-medium text-foreground">Nom du client<span class="text-destructive ml-0.5">*</span></label>
                             <input
                                 v-model="createForm.client_name"
                                 name="client_name"
@@ -386,7 +386,7 @@ async function revokeShare() {
                             <p v-if="fieldError('client_name')" class="text-xs text-destructive">{{ fieldError('client_name') }}</p>
                         </div>
                         <div class="flex flex-col gap-1.5">
-                            <label class="text-sm font-medium text-foreground">TJM du client (€/jour)</label>
+                            <label class="text-sm font-medium text-foreground">TJM du client (€/jour)<span class="text-destructive ml-0.5">*</span></label>
                             <input
                                 v-model="createForm.client_rate"
                                 name="client_rate"
@@ -402,7 +402,7 @@ async function revokeShare() {
                 </template>
 
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Nom du projet</label>
+                    <label class="text-sm font-medium text-foreground">Nom du projet<span class="text-destructive ml-0.5">*</span></label>
                     <input
                         v-model="createForm.name"
                         name="name"
@@ -414,7 +414,7 @@ async function revokeShare() {
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Description <span class="font-normal text-muted-foreground">— optionnel</span></label>
+                    <label class="text-sm font-medium text-foreground">Description</label>
                     <input
                         v-model="createForm.description"
                         name="description"
@@ -424,7 +424,7 @@ async function revokeShare() {
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">TJM du projet <span class="font-normal text-muted-foreground">— optionnel</span></label>
+                    <label class="text-sm font-medium text-foreground">TJM du projet</label>
                     <input
                         v-model="createForm.daily_rate"
                         name="daily_rate"
@@ -450,7 +450,7 @@ async function revokeShare() {
                 <input type="hidden" name="_token" :value="csrfToken" />
                 <input type="hidden" name="_method" value="PUT" />
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Client</label>
+                    <label class="text-sm font-medium text-foreground">Client<span class="text-destructive ml-0.5">*</span></label>
                     <Select
                         v-model="editingProject.client_id"
                         name="client_id"
@@ -458,15 +458,15 @@ async function revokeShare() {
                     />
                 </div>
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Nom du projet</label>
+                    <label class="text-sm font-medium text-foreground">Nom du projet<span class="text-destructive ml-0.5">*</span></label>
                     <input v-model="editingProject.name" name="name" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
                 </div>
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Description <span class="font-normal text-muted-foreground">— optionnel</span></label>
+                    <label class="text-sm font-medium text-foreground">Description</label>
                     <input v-model="editingProject.description" name="description" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
                 </div>
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">TJM du projet <span class="font-normal text-muted-foreground">— optionnel</span></label>
+                    <label class="text-sm font-medium text-foreground">TJM du projet</label>
                     <input
                         v-model="editingProject.daily_rate"
                         name="daily_rate"

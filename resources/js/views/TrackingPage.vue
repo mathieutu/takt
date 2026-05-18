@@ -375,7 +375,7 @@ function localMaxBudget(projectId: number): number | null {
                 </p>
 
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Montant facturé (€)</label>
+                    <label class="text-sm font-medium text-foreground">Montant facturé (€)<span class="text-destructive ml-0.5">*</span></label>
                     <input
                         v-model="billingForm.amount_billed"
                         type="number"
@@ -386,10 +386,7 @@ function localMaxBudget(projectId: number): number | null {
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">
-                        Date de paiement
-                        <span class="font-normal text-muted-foreground">— optionnel</span>
-                    </label>
+                    <label class="text-sm font-medium text-foreground">Date de paiement</label>
                     <input
                         v-model="billingForm.payment_date"
                         type="date"
@@ -398,10 +395,7 @@ function localMaxBudget(projectId: number): number | null {
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">
-                        Notes
-                        <span class="font-normal text-muted-foreground">— optionnel</span>
-                    </label>
+                    <label class="text-sm font-medium text-foreground">Notes</label>
                     <textarea
                         v-model="billingForm.notes"
                         rows="3"

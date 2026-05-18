@@ -40,7 +40,7 @@ function submit() {
             <div class="p-6 pt-0">
                 <form @submit.prevent="submit" class="flex flex-col gap-4">
                     <div class="flex flex-col gap-1.5">
-                        <label class="text-sm font-medium text-foreground">Adresse e-mail</label>
+                        <label class="text-sm font-medium text-foreground">Adresse e-mail<span class="text-destructive ml-0.5">*</span></label>
                         <input
                             v-model="form.email"
                             name="email"
@@ -53,7 +53,7 @@ function submit() {
                     </div>
 
                     <div class="flex flex-col gap-1.5">
-                        <label class="text-sm font-medium text-foreground">Mot de passe</label>
+                        <label class="text-sm font-medium text-foreground">Mot de passe<span class="text-destructive ml-0.5">*</span></label>
                         <input
                             v-model="form.password"
                             name="password"
@@ -66,7 +66,7 @@ function submit() {
                     </div>
 
                     <div class="flex flex-col gap-1.5">
-                        <label class="text-sm font-medium text-foreground">Confirmer le mot de passe</label>
+                        <label class="text-sm font-medium text-foreground">Confirmer le mot de passe<span class="text-destructive ml-0.5">*</span></label>
                         <input
                             v-model="form.password_confirmation"
                             name="password_confirmation"
@@ -77,7 +77,7 @@ function submit() {
                     </div>
 
                     <div class="flex flex-col gap-2">
-                        <label class="text-sm font-medium text-foreground">Type de compte</label>
+                        <label class="text-sm font-medium text-foreground">Type de compte<span class="text-destructive ml-0.5">*</span></label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <label
                                 class="flex cursor-pointer items-center justify-center rounded-md border px-3 py-2 text-sm transition-colors"
@@ -103,7 +103,7 @@ function submit() {
 
                     <template v-if="isUser">
                         <div class="flex flex-col gap-1.5">
-                            <label class="text-sm font-medium text-foreground">Prénom</label>
+                            <label class="text-sm font-medium text-foreground">Prénom<span class="text-destructive ml-0.5">*</span></label>
                             <input
                                 v-model="form.model.first_name"
                                 type="text"
@@ -114,7 +114,7 @@ function submit() {
                             <p v-if="form.errors['model.first_name']" class="text-xs text-destructive">{{ form.errors['model.first_name'] }}</p>
                         </div>
                         <div class="flex flex-col gap-1.5">
-                            <label class="text-sm font-medium text-foreground">Nom de famille</label>
+                            <label class="text-sm font-medium text-foreground">Nom de famille<span class="text-destructive ml-0.5">*</span></label>
                             <input
                                 v-model="form.model.last_name"
                                 type="text"
@@ -128,7 +128,7 @@ function submit() {
 
                     <template v-else>
                         <div class="flex flex-col gap-1.5">
-                            <label class="text-sm font-medium text-foreground">Nom de l'organisation</label>
+                            <label class="text-sm font-medium text-foreground">Nom de l'organisation<span class="text-destructive ml-0.5">*</span></label>
                             <input
                                 v-model="form.model.name"
                                 type="text"

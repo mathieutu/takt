@@ -83,7 +83,7 @@ function submit() {
                     <CardContent>
                         <div class="space-y-4">
                             <div class="flex flex-col gap-1.5">
-                                <label class="text-sm font-medium text-foreground">Adresse e-mail</label>
+                                <label class="text-sm font-medium text-foreground">Adresse e-mail<span class="text-destructive ml-0.5">*</span></label>
                                 <input v-model="form.email" name="email" type="email" autocomplete="email"
                                     class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                                     :class="{ 'border-destructive focus:ring-destructive': form.errors.email }" />
@@ -93,14 +93,14 @@ function submit() {
                             <template v-if="isUser">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div class="flex flex-col gap-1.5">
-                                        <label class="text-sm font-medium text-foreground">Prénom</label>
+                                        <label class="text-sm font-medium text-foreground">Prénom<span class="text-destructive ml-0.5">*</span></label>
                                         <input v-model="form.user.first_name" type="text" autocomplete="given-name"
                                             class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                                             :class="{ 'border-destructive focus:ring-destructive': form.errors['user.first_name'] }" />
                                         <p v-if="form.errors['user.first_name']" class="text-xs text-destructive">{{ form.errors['user.first_name'] }}</p>
                                     </div>
                                     <div class="flex flex-col gap-1.5">
-                                        <label class="text-sm font-medium text-foreground">Nom de famille</label>
+                                        <label class="text-sm font-medium text-foreground">Nom de famille<span class="text-destructive ml-0.5">*</span></label>
                                         <input v-model="form.user.last_name" type="text" autocomplete="family-name"
                                             class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                                             :class="{ 'border-destructive focus:ring-destructive': form.errors['user.last_name'] }" />
@@ -111,7 +111,7 @@ function submit() {
 
                             <template v-else>
                                 <div class="flex flex-col gap-1.5">
-                                    <label class="text-sm font-medium text-foreground">Nom de l'organisation</label>
+                                    <label class="text-sm font-medium text-foreground">Nom de l'organisation<span class="text-destructive ml-0.5">*</span></label>
                                     <input v-model="form.organization.name" type="text" autocomplete="organization"
                                         class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                                         :class="{ 'border-destructive focus:ring-destructive': form.errors['organization.name'] }" />
