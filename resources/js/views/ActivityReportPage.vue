@@ -293,14 +293,14 @@ async function saveEdit() {
                                     <button
                                         v-if="project.is_owner && reportByKey.get(`${project.id}:${day.dateStr}`) && reportByKey.get(`${project.id}:${day.dateStr}`)!.id > 0"
                                         type="button"
-                                        class="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded opacity-0 cursor-pointer transition-opacity hover:bg-primary/25 group-hover/cell:opacity-100"
+                                        class="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded opacity-0 transition-opacity hover:bg-primary/25 group-hover/cell:opacity-100"
                                         @click.stop="openEdit(reportByKey.get(`${project.id}:${day.dateStr}`)!)">
                                         <Pencil class="h-3 w-3 text-primary" />
                                     </button>
                                     <button
                                         v-else-if="!project.is_owner && reportByKey.get(`${project.id}:${day.dateStr}`) && (reportByKey.get(`${project.id}:${day.dateStr}`)!.label || reportByKey.get(`${project.id}:${day.dateStr}`)!.comments)"
                                         type="button"
-                                        class="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded opacity-0 cursor-pointer transition-opacity hover:bg-primary/25 group-hover/cell:opacity-100"
+                                        class="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded opacity-0 transition-opacity hover:bg-primary/25 group-hover/cell:opacity-100"
                                         @click.stop="viewingReport = reportByKey.get(`${project.id}:${day.dateStr}`)!">
                                         <Eye class="h-3 w-3 text-primary" />
                                     </button>

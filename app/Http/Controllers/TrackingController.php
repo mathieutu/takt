@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\SharedClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class TrackingController
@@ -75,10 +76,17 @@ class TrackingController
             }
         }
 
-        return view('dashboard.singletons.tracking', [
-            'clients'          => $clients,
-            'selectedClientId' => $selectedClientId,
-            'projects'         => $projects,
+        return Inertia::render('TrackingPage', [
+            'clients'            => $clients->map(fn($c) => [
+                'id'         => $c->id,
+                'name'       => $c->name,
+                'daily_rate' => (float) $c->daily_rate,
+            ])->values(),
+            'selectedClientId'   => $selectedClientId,
+            'projects'           => $projects->values(),
+            'billingStoreAction' => url('/dashboard/tracking/billing'),
+            'billingBaseAction'  => url('/dashboard/tracking/billing'),
+            'projectBudgetBase'  => url('/dashboard/tracking/projects'),
         ]);
     }
 

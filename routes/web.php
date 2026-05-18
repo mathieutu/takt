@@ -66,13 +66,15 @@ Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(functi
 });
 
 Route::prefix('/login')->name('login')->middleware('guest')->group(function () {
-    Route::view('/', 'auth.login');
+    Route::get('/', [AuthController::class, 'showLogin']);
     Route::post('/', [AuthController::class, 'login']);
 });
+
 Route::prefix('/register')->name('register')->middleware('guest')->group(function () {
-    Route::view('/', 'auth.register');
+    Route::get('/', [AuthController::class, 'showRegister']);
     Route::post('/', [AuthController::class, 'register']);
 });
+
 Route::prefix("/me")->name('account')->middleware('auth')->group(function () {
     Route::delete('/', [AccountController::class, 'delete'])->name('.delete');
     Route::get('/logout', [AuthController::class, 'logout'])->name('.logout');

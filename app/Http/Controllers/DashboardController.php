@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\ActivityTime;
 use App\Models\Client;
 use App\Models\Project;
+use Inertia\Inertia;
 
 class DashboardController
 {
@@ -44,7 +45,7 @@ class DashboardController
             'daily_rate' => $p->daily_rate !== null ? (float) $p->daily_rate : null,
         ])->values();
 
-        return view('dashboard.index', [
+        return Inertia::render('DashboardPage', [
             'entries'  => $entries,
             'clients'  => $clientsData,
             'projects' => $projectsData,

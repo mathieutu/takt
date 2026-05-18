@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { Link, usePage } from '@inertiajs/vue3'
 import {
     LayoutDashboard,
     CalendarDays,
@@ -16,19 +17,19 @@ interface User {
     role: string
 }
 
-const props = defineProps<{
-    user: User
-    currentPath?: string
+defineProps<{
+    user: User | null
 }>()
 
-const path = computed(() => props.currentPath ?? window.location.pathname)
+const page = usePage()
+const path = computed(() => page.url.split('?')[0])
 
 const navItems = [
     { route: '/dashboard',          label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
     { route: '/dashboard/reports',  label: 'Saisie CRA',      icon: CalendarDays },
-    { route: '/dashboard/projects', label: 'Projets',           icon: FolderKanban },
+    { route: '/dashboard/projects', label: 'Projets',         icon: FolderKanban },
     { route: '/dashboard/tracking', label: 'Suivi facturation', icon: ReceiptText },
-    { route: '/dashboard/exports',  label: 'Export',            icon: Download },
+    { route: '/dashboard/exports',  label: 'Export',          icon: Download },
 ]
 
 function isActive(item: (typeof navItems)[0]): boolean {
@@ -47,14 +48,10 @@ function hideTooltip() {
     if (tooltipTimer) clearTimeout(tooltipTimer)
     activeTooltip.value = null
 }
-
-function logout() {
-    window.location.href = '/me/logout'
-}
 </script>
 
 <template>
-    <aside class="flex h-full w-14 flex-col items-center border-r border-border bg-sidebar py-3">
+    <aside class="hidden md:flex fixed left-0 top-14 z-40 h-[calc(100vh-3.5rem)] w-14 flex-col items-center border-r border-border bg-sidebar py-3">
 
         <nav class="flex flex-1 flex-col items-center gap-1">
             <div
@@ -64,7 +61,7 @@ function logout() {
                 @mouseenter="showTooltip(item.route)"
                 @mouseleave="hideTooltip"
             >
-                <a
+                <Link
                     :href="item.route"
                     class="flex h-9 w-9 items-center justify-center rounded-md transition-colors"
                     :class="isActive(item)
@@ -72,7 +69,7 @@ function logout() {
                         : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
                 >
                     <component :is="item.icon" class="h-4 w-4" />
-                </a>
+                </Link>
                 <Transition name="tooltip">
                     <div
                         v-if="activeTooltip === item.route"
@@ -86,7 +83,7 @@ function logout() {
 
         <div class="mt-auto flex flex-col items-center gap-1">
             <div class="relative" @mouseenter="showTooltip('settings')" @mouseleave="hideTooltip">
-                <a
+                <Link
                     href="/dashboard/settings"
                     class="flex h-9 w-9 items-center justify-center rounded-md transition-colors"
                     :class="path.startsWith('/dashboard/settings')
@@ -94,7 +91,7 @@ function logout() {
                         : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
                 >
                     <Settings class="h-4 w-4" />
-                </a>
+                </Link>
                 <Transition name="tooltip">
                     <div
                         v-if="activeTooltip === 'settings'"
@@ -106,13 +103,15 @@ function logout() {
             </div>
 
             <div class="relative" @mouseenter="showTooltip('logout')" @mouseleave="hideTooltip">
-                <button
+                <Link
+                    href="/me/logout"
+                    method="get"
+                    as="button"
                     type="button"
-                    class="flex h-9 w-9 items-center justify-center rounded-md cursor-pointer transition-colors text-muted-foreground hover:bg-red-50 hover:text-destructive"
-                    @click="logout"
+                    class="flex h-9 w-9 items-center justify-center rounded-md transition-colors text-muted-foreground hover:bg-red-50 hover:text-destructive"
                 >
                     <LogOut class="h-4 w-4" />
-                </button>
+                </Link>
                 <Transition name="tooltip">
                     <div
                         v-if="activeTooltip === 'logout'"
@@ -124,7 +123,6 @@ function logout() {
             </div>
         </div>
     </aside>
-
 </template>
 
 <style scoped>

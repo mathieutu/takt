@@ -8,13 +8,11 @@ use App\Models\Project;
 use App\Models\SharedClient;
 use App\Models\SharedProject;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ProjectController
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $userId = Account::authenticated()->id;
@@ -41,15 +39,31 @@ class ProjectController
                 $c->is_shared = $c->sharer !== null;
             }));
 
-        return view('dashboard.singletons.projects', [
-            'projects' => $projects,
-            'clients' => $clients,
+        return Inertia::render('ProjectsPage', [
+            'storeAction' => route('dashboard.projects.store'),
+            'baseAction'  => url('/dashboard/projects'),
+            'projects'    => $projects->map(fn($p) => [
+                'id'          => $p->id,
+                'name'        => $p->name,
+                'description' => $p->description ?? '',
+                'daily_rate'  => $p->daily_rate ? (float) $p->daily_rate : null,
+                'client_id'   => $p->client_id,
+                'client_name' => $p->client->name,
+                'created_at'  => $p->created_at?->translatedFormat('j M Y') ?? '',
+                'is_owner'    => $p->is_owner,
+                'is_shared'   => $p->is_shared,
+            ])->values(),
+            'clients' => $clients->map(fn($c) => [
+                'id'         => $c->id,
+                'name'       => $c->name,
+                'daily_rate' => (float) $c->daily_rate,
+                'is_owner'   => $c->is_owner,
+                'is_shared'  => $c->is_shared,
+            ])->values(),
+            'open' => request()->has('open'),
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $account = Account::authenticated();
@@ -84,9 +98,6 @@ class ProjectController
         return to_route('dashboard.projects');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Project $project)
     {
         if ($project->client->user_id !== Account::authenticated()->id) {
@@ -108,9 +119,6 @@ class ProjectController
         return to_route('dashboard.projects');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Project $project)
     {
         if ($project->client->user_id !== Account::authenticated()->id) {

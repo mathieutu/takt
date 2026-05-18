@@ -1,54 +1,55 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useForm, usePage } from '@inertiajs/vue3'
 import Card from '../components/ui/Card.vue'
 import CardHeader from '../components/ui/CardHeader.vue'
 import CardTitle from '../components/ui/CardTitle.vue'
 import CardContent from '../components/ui/CardContent.vue'
 
-const props = withDefaults(defineProps<{
-    action?: string
-    csrfToken?: string
-    type?: string
-    email?: string
-    firstName?: string
-    lastName?: string
-    orgName?: string
-    errors?: Record<string, string[]>
-    success?: boolean
-}>(), {
-    action: '/dashboard/settings',
-    csrfToken: '',
-    type: 'user',
-    email: '',
-    firstName: '',
-    lastName: '',
-    orgName: '',
-    errors: () => ({}),
-    success: false,
+const props = defineProps<{
+    account: {
+        email: string
+        type: string
+        user?: { first_name: string; last_name: string } | null
+        organization?: { name: string } | null
+    }
+}>()
+
+const page = usePage()
+const success = computed(() => (page.props.flash as any)?.success)
+
+const form = useForm({
+    email: props.account.email,
+    password: '',
+    password_confirmation: '',
+    user: {
+        first_name: props.account.user?.first_name ?? '',
+        last_name:  props.account.user?.last_name  ?? '',
+    },
+    organization: {
+        name: props.account.organization?.name ?? '',
+    },
 })
 
-const email = ref(props.email)
-const password = ref('')
-const passwordConfirmation = ref('')
-const firstName = ref(props.firstName)
-const lastName = ref(props.lastName)
-const orgName = ref(props.orgName)
-
-const isUser = computed(() => props.type === 'user')
+const isUser = computed(() => props.account.type === 'user')
 
 const initials = computed(() => {
     if (isUser.value) {
-        return ((firstName.value[0] ?? '') + (lastName.value[0] ?? '')).toUpperCase()
+        return ((form.user.first_name[0] ?? '') + (form.user.last_name[0] ?? '')).toUpperCase()
     }
-    return (orgName.value[0] ?? '').toUpperCase()
+    return (form.organization.name[0] ?? '').toUpperCase()
 })
 
 const displayName = computed(() =>
-    isUser.value ? `${firstName.value} ${lastName.value}`.trim() : orgName.value
+    isUser.value
+        ? `${form.user.first_name} ${form.user.last_name}`.trim()
+        : form.organization.name
 )
 
-function fieldError(key: string): string | null {
-    return props.errors[key]?.[0] ?? null
+const showPassword = ref(false)
+
+function submit() {
+    form.put('/dashboard/settings', { preserveScroll: true })
 }
 </script>
 
@@ -65,10 +66,7 @@ function fieldError(key: string): string | null {
                 Vos informations ont été mises à jour.
             </div>
 
-            <form :action="action" method="POST" class="space-y-6">
-                <input type="hidden" name="_token" :value="csrfToken" />
-                <input type="hidden" name="_method" value="PUT" />
-
+            <form @submit.prevent="submit" class="space-y-6">
                 <Card>
                     <CardHeader>
                         <div class="flex items-center gap-3">
@@ -78,7 +76,7 @@ function fieldError(key: string): string | null {
                             </div>
                             <div class="w-fit overflow-hidden">
                                 <p class="text-sm font-medium text-foreground truncate">{{ displayName }}</p>
-                                <p class="text-xs text-muted-foreground truncate">{{ email }}</p>
+                                <p class="text-xs text-muted-foreground truncate">{{ form.email }}</p>
                             </div>
                         </div>
                     </CardHeader>
@@ -86,32 +84,27 @@ function fieldError(key: string): string | null {
                         <div class="space-y-4">
                             <div class="flex flex-col gap-1.5">
                                 <label class="text-sm font-medium text-foreground">Adresse e-mail</label>
-                                <input v-model="email" name="email" type="email" autocomplete="email"
+                                <input v-model="form.email" name="email" type="email" autocomplete="email"
                                     class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                                    :class="{ 'border-destructive focus:ring-destructive': fieldError('email') }" />
-                                <p v-if="fieldError('email')" class="text-xs text-destructive">{{ fieldError('email') }}
-                                </p>
+                                    :class="{ 'border-destructive focus:ring-destructive': form.errors.email }" />
+                                <p v-if="form.errors.email" class="text-xs text-destructive">{{ form.errors.email }}</p>
                             </div>
 
                             <template v-if="isUser">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div class="flex flex-col gap-1.5">
                                         <label class="text-sm font-medium text-foreground">Prénom</label>
-                                        <input v-model="firstName" name="user[first_name]" type="text"
-                                            autocomplete="given-name"
+                                        <input v-model="form.user.first_name" type="text" autocomplete="given-name"
                                             class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                                            :class="{ 'border-destructive focus:ring-destructive': fieldError('user.first_name') }" />
-                                        <p v-if="fieldError('user.first_name')" class="text-xs text-destructive">{{
-                                            fieldError('user.first_name') }}</p>
+                                            :class="{ 'border-destructive focus:ring-destructive': form.errors['user.first_name'] }" />
+                                        <p v-if="form.errors['user.first_name']" class="text-xs text-destructive">{{ form.errors['user.first_name'] }}</p>
                                     </div>
                                     <div class="flex flex-col gap-1.5">
                                         <label class="text-sm font-medium text-foreground">Nom de famille</label>
-                                        <input v-model="lastName" name="user[last_name]" type="text"
-                                            autocomplete="family-name"
+                                        <input v-model="form.user.last_name" type="text" autocomplete="family-name"
                                             class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                                            :class="{ 'border-destructive focus:ring-destructive': fieldError('user.last_name') }" />
-                                        <p v-if="fieldError('user.last_name')" class="text-xs text-destructive">{{
-                                            fieldError('user.last_name') }}</p>
+                                            :class="{ 'border-destructive focus:ring-destructive': form.errors['user.last_name'] }" />
+                                        <p v-if="form.errors['user.last_name']" class="text-xs text-destructive">{{ form.errors['user.last_name'] }}</p>
                                     </div>
                                 </div>
                             </template>
@@ -119,12 +112,10 @@ function fieldError(key: string): string | null {
                             <template v-else>
                                 <div class="flex flex-col gap-1.5">
                                     <label class="text-sm font-medium text-foreground">Nom de l'organisation</label>
-                                    <input v-model="orgName" name="organization[name]" type="text"
-                                        autocomplete="organization"
+                                    <input v-model="form.organization.name" type="text" autocomplete="organization"
                                         class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                                        :class="{ 'border-destructive focus:ring-destructive': fieldError('organization.name') }" />
-                                    <p v-if="fieldError('organization.name')" class="text-xs text-destructive">{{
-                                        fieldError('organization.name') }}</p>
+                                        :class="{ 'border-destructive focus:ring-destructive': form.errors['organization.name'] }" />
+                                    <p v-if="form.errors['organization.name']" class="text-xs text-destructive">{{ form.errors['organization.name'] }}</p>
                                 </div>
                             </template>
                         </div>
@@ -139,17 +130,16 @@ function fieldError(key: string): string | null {
                         <div class="space-y-4">
                             <div class="flex flex-col gap-1.5">
                                 <label class="text-sm font-medium text-foreground">Nouveau mot de passe</label>
-                                <input v-model="password" :name="password ? 'password' : undefined" type="password"
-                                    autocomplete="new-password" placeholder="Laisser vide pour ne pas modifier"
+                                <input v-model="form.password" type="password" autocomplete="new-password"
+                                    placeholder="Laisser vide pour ne pas modifier"
                                     class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                                    :class="{ 'border-destructive focus:ring-destructive': fieldError('password') }" />
-                                <p v-if="fieldError('password')" class="text-xs text-destructive">{{
-                                    fieldError('password') }}</p>
+                                    :class="{ 'border-destructive focus:ring-destructive': form.errors.password }"
+                                    @input="showPassword = form.password.length > 0" />
+                                <p v-if="form.errors.password" class="text-xs text-destructive">{{ form.errors.password }}</p>
                             </div>
-                            <div v-if="password" class="flex flex-col gap-1.5">
+                            <div v-if="showPassword" class="flex flex-col gap-1.5">
                                 <label class="text-sm font-medium text-foreground">Confirmer le mot de passe</label>
-                                <input v-model="passwordConfirmation" name="password_confirmation" type="password"
-                                    autocomplete="new-password"
+                                <input v-model="form.password_confirmation" type="password" autocomplete="new-password"
                                     class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
                             </div>
                         </div>
@@ -157,8 +147,8 @@ function fieldError(key: string): string | null {
                 </Card>
 
                 <div class="flex justify-end">
-                    <button type="submit"
-                        class="h-9 px-4 rounded-md bg-primary text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+                    <button type="submit" :disabled="form.processing"
+                        class="h-9 px-4 rounded-md bg-primary text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60">
                         Enregistrer
                     </button>
                 </div>
