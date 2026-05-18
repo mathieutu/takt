@@ -37,7 +37,7 @@ onUnmounted(() => document.removeEventListener('mousedown', handleOutside))
     >
       <div
         v-if="open"
-        class="absolute right-0 top-full z-50 mt-1 min-w-[140px] overflow-hidden rounded-md border border-border bg-background shadow-md"
+        class="absolute right-0 top-full z-50 mt-1 min-w-35 overflow-hidden rounded-md border border-border bg-background shadow-md"
       >
         <button
           v-for="(item, i) in items"

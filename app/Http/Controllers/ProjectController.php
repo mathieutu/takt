@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use App\Models\Client;
 use App\Models\Project;
-use App\Models\SharedClient;
 use App\Models\SharedProject;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -28,16 +27,7 @@ class ProjectController
                 $p->is_shared = $p->sharer !== null;
             }));
 
-        $ownedClientIds = Client::where('user_id', $userId)->pluck('id');
-        $sharedClientIds = SharedClient::where('account_id', $userId)->pluck('client_id');
-
-        $clients = Client::with('sharer')
-            ->whereIn('id', $ownedClientIds->merge($sharedClientIds)->unique())
-            ->get()
-            ->map(fn($c) => tap($c, function ($c) use ($ownedClientIds) {
-                $c->is_owner = $ownedClientIds->contains($c->id);
-                $c->is_shared = $c->sharer !== null;
-            }));
+        $clients = Client::where('user_id', $userId)->get();
 
         return Inertia::render('ProjectsPage', [
             'storeAction' => route('dashboard.projects.store'),
@@ -57,8 +47,7 @@ class ProjectController
                 'id'         => $c->id,
                 'name'       => $c->name,
                 'daily_rate' => (float) $c->daily_rate,
-                'is_owner'   => $c->is_owner,
-                'is_shared'  => $c->is_shared,
+                'is_owner'   => true,
             ])->values(),
             'open' => request()->has('open'),
         ]);

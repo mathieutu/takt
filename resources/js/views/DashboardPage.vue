@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
+import { router } from '@inertiajs/vue3'
 import { Bar } from 'vue-chartjs'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip } from 'chart.js'
-import { TrendingUp, Calendar, Users, FolderKanban, Plus } from 'lucide-vue-next'
+import { TrendingUp, Calendar, Users, FolderKanban } from 'lucide-vue-next'
 import Card from '../components/ui/Card.vue'
 import CardHeader from '../components/ui/CardHeader.vue'
 import CardTitle from '../components/ui/CardTitle.vue'
@@ -10,6 +11,12 @@ import CardContent from '../components/ui/CardContent.vue'
 import Badge from '../components/ui/Badge.vue'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip)
+
+onMounted(() => {
+    if (props.projects.length === 0) {
+        router.visit('/dashboard/projects?open=1', { replace: true })
+    }
+})
 
 type Entry   = { id: number; projectId: number; date: string; value: number; label: string | null }
 type Client  = { id: number; name: string; daily_rate: number }
@@ -188,22 +195,6 @@ const barChartOptions = {
                 <div>
                     <h1 class="text-lg font-semibold text-foreground">Tableau de bord</h1>
                     <p class="text-sm text-muted-foreground">Vue d'ensemble de votre activité</p>
-                </div>
-
-                <div class="rounded-lg border border-border bg-card p-5">
-                    <div class="flex items-start gap-4">
-                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10">
-                            <FolderKanban class="h-4 w-4 text-primary" />
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-foreground">{{ projects.length === 0 ? 'Créez votre premier projet' : 'Nouveau projet' }}</p>
-                            <p class="mt-0.5 text-sm text-muted-foreground">{{ projects.length === 0 ? 'Ajoutez un projet pour commencer à suivre votre activité. Vous pourrez créer un client en même temps.' : 'Ajoutez un nouveau projet à l\'un de vos clients.' }}</p>
-                            <a href="/dashboard/projects?open=1" class="mt-3 inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90">
-                                <Plus class="h-3.5 w-3.5" />
-                                {{ projects.length === 0 ? 'Créer un projet' : 'Nouveau projet' }}
-                            </a>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">

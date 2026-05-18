@@ -205,11 +205,11 @@ async function saveEdit() {
 </script>
 
 <template>
-    <div class="flex h-screen flex-col overflow-hidden bg-background">
+    <div class="flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden bg-background">
         <div class="flex flex-1 overflow-hidden">
             <main class="flex flex-1 flex-col overflow-hidden px-3 py-4 md:px-6 md:py-6">
 
-                <div class="mb-4 flex items-center justify-between">
+                <div class="mb-4 shrink-0 flex items-center justify-between">
                     <h2 class="text-sm font-semibold text-foreground">Compte-rendu d'activité</h2>
                     <div class="flex shrink-0 items-center gap-2">
                         <button type="button"
@@ -228,7 +228,8 @@ async function saveEdit() {
                     </div>
                 </div>
 
-                <div class="flex-1 overflow-auto rounded-md border border-border">
+                <div class="flex-1 min-h-0">
+                <div class="overflow-y-auto rounded-md border border-border max-h-full">
                     <table class="border-collapse" style="table-layout: fixed; width: max-content; min-width: 100%;">
                         <colgroup>
                             <col style="width: 160px; min-width: 160px;" />
@@ -242,16 +243,16 @@ async function saveEdit() {
                                 <th v-for="day in daysInMonth" :key="day.d"
                                     class="sticky top-0 z-10 border-b border-r border-border px-0 py-1.5 text-center"
                                     :class="[
-                                        holidays.has(day.dateStr) ? 'bg-destructive/10' : day.isWeekend ? 'bg-muted-foreground/10' : 'bg-background',
+                                        holidays.has(day.dateStr) || day.isWeekend ? 'bg-muted-foreground/10' : 'bg-background',
                                         day.dateStr === todayStr ? 'bg-primary/15!' : '',
                                     ]"
                                     :title="holidays.get(day.dateStr)">
                                     <div class="text-xs font-semibold leading-none"
-                                        :class="day.dateStr === todayStr ? 'text-primary' : holidays.has(day.dateStr) ? 'text-destructive' : 'text-foreground'">
+                                        :class="day.dateStr === todayStr ? 'text-primary' : 'text-foreground'">
                                         {{ day.d }}
                                     </div>
                                     <div class="mt-0.5 text-[10px] leading-none"
-                                        :class="day.dateStr === todayStr ? 'text-primary' : holidays.has(day.dateStr) ? 'text-destructive/70' : 'text-muted-foreground'">
+                                        :class="day.dateStr === todayStr ? 'text-primary' : 'text-muted-foreground'">
                                         {{ day.letter }}
                                     </div>
                                 </th>
@@ -278,7 +279,7 @@ async function saveEdit() {
                                     style="height: 52px;"
                                     :class="[
                                         project.is_owner ? 'cursor-pointer' : 'cursor-default',
-                                        !(reportByKey.get(`${project.id}:${day.dateStr}`)) && holidays.has(day.dateStr) ? 'bg-destructive/10' : '',
+                                        !(reportByKey.get(`${project.id}:${day.dateStr}`)) && holidays.has(day.dateStr) ? 'bg-muted-foreground/10' : '',
                                         !(reportByKey.get(`${project.id}:${day.dateStr}`)) && !holidays.has(day.dateStr) && day.isWeekend ? 'bg-muted-foreground/10' : '',
                                         (reportByKey.get(`${project.id}:${day.dateStr}`)?.day_coverage ?? 0) >= 100 ? 'bg-primary/25 hover:bg-primary/30' : '',
                                         (reportByKey.get(`${project.id}:${day.dateStr}`)?.day_coverage ?? 0) > 0 && (reportByKey.get(`${project.id}:${day.dateStr}`)?.day_coverage ?? 0) < 100 ? 'bg-primary/10 hover:bg-primary/15' : '',
@@ -314,28 +315,30 @@ async function saveEdit() {
                     </table>
                 </div>
 
-                <div class="mt-3 hidden items-center gap-5 sm:flex">
-                    <div class="flex items-center gap-1.5">
-                        <span class="h-3 w-3 rounded-sm border border-border bg-primary/25"></span>
-                        <span class="text-xs text-muted-foreground">1 jour</span>
+                </div><!-- end flex-1 min-h-0 -->
+                <div class="mt-auto shrink-0">
+                    <div class="pt-3 hidden items-center gap-5 sm:flex">
+                        <div class="flex items-center gap-1.5">
+                            <span class="h-3 w-3 rounded-sm border border-border bg-primary/25"></span>
+                            <span class="text-xs text-muted-foreground">1 jour</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="h-3 w-3 rounded-sm border border-border bg-primary/10"></span>
+                            <span class="text-xs text-muted-foreground">½ jour</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="h-3 w-3 rounded-sm border border-border bg-muted-foreground/10"></span>
+                            <span class="text-xs text-muted-foreground">Week-end</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="h-3 w-3 rounded-sm border border-border bg-muted-foreground/10"></span>
+                            <span class="text-xs text-muted-foreground">Jour férié</span>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="h-3 w-3 rounded-sm border border-border bg-primary/10"></span>
-                        <span class="text-xs text-muted-foreground">½ jour</span>
+                    <div class="pt-2 flex items-center justify-between border-t border-border md:hidden">
+                        <span class="text-sm text-muted-foreground">{{ fmtDays(totalDays) }} saisis</span>
+                        <span class="text-sm font-semibold text-foreground">{{ totalCa.toLocaleString('fr-FR') }} €</span>
                     </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="h-3 w-3 rounded-sm border border-border bg-muted-foreground/10"></span>
-                        <span class="text-xs text-muted-foreground">Week-end</span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <span class="h-3 w-3 rounded-sm border border-border bg-destructive/10"></span>
-                        <span class="text-xs text-muted-foreground">Jour férié</span>
-                    </div>
-                </div>
-
-                <div class="mt-2 flex items-center justify-between border-t border-border pt-2 md:hidden">
-                    <span class="text-sm text-muted-foreground">{{ fmtDays(totalDays) }} saisis</span>
-                    <span class="text-sm font-semibold text-foreground">{{ totalCa.toLocaleString('fr-FR') }} €</span>
                 </div>
             </main>
 

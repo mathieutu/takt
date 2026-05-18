@@ -166,6 +166,7 @@ watch(localProjectIds, (val) => {
 
 watch([localDateStart, localDateEnd], () => {
     if (localProjectIds.value.length > 0) scheduleApply()
+    else syncUrl()
 })
 
 function clearExport() {

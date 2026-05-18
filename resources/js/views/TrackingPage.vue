@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { Pencil } from 'lucide-vue-next'
 import Dialog from '../components/ui/Dialog.vue'
+import Select from '../components/ui/Select.vue'
 
 type ClientOption = { id: number; name: string; daily_rate: number }
 
@@ -149,8 +150,12 @@ async function saveBudget() {
     }
 }
 
-function selectClient(e: Event) {
-    const id = (e.target as HTMLSelectElement).value
+const clientOptions = computed(() =>
+    props.clients.map(c => ({ value: c.id, label: `${c.name} — ${c.daily_rate} €/j` }))
+)
+
+function selectClient(id: string | number | null) {
+    if (!id) return
     window.location.href = `/dashboard/tracking?client_id=${id}`
 }
 
@@ -200,7 +205,7 @@ function localMaxBudget(projectId: number): number | null {
 <template>
     <div class="flex min-h-screen flex-col bg-background">
         <main class="flex-1 px-6 py-8">
-            <div class="mx-auto max-w-6xl space-y-8">
+            <div class="mx-auto max-w-5xl space-y-6">
 
                 <!-- Header -->
                 <div>
@@ -211,16 +216,14 @@ function localMaxBudget(projectId: number): number | null {
                 <!-- Client dropdown -->
                 <div class="flex items-center gap-3">
                     <label class="text-sm font-medium text-foreground">Client</label>
-                    <select
-                        :value="selectedClientId ?? ''"
-                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                        @change="selectClient"
-                    >
-                        <option value="" disabled>Choisir un client…</option>
-                        <option v-for="c in clients" :key="c.id" :value="c.id">
-                            {{ c.name }} — {{ c.daily_rate }} €/j
-                        </option>
-                    </select>
+                    <div class="w-72">
+                        <Select
+                            :model-value="selectedClientId"
+                            :options="clientOptions"
+                            placeholder="Choisir un client…"
+                            @change="selectClient"
+                        />
+                    </div>
                 </div>
 
                 <!-- Empty states -->
@@ -232,7 +235,7 @@ function localMaxBudget(projectId: number): number | null {
                 </p>
 
                 <!-- Project cards -->
-                <div v-else class="space-y-8">
+                <div v-else class="space-y-6">
                     <div
                         v-for="project in localProjects"
                         :key="project.id"

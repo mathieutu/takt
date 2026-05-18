@@ -6,7 +6,6 @@ use App\Models\Account;
 use App\Models\BillingEntry;
 use App\Models\Client;
 use App\Models\Project;
-use App\Models\SharedClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,11 +17,7 @@ class TrackingController
     {
         $userId = Account::authenticated()->id;
 
-        $ownedClientIds  = Client::where('user_id', $userId)->pluck('id');
-        $sharedClientIds = SharedClient::where('account_id', $userId)->pluck('client_id');
-        $allClientIds    = $ownedClientIds->merge($sharedClientIds)->unique();
-
-        $clients = Client::whereIn('id', $allClientIds)
+        $clients = Client::where('user_id', $userId)
             ->orderBy('name')
             ->get(['id', 'name', 'daily_rate']);
 

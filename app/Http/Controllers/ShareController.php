@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Client;
+use App\Models\ActivityTime;
 use App\Models\Project;
 use App\Models\Share;
-use App\Models\SharedClient;
-use App\Models\SharedProject;
-use Auth;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ShareController
 {
@@ -19,28 +20,37 @@ class ShareController
         return response()->json(['url' => $share->url()]);
     }
 
-    public function generateForClient(Client $client): JsonResponse
+    public function apply(Share $share, Request $request)
     {
-        $share = $client->share();
+        if ($share->share_type !== 'projects') {
+            throw new NotFoundHttpException();
+        }
 
-        return response()->json(['url' => $share->url()]);
-    }
+        $project = Project::with('client')->find($share->share_id);
 
-    public function apply(Share $share)
-    {
-        $account_id = Auth::id();
+        if (!$project) {
+            throw new NotFoundHttpException();
+        }
 
-        $shared = match ($share->share_type) {
-            'projects' => SharedProject::firstOrCreate([
-                'account_id' => $account_id,
-                'project_id' => $share->share_id
-            ]),
-            'clients' => SharedClient::firstOrCreate([
-                'account_id' => $account_id,
-                'client_id' => $share->share_id
-            ]),
-        };
+        $fromParam = $request->query('from');
+        $currentDate = $fromParam ? Carbon::parse($fromParam) : Carbon::now();
 
-        return to_route('dashboard.projects');
+        $reports = ActivityTime::where('project_id', $project->id)->get();
+
+        return Inertia::render('SharedActivityReportPage', [
+            'projectName'  => $project->name,
+            'clientName'   => $project->client?->name ?? '',
+            'projectId'    => $project->id,
+            'currentYear'  => $currentDate->year,
+            'currentMonth' => $currentDate->month,
+            'reports'      => $reports->map(fn($r) => [
+                'id'           => $r->id,
+                'project_id'   => $r->project_id,
+                'start_date'   => $r->start_date->format('Y-m-d'),
+                'day_coverage' => $r->day_coverage ?? 0,
+                'label'        => $r->label ?? '',
+                'comments'     => $r->comments ?? '',
+            ])->values(),
+        ]);
     }
 }

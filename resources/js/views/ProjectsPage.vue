@@ -3,13 +3,13 @@ import { MoreVertical, Pencil, Plus, Share2, Trash2, Users } from 'lucide-vue-ne
 import { computed, onMounted, ref, watch } from 'vue'
 import Dialog from '../components/ui/Dialog.vue'
 import DropdownMenu from '../components/ui/DropdownMenu.vue'
+import Select from '../components/ui/Select.vue'
 
 type Client = {
     id: number
     name: string
     daily_rate: number
     is_owner: boolean
-    is_shared: boolean
 }
 
 type Project = {
@@ -50,7 +50,6 @@ const editingProject = ref<Project | null>(null)
 const deletingProject = ref<Project | null>(null)
 const deletingClient = ref<Client | null>(null)
 const sharingProject = ref<Project | null>(null)
-const sharingClient = ref<Client | null>(null)
 const shareUrl = ref('')
 const copied = ref(false)
 const shareLoading = ref(false)
@@ -149,27 +148,6 @@ async function openShare(project: Project) {
     shareLoading.value = true
     try {
         const res = await fetch(`${props.baseAction}/${project.id}/share`, {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': props.csrfToken, 'Accept': 'application/json' },
-        })
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const data = await res.json()
-        shareUrl.value = data.url
-    } catch (e) {
-        shareUrl.value = ''
-        console.error('Erreur lors de la génération du lien de partage', e)
-    } finally {
-        shareLoading.value = false
-    }
-}
-
-async function openShareClient(client: Client) {
-    sharingClient.value = client
-    shareUrl.value = ''
-    copied.value = false
-    shareLoading.value = true
-    try {
-        const res = await fetch(`/dashboard/clients/${client.id}/share`, {
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': props.csrfToken, 'Accept': 'application/json' },
         })
@@ -301,30 +279,8 @@ function copyShareUrl() {
                             </div>
                             <span class="text-sm text-foreground">{{ client.name }}</span>
                             <span class="text-xs text-muted-foreground">{{ client.daily_rate }} €/j</span>
-                            <span
-                                v-if="!client.is_owner"
-                                class="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700"
-                            >
-                                <Users class="h-3 w-3" />
-                                Partagé avec moi
-                            </span>
-                            <span
-                                v-else-if="client.is_shared"
-                                class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-                            >
-                                <Users class="h-3 w-3" />
-                                Partagé
-                            </span>
                         </div>
                         <div class="flex items-center gap-1">
-                            <button
-                                v-if="client.is_owner"
-                                type="button"
-                                class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                @click="openShareClient(client)"
-                            >
-                                <Share2 class="h-3.5 w-3.5" />
-                            </button>
                             <div class="flex items-center gap-1">
                             <button
                                 v-if="client.is_owner"
@@ -388,17 +344,15 @@ function copyShareUrl() {
 
                 <div class="flex flex-col gap-1.5">
                     <label class="text-sm font-medium text-foreground">Client</label>
-                    <select
+                    <Select
                         v-model="createForm.client_id"
                         name="client_id"
-                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                        :class="{ 'border-destructive focus:ring-destructive': fieldError('client_id') }"
-                    >
-                        <option value="new">+ Nouveau client</option>
-                        <optgroup v-if="clients.some(c => c.is_owner)" label="Clients existants">
-                            <option v-for="client in clients.filter(c => c.is_owner)" :key="client.id" :value="client.id">{{ client.name }}</option>
-                        </optgroup>
-                    </select>
+                        :options="[
+                            { value: 'new', label: '+ Nouveau client' },
+                            ...clients.filter(c => c.is_owner).map(c => ({ value: c.id, label: c.name, group: 'Clients existants' })),
+                        ]"
+                        :error="!!fieldError('client_id')"
+                    />
                     <p v-if="fieldError('client_id')" class="text-xs text-destructive">{{ fieldError('client_id') }}</p>
                 </div>
 
@@ -481,9 +435,11 @@ function copyShareUrl() {
                 <input type="hidden" name="_method" value="PUT" />
                 <div class="flex flex-col gap-1.5">
                     <label class="text-sm font-medium text-foreground">Client</label>
-                    <select v-model="editingProject.client_id" name="client_id" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring">
-                        <option v-for="client in clients.filter(c => c.is_owner)" :key="client.id" :value="client.id">{{ client.name }}</option>
-                    </select>
+                    <Select
+                        v-model="editingProject.client_id"
+                        name="client_id"
+                        :options="clients.filter(c => c.is_owner).map(c => ({ value: c.id, label: c.name }))"
+                    />
                 </div>
                 <div class="flex flex-col gap-1.5">
                     <label class="text-sm font-medium text-foreground">Nom du projet</label>
@@ -516,28 +472,6 @@ function copyShareUrl() {
             <p class="text-sm text-muted-foreground">
                 Copiez ce lien et envoyez-le à la personne avec qui vous souhaitez partager
                 <span class="font-medium text-foreground">{{ sharingProject?.name }}</span>.
-            </p>
-            <div class="mt-4 flex gap-2">
-                <input
-                    :value="shareLoading ? 'Chargement…' : shareUrl"
-                    readonly
-                    class="h-9 min-w-0 flex-1 rounded-md border border-input bg-muted px-3 text-sm text-foreground focus:outline-none"
-                />
-                <button
-                    type="button"
-                    :disabled="shareLoading || !shareUrl"
-                    class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                    @click="copyShareUrl"
-                >
-                    {{ copied ? 'Copié !' : 'Copier' }}
-                </button>
-            </div>
-        </Dialog>
-
-        <Dialog :open="sharingClient !== null" title="Partager le client" @close="sharingClient = null">
-            <p class="text-sm text-muted-foreground">
-                Copiez ce lien et envoyez-le à la personne avec qui vous souhaitez partager
-                <span class="font-medium text-foreground">{{ sharingClient?.name }}</span>.
             </p>
             <div class="mt-4 flex gap-2">
                 <input

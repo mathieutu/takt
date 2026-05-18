@@ -40,7 +40,6 @@ Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(functi
         Route::post('/', [ClientController::class, 'store'])->name('.store');
         Route::put('/{client}', [ClientController::class, 'update'])->name('.update');
         Route::delete('/{client}', [ClientController::class, 'destroy'])->name('.destroy');
-        Route::post('/{client}/share', [ShareController::class, 'generateForClient'])->name('.share');
     });
 
     Route::prefix('/projects')->name('.projects')->group(function () {
@@ -80,6 +79,6 @@ Route::prefix("/me")->name('account')->middleware('auth')->group(function () {
     Route::get('/logout', [AuthController::class, 'logout'])->name('.logout');
 });
 
-Route::prefix('/share')->name('share')->middleware('auth')->group(function () {
+Route::prefix('/share')->name('share')->group(function () {
     Route::get('/{share}', [ShareController::class, 'apply'])->name('.apply');
 });
