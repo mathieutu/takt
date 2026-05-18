@@ -123,12 +123,12 @@ async function clickDay(projectId: number, dateStr: string) {
 
     if (!existing) {
         const tempId = -Date.now()
-        localReports.value.push({ id: tempId, project_id: projectId, start_date: dateStr, day_coverage: 50, label: '', comments: '' })
+        localReports.value.push({ id: tempId, project_id: projectId, start_date: dateStr, day_coverage: 100, label: '', comments: '' })
         try {
             const res = await fetch(props.storeUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': props.csrfToken, 'Accept': 'application/json' },
-                body: JSON.stringify({ project_id: projectId, start_date: dateStr, day_coverage: 50 }),
+                body: JSON.stringify({ project_id: projectId, start_date: dateStr, day_coverage: 100 }),
             })
             if (res.ok) {
                 const created = await res.json()
@@ -137,7 +137,7 @@ async function clickDay(projectId: number, dateStr: string) {
                     id: created.id,
                     project_id: projectId,
                     start_date: (created.start_date ?? dateStr).slice(0, 10),
-                    day_coverage: created.day_coverage ?? 50,
+                    day_coverage: created.day_coverage ?? 100,
                     label: created.label ?? '',
                     comments: created.comments ?? '',
                 }
@@ -147,17 +147,17 @@ async function clickDay(projectId: number, dateStr: string) {
         } catch {
             localReports.value = localReports.value.filter(r => r.id !== tempId)
         }
-    } else if (existing.day_coverage < 100) {
+    } else if (existing.day_coverage > 50) {
         const idx = localReports.value.findIndex(r => r.id === existing.id)
-        if (idx !== -1) localReports.value[idx] = { ...localReports.value[idx], day_coverage: 100 }
+        if (idx !== -1) localReports.value[idx] = { ...localReports.value[idx], day_coverage: 50 }
         fetch(`${props.baseUrl}/${existing.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': props.csrfToken, 'Accept': 'application/json' },
-            body: JSON.stringify({ day_coverage: 100 }),
+            body: JSON.stringify({ day_coverage: 50 }),
         }).then(res => {
             if (!res.ok) {
                 const idx2 = localReports.value.findIndex(r => r.id === existing.id)
-                if (idx2 !== -1) localReports.value[idx2] = { ...localReports.value[idx2], day_coverage: 50 }
+                if (idx2 !== -1) localReports.value[idx2] = { ...localReports.value[idx2], day_coverage: 100 }
             }
         })
     } else {
