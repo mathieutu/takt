@@ -59,7 +59,7 @@ class ClientController
 
         $client->update($validated);
 
-        return redirect('/dashboard/projects');
+        return redirect()->back();
     }
 
     /**
@@ -72,6 +72,6 @@ class ClientController
         }
         $client->delete();
 
-        return redirect('/dashboard/projects');
+        return redirect()->back();
     }
 }

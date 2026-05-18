@@ -4,25 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Enums\AccountType;
 use App\Models\Account;
-use Auth;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rules\Password;
+use Inertia\Inertia;
 
 class SettingsController
 {
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit()
     {
-        return view('dashboard.singletons.settings', [
-            'account' => Account::authenticated()
+        $account = Account::authenticated()->load(['user', 'organization']);
+
+        return Inertia::render('SettingsPage', [
+            'account' => $this->serializeAccount($account),
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request)
     {
         $auth = Account::authenticated();
@@ -48,7 +43,6 @@ class SettingsController
             'password' => [
                 'nullable',
                 'confirmed',
-                // Password::min(8)->letters()->numbers()->symbols()
             ],
             'password_confirmation' => [
                 'required_with:password',
@@ -65,9 +59,21 @@ class SettingsController
             default => null,
         };
 
-        return view('dashboard.singletons.settings', [
-            'account' => $auth->fresh(['user', 'organization']),
-            'success' => true
-        ]);
+        return redirect()->route('dashboard.settings')->with('success', true);
+    }
+
+    private function serializeAccount(Account $account): array
+    {
+        return [
+            'email'        => $account->email,
+            'type'         => $account->type?->value,
+            'user'         => $account->user ? [
+                'first_name' => $account->user->first_name,
+                'last_name'  => $account->user->last_name,
+            ] : null,
+            'organization' => $account->organization ? [
+                'name' => $account->organization->name,
+            ] : null,
+        ];
     }
 }
