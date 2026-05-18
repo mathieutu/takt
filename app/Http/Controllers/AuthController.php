@@ -31,7 +31,7 @@ class AuthController
         Request::session()->invalidate();
         Request::session()->regenerateToken();
 
-        return to_route('account.logout');
+        return to_route('login');
     }
 
     public function login(\Illuminate\Http\Request $request)
