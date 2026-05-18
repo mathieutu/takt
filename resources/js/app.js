@@ -12,6 +12,10 @@ createInertiaApp({
         return page
     },
     setup({ el, App, props, plugin }) {
+        console.group('[Inertia] props')
+        console.log(JSON.parse(JSON.stringify(props)))
+        console.groupEnd()
+        console.log('[Inertia] HTML initial', el.outerHTML)
         createApp({ render: () => h(App, props) })
             .use(plugin)
             .mount(el)
