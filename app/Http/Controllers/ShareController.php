@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
 use App\Models\ActivityTime;
 use App\Models\Project;
 use App\Models\Share;
@@ -18,6 +19,17 @@ class ShareController
         $share = $project->share();
 
         return response()->json(['url' => $share->url()]);
+    }
+
+    public function revoke(Project $project): JsonResponse
+    {
+        if ($project->client->user_id !== Account::authenticated()->id) {
+            abort(403);
+        }
+
+        $project->sharer()->delete();
+
+        return response()->json(['success' => true]);
     }
 
     public function apply(Share $share, Request $request)

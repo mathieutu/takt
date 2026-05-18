@@ -105,7 +105,7 @@ class ProjectController
 
         $project->update($validated);
 
-        return to_route('dashboard.projects');
+        return redirect()->back();
     }
 
     public function destroy(Project $project)
@@ -116,6 +116,6 @@ class ProjectController
 
         $project->delete();
 
-        return to_route('dashboard.projects');
+        return redirect()->back();
     }
 }

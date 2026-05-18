@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { Bar } from 'vue-chartjs'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip } from 'chart.js'
-import { TrendingUp, Calendar, Users, FolderKanban } from 'lucide-vue-next'
+import { TrendingUp, Calendar, Users, FolderKanban, MoreVertical, Pencil, Share2, Trash2 } from 'lucide-vue-next'
 import Card from '../components/ui/Card.vue'
 import CardHeader from '../components/ui/CardHeader.vue'
 import CardTitle from '../components/ui/CardTitle.vue'
 import CardContent from '../components/ui/CardContent.vue'
 import Badge from '../components/ui/Badge.vue'
+import Dialog from '../components/ui/Dialog.vue'
+import DropdownMenu from '../components/ui/DropdownMenu.vue'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip)
 
@@ -19,14 +21,67 @@ onMounted(() => {
 })
 
 type Entry   = { id: number; projectId: number; date: string; value: number; label: string | null }
-type Client  = { id: number; name: string; daily_rate: number }
-type Project = { id: number; clientId: number; name: string; daily_rate: number | null }
+type Client  = { id: number; name: string; daily_rate: number; is_owner: boolean }
+type Project = { id: number; clientId: number; name: string; daily_rate: number | null; is_owner: boolean; is_shared: boolean; description: string }
+type ActiveProject = Project & { client: Client | undefined }
 
 const props = defineProps<{
-    entries:  Entry[]
-    clients:  Client[]
-    projects: Project[]
+    entries:   Entry[]
+    clients:   Client[]
+    projects:  Project[]
+    csrfToken?: string
 }>()
+
+const editingClient    = ref<Client | null>(null)
+const deletingClient   = ref<Client | null>(null)
+const editingProject   = ref<ActiveProject | null>(null)
+const deletingProject  = ref<ActiveProject | null>(null)
+const sharingProject   = ref<ActiveProject | null>(null)
+const shareUrl         = ref('')
+const copied           = ref(false)
+const shareLoading     = ref(false)
+
+const ownedClients = computed(() => props.clients.filter(c => c.is_owner))
+
+const editProjectClientRate = computed(() => {
+    if (!editingProject.value) return null
+    const client = props.clients.find(c => c.id === editingProject.value!.clientId)
+    return client?.daily_rate ?? null
+})
+
+async function openShare(project: ActiveProject) {
+    sharingProject.value = project
+    shareUrl.value = ''
+    copied.value = false
+    shareLoading.value = true
+    try {
+        const res = await fetch(`/dashboard/projects/${project.id}/share`, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': props.csrfToken ?? '', 'Accept': 'application/json' },
+        })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const data = await res.json()
+        shareUrl.value = data.url
+    } catch (e) {
+        shareUrl.value = ''
+        console.error('Erreur lors de la génération du lien de partage', e)
+    } finally {
+        shareLoading.value = false
+    }
+}
+
+function copyShareUrl() {
+    navigator.clipboard.writeText(shareUrl.value)
+    copied.value = true
+    setTimeout(() => { copied.value = false }, 2000)
+}
+
+function menuItemsProject(project: ActiveProject) {
+    return [
+        { label: 'Modifier', action: () => { editingProject.value = { ...project } } },
+        { label: 'Supprimer', action: () => { deletingProject.value = project }, variant: 'destructive' as const },
+    ]
+}
 
 const now          = new Date()
 const currentYear  = now.getFullYear()
@@ -301,9 +356,25 @@ const barChartOptions = {
                                          :class="avatarColor(client.name)">
                                         {{ initials(client.name) }}
                                     </div>
-                                    <div class="min-w-0">
+                                    <div class="min-w-0 flex-1">
                                         <p class="truncate text-sm font-medium text-foreground">{{ client.name }}</p>
                                         <p class="text-xs text-muted-foreground">{{ client.daily_rate }} €/j</p>
+                                    </div>
+                                    <div v-if="client.is_owner" class="flex shrink-0 items-center gap-1">
+                                        <button
+                                            type="button"
+                                            class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                            @click="editingClient = { ...client }"
+                                        >
+                                            <Pencil class="h-3.5 w-3.5" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                            @click="deletingClient = client"
+                                        >
+                                            <Trash2 class="h-3.5 w-3.5" />
+                                        </button>
                                     </div>
                                 </li>
                                 <li v-if="activeClients.length === 0" class="text-sm text-muted-foreground">
@@ -319,11 +390,30 @@ const barChartOptions = {
                             <ul class="space-y-3">
                                 <li v-for="project in activeProjects" :key="project.id"
                                     class="flex items-center justify-between gap-2">
-                                    <div class="min-w-0">
+                                    <div class="min-w-0 flex-1">
                                         <p class="truncate text-sm font-medium text-foreground">{{ project.name }}</p>
                                         <p class="text-xs text-muted-foreground">{{ project.client?.name ?? '—' }}</p>
                                     </div>
-                                    <Badge variant="secondary">Actif</Badge>
+                                    <div class="flex shrink-0 items-center gap-1">
+                                        <Badge variant="secondary">Actif</Badge>
+                                        <template v-if="project.is_owner">
+                                            <button
+                                                type="button"
+                                                class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                                @click="openShare(project)"
+                                            >
+                                                <Share2 class="h-4 w-4" />
+                                            </button>
+                                            <DropdownMenu :items="menuItemsProject(project)" class="shrink-0">
+                                                <button
+                                                    type="button"
+                                                    class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                                >
+                                                    <MoreVertical class="h-4 w-4" />
+                                                </button>
+                                            </DropdownMenu>
+                                        </template>
+                                    </div>
                                 </li>
                                 <li v-if="activeProjects.length === 0" class="text-sm text-muted-foreground">
                                     Aucun projet actif
@@ -336,4 +426,107 @@ const barChartOptions = {
             </div>
         </main>
     </div>
+
+    <Dialog :open="editingClient !== null" title="Modifier le client" @close="editingClient = null">
+        <form v-if="editingClient" :action="`/dashboard/clients/${editingClient.id}`" method="POST" class="space-y-4">
+            <input type="hidden" name="_token" :value="csrfToken" />
+            <input type="hidden" name="_method" value="PUT" />
+            <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-foreground">Nom</label>
+                <input v-model="editingClient.name" name="name" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-foreground">TJM (€/jour)</label>
+                <input v-model="editingClient.daily_rate" name="daily_rate" type="number" min="0" step="0.01" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="editingClient = null">Annuler</button>
+                <button type="submit" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">Enregistrer</button>
+            </div>
+        </form>
+    </Dialog>
+
+    <Dialog :open="deletingClient !== null" title="Supprimer le client" @close="deletingClient = null">
+        <p class="text-sm text-muted-foreground">
+            Supprimer <span class="font-medium text-foreground">{{ deletingClient?.name }}</span> ?
+            Tous les projets et saisies associés seront définitivement supprimés.
+        </p>
+        <form v-if="deletingClient" :action="`/dashboard/clients/${deletingClient.id}`" method="POST" class="mt-4 flex justify-end gap-2">
+            <input type="hidden" name="_token" :value="csrfToken" />
+            <input type="hidden" name="_method" value="DELETE" />
+            <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="deletingClient = null">Annuler</button>
+            <button type="submit" class="h-9 rounded-md bg-destructive px-4 text-sm font-medium text-white transition-colors hover:bg-destructive/90">Supprimer</button>
+        </form>
+    </Dialog>
+
+    <Dialog :open="editingProject !== null" title="Modifier le projet" @close="editingProject = null">
+        <form v-if="editingProject" :action="`/dashboard/projects/${editingProject.id}`" method="POST" class="space-y-4">
+            <input type="hidden" name="_token" :value="csrfToken" />
+            <input type="hidden" name="_method" value="PUT" />
+            <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-foreground">Client</label>
+                <select v-model="editingProject.clientId" name="client_id" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring">
+                    <option v-for="c in ownedClients" :key="c.id" :value="c.id">{{ c.name }}</option>
+                </select>
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-foreground">Nom du projet</label>
+                <input v-model="editingProject.name" name="name" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-foreground">Description <span class="font-normal text-muted-foreground">— optionnel</span></label>
+                <input v-model="editingProject.description" name="description" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+            </div>
+            <div class="flex flex-col gap-1.5">
+                <label class="text-sm font-medium text-foreground">TJM du projet <span class="font-normal text-muted-foreground">— optionnel</span></label>
+                <input
+                    v-model="editingProject.daily_rate"
+                    name="daily_rate"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    :placeholder="editProjectClientRate !== null ? `${editProjectClientRate} €/j (TJM client)` : 'Hérite du TJM client'"
+                    class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="editingProject = null">Annuler</button>
+                <button type="submit" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">Enregistrer</button>
+            </div>
+        </form>
+    </Dialog>
+
+    <Dialog :open="sharingProject !== null" title="Partager le projet" @close="sharingProject = null">
+        <p class="text-sm text-muted-foreground">
+            Copiez ce lien et envoyez-le à la personne avec qui vous souhaitez partager
+            <span class="font-medium text-foreground">{{ sharingProject?.name }}</span>.
+        </p>
+        <div class="mt-4 flex gap-2">
+            <input
+                :value="shareLoading ? 'Chargement…' : shareUrl"
+                readonly
+                class="h-9 min-w-0 flex-1 rounded-md border border-input bg-muted px-3 text-sm text-foreground focus:outline-none"
+            />
+            <button
+                type="button"
+                :disabled="shareLoading || !shareUrl"
+                class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                @click="copyShareUrl"
+            >
+                {{ copied ? 'Copié !' : 'Copier' }}
+            </button>
+        </div>
+    </Dialog>
+
+    <Dialog :open="deletingProject !== null" title="Supprimer le projet" @close="deletingProject = null">
+        <p class="text-sm text-muted-foreground">
+            Supprimer <span class="font-medium text-foreground">{{ deletingProject?.name }}</span> ? Cette action est irréversible.
+        </p>
+        <form v-if="deletingProject" :action="`/dashboard/projects/${deletingProject.id}`" method="POST" class="mt-4 flex justify-end gap-2">
+            <input type="hidden" name="_token" :value="csrfToken" />
+            <input type="hidden" name="_method" value="DELETE" />
+            <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="deletingProject = null">Annuler</button>
+            <button type="submit" class="h-9 rounded-md bg-destructive px-4 text-sm font-medium text-white transition-colors hover:bg-destructive/90">Supprimer</button>
+        </form>
+    </Dialog>
 </template>

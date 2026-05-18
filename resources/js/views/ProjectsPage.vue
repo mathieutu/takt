@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { MoreVertical, Pencil, Plus, Share2, Trash2, Users } from 'lucide-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
+import { router } from '@inertiajs/vue3'
 import Dialog from '../components/ui/Dialog.vue'
 import DropdownMenu from '../components/ui/DropdownMenu.vue'
 import Select from '../components/ui/Select.vue'
@@ -166,6 +167,21 @@ function copyShareUrl() {
     navigator.clipboard.writeText(shareUrl.value)
     copied.value = true
     setTimeout(() => { copied.value = false }, 2000)
+}
+
+async function revokeShare() {
+    if (!sharingProject.value) return
+    try {
+        await fetch(`${props.baseAction}/${sharingProject.value.id}/share`, {
+            method: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': props.csrfToken, 'Accept': 'application/json' },
+        })
+        sharingProject.value = null
+        shareUrl.value = ''
+        router.reload({ only: ['projects'] })
+    } catch (e) {
+        console.error('Erreur lors de la révocation du partage', e)
+    }
 }
 </script>
 
@@ -486,6 +502,15 @@ function copyShareUrl() {
                     @click="copyShareUrl"
                 >
                     {{ copied ? 'Copié !' : 'Copier' }}
+                </button>
+            </div>
+            <div v-if="shareUrl" class="mt-3 flex justify-end border-t border-border pt-3">
+                <button
+                    type="button"
+                    class="text-xs text-muted-foreground underline-offset-2 hover:text-destructive hover:underline transition-colors"
+                    @click="revokeShare"
+                >
+                    Désactiver ce lien de partage
                 </button>
             </div>
         </Dialog>

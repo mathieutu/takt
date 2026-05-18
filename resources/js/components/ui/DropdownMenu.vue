@@ -6,9 +6,15 @@ defineProps<{
 }>()
 
 const open = ref(false)
+const openUpward = ref(false)
 const containerRef = ref<HTMLElement | null>(null)
 
 function toggle() {
+  if (!open.value && containerRef.value) {
+    const rect = containerRef.value.getBoundingClientRect()
+    const spaceBelow = window.innerHeight - rect.bottom
+    openUpward.value = spaceBelow < 100
+  }
   open.value = !open.value
 }
 
@@ -37,7 +43,8 @@ onUnmounted(() => document.removeEventListener('mousedown', handleOutside))
     >
       <div
         v-if="open"
-        class="absolute right-0 top-full z-50 mt-1 min-w-35 overflow-hidden rounded-md border border-border bg-background shadow-md"
+        class="absolute right-0 z-50 min-w-35 overflow-hidden rounded-md border border-border bg-background shadow-md"
+        :class="openUpward ? 'bottom-full mb-1' : 'top-full mt-1'"
       >
         <button
           v-for="(item, i) in items"

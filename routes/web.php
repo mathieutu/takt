@@ -48,6 +48,7 @@ Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(functi
         Route::put('/{project}', [ProjectController::class, 'update'])->name('.update');
         Route::delete('/{project}', [ProjectController::class, 'destroy'])->name('.destroy');
         Route::post('/{project}/share', [ShareController::class, 'generate'])->name('.share');
+        Route::delete('/{project}/share', [ShareController::class, 'revoke'])->name('.share.revoke');
     });
 
     Route::prefix('/tracking')->name('.tracking')->group(function () {
