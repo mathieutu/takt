@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -153,18 +154,15 @@ class ExportsController
         ]);
     }
 
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $auth = Account::authenticated();
 
         [
-            'projects' => $projects,
+            'projects'     => $projects,
             'projects_ids' => $projects_ids,
-            'date_start' => $date_start,
-            'date_end' => $date_end
+            'date_start'   => $date_start,
+            'date_end'     => $date_end,
         ] = $this->getAllProjects($request);
 
         if ($request->expectsJson()) {
@@ -185,62 +183,38 @@ class ExportsController
             ]);
         }
 
-        return view('dashboard.singletons.exports', [
-            'auth' => $auth,
-            'user' => $auth->user,
-            'projects' => $projects,
-            'projects_ids' => array_map('intval', $projects_ids),
-            'date_start' => $date_start,
-            'date_end' => $date_end,
+        $allProjectsData = collect();
+        foreach ($auth->user?->clients ?? [] as $client) {
+            foreach ($client->projects as $project) {
+                $allProjectsData->push([
+                    'id'          => $project->id,
+                    'name'        => $project->name,
+                    'client_name' => $client->name,
+                ]);
+            }
+        }
+
+        return Inertia::render('ExportPage', [
+            'indexUrl'           => url('/dashboard/exports'),
+            'csvUrl'             => url('/dashboard/exports/csv'),
+            'allProjects'        => $allProjectsData->values(),
+            'selectedProjectIds' => array_map('intval', (array) $projects_ids),
+            'dateStart'          => $date_start ?? '',
+            'dateEnd'            => $date_end ?? '',
+            'projects'           => $projects->map(fn($p) => [
+                'id'          => $p->id,
+                'name'        => $p->name,
+                'client_name' => $p->client->name,
+                'daily_rate'  => (float) ($p->daily_rate ?? $p->client->daily_rate ?? 0),
+                'entries'     => $p->activityTimes->map(fn($a) => [
+                    'id'           => $a->id,
+                    'start_date'   => $a->start_date->format('Y-m-d'),
+                    'day_coverage' => (int) $a->day_coverage,
+                    'label'        => $a->label ?? '',
+                    'comments'     => $a->comments ?? '',
+                ])->values(),
+            ])->values(),
         ]);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
     }
 
     private function getAllProjects(Request $request): array

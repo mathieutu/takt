@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Client;
+use App\Models\Account;
+use App\Models\ActivityTime;
 use App\Models\Project;
 use App\Models\Share;
-use App\Models\SharedClient;
-use App\Models\SharedProject;
-use Auth;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ShareController
 {
@@ -19,28 +21,48 @@ class ShareController
         return response()->json(['url' => $share->url()]);
     }
 
-    public function generateForClient(Client $client): JsonResponse
+    public function revoke(Project $project): JsonResponse
     {
-        $share = $client->share();
+        if ($project->client->user_id !== Account::authenticated()->id) {
+            abort(403);
+        }
 
-        return response()->json(['url' => $share->url()]);
+        $project->sharer()->delete();
+
+        return response()->json(['success' => true]);
     }
 
-    public function apply(Share $share)
+    public function apply(Share $share, Request $request)
     {
-        $account_id = Auth::id();
+        if ($share->share_type !== 'projects') {
+            throw new NotFoundHttpException();
+        }
 
-        $shared = match ($share->share_type) {
-            'projects' => SharedProject::firstOrCreate([
-                'account_id' => $account_id,
-                'project_id' => $share->share_id
-            ]),
-            'clients' => SharedClient::firstOrCreate([
-                'account_id' => $account_id,
-                'client_id' => $share->share_id
-            ]),
-        };
+        $project = Project::with('client')->find($share->share_id);
 
-        return to_route('dashboard.projects');
+        if (!$project) {
+            throw new NotFoundHttpException();
+        }
+
+        $fromParam = $request->query('from');
+        $currentDate = $fromParam ? Carbon::parse($fromParam) : Carbon::now();
+
+        $reports = ActivityTime::where('project_id', $project->id)->get();
+
+        return Inertia::render('SharedActivityReportPage', [
+            'projectName'  => $project->name,
+            'clientName'   => $project->client?->name ?? '',
+            'projectId'    => $project->id,
+            'currentYear'  => $currentDate->year,
+            'currentMonth' => $currentDate->month,
+            'reports'      => $reports->map(fn($r) => [
+                'id'           => $r->id,
+                'project_id'   => $r->project_id,
+                'start_date'   => $r->start_date->format('Y-m-d'),
+                'day_coverage' => $r->day_coverage ?? 0,
+                'label'        => $r->label ?? '',
+                'comments'     => $r->comments ?? '',
+            ])->values(),
+        ]);
     }
 }

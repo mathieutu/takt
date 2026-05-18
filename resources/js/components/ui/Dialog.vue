@@ -1,14 +1,27 @@
 <script setup lang="ts">
-defineProps<{
+import { watch, onUnmounted } from 'vue'
+
+const props = defineProps<{
   open: boolean
   title?: string
   description?: string
   maxWidth?: string
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   close: []
 }>()
+
+function onKey(e: KeyboardEvent) {
+  if (e.key === 'Escape') emit('close')
+}
+
+watch(() => props.open, (val) => {
+  if (val) document.addEventListener('keydown', onKey)
+  else     document.removeEventListener('keydown', onKey)
+}, { immediate: true })
+
+onUnmounted(() => document.removeEventListener('keydown', onKey))
 </script>
 
 <template>
@@ -24,10 +37,9 @@ defineEmits<{
       <div
         v-if="open"
         class="fixed inset-0 z-50 flex items-center justify-center p-4"
-        @mousedown.self="$emit('close')"
       >
         <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/50" />
+        <div class="absolute inset-0 bg-black/50" @mousedown="$emit('close')" />
 
         <!-- Dialog panel -->
         <div

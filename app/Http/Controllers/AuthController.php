@@ -9,18 +9,29 @@ use App\Models\User;
 use Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Inertia\Inertia;
 use Request;
 
 class AuthController
 {
+    public function showLogin()
+    {
+        return Inertia::render('LoginPage');
+    }
+
+    public function showRegister()
+    {
+        return Inertia::render('RegisterPage');
+    }
+
     public function logout()
     {
         Auth::logout();
 
         Request::session()->invalidate();
         Request::session()->regenerateToken();
-        
-        return to_route('account.logout');
+
+        return to_route('login');
     }
 
     public function login(\Illuminate\Http\Request $request)
