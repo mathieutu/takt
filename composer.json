@@ -15,7 +15,9 @@
         "php": "^8.3",
         "inertiajs/inertia-laravel": "^3.1",
         "laravel/framework": "^12.0",
+        "laravel/socialite": "^5.27",
         "laravel/tinker": "^3.0",
+        "laravel/wayfinder": "^0.1.20",
         "phpoffice/phpspreadsheet": "^5.6"
     },
     "require-dev": {
@@ -23,6 +25,7 @@
         "fakerphp/faker": "^1.23",
         "laravel/boost": "^2.4",
         "laravel/pail": "^1.2.5",
+        "laravel/pao": "^1.0",
         "laravel/pint": "^1.27",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
@@ -51,7 +54,8 @@
             "yarn run build"
         ],
         "dev": [
-            "@php artisan serve --port 8084"
+            "Composer\\Config::disableProcessTimeout",
+            "XDEBUG_MODE=debug php artisan serve --port 8084 --ansi"
         ],
         "test": [
             "@php artisan config:clear --ansi",

@@ -10,26 +10,21 @@ import {
     Settings,
     LogOut,
 } from 'lucide-vue-next'
-
-interface User {
-    name: string
-    email: string
-    role: string
-}
+import type { AuthUser } from '../types'
 
 defineProps<{
-    user: User | null
+    user: AuthUser | null
 }>()
 
 const page = usePage()
 const path = computed(() => page.url.split('?')[0])
 
 const navItems = [
-    { route: '/dashboard',          label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
-    { route: '/dashboard/reports',  label: 'Saisie CRA',      icon: CalendarDays },
-    { route: '/dashboard/projects', label: 'Projets',         icon: FolderKanban },
-    { route: '/dashboard/tracking', label: 'Suivi facturation', icon: ReceiptText },
-    { route: '/dashboard/exports',  label: 'Export',          icon: Download },
+    { route: '/',          label: 'Tableau de bord',    icon: LayoutDashboard, exact: true },
+    { route: '/reports',   label: 'Saisie CRA',         icon: CalendarDays },
+    { route: '/projects',  label: 'Projets',            icon: FolderKanban },
+    { route: '/tracking',  label: 'Suivi facturation',  icon: ReceiptText },
+    { route: '/exports',   label: 'Export',             icon: Download },
 ]
 
 function isActive(item: (typeof navItems)[0]): boolean {
@@ -84,9 +79,9 @@ function hideTooltip() {
         <div class="mt-auto flex flex-col items-center gap-1">
             <div class="relative" @mouseenter="showTooltip('settings')" @mouseleave="hideTooltip">
                 <Link
-                    href="/dashboard/settings"
+                    href="/profile"
                     class="flex h-9 w-9 items-center justify-center rounded-md transition-colors"
-                    :class="path.startsWith('/dashboard/settings')
+                    :class="path.startsWith('/profile')
                         ? 'bg-primary text-primary-foreground'
                         : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
                 >
@@ -104,7 +99,7 @@ function hideTooltip() {
 
             <div class="relative" @mouseenter="showTooltip('logout')" @mouseleave="hideTooltip">
                 <Link
-                    href="/me/logout"
+                    href="/logout"
                     method="post"
                     as="button"
                     type="button"

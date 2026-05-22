@@ -2,24 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Account;
 use App\Models\ActivityTime;
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\SharedProject;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class DashboardController
 {
     public function index()
     {
-        $account = Account::authenticated();
+        $userId = Auth::id();
 
-        $clients = Client::where('user_id', $account->id)->get();
+        $clients = Client::where('user_id', $userId)->get();
         $clientIds = $clients->pluck('id')->all();
 
         $ownedProjectIds = Project::whereIn('client_id', $clientIds)->pluck('id');
-        $sharedProjectIds = SharedProject::where('account_id', $account->id)->pluck('project_id');
+        $sharedProjectIds = SharedProject::where('user_id', $userId)->pluck('project_id');
 
         $projects = Project::with('client', 'sharer')
             ->whereIn('id', $ownedProjectIds->merge($sharedProjectIds)->unique())
@@ -64,7 +64,6 @@ class DashboardController
             'entries' => $entries,
             'clients' => $clientsData,
             'projects' => $projectsData,
-            'csrfToken' => csrf_token(),
         ]);
     }
 }

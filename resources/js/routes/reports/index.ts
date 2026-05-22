@@ -1,0 +1,178 @@
+import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../wayfinder'
+/**
+* @see \App\Http\Controllers\ActivitiesController::update
+* @see app/Http/Controllers/ActivitiesController.php:79
+* @route '/reports/{report}'
+*/
+export const update = (args: { report: number | { id: number } } | [report: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+    url: update.url(args, options),
+    method: 'put',
+})
+
+update.definition = {
+    methods: ["put","patch"],
+    url: '/reports/{report}',
+} satisfies RouteDefinition<["put","patch"]>
+
+/**
+* @see \App\Http\Controllers\ActivitiesController::update
+* @see app/Http/Controllers/ActivitiesController.php:79
+* @route '/reports/{report}'
+*/
+update.url = (args: { report: number | { id: number } } | [report: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { report: args }
+    }
+
+    if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+        args = { report: args.id }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+            report: args[0],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        report: typeof args.report === 'object'
+        ? args.report.id
+        : args.report,
+    }
+
+    return update.definition.url
+            .replace('{report}', parsedArgs.report.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\ActivitiesController::update
+* @see app/Http/Controllers/ActivitiesController.php:79
+* @route '/reports/{report}'
+*/
+update.put = (args: { report: number | { id: number } } | [report: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
+    url: update.url(args, options),
+    method: 'put',
+})
+
+/**
+* @see \App\Http\Controllers\ActivitiesController::update
+* @see app/Http/Controllers/ActivitiesController.php:79
+* @route '/reports/{report}'
+*/
+update.patch = (args: { report: number | { id: number } } | [report: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'patch'> => ({
+    url: update.url(args, options),
+    method: 'patch',
+})
+
+/**
+* @see \App\Http\Controllers\ActivitiesController::destroy
+* @see app/Http/Controllers/ActivitiesController.php:88
+* @route '/reports/{report}'
+*/
+export const destroy = (args: { report: number | { id: number } } | [report: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+    url: destroy.url(args, options),
+    method: 'delete',
+})
+
+destroy.definition = {
+    methods: ["delete"],
+    url: '/reports/{report}',
+} satisfies RouteDefinition<["delete"]>
+
+/**
+* @see \App\Http\Controllers\ActivitiesController::destroy
+* @see app/Http/Controllers/ActivitiesController.php:88
+* @route '/reports/{report}'
+*/
+destroy.url = (args: { report: number | { id: number } } | [report: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { report: args }
+    }
+
+    if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+        args = { report: args.id }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+            report: args[0],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        report: typeof args.report === 'object'
+        ? args.report.id
+        : args.report,
+    }
+
+    return destroy.definition.url
+            .replace('{report}', parsedArgs.report.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\ActivitiesController::destroy
+* @see app/Http/Controllers/ActivitiesController.php:88
+* @route '/reports/{report}'
+*/
+destroy.delete = (args: { report: number | { id: number } } | [report: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
+    url: destroy.url(args, options),
+    method: 'delete',
+})
+
+/**
+* @see \App\Http\Controllers\ActivitiesController::index
+* @see app/Http/Controllers/ActivitiesController.php:32
+* @route '/reports'
+*/
+export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: index.url(options),
+    method: 'get',
+})
+
+index.definition = {
+    methods: ["get","head"],
+    url: '/reports',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\ActivitiesController::index
+* @see app/Http/Controllers/ActivitiesController.php:32
+* @route '/reports'
+*/
+index.url = (options?: RouteQueryOptions) => {
+    return index.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\ActivitiesController::index
+* @see app/Http/Controllers/ActivitiesController.php:32
+* @route '/reports'
+*/
+index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: index.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\ActivitiesController::index
+* @see app/Http/Controllers/ActivitiesController.php:32
+* @route '/reports'
+*/
+index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: index.url(options),
+    method: 'head',
+})
+
+const reports = {
+    update: Object.assign(update, update),
+    destroy: Object.assign(destroy, destroy),
+    index: Object.assign(index, index),
+}
+
+export default reports

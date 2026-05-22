@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
@@ -34,8 +33,6 @@ use Illuminate\Support\Carbon;
 class View extends Model
 {
     protected $table = 'views';
-
-    protected $fillable = ['title', 'project_id', 'start_date', 'end_date', 'comments'];
 
     protected function casts(): array
     {

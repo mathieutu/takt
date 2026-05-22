@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Account;
 use App\Models\ActivityTime;
 use App\Models\Project;
 use App\Models\Share;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -16,7 +16,7 @@ class ShareController
 {
     public function generate(Project $project): JsonResponse
     {
-        abort_unless($project->client->user_id === Account::authenticated()->id, 403);
+        abort_unless($project->client->user_id === Auth::id(), 403);
 
         $share = $project->share();
 
@@ -25,7 +25,7 @@ class ShareController
 
     public function revoke(Project $project): JsonResponse
     {
-        if ($project->client->user_id !== Account::authenticated()->id) {
+        if ($project->client->user_id !== Auth::id()) {
             abort(403);
         }
 

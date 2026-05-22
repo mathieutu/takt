@@ -2,45 +2,42 @@
 
 namespace App\Models;
 
+use Illuminate\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Foundation\Auth\Access\Authorizable;
+use Illuminate\Support\Carbon;
 
 /**
  * @property string $id
- * @property string $first_name
- * @property string $last_name
- * @property-read Account $account
+ * @property string $name
+ * @property string $email
+ * @property string|null $github_id
+ * @property string|null $password
+ * @property string|null $remember_token
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  * @property-read Collection<int, Client> $clients
  * @property-read int|null $clients_count
  * @property-read Collection<int, Project> $projects
  * @property-read int|null $projects_count
- *
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User query()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereFirstName($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLastName($value)
+ * @property-read Collection<int, SharedProject> $sharedProjects
+ * @property-read int|null $shared_projects_count
  *
  * @mixin \Eloquent
  */
-class User extends Model
+class User extends Model implements AuthenticatableContract, AuthorizableContract
 {
-    public $incrementing = false;
+    use Authenticatable, Authorizable;
+    use HasUuids;
 
-    public $keyType = 'string';
+    protected $guarded = [];
 
-    public $timestamps = false;
-
-    protected $fillable = ['first_name', 'last_name'];
-
-    public function account(): BelongsTo
-    {
-        return $this->belongsTo(Account::class, 'id', 'id');
-    }
+    protected $hidden = ['remember_token'];
 
     public function clients(): HasMany
     {
@@ -50,5 +47,10 @@ class User extends Model
     public function projects(): HasManyThrough
     {
         return $this->hasManyThrough(Project::class, Client::class, 'user_id', 'client_id');
+    }
+
+    public function sharedProjects(): HasMany
+    {
+        return $this->hasMany(SharedProject::class);
     }
 }

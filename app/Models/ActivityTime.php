@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
@@ -33,8 +32,6 @@ use Illuminate\Support\Carbon;
  */
 class ActivityTime extends Model
 {
-    protected $fillable = ['project_id', 'label', 'start_date', 'comments', 'day_coverage'];
-
     protected function casts(): array
     {
         return [

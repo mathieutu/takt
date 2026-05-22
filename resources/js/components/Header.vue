@@ -11,15 +11,10 @@ import {
     Settings,
     LogOut,
 } from 'lucide-vue-next'
-
-interface User {
-    name: string
-    email: string
-    role: string
-}
+import type { AuthUser } from '../types'
 
 const props = defineProps<{
-    user: User | null
+    user: AuthUser | null
 }>()
 
 const page = usePage()
@@ -31,10 +26,10 @@ const greeting = computed(() => {
 })
 
 const navItems = [
-    { route: '/dashboard',          label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
-    { route: '/dashboard/reports',  label: 'Saisie CRA',      icon: CalendarDays },
-    { route: '/dashboard/projects', label: 'Projets',         icon: FolderKanban },
-    { route: '/dashboard/exports',  label: 'Export',          icon: Download },
+    { route: '/',        label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
+    { route: '/reports', label: 'Saisie CRA',      icon: CalendarDays },
+    { route: '/projects', label: 'Projets',        icon: FolderKanban },
+    { route: '/exports',  label: 'Export',         icon: Download },
 ]
 
 function isActive(item: (typeof navItems)[0]): boolean {
@@ -111,9 +106,9 @@ const drawerOpen = ref(false)
 
                 <div class="flex flex-col gap-1 pt-4 border-t border-border">
                     <Link
-                        href="/dashboard/settings"
+                        href="/profile"
                         class="flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors"
-                        :class="path.startsWith('/dashboard/settings')
+                        :class="path.startsWith('/profile')
                             ? 'bg-primary text-primary-foreground'
                             : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
                         @click="drawerOpen = false"
@@ -122,7 +117,7 @@ const drawerOpen = ref(false)
                         Paramètres
                     </Link>
                     <Link
-                        href="/me/logout"
+                        href="/logout"
                         method="post"
                         as="button"
                         type="button"

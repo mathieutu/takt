@@ -1,8 +1,10 @@
 <?php
 
-use App\Models\Account;
+use App\Models\User;
 
 return [
+
+    'enabled' => env('AUTH_ENABLED', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -64,7 +66,7 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', Account::class),
+            'model' => env('AUTH_MODEL', User::class),
         ],
 
         // 'users' => [

@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Account;
 use App\Models\BillingEntry;
 use App\Models\Client;
 use App\Models\Project;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -15,7 +15,7 @@ class TrackingController
 {
     public function index(Request $request)
     {
-        $userId = Account::authenticated()->id;
+        $userId = Auth::id();
 
         $clients = Client::where('user_id', $userId)
             ->orderBy('name')
@@ -79,29 +79,25 @@ class TrackingController
             ])->values(),
             'selectedClientId' => $selectedClientId,
             'projects' => $projects->values(),
-            'billingStoreAction' => url('/dashboard/tracking/billing'),
-            'billingBaseAction' => url('/dashboard/tracking/billing'),
-            'projectBudgetBase' => url('/dashboard/tracking/projects'),
         ]);
     }
 
-    public function storeBilling(Request $request)
+    public function storeBilling(Request $request, Project $project)
     {
+        $project->load('client');
+        if ($project->client->user_id !== Auth::id()) {
+            throw new NotFoundHttpException;
+        }
+
         $validated = $request->validate([
-            'project_id' => 'required|integer|exists:projects,id',
             'month' => 'required|date_format:Y-m',
             'amount_billed' => 'required|numeric|min:0',
             'payment_date' => 'nullable|date',
             'notes' => 'nullable|string|max:1000',
         ]);
 
-        $project = Project::with('client')->findOrFail($validated['project_id']);
-        if ($project->client->user_id !== Account::authenticated()->id) {
-            throw new NotFoundHttpException;
-        }
-
         $entry = BillingEntry::updateOrCreate(
-            ['project_id' => $validated['project_id'], 'month' => $validated['month'].'-01'],
+            ['project_id' => $project->id, 'month' => $validated['month'].'-01'],
             [
                 'amount_billed' => $validated['amount_billed'],
                 'payment_date' => $validated['payment_date'] ?? null,
@@ -119,7 +115,7 @@ class TrackingController
 
     public function updateBilling(Request $request, BillingEntry $entry)
     {
-        if ($entry->project->client->user_id !== Account::authenticated()->id) {
+        if ($entry->project->client->user_id !== Auth::id()) {
             throw new NotFoundHttpException;
         }
 
@@ -139,9 +135,9 @@ class TrackingController
         ]);
     }
 
-    public function updateProjectBudget(Request $request, Project $project)
+    public function updateBudget(Request $request, Project $project)
     {
-        if ($project->client->user_id !== Account::authenticated()->id) {
+        if ($project->client->user_id !== Auth::id()) {
             throw new NotFoundHttpException;
         }
 

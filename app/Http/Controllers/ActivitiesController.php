@@ -2,75 +2,42 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Account;
+use App\Http\Requests\StoreActivityTimeRequest;
+use App\Http\Requests\UpdateActivityTimeRequest;
 use App\Models\ActivityTime;
 use App\Models\Project;
 use App\Models\SharedProject;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use Symfony\Component\HttpKernel\Exception\GoneHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Inertia\Response;
 
-class ActivitiesController
+class ActivitiesController extends Controller
 {
-    public function get(string|ActivityTime $report): ActivityTime
+    public function projectReports(Project $project, Request $request)
     {
-        $account_id = Account::authenticated()->id;
-
-        if ($report instanceof ActivityTime) {
-            if ($report->project->client->user_id != $account_id) {
-                $report = null;
-            }
-        } else {
-            $report = ActivityTime::whereRelation('project.client', 'user_id', $account_id)->find($report);
-        }
-
-        if (! $report) {
-            throw new NotFoundHttpException;
-        }
-
-        return $report;
-    }
-
-    public function find(Request $request)
-    {
-        $project =
-            Account::authenticated()
-                ->user
-                ->projects()
-                ->find($request->query('project_id'));
-
-        if (! $project) {
-            throw new NotFoundHttpException('You must provide a valid project id.');
-        }
+        Auth::user()->projects()->findOrFail($project->id);
 
         $from = $request->query('from');
         $to = $request->query('to');
 
-        return
-            $project->activityTimes()
-                ->when($from, fn (Builder $query) => (
-                    $query->where('start_date', '>=', $from)
-                ))
-                ->when($to, fn (Builder $query) => (
-                    $query->whereRaw('(start_date + day_coverage * 3600 * 24) <= ?', [$to])
-                ))
-                ->get();
+        return $project->activityTimes()
+            ->when($from, fn (Builder $query) => $query->where('start_date', '>=', $from))
+            ->when($to, fn (Builder $query) => $query->whereRaw('(start_date + day_coverage * 3600 * 24) <= ?', [$to]))
+            ->get();
     }
 
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $fromParam = $request->query('from');
         $currentDate = $fromParam ? Carbon::parse($fromParam) : Carbon::now();
 
-        $auth = Account::authenticated();
-        $userId = $auth->id;
+        $userId = Auth::id();
 
         $ownedIds = Project::whereHas('client', fn ($q) => $q->where('user_id', $userId))->pluck('id');
-        $sharedIds = SharedProject::where('account_id', $userId)->pluck('project_id');
+        $sharedIds = SharedProject::where('user_id', $userId)->pluck('project_id');
 
         $projects = Project::with('client')
             ->whereIn('id', $ownedIds->merge($sharedIds)->unique())
@@ -80,8 +47,6 @@ class ActivitiesController
         $reports = ActivityTime::whereIn('project_id', $projects->pluck('id'))->get();
 
         return Inertia::render('ActivityReportPage', [
-            'storeUrl' => url('/dashboard/reports'),
-            'baseUrl' => url('/dashboard/reports'),
             'currentYear' => $currentDate->year,
             'currentMonth' => $currentDate->month,
             'projects' => $projects->map(fn ($p) => [
@@ -97,82 +62,35 @@ class ActivitiesController
                 'id' => $r->id,
                 'project_id' => $r->project_id,
                 'start_date' => $r->start_date->format('Y-m-d'),
-                'day_coverage' => $r->day_coverage ?? 0,
+                'day_coverage' => $r->day_coverage,
                 'label' => $r->label ?? '',
                 'comments' => $r->comments ?? '',
             ])->values(),
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreActivityTimeRequest $request, Project $project): ActivityTime
     {
-        $validated = $request->validate([
-            'project_id' => [
-                'required',
-                Rule::exists('projects', 'id')
-                    ->whereIn(
-                        'id',
-                        Project::whereRelation('client', 'user_id', Account::authenticated()->id)->get('id')
-                    ),
-            ],
-            'label' => [
-                'nullable',
-                'string',
-            ],
-            'start_date' => [
-                'required',
-                'date',
-            ],
-            'day_coverage' => [
-                'nullable',
-                'integer',
-                'between:0,100',
-            ],
-            'comments' => [
-                'nullable',
-                'string',
-            ],
-        ]);
+        Auth::user()->projects()->findOrFail($project->id);
 
-        return ActivityTime::create($validated);
+        return ActivityTime::create(['project_id' => $project->id, ...$request->validated()]);
     }
 
-    public function update(Request $request, string $id)
+    public function update(UpdateActivityTimeRequest $request, ActivityTime $report): ActivityTime
     {
-        $validated = $request->validate([
-            'label' => [
-                'nullable',
-                'string',
-            ],
-            'start_date' => [
-                'nullable',
-                'date',
-            ],
-            'day_coverage' => [
-                'nullable',
-                'integer',
-                'between:0,100',
-            ],
-            'comments' => [
-                'nullable',
-                'string',
-            ],
-        ]);
+        $this->authorize('update', $report);
 
-        $model = $this->get($id);
-        $model->update($validated);
+        $report->update($request->validated());
 
-        return $model;
+        return $report;
     }
 
-    public function destroy(string $id)
+    public function destroy(ActivityTime $report): ActivityTime
     {
-        $model = $this->get($id);
+        $this->authorize('delete', $report);
 
-        if (! $model->delete()) {
-            throw new GoneHttpException("Unable to delete the report #$id");
-        }
+        $report->delete();
 
-        return $model;
+        return $report;
     }
 }

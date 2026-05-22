@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            AccountSeeder::class,       // Accounts + Users + Organizations
+            AccountSeeder::class,       // Users
             ClientSeeder::class,        // Clients (dépend de Users)
             ProjectSeeder::class,       // Projects (dépend de Clients)
             ActivityTimeSeeder::class,  // ActivityTimes (dépend de Projects)

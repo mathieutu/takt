@@ -2,37 +2,36 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Account;
+use App\Http\Requests\StoreProjectRequest;
+use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\SharedProject;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Inertia\Response;
 
-class ProjectController
+class ProjectController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
-        $userId = Account::authenticated()->id;
+        $userId = Auth::id();
 
         $ownedIds = Project::whereHas('client', fn ($q) => $q->where('user_id', $userId))->pluck('id');
-        $sharedIds = SharedProject::where('account_id', $userId)->pluck('project_id');
+        $sharedIds = SharedProject::where('user_id', $userId)->pluck('project_id');
 
-        $projects = Project::with('client', 'sharer')
+        $projects = Project::with('client')->withExists('sharer')
             ->whereIn('id', $ownedIds->merge($sharedIds)->unique())
             ->get()
             ->map(fn ($p) => tap($p, function ($p) use ($ownedIds) {
                 $p->is_owner = $ownedIds->contains($p->id);
-                $p->is_shared = $p->sharer !== null;
+                $p->is_shared = $p->sharer_exists;
             }));
 
         $clients = Client::where('user_id', $userId)->get();
 
         return Inertia::render('ProjectsPage', [
-            'storeAction' => route('dashboard.projects.store'),
-            'baseAction' => url('/dashboard/projects'),
             'projects' => $projects->map(fn ($p) => [
                 'id' => $p->id,
                 'name' => $p->name,
@@ -54,66 +53,37 @@ class ProjectController
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreProjectRequest $request): RedirectResponse
     {
-        $account = Account::authenticated();
+        $userId = Auth::id();
+        $data = $request->validated();
 
         if ($request->client_id === 'new') {
-            $clientData = $request->validate([
-                'client_name' => 'required|max:255',
-                'client_rate' => 'required|numeric|min:0',
-            ]);
-
             $client = Client::create([
-                'name' => $clientData['client_name'],
-                'daily_rate' => $clientData['client_rate'],
-                'user_id' => $account->id,
+                'name' => $data['client_name'],
+                'daily_rate' => $data['client_rate'],
+                'user_id' => $userId,
             ]);
-
-            $request->merge(['client_id' => $client->id]);
+            $data['client_id'] = $client->id;
         }
 
-        $project = $request->validate([
-            'name' => 'required|max:255',
-            'description' => 'nullable|max:255',
-            'daily_rate' => 'nullable|numeric|min:0',
-            'client_id' => [
-                'required',
-                Rule::exists('clients', 'id')->where('user_id', $account->id),
-            ],
-        ]);
+        Project::create($data);
 
-        Project::create($project);
-
-        return to_route('dashboard.projects');
+        return to_route('projects.index');
     }
 
-    public function update(Request $request, Project $project)
+    public function update(UpdateProjectRequest $request, Project $project): RedirectResponse
     {
-        if ($project->client->user_id !== Account::authenticated()->id) {
-            throw new NotFoundHttpException;
-        }
+        $this->authorize('update', $project);
 
-        $validated = $request->validate([
-            'name' => 'required|max:255',
-            'description' => 'nullable|max:255',
-            'daily_rate' => 'nullable|numeric|min:0',
-            'client_id' => [
-                'required',
-                Rule::exists('clients', 'id')->where('user_id', Account::authenticated()->id),
-            ],
-        ]);
-
-        $project->update($validated);
+        $project->update($request->validated());
 
         return redirect()->back();
     }
 
-    public function destroy(Project $project)
+    public function destroy(Project $project): RedirectResponse
     {
-        if ($project->client->user_id !== Account::authenticated()->id) {
-            throw new NotFoundHttpException;
-        }
+        $this->authorize('delete', $project);
 
         $project->delete();
 

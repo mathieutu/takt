@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Account;
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -16,7 +16,7 @@ class ExportsController
 {
     public function exportCsv(Request $request)
     {
-        Account::authenticated();
+        Auth::user();
 
         ['projects' => $projects] = $this->getAllProjects($request);
 
@@ -68,7 +68,7 @@ class ExportsController
 
     public function exportXlsx(Request $request)
     {
-        Account::authenticated();
+        Auth::user();
 
         ['projects' => $projects] = $this->getAllProjects($request);
 
@@ -158,7 +158,7 @@ class ExportsController
 
     public function index(Request $request)
     {
-        $auth = Account::authenticated();
+        $auth = Auth::user();
 
         [
             'projects' => $projects,
@@ -186,7 +186,7 @@ class ExportsController
         }
 
         $allProjectsData = collect();
-        foreach ($auth->user?->clients ?? [] as $client) {
+        foreach ($auth->clients ?? [] as $client) {
             foreach ($client->projects as $project) {
                 $allProjectsData->push([
                     'id' => $project->id,
@@ -197,8 +197,6 @@ class ExportsController
         }
 
         return Inertia::render('ExportPage', [
-            'indexUrl' => url('/dashboard/exports'),
-            'csvUrl' => url('/dashboard/exports/csv'),
             'allProjects' => $allProjectsData->values(),
             'selectedProjectIds' => array_map('intval', (array) $projects_ids),
             'dateStart' => $date_start ?? '',

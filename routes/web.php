@@ -1,85 +1,63 @@
 <?php
 
-use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ActivitiesController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExportsController;
 use App\Http\Controllers\ProjectController;
-use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ShareController;
 use App\Http\Controllers\TrackingController;
+use App\Http\Controllers\UserController;
 
-Route::redirect('/', '/dashboard');
+Route::middleware('guest')->group(function () {
+    Route::get('login', [AuthController::class, 'show'])->name('login');
 
-Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(function () {
-    Route::get('/', [DashboardController::class, 'index']);
+    if (config('auth.enabled')) {
+        Route::get('login/redirect', [AuthController::class, 'redirect'])->name('login.redirect');
+        Route::get('login/callback', [AuthController::class, 'callback'])->name('login.callback');
+    } else {
+        Route::post('login/disabled', [AuthController::class, 'disabled'])->name('login.disabled');
+    }
+});
 
-    Route::prefix('/settings')->name('.settings')->group(function () {
-        Route::get('/', [SettingsController::class, 'edit']);
-        Route::put('/', [SettingsController::class, 'update']);
-    });
+Route::middleware('auth')->group(function () {
+    Route::match(['post', 'get'], 'logout', [AuthController::class, 'logout'])->name('logout');
+});
 
-    Route::name('.activity_reports.')->group(function () {
-        Route::resource(
-            'reports',
-            ActivitiesController::class
-        )
-            ->names('')
-            ->except([
-                'edit',
-                'show',
-                'create',
-            ]);
+Route::middleware('auth')->group(function () {
+    Route::get('/', [DashboardController::class, 'index'])->name('home');
 
-        Route::get('/reports/{report}', [ActivitiesController::class, 'get'])->name('get');
-    });
+    Route::get('profile', [UserController::class, 'edit'])->name('profile');
+    Route::put('profile', [UserController::class, 'update'])->name('profile.update');
+    Route::delete('profile', [UserController::class, 'destroy'])->name('profile.destroy');
 
-    Route::prefix('/clients')->name('.clients')->group(function () {
-        Route::post('/', [ClientController::class, 'store'])->name('.store');
-        Route::put('/{client}', [ClientController::class, 'update'])->name('.update');
-        Route::delete('/{client}', [ClientController::class, 'destroy'])->name('.destroy');
-    });
+    // Clients
+    Route::apiResource('clients', ClientController::class)->only(['store', 'update', 'destroy']);
 
-    Route::prefix('/projects')->name('.projects')->group(function () {
-        Route::get('/', [ProjectController::class, 'index']);
-        Route::post('/', [ProjectController::class, 'store'])->name('.store');
-        Route::put('/{project}', [ProjectController::class, 'update'])->name('.update');
-        Route::delete('/{project}', [ProjectController::class, 'destroy'])->name('.destroy');
-        Route::post('/{project}/share', [ShareController::class, 'generate'])->name('.share');
-        Route::delete('/{project}/share', [ShareController::class, 'revoke'])->name('.share.revoke');
-    });
+    // Projects + sous-ressources
+    Route::apiResource('projects', ProjectController::class)->except(['show']);
+    Route::apiResource('projects.reports', ActivitiesController::class)
+        ->only(['store', 'update', 'destroy'])
+        ->shallow();
+    Route::get('projects/{project}/reports', [ActivitiesController::class, 'projectReports'])->name('projects.reports.index');
+    Route::post('projects/{project}/billing', [TrackingController::class, 'storeBilling'])->name('projects.billing.store');
+    Route::put('projects/{project}/budget', [TrackingController::class, 'updateBudget'])->name('projects.budget');
 
-    Route::prefix('/tracking')->name('.tracking')->group(function () {
-        Route::get('/', [TrackingController::class, 'index'])->name('.index');
-        Route::post('/billing', [TrackingController::class, 'storeBilling'])->name('.billing.store');
-        Route::put('/billing/{entry}', [TrackingController::class, 'updateBilling'])->name('.billing.update');
-        Route::put('/projects/{project}/max-budget', [TrackingController::class, 'updateProjectBudget'])->name('.project.budget');
-    });
+    Route::post('projects/{project}/share', [ShareController::class, 'generate'])->name('projects.share');
+    Route::delete('projects/{project}/share', [ShareController::class, 'revoke'])->name('projects.share.revoke');
 
-    Route::prefix('/exports')->name('.exports.')->group(function () {
+    // Billing (shallow - pas besoin du project pour update)
+    Route::put('billing/{entry}', [TrackingController::class, 'updateBilling'])->name('billing.update');
+
+    // Pages
+    Route::get('reports', [ActivitiesController::class, 'index'])->name('reports.index');
+    Route::get('tracking', [TrackingController::class, 'index'])->name('tracking.index');
+    Route::prefix('exports')->name('exports.')->group(function () {
         Route::get('/', [ExportsController::class, 'index'])->name('index');
-        Route::get('/csv', [ExportsController::class, 'exportCsv'])->name('csv');
-        Route::get('/xlsx', [ExportsController::class, 'exportXlsx'])->name('xlsx');
+        Route::get('csv', [ExportsController::class, 'exportCsv'])->name('csv');
+        Route::get('xlsx', [ExportsController::class, 'exportXlsx'])->name('xlsx');
     });
 });
 
-Route::prefix('/login')->name('login')->middleware('guest')->group(function () {
-    Route::get('/', [AuthController::class, 'showLogin']);
-    Route::post('/', [AuthController::class, 'login'])->middleware('throttle:5,1');
-});
-
-Route::prefix('/register')->name('register')->middleware('guest')->group(function () {
-    Route::get('/', [AuthController::class, 'showRegister']);
-    Route::post('/', [AuthController::class, 'register'])->middleware('throttle:5,1');
-});
-
-Route::prefix('/me')->name('account')->middleware('auth')->group(function () {
-    Route::delete('/', [AccountController::class, 'delete'])->name('.delete');
-    Route::post('/logout', [AuthController::class, 'logout'])->name('.logout');
-});
-
-Route::prefix('/share')->name('share')->group(function () {
-    Route::get('/{share}', [ShareController::class, 'apply'])->name('.apply');
-});
+Route::get('share/{share}', [ShareController::class, 'apply'])->name('share.apply');

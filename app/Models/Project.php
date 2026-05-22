@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
@@ -26,7 +25,7 @@ use Illuminate\Support\Carbon;
  * @property-read Client $client
  * @property-read Collection<int, SharedProject> $shared
  * @property-read int|null $shared_count
- * @property-read Collection<int, Account> $sharedTo
+ * @property-read Collection<int, User> $sharedTo
  * @property-read int|null $shared_to_count
  * @property-read Share|null $sharer
  * @property-read Collection<int, View> $vues
@@ -48,8 +47,6 @@ use Illuminate\Support\Carbon;
  */
 class Project extends Model
 {
-    protected $fillable = ['name', 'client_id', 'daily_rate', 'description', 'max_budget'];
-
     protected function casts(): array
     {
         return [
@@ -80,7 +77,7 @@ class Project extends Model
 
     public function sharedTo(): HasManyThrough
     {
-        return $this->hasManyThrough(Account::class, SharedProject::class, 'project_id', 'id', 'id', 'account_id');
+        return $this->hasManyThrough(User::class, SharedProject::class, 'project_id', 'id', 'id', 'user_id');
     }
 
     public function billingEntries(): HasMany
