@@ -21,13 +21,13 @@ class TrackingController
             ->orderBy('name')
             ->get(['id', 'name', 'daily_rate']);
 
-        $projects         = collect();
+        $projects = collect();
         $selectedClientId = $request->query('client_id') ? (int) $request->query('client_id') : null;
 
         if ($selectedClientId) {
             $client = $clients->firstWhere('id', $selectedClientId);
             if (! $client) {
-                throw new NotFoundHttpException();
+                throw new NotFoundHttpException;
             }
 
             $projectsList = Project::where('client_id', $client->id)
@@ -49,100 +49,100 @@ class TrackingController
                         $entry = $billingByMonth->get($month);
 
                         return [
-                            'month'            => $month,
-                            'days_worked'      => round($activities->sum('day_coverage') / 100, 2),
+                            'month' => $month,
+                            'days_worked' => round($activities->sum('day_coverage') / 100, 2),
                             'billing_entry_id' => $entry?->id,
-                            'amount_billed'    => $entry ? (float) $entry->amount_billed : 0.0,
-                            'payment_date'     => $entry?->payment_date?->format('Y-m-d'),
-                            'notes'            => $entry?->notes,
+                            'amount_billed' => $entry ? (float) $entry->amount_billed : 0.0,
+                            'payment_date' => $entry?->payment_date?->format('Y-m-d'),
+                            'notes' => $entry?->notes,
                         ];
                     })
                     ->sortKeys()
                     ->values();
 
                 $projects->push([
-                    'id'          => $project->id,
-                    'name'        => $project->name,
-                    'daily_rate'  => $rate,
-                    'max_budget'  => $project->max_budget !== null ? (float) $project->max_budget : null,
+                    'id' => $project->id,
+                    'name' => $project->name,
+                    'daily_rate' => $rate,
+                    'max_budget' => $project->max_budget !== null ? (float) $project->max_budget : null,
                     'client_name' => $client->name,
-                    'months'      => $months,
+                    'months' => $months,
                 ]);
             }
         }
 
         return Inertia::render('TrackingPage', [
-            'clients'            => $clients->map(fn($c) => [
-                'id'         => $c->id,
-                'name'       => $c->name,
+            'clients' => $clients->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
                 'daily_rate' => (float) $c->daily_rate,
             ])->values(),
-            'selectedClientId'   => $selectedClientId,
-            'projects'           => $projects->values(),
+            'selectedClientId' => $selectedClientId,
+            'projects' => $projects->values(),
             'billingStoreAction' => url('/dashboard/tracking/billing'),
-            'billingBaseAction'  => url('/dashboard/tracking/billing'),
-            'projectBudgetBase'  => url('/dashboard/tracking/projects'),
+            'billingBaseAction' => url('/dashboard/tracking/billing'),
+            'projectBudgetBase' => url('/dashboard/tracking/projects'),
         ]);
     }
 
     public function storeBilling(Request $request)
     {
         $validated = $request->validate([
-            'project_id'    => 'required|integer|exists:projects,id',
-            'month'         => 'required|date_format:Y-m',
+            'project_id' => 'required|integer|exists:projects,id',
+            'month' => 'required|date_format:Y-m',
             'amount_billed' => 'required|numeric|min:0',
-            'payment_date'  => 'nullable|date',
-            'notes'         => 'nullable|string|max:1000',
+            'payment_date' => 'nullable|date',
+            'notes' => 'nullable|string|max:1000',
         ]);
 
         $project = Project::with('client')->findOrFail($validated['project_id']);
         if ($project->client->user_id !== Account::authenticated()->id) {
-            throw new NotFoundHttpException();
+            throw new NotFoundHttpException;
         }
 
         $entry = BillingEntry::updateOrCreate(
             ['project_id' => $validated['project_id'], 'month' => $validated['month'].'-01'],
             [
                 'amount_billed' => $validated['amount_billed'],
-                'payment_date'  => $validated['payment_date'] ?? null,
-                'notes'         => $validated['notes'] ?? null,
+                'payment_date' => $validated['payment_date'] ?? null,
+                'notes' => $validated['notes'] ?? null,
             ]
         );
 
         return response()->json([
-            'id'            => $entry->id,
+            'id' => $entry->id,
             'amount_billed' => (float) $entry->amount_billed,
-            'payment_date'  => $entry->payment_date?->format('Y-m-d'),
-            'notes'         => $entry->notes,
+            'payment_date' => $entry->payment_date?->format('Y-m-d'),
+            'notes' => $entry->notes,
         ]);
     }
 
     public function updateBilling(Request $request, BillingEntry $entry)
     {
         if ($entry->project->client->user_id !== Account::authenticated()->id) {
-            throw new NotFoundHttpException();
+            throw new NotFoundHttpException;
         }
 
         $validated = $request->validate([
             'amount_billed' => 'required|numeric|min:0',
-            'payment_date'  => 'nullable|date',
-            'notes'         => 'nullable|string|max:1000',
+            'payment_date' => 'nullable|date',
+            'notes' => 'nullable|string|max:1000',
         ]);
 
         $entry->update($validated);
 
         return response()->json([
-            'id'            => $entry->id,
+            'id' => $entry->id,
             'amount_billed' => (float) $entry->amount_billed,
-            'payment_date'  => $entry->payment_date?->format('Y-m-d'),
-            'notes'         => $entry->notes,
+            'payment_date' => $entry->payment_date?->format('Y-m-d'),
+            'notes' => $entry->notes,
         ]);
     }
 
     public function updateProjectBudget(Request $request, Project $project)
     {
         if ($project->client->user_id !== Account::authenticated()->id) {
-            throw new NotFoundHttpException();
+            throw new NotFoundHttpException;
         }
 
         $validated = $request->validate([

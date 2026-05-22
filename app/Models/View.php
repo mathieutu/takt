@@ -4,17 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
  * @property string $title
  * @property int $project_id
- * @property \Illuminate\Support\Carbon $start_date
- * @property \Illuminate\Support\Carbon $end_date
+ * @property Carbon $start_date
+ * @property Carbon $end_date
  * @property string|null $comments
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Project $project
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Project $project
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|View newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|View newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|View query()
@@ -26,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|View whereStartDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|View whereTitle($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|View whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
 class View extends Model

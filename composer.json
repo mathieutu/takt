@@ -51,8 +51,7 @@
             "yarn run build"
         ],
         "dev": [
-            "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1 --timeout=0\" \"yarn run dev\" --names=server,queue,logs,vite --kill-others"
+            "@php artisan serve --port 8084"
         ],
         "test": [
             "@php artisan config:clear --ansi",

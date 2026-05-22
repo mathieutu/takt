@@ -11,9 +11,9 @@ return new class extends Migration
         Schema::create('billing_entries', function (Blueprint $table) {
             $table->id();
             $table->foreignId('project_id')
-                  ->constrained('projects')
-                  ->cascadeOnDelete()
-                  ->cascadeOnUpdate();
+                ->constrained('projects')
+                ->cascadeOnDelete()
+                ->cascadeOnUpdate();
             $table->date('month'); // stored as YYYY-MM-01
             $table->decimal('amount_billed', 10, 2)->default(0);
             $table->date('payment_date')->nullable();

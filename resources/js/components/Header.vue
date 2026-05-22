@@ -123,7 +123,7 @@ const drawerOpen = ref(false)
                     </Link>
                     <Link
                         href="/me/logout"
-                        method="get"
+                        method="post"
                         as="button"
                         type="button"
                         class="flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors text-muted-foreground hover:bg-red-50 hover:text-destructive"

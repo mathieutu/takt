@@ -30,7 +30,7 @@ Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(functi
             ->except([
                 'edit',
                 'show',
-                'create'
+                'create',
             ]);
 
         Route::get('/reports/{report}', [ActivitiesController::class, 'get'])->name('get');
@@ -59,25 +59,25 @@ Route::prefix('/dashboard')->name('dashboard')->middleware('auth')->group(functi
     });
 
     Route::prefix('/exports')->name('.exports.')->group(function () {
+        Route::get('/', [ExportsController::class, 'index'])->name('index');
         Route::get('/csv', [ExportsController::class, 'exportCsv'])->name('csv');
         Route::get('/xlsx', [ExportsController::class, 'exportXlsx'])->name('xlsx');
-        Route::resource('/', ExportsController::class);
     });
 });
 
 Route::prefix('/login')->name('login')->middleware('guest')->group(function () {
     Route::get('/', [AuthController::class, 'showLogin']);
-    Route::post('/', [AuthController::class, 'login']);
+    Route::post('/', [AuthController::class, 'login'])->middleware('throttle:5,1');
 });
 
 Route::prefix('/register')->name('register')->middleware('guest')->group(function () {
     Route::get('/', [AuthController::class, 'showRegister']);
-    Route::post('/', [AuthController::class, 'register']);
+    Route::post('/', [AuthController::class, 'register'])->middleware('throttle:5,1');
 });
 
-Route::prefix("/me")->name('account')->middleware('auth')->group(function () {
+Route::prefix('/me')->name('account')->middleware('auth')->group(function () {
     Route::delete('/', [AccountController::class, 'delete'])->name('.delete');
-    Route::get('/logout', [AuthController::class, 'logout'])->name('.logout');
+    Route::post('/logout', [AuthController::class, 'logout'])->name('.logout');
 });
 
 Route::prefix('/share')->name('share')->group(function () {

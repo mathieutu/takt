@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('shares', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('share_type');
-            $table->integer('share_id');
+            $table->unsignedBigInteger('share_id');
             $table->unique(['share_type', 'share_id']);
             $table->timestamp('created_at');
         });

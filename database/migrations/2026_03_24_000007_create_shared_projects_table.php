@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::create('shared_projects', function (Blueprint $table) {
             $table->id();
-            $table->uuid('account_id');
+            $table->uuid('account_id')->index();
             $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete()->cascadeOnUpdate();
-            $table->timestamp('created_at');
+            $table->timestamp('created_at')->useCurrent();
 
             $table->foreign('account_id')->references('id')->on('accounts')->cascadeOnDelete()->cascadeOnUpdate();
         });

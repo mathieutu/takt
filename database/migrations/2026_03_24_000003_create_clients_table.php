@@ -11,8 +11,8 @@ return new class extends Migration
         Schema::create('clients', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->integer('daily_rate');
-            $table->uuid('user_id');
+            $table->unsignedInteger('daily_rate');
+            $table->uuid('user_id')->index();
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnUpdate()->cascadeOnDelete();

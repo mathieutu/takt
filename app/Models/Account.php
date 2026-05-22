@@ -3,16 +3,13 @@
 namespace App\Models;
 
 use App\Enums\AccountType;
-use Auth;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Models\Contracts\HasName;
-use Filament\Panel;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Str;
-use function Pest\Laravel\instance;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * @property string $id
@@ -20,12 +17,13 @@ use function Pest\Laravel\instance;
  * @property string $email
  * @property string $password
  * @property string|null $remember_token
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Organization|null $organization
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SharedProject> $sharedProjects
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Organization|null $organization
+ * @property-read Collection<int, SharedProject> $sharedProjects
  * @property-read int|null $shared_projects_count
- * @property-read \App\Models\User|null $user
+ * @property-read User|null $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Account newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Account newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Account query()
@@ -36,14 +34,12 @@ use function Pest\Laravel\instance;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Account whereRememberToken($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Account whereType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Account whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
 class Account extends Authenticatable
 {
     use HasUuids;
-
-    public $incrementing = false;
-    public $keyType = 'string';
 
     protected $fillable = ['type', 'email', 'password'];
 
@@ -53,7 +49,7 @@ class Account extends Authenticatable
     {
         return [
             'password' => 'hashed',
-            'type' => AccountType::class
+            'type' => AccountType::class,
         ];
     }
 
@@ -75,11 +71,12 @@ class Account extends Authenticatable
     public static function authenticated(): ?Account
     {
         $auth = Auth::user();
-        if (!$auth) {
+        if (! $auth) {
             return null;
         }
 
-        assert($auth instanceof Account, "Auth is not an Account");
+        assert($auth instanceof Account, 'Auth is not an Account');
+
         return $auth;
     }
 }

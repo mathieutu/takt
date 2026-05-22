@@ -11,8 +11,8 @@ return new class extends Migration
         Schema::create('shared_clients', function (Blueprint $table) {
             $table->id();
             $table->foreignId('client_id')->constrained('clients')->cascadeOnDelete()->cascadeOnUpdate();
-            $table->uuid('account_id');
-            $table->timestamp('created_at');
+            $table->uuid('account_id')->index();
+            $table->timestamp('created_at')->useCurrent();
 
             $table->foreign('account_id')->references('id')->on('accounts')->cascadeOnDelete()->cascadeOnUpdate();
         });

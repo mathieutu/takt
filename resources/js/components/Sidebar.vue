@@ -105,7 +105,7 @@ function hideTooltip() {
             <div class="relative" @mouseenter="showTooltip('logout')" @mouseleave="hideTooltip">
                 <Link
                     href="/me/logout"
-                    method="get"
+                    method="post"
                     as="button"
                     type="button"
                     class="flex h-9 w-9 items-center justify-center rounded-md transition-colors text-muted-foreground hover:bg-red-50 hover:text-destructive"

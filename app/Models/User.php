@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,24 +12,30 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @property string $id
  * @property string $first_name
  * @property string $last_name
- * @property-read \App\Models\Account $account
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Client> $clients
+ * @property-read Account $account
+ * @property-read Collection<int, Client> $clients
  * @property-read int|null $clients_count
+ * @property-read Collection<int, Project> $projects
+ * @property-read int|null $projects_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereFirstName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLastName($value)
+ *
  * @mixin \Eloquent
  */
 class User extends Model
 {
     public $incrementing = false;
+
     public $keyType = 'string';
+
     public $timestamps = false;
 
-    protected $fillable = ['id', 'first_name', 'last_name'];
+    protected $fillable = ['first_name', 'last_name'];
 
     public function account(): BelongsTo
     {
@@ -37,7 +44,7 @@ class User extends Model
 
     public function clients(): HasMany
     {
-        return $this->hasMany(Client::class, 'user_id', 'id');
+        return $this->hasMany(Client::class);
     }
 
     public function projects(): HasManyThrough

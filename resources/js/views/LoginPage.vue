@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3'
+import { Link, useForm } from '@inertiajs/vue3'
 
 defineOptions({ layout: null })
 
@@ -68,7 +68,7 @@ function submit() {
 
                 <p class="mt-4 text-center text-sm text-muted-foreground">
                     Pas encore de compte ?
-                    <a href="/register" class="font-medium text-primary hover:underline">Créer un compte</a>
+                    <Link href="/register" class="font-medium text-primary hover:underline">Créer un compte</Link>
                 </p>
             </div>
         </div>

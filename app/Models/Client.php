@@ -2,20 +2,23 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
  * @property string $name
- * @property float $daily_rate
- * @property int $user_id
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Project> $projects
+ * @property int $daily_rate
+ * @property string $user_id
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Collection<int, Project> $projects
  * @property-read int|null $projects_count
- * @property-read \App\Models\User $user
+ * @property-read User $user
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Client newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Client newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Client query()
@@ -25,11 +28,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Client whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Client whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Client whereUserId($value)
+ *
  * @mixin \Eloquent
  */
 class Client extends Model
 {
     protected $fillable = ['name', 'daily_rate', 'user_id'];
+
+    protected function casts(): array
+    {
+        return ['daily_rate' => 'integer'];
+    }
 
     public function user(): BelongsTo
     {
@@ -40,5 +49,4 @@ class Client extends Model
     {
         return $this->hasMany(Project::class);
     }
-
 }

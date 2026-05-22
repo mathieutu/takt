@@ -3,22 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Models\Account;
-use Auth;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AccountController
 {
     public function delete()
     {
-        (new AuthController)->logout();
-
         Account::authenticated()->delete();
+
+        Auth::logout();
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
 
         return redirect('/')->with([
             'toast' => [
                 'type' => 'success',
-                'message' => "Ton compte vient d'être supprimé."
-            ]
+                'message' => "Ton compte vient d'être supprimé.",
+            ],
         ]);
     }
 }

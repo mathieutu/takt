@@ -4,14 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
  * @property string $account_id
  * @property int $project_id
- * @property \Illuminate\Support\Carbon $created_at
- * @property-read \App\Models\Account $account
- * @property-read \App\Models\Project $project
+ * @property Carbon $created_at
+ * @property-read Account $account
+ * @property-read Project $project
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SharedProject newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SharedProject newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SharedProject query()
@@ -19,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SharedProject whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SharedProject whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SharedProject whereProjectId($value)
+ *
  * @mixin \Eloquent
  */
 class SharedProject extends Model

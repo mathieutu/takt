@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { router } from '@inertiajs/vue3'
 import { Pencil } from 'lucide-vue-next'
 import Dialog from '../components/ui/Dialog.vue'
 import Select from '../components/ui/Select.vue'
@@ -156,7 +157,7 @@ const clientOptions = computed(() =>
 
 function selectClient(id: string | number | null) {
     if (!id) return
-    window.location.href = `/dashboard/tracking?client_id=${id}`
+    router.visit('/dashboard/tracking', { data: { client_id: id } })
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

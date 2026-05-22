@@ -26,13 +26,13 @@ class SettingsController
             AccountType::User => [
                 'user' => [
                     'first_name' => 'required',
-                    'last_name' => 'required'
-                ]
+                    'last_name' => 'required',
+                ],
             ],
             AccountType::Organization => [
                 'organization' => [
-                    'name' => 'required'
-                ]
+                    'name' => 'required',
+                ],
             ],
 
             default => []
@@ -46,17 +46,20 @@ class SettingsController
             ],
             'password_confirmation' => [
                 'required_with:password',
-                'same:password'
+                'same:password',
             ],
-            ...$extra_entries
+            ...$extra_entries,
         ]);
 
-        $auth->update($entries);
+        $authUpdate = ['email' => $entries['email']];
+        if (! empty($entries['password'])) {
+            $authUpdate['password'] = $entries['password'];
+        }
+        $auth->update($authUpdate);
 
         match ($auth->type) {
             AccountType::User => $auth->user()->updateOrCreate(['id' => $auth->id], $entries['user']),
             AccountType::Organization => $auth->organization()->updateOrCreate(['id' => $auth->id], $entries['organization']),
-            default => null,
         };
 
         return redirect()->route('dashboard.settings')->with('success', true);
@@ -65,11 +68,11 @@ class SettingsController
     private function serializeAccount(Account $account): array
     {
         return [
-            'email'        => $account->email,
-            'type'         => $account->type?->value,
-            'user'         => $account->user ? [
+            'email' => $account->email,
+            'type' => $account->type?->value,
+            'user' => $account->user ? [
                 'first_name' => $account->user->first_name,
-                'last_name'  => $account->user->last_name,
+                'last_name' => $account->user->last_name,
             ] : null,
             'organization' => $account->organization ? [
                 'name' => $account->organization->name,

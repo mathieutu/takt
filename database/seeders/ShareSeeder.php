@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Client;
+use App\Models\Project;
 use App\Models\Share;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -20,9 +22,9 @@ class ShareSeeder extends Seeder
 
         foreach ($sharedProjects as $data) {
             Share::create([
-                'id'         => Str::random(32),
-                'share_type' => \App\Models\Project::class,
-                'share_id'   => $data['share_id'],
+                'id' => Str::random(32),
+                'share_type' => Project::class,
+                'share_id' => $data['share_id'],
             ]);
         }
 
@@ -34,9 +36,9 @@ class ShareSeeder extends Seeder
 
         foreach ($sharedClients as $data) {
             Share::create([
-                'id'         => Str::random(32),
-                'share_type' => \App\Models\Client::class,
-                'share_id'   => $data['share_id'],
+                'id' => Str::random(32),
+                'share_type' => Client::class,
+                'share_id' => $data['share_id'],
             ]);
         }
     }

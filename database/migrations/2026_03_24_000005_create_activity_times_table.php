@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete()->cascadeOnUpdate();
             $table->string('label')->nullable();
-            $table->date('start_date');
+            $table->date('start_date')->index();
             $table->longText('comments')->nullable();
             $table->unsignedInteger('day_coverage')->default(0);
             $table->timestamps();

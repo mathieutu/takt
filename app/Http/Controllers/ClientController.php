@@ -32,12 +32,12 @@ class ClientController
 
         $client = $request->validate([
             'name' => 'required|max:255',
-            'daily_rate' => 'required|between:0,100'
+            'daily_rate' => 'required|between:0,100',
         ]);
 
         Client::create([
             ...$client,
-            'user_id' => $user->id
+            'user_id' => $user->id,
         ]);
 
         return redirect('/dashboard/projects?open=1');
@@ -50,11 +50,11 @@ class ClientController
     {
         $validated = $request->validate([
             'name' => 'required|max:255',
-            'daily_rate' => 'required'
+            'daily_rate' => 'required',
         ]);
 
         if ($client->user_id !== Account::authenticated()->id) {
-            throw new AccessDeniedException();
+            throw new AccessDeniedException;
         }
 
         $client->update($validated);
@@ -68,7 +68,7 @@ class ClientController
     public function destroy(Client $client)
     {
         if ($client->user_id !== Account::authenticated()->id) {
-            throw new NotFoundHttpException();
+            throw new NotFoundHttpException;
         }
         $client->delete();
 

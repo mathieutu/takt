@@ -24,7 +24,7 @@ class DashboardController
         $projects = Project::with('client', 'sharer')
             ->whereIn('id', $ownedProjectIds->merge($sharedProjectIds)->unique())
             ->get()
-            ->map(fn($p) => tap($p, function ($p) use ($ownedProjectIds) {
+            ->map(fn ($p) => tap($p, function ($p) use ($ownedProjectIds) {
                 $p->is_owner = $ownedProjectIds->contains($p->id);
                 $p->is_shared = $p->sharer !== null;
             }));
@@ -35,36 +35,36 @@ class DashboardController
             ->orderBy('start_date', 'desc')
             ->get();
 
-        $entries = $activityTimes->map(fn($e) => [
-            'id'        => $e->id,
+        $entries = $activityTimes->map(fn ($e) => [
+            'id' => $e->id,
             'projectId' => $e->project_id,
-            'date'      => $e->start_date->format('Y-m-d'),
-            'value'     => round(($e->day_coverage ?? 0) / 100, 2),
-            'label'     => $e->label,
+            'date' => $e->start_date->format('Y-m-d'),
+            'value' => round(($e->day_coverage ?? 0) / 100, 2),
+            'label' => $e->label,
         ])->values();
 
-        $clientsData = $clients->map(fn($c) => [
-            'id'         => $c->id,
-            'name'       => $c->name,
+        $clientsData = $clients->map(fn ($c) => [
+            'id' => $c->id,
+            'name' => $c->name,
             'daily_rate' => (float) $c->daily_rate,
-            'is_owner'   => true,
+            'is_owner' => true,
         ])->values();
 
-        $projectsData = $projects->map(fn($p) => [
-            'id'          => $p->id,
-            'clientId'    => $p->client_id,
-            'name'        => $p->name,
+        $projectsData = $projects->map(fn ($p) => [
+            'id' => $p->id,
+            'clientId' => $p->client_id,
+            'name' => $p->name,
             'description' => $p->description ?? '',
-            'daily_rate'  => $p->daily_rate !== null ? (float) $p->daily_rate : null,
-            'is_owner'    => $p->is_owner,
-            'is_shared'   => $p->is_shared,
+            'daily_rate' => $p->daily_rate !== null ? (float) $p->daily_rate : null,
+            'is_owner' => $p->is_owner,
+            'is_shared' => $p->is_shared,
         ])->values();
 
         return Inertia::render('DashboardPage', [
-            'entries'    => $entries,
-            'clients'    => $clientsData,
-            'projects'   => $projectsData,
-            'csrfToken'  => csrf_token(),
+            'entries' => $entries,
+            'clients' => $clientsData,
+            'projects' => $projectsData,
+            'csrfToken' => csrf_token(),
         ]);
     }
 }

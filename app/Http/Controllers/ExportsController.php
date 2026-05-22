@@ -7,10 +7,10 @@ use App\Models\Project;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ExportsController
 {
@@ -20,11 +20,11 @@ class ExportsController
 
         ['projects' => $projects] = $this->getAllProjects($request);
 
-        $filename = 'export_' . now()->format('Y-m-d') . '.csv';
+        $filename = 'export_'.now()->format('Y-m-d').'.csv';
 
         $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $callback = function () use ($projects) {
@@ -40,6 +40,7 @@ class ExportsController
 
                 if ($project->activityTimes->isEmpty()) {
                     fputcsv($handle, [$project->name, $project->client->name, '', '', '', '', '', ''], ';');
+
                     continue;
                 }
 
@@ -71,7 +72,7 @@ class ExportsController
 
         ['projects' => $projects] = $this->getAllProjects($request);
 
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Export');
 
@@ -79,10 +80,10 @@ class ExportsController
         $sheet->fromArray($headers, null, 'A1');
 
         $headerStyle = [
-            'font'      => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
-            'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1E3A5F']],
+            'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF1E3A5F']],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
-            'borders'   => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFCBD5E0']]],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FFCBD5E0']]],
         ];
         $sheet->getStyle('A1:H1')->applyFromArray($headerStyle);
         $sheet->getRowDimension(1)->setRowHeight(22);
@@ -94,6 +95,7 @@ class ExportsController
             if ($project->activityTimes->isEmpty()) {
                 $sheet->fromArray([$project->name, $project->client->name, '', '', '', '', '', ''], null, "A{$row}");
                 $row++;
+
                 continue;
             }
 
@@ -124,16 +126,16 @@ class ExportsController
                 $row++;
             }
 
-            $projectRange = "A{$projectStartRow}:B" . ($row - 1);
+            $projectRange = "A{$projectStartRow}:B".($row - 1);
             $sheet->getStyle($projectRange)->getFill()
                 ->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFEFF6FF');
             $sheet->getStyle($projectRange)->getFont()->setBold(true);
-            $sheet->getStyle("A{$projectStartRow}:A" . ($row - 1))->getBorders()->getLeft()
+            $sheet->getStyle("A{$projectStartRow}:A".($row - 1))->getBorders()->getLeft()
                 ->setBorderStyle(Border::BORDER_MEDIUM)->getColor()->setARGB('FF3B82F6');
         }
 
         if ($row > 2) {
-            $sheet->getStyle("A1:H" . ($row - 1))->getBorders()->getAllBorders()
+            $sheet->getStyle('A1:H'.($row - 1))->getBorders()->getAllBorders()
                 ->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFD1D5DB');
         }
 
@@ -141,16 +143,16 @@ class ExportsController
             $sheet->getColumnDimension($col)->setWidth($width);
         }
 
-        $filename = 'export_' . now()->format('Y-m-d') . '.xlsx';
-        $writer   = new Xlsx($spreadsheet);
+        $filename = 'export_'.now()->format('Y-m-d').'.xlsx';
+        $writer = new Xlsx($spreadsheet);
 
         ob_start();
         $writer->save('php://output');
         $content = ob_get_clean();
 
         return response($content, 200, [
-            'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ]);
     }
 
@@ -159,25 +161,25 @@ class ExportsController
         $auth = Account::authenticated();
 
         [
-            'projects'     => $projects,
+            'projects' => $projects,
             'projects_ids' => $projects_ids,
-            'date_start'   => $date_start,
-            'date_end'     => $date_end,
+            'date_start' => $date_start,
+            'date_end' => $date_end,
         ] = $this->getAllProjects($request);
 
         if ($request->expectsJson()) {
             return response()->json([
-                'projects' => $projects->map(fn($p) => [
-                    'id'          => $p->id,
-                    'name'        => $p->name,
+                'projects' => $projects->map(fn ($p) => [
+                    'id' => $p->id,
+                    'name' => $p->name,
                     'client_name' => $p->client->name,
-                    'daily_rate'  => (float) ($p->daily_rate ?? $p->client->daily_rate ?? 0),
-                    'entries'     => $p->activityTimes->map(fn($a) => [
-                        'id'           => $a->id,
-                        'start_date'   => $a->start_date->format('Y-m-d'),
+                    'daily_rate' => (float) ($p->daily_rate ?? $p->client->daily_rate ?? 0),
+                    'entries' => $p->activityTimes->map(fn ($a) => [
+                        'id' => $a->id,
+                        'start_date' => $a->start_date->format('Y-m-d'),
                         'day_coverage' => (int) $a->day_coverage,
-                        'label'        => $a->label ?? '',
-                        'comments'     => $a->comments ?? '',
+                        'label' => $a->label ?? '',
+                        'comments' => $a->comments ?? '',
                     ])->values(),
                 ])->values(),
             ]);
@@ -187,31 +189,31 @@ class ExportsController
         foreach ($auth->user?->clients ?? [] as $client) {
             foreach ($client->projects as $project) {
                 $allProjectsData->push([
-                    'id'          => $project->id,
-                    'name'        => $project->name,
+                    'id' => $project->id,
+                    'name' => $project->name,
                     'client_name' => $client->name,
                 ]);
             }
         }
 
         return Inertia::render('ExportPage', [
-            'indexUrl'           => url('/dashboard/exports'),
-            'csvUrl'             => url('/dashboard/exports/csv'),
-            'allProjects'        => $allProjectsData->values(),
+            'indexUrl' => url('/dashboard/exports'),
+            'csvUrl' => url('/dashboard/exports/csv'),
+            'allProjects' => $allProjectsData->values(),
             'selectedProjectIds' => array_map('intval', (array) $projects_ids),
-            'dateStart'          => $date_start ?? '',
-            'dateEnd'            => $date_end ?? '',
-            'projects'           => $projects->map(fn($p) => [
-                'id'          => $p->id,
-                'name'        => $p->name,
+            'dateStart' => $date_start ?? '',
+            'dateEnd' => $date_end ?? '',
+            'projects' => $projects->map(fn ($p) => [
+                'id' => $p->id,
+                'name' => $p->name,
                 'client_name' => $p->client->name,
-                'daily_rate'  => (float) ($p->daily_rate ?? $p->client->daily_rate ?? 0),
-                'entries'     => $p->activityTimes->map(fn($a) => [
-                    'id'           => $a->id,
-                    'start_date'   => $a->start_date->format('Y-m-d'),
+                'daily_rate' => (float) ($p->daily_rate ?? $p->client->daily_rate ?? 0),
+                'entries' => $p->activityTimes->map(fn ($a) => [
+                    'id' => $a->id,
+                    'start_date' => $a->start_date->format('Y-m-d'),
                     'day_coverage' => (int) $a->day_coverage,
-                    'label'        => $a->label ?? '',
-                    'comments'     => $a->comments ?? '',
+                    'label' => $a->label ?? '',
+                    'comments' => $a->comments ?? '',
                 ])->values(),
             ])->values(),
         ]);
@@ -226,8 +228,12 @@ class ExportsController
         $projects = $projects_ids
             ? Project::whereIn('id', $projects_ids)
                 ->with(['client', 'activityTimes' => function ($q) use ($date_start, $date_end) {
-                    if ($date_start) $q->whereDate('start_date', '>=', $date_start);
-                    if ($date_end) $q->whereDate('start_date', '<=', $date_end);
+                    if ($date_start) {
+                        $q->whereDate('start_date', '>=', $date_start);
+                    }
+                    if ($date_end) {
+                        $q->whereDate('start_date', '<=', $date_end);
+                    }
                     $q->orderBy('start_date');
                 }])
                 ->get()

@@ -4,14 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
  * @property int $client_id
  * @property string $account_id
- * @property \Illuminate\Support\Carbon $created_at
- * @property-read \App\Models\Account $account
- * @property-read \App\Models\Client $client
+ * @property Carbon $created_at
+ * @property-read Account $account
+ * @property-read Client $client
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SharedClient newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SharedClient newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SharedClient query()
@@ -19,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SharedClient whereClientId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SharedClient whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SharedClient whereId($value)
+ *
  * @mixin \Eloquent
  */
 class SharedClient extends Model

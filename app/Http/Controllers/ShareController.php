@@ -16,6 +16,8 @@ class ShareController
 {
     public function generate(Project $project): JsonResponse
     {
+        abort_unless($project->client->user_id === Account::authenticated()->id, 403);
+
         $share = $project->share();
 
         return response()->json(['url' => $share->url()]);
@@ -35,13 +37,13 @@ class ShareController
     public function apply(Share $share, Request $request)
     {
         if ($share->share_type !== 'projects') {
-            throw new NotFoundHttpException();
+            throw new NotFoundHttpException;
         }
 
         $project = Project::with('client')->find($share->share_id);
 
-        if (!$project) {
-            throw new NotFoundHttpException();
+        if (! $project) {
+            throw new NotFoundHttpException;
         }
 
         $fromParam = $request->query('from');
@@ -50,18 +52,18 @@ class ShareController
         $reports = ActivityTime::where('project_id', $project->id)->get();
 
         return Inertia::render('SharedActivityReportPage', [
-            'projectName'  => $project->name,
-            'clientName'   => $project->client?->name ?? '',
-            'projectId'    => $project->id,
-            'currentYear'  => $currentDate->year,
+            'projectName' => $project->name,
+            'clientName' => $project->client?->name ?? '',
+            'projectId' => $project->id,
+            'currentYear' => $currentDate->year,
             'currentMonth' => $currentDate->month,
-            'reports'      => $reports->map(fn($r) => [
-                'id'           => $r->id,
-                'project_id'   => $r->project_id,
-                'start_date'   => $r->start_date->format('Y-m-d'),
+            'reports' => $reports->map(fn ($r) => [
+                'id' => $r->id,
+                'project_id' => $r->project_id,
+                'start_date' => $r->start_date->format('Y-m-d'),
                 'day_coverage' => $r->day_coverage ?? 0,
-                'label'        => $r->label ?? '',
-                'comments'     => $r->comments ?? '',
+                'label' => $r->label ?? '',
+                'comments' => $r->comments ?? '',
             ])->values(),
         ]);
     }

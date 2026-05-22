@@ -6,11 +6,12 @@ use App\Enums\AccountType;
 use App\Models\Account;
 use App\Models\Organization;
 use App\Models\User;
-use Auth;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
-use Request;
 
 class AuthController
 {
@@ -24,79 +25,70 @@ class AuthController
         return Inertia::render('RegisterPage');
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
         Auth::logout();
 
-        Request::session()->invalidate();
-        Request::session()->regenerateToken();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return to_route('login');
     }
 
-    public function login(\Illuminate\Http\Request $request)
+    public function login(Request $request)
     {
         $credentials = $request->validate([
             'email' => 'required|email',
-            'password' => 'required'
+            'password' => 'required',
         ]);
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
             return redirect()->intended(route('dashboard.settings'))->with([
-                'from' => 'login'
+                'from' => 'login',
             ]);
         }
 
         return back()->withErrors([
-            '#global' => __('auth.failed')
+            '#global' => __('auth.failed'),
         ]);
     }
 
-    public function register(\Illuminate\Http\Request $request)
+    public function register(Request $request)
     {
-        $validated = $request->validate([
-            'email' => 'required|email|unique:' . Account::class . ',email',
-            'password' => [
-                'required',
-                'confirmed',
-                Password::min(8)->letters()->symbols()->numbers()
-            ],
-            'type' => [
-                'required',
-                Rule::enum(AccountType::class)
-            ]
-        ]);
-
-        $account = Account::create($validated);
-
-        $model_info = match ($account->type) {
+        $model_info = match ($request->enum('type', AccountType::class)) {
             AccountType::User => [
-                'validation' => [
-                    'first_name' => 'required',
-                    'last_name' => 'required'
-                ],
-                'model' => User::class
+                'validation' => ['first_name' => 'required', 'last_name' => 'required'],
+                'model' => User::class,
             ],
             AccountType::Organization => [
-                'validation' => [
-                    'name' => 'required'
-                ],
-                'model' => Organization::class
-            ]
+                'validation' => ['name' => 'required'],
+                'model' => Organization::class,
+            ],
+            default => null,
         };
 
-        $model_validated = $request->validate([
-            'model' => $model_info['validation']
-        ])['model'];
-        $model_info['model']::create(['id' => $account->id, ...$model_validated]);
+        $validated = $request->validate([
+            'email' => 'required|email|unique:'.Account::class.',email',
+            'password' => ['required', 'confirmed', Password::min(8)->letters()->symbols()->numbers()],
+            'type' => ['required', Rule::enum(AccountType::class)],
+            'model' => $model_info ? $model_info['validation'] : ['required'],
+        ]);
+
+        $account = DB::transaction(function () use ($validated, $model_info) {
+            $account = Account::create($validated);
+
+            $modelData = new $model_info['model']($validated['model']);
+            $modelData->id = $account->id;
+            $modelData->save();
+
+            return $account;
+        });
 
         Auth::login($account);
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard.settings'))->with([
-            'from' => 'register'
-        ]);
+        return redirect()->intended(route('dashboard.settings'))->with(['from' => 'register']);
     }
 }
