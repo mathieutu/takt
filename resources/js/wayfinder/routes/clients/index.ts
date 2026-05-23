@@ -49,7 +49,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:23
  * @route "/clients/{client}"
  */
-export const update = (args: { client: number | { id: number } } | [ client: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
+export const update = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
     url: update.url(args, options),
     method: "put",
 })
@@ -64,7 +64,7 @@ update.definition = {
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:23
  * @route "/clients/{client}"
  */
-update.url = (args: { client: number | { id: number } } | [ client: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+update.url = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
     if (typeof args === "string" || typeof args === "number") {
         args = { client: args }
     }
@@ -95,7 +95,7 @@ update.url = (args: { client: number | { id: number } } | [ client: number | { i
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:23
  * @route "/clients/{client}"
  */
-update.put = (args: { client: number | { id: number } } | [ client: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
+update.put = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
     url: update.url(args, options),
     method: "put",
 })
@@ -105,7 +105,7 @@ update.put = (args: { client: number | { id: number } } | [ client: number | { i
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:23
  * @route "/clients/{client}"
  */
-update.patch = (args: { client: number | { id: number } } | [ client: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"patch"> => ({
+update.patch = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"patch"> => ({
     url: update.url(args, options),
     method: "patch",
 })
@@ -122,7 +122,7 @@ update.patch = (args: { client: number | { id: number } } | [ client: number | {
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:32
  * @route "/clients/{client}"
  */
-export const destroy = (args: { client: number | { id: number } } | [ client: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
+export const destroy = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
     url: destroy.url(args, options),
     method: "delete",
 })
@@ -137,7 +137,7 @@ destroy.definition = {
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:32
  * @route "/clients/{client}"
  */
-destroy.url = (args: { client: number | { id: number } } | [ client: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+destroy.url = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
     if (typeof args === "string" || typeof args === "number") {
         args = { client: args }
     }
@@ -168,7 +168,7 @@ destroy.url = (args: { client: number | { id: number } } | [ client: number | { 
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:32
  * @route "/clients/{client}"
  */
-destroy.delete = (args: { client: number | { id: number } } | [ client: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
+destroy.delete = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
     url: destroy.url(args, options),
     method: "delete",
 })

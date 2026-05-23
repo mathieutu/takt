@@ -8,7 +8,7 @@ import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOpt
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:85
  * @route "/projects/{project}/billing"
  */
-export const store = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
+export const store = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
     url: store.url(args, options),
     method: "post",
 })
@@ -23,7 +23,7 @@ store.definition = {
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:85
  * @route "/projects/{project}/billing"
  */
-store.url = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+store.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
     if (typeof args === "string" || typeof args === "number") {
         args = { project: args }
     }
@@ -54,7 +54,7 @@ store.url = (args: { project: number | { id: number } } | [ project: number | { 
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:85
  * @route "/projects/{project}/billing"
  */
-store.post = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
+store.post = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
     url: store.url(args, options),
     method: "post",
 })

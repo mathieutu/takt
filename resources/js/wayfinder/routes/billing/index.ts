@@ -8,7 +8,7 @@ import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOpt
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:116
  * @route "/billing/{entry}"
  */
-export const update = (args: { entry: number | { id: number } } | [ entry: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
+export const update = (args: { entry: string | { id: string } } | [ entry: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
     url: update.url(args, options),
     method: "put",
 })
@@ -23,7 +23,7 @@ update.definition = {
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:116
  * @route "/billing/{entry}"
  */
-update.url = (args: { entry: number | { id: number } } | [ entry: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+update.url = (args: { entry: string | { id: string } } | [ entry: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
     if (typeof args === "string" || typeof args === "number") {
         args = { entry: args }
     }
@@ -54,7 +54,7 @@ update.url = (args: { entry: number | { id: number } } | [ entry: number | { id:
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:116
  * @route "/billing/{entry}"
  */
-update.put = (args: { entry: number | { id: number } } | [ entry: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
+update.put = (args: { entry: string | { id: string } } | [ entry: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
     url: update.url(args, options),
     method: "put",
 })

@@ -8,7 +8,7 @@ import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOpt
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:26
  * @route "/projects/{project}/share"
  */
-export const revoke = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
+export const revoke = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
     url: revoke.url(args, options),
     method: "delete",
 })
@@ -23,7 +23,7 @@ revoke.definition = {
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:26
  * @route "/projects/{project}/share"
  */
-revoke.url = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+revoke.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
     if (typeof args === "string" || typeof args === "number") {
         args = { project: args }
     }
@@ -54,7 +54,7 @@ revoke.url = (args: { project: number | { id: number } } | [ project: number | {
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:26
  * @route "/projects/{project}/share"
  */
-revoke.delete = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
+revoke.delete = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
     url: revoke.url(args, options),
     method: "delete",
 })

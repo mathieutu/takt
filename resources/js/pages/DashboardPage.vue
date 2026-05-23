@@ -1,19 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { router, useHttp } from '@inertiajs/vue3'
-import type { PageProps } from '../types'
 import { update as updateClient, destroy as destroyClient } from '@/wayfinder/routes/clients'
 import { update as updateProject, destroy as destroyProject, share as shareRoute } from '@/wayfinder/routes/projects'
 import { Bar } from 'vue-chartjs'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, type TooltipItem } from 'chart.js'
-import { TrendingUp, Calendar, Users, FolderKanban, MoreVertical, Pencil, Share2, Trash2 } from 'lucide-vue-next'
-import Card from '../components/ui/Card.vue'
-import CardHeader from '../components/ui/CardHeader.vue'
-import CardTitle from '../components/ui/CardTitle.vue'
-import CardContent from '../components/ui/CardContent.vue'
-import Badge from '../components/ui/Badge.vue'
-import Dialog from '../components/ui/Dialog.vue'
-import DropdownMenu from '../components/ui/DropdownMenu.vue'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip)
 
@@ -24,8 +15,8 @@ onMounted(() => {
 })
 
 type Entry   = { id: number; projectId: number; date: string; value: number; label: string | null }
-type Client  = { id: number; name: string; daily_rate: number; is_owner: boolean }
-type Project = { id: number; clientId: number; name: string; daily_rate: number | null; is_owner: boolean; is_shared: boolean; description: string }
+type Client  = { id: number; name: string; daily_rate: number }
+type Project = { id: number; clientId: number; name: string; daily_rate: number | null; is_shared: boolean; description: string }
 type ActiveProject = Project & { client: Client | undefined }
 
 const props = defineProps<{
@@ -33,6 +24,12 @@ const props = defineProps<{
     clients:  Client[]
     projects: Project[]
 }>()
+
+const editClientOpen    = ref(false)
+const deleteClientOpen  = ref(false)
+const editProjectOpen   = ref(false)
+const deleteProjectOpen = ref(false)
+const shareProjectOpen  = ref(false)
 
 const editingClient    = ref<Client | null>(null)
 const deletingClient   = ref<Client | null>(null)
@@ -43,7 +40,7 @@ const shareUrl         = ref('')
 const copied           = ref(false)
 const shareLoading     = ref(false)
 
-const ownedClients = computed(() => props.clients.filter(c => c.is_owner))
+const ownedClients = computed(() => props.clients)
 
 const editProjectClientRate = computed(() => {
     if (!editingProject.value) return null
@@ -51,11 +48,22 @@ const editProjectClientRate = computed(() => {
     return client?.daily_rate ?? null
 })
 
+function openEditClient(client: Client) {
+    editingClient.value = { ...client }
+    editClientOpen.value = true
+}
+
+function openDeleteClient(client: Client) {
+    deletingClient.value = client
+    deleteClientOpen.value = true
+}
+
 function openShare(project: ActiveProject) {
     sharingProject.value = project
     shareUrl.value = ''
     copied.value = false
     shareLoading.value = true
+    shareProjectOpen.value = true
 
     useHttp().post(shareRoute(project.id).url, {
         onSuccess: (data: { url: string }) => {
@@ -78,10 +86,11 @@ function copyShareUrl() {
 }
 
 function menuItemsProject(project: ActiveProject) {
-    return [
-        { label: 'Modifier', action: () => { editingProject.value = { ...project } } },
-        { label: 'Supprimer', action: () => { deletingProject.value = project }, variant: 'destructive' as const },
-    ]
+    return [[
+        { label: 'Modifier', icon: 'i-lucide-pencil', onSelect: () => { editingProject.value = { ...project }; editProjectOpen.value = true } },
+    ], [
+        { label: 'Supprimer', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => { deletingProject.value = project; deleteProjectOpen.value = true } },
+    ]]
 }
 
 const now          = new Date()
@@ -215,7 +224,7 @@ const barChartData = computed(() => {
         if (m <= 0) { m += 12; y -= 1 }
         labels.push(MONTHS_FR[m - 1])
         data.push(sumDays(entriesForMonth(y, m)))
-        colors.push(m === currentMonth && y === currentYear ? 'var(--primary)' : 'var(--border)')
+        colors.push(m === currentMonth && y === currentYear ? 'var(--ui-primary)' : 'var(--ui-border)')
     }
     return {
         labels,
@@ -244,297 +253,306 @@ const barChartOptions = {
 </script>
 
 <template>
-    <div class="flex min-h-screen flex-col bg-background">
+    <div class="flex min-h-screen flex-col bg-default">
         <main class="flex-1 px-6 py-8">
             <div class="mx-auto max-w-5xl space-y-6">
 
                 <div>
-                    <h1 class="text-lg font-semibold text-foreground">Tableau de bord</h1>
-                    <p class="text-sm text-muted-foreground">Vue d'ensemble de votre activité</p>
+                    <h1 class="text-lg font-semibold">Tableau de bord</h1>
+                    <p class="text-sm text-muted">Vue d'ensemble de votre activité</p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                    <Card>
-                        <CardHeader>
+                    <UCard>
+                        <template #header>
                             <div class="flex items-center justify-between">
-                                <CardTitle>Jours ce mois</CardTitle>
-                                <Calendar class="h-4 w-4 text-muted-foreground" />
+                                <p class="text-sm font-semibold">Jours ce mois</p>
+                                <UIcon name="i-lucide-calendar" class="text-muted" />
                             </div>
-                        </CardHeader>
-                        <CardContent>
-                            <p class="text-2xl font-bold text-foreground">{{ formatDays(monthDays) }}</p>
-                            <p class="mt-1 text-xs text-muted-foreground">sur {{ workingDays }} jours ouvrés</p>
-                            <div class="mt-2 h-1.5 w-full rounded-full bg-secondary">
-                                <div class="h-1.5 rounded-full bg-primary transition-all"
-                                     :style="{ width: `${Math.min(fillRate, 100)}%` }" />
-                            </div>
-                            <p class="mt-1 text-xs text-muted-foreground">{{ fillRate }}% rempli</p>
-                        </CardContent>
-                    </Card>
+                        </template>
+                        <p class="text-2xl font-bold">{{ formatDays(monthDays) }}</p>
+                        <p class="mt-1 text-xs text-muted">sur {{ workingDays }} jours ouvrés</p>
+                        <div class="mt-2 h-1.5 w-full rounded-full bg-muted">
+                            <div class="h-1.5 rounded-full bg-primary transition-all"
+                                 :style="{ width: `${Math.min(fillRate, 100)}%` }" />
+                        </div>
+                        <p class="mt-1 text-xs text-muted">{{ fillRate }}% rempli</p>
+                    </UCard>
 
-                    <Card>
-                        <CardHeader>
+                    <UCard>
+                        <template #header>
                             <div class="flex items-center justify-between">
-                                <CardTitle>CA ce mois</CardTitle>
-                                <TrendingUp class="h-4 w-4 text-muted-foreground" />
+                                <p class="text-sm font-semibold">CA ce mois</p>
+                                <UIcon name="i-lucide-trending-up" class="text-muted" />
                             </div>
-                        </CardHeader>
-                        <CardContent>
-                            <p class="text-2xl font-bold text-foreground">{{ formatCurrency(monthRevenue) }}</p>
-                            <p class="mt-1 text-xs text-muted-foreground">{{ formatDays(monthDays) }} facturés</p>
-                        </CardContent>
-                    </Card>
+                        </template>
+                        <p class="text-2xl font-bold">{{ formatCurrency(monthRevenue) }}</p>
+                        <p class="mt-1 text-xs text-muted">{{ formatDays(monthDays) }} facturés</p>
+                    </UCard>
 
-                    <Card>
-                        <CardHeader>
+                    <UCard>
+                        <template #header>
                             <div class="flex items-center justify-between">
-                                <CardTitle>Clients actifs</CardTitle>
-                                <Users class="h-4 w-4 text-muted-foreground" />
+                                <p class="text-sm font-semibold">Clients actifs</p>
+                                <UIcon name="i-lucide-users" class="text-muted" />
                             </div>
-                        </CardHeader>
-                        <CardContent>
-                            <p class="text-2xl font-bold text-foreground">{{ activeClients.length }}</p>
-                            <p class="mt-1 text-xs text-muted-foreground">{{ clients.length }} clients total</p>
-                        </CardContent>
-                    </Card>
+                        </template>
+                        <p class="text-2xl font-bold">{{ activeClients.length }}</p>
+                        <p class="mt-1 text-xs text-muted">{{ clients.length }} clients total</p>
+                    </UCard>
 
-                    <Card>
-                        <CardHeader>
+                    <UCard>
+                        <template #header>
                             <div class="flex items-center justify-between">
-                                <CardTitle>CA {{ currentYear }}</CardTitle>
-                                <FolderKanban class="h-4 w-4 text-muted-foreground" />
+                                <p class="text-sm font-semibold">CA {{ currentYear }}</p>
+                                <UIcon name="i-lucide-folder-kanban" class="text-muted" />
                             </div>
-                        </CardHeader>
-                        <CardContent>
-                            <p class="text-2xl font-bold text-foreground">{{ formatCurrency(yearRevenue) }}</p>
-                            <p class="mt-1 text-xs text-muted-foreground">{{ formatDays(sumDays(yearEntries)) }} facturés</p>
-                        </CardContent>
-                    </Card>
+                        </template>
+                        <p class="text-2xl font-bold">{{ formatCurrency(yearRevenue) }}</p>
+                        <p class="mt-1 text-xs text-muted">{{ formatDays(sumDays(yearEntries)) }} facturés</p>
+                    </UCard>
                 </div>
 
                 <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                    <Card class="lg:col-span-2">
-                        <CardHeader><CardTitle>Activité sur 12 mois</CardTitle></CardHeader>
-                        <CardContent>
-                            <div class="h-52">
-                                <Bar :data="barChartData" :options="barChartOptions" />
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <UCard class="lg:col-span-2">
+                        <template #header>
+                            <p class="text-sm font-semibold">Activité sur 12 mois</p>
+                        </template>
+                        <div class="h-52">
+                            <Bar :data="barChartData" :options="barChartOptions" />
+                        </div>
+                    </UCard>
 
-                    <Card>
-                        <CardHeader><CardTitle>Dernières saisies</CardTitle></CardHeader>
-                        <CardContent>
-                            <ul class="space-y-2">
-                                <li v-for="entry in recentEntries" :key="entry.id"
-                                    class="flex items-center justify-between text-sm">
-                                    <div class="flex min-w-0 items-center gap-2">
-                                        <div class="h-2 w-2 shrink-0 rounded-full"
-                                             :style="{ backgroundColor: dotColor(entry.client?.name ?? '') }" />
-                                        <span class="truncate text-foreground">{{ entry.project?.name ?? '—' }}</span>
-                                    </div>
-                                    <div class="ml-2 flex shrink-0 items-center gap-2">
-                                        <span class="text-xs text-muted-foreground">{{ formatDate(entry.date) }}</span>
-                                        <Badge variant="secondary">{{ formatDays(entry.value) }}</Badge>
-                                    </div>
-                                </li>
-                                <li v-if="recentEntries.length === 0" class="text-sm text-muted-foreground">
-                                    Aucune saisie
-                                </li>
-                            </ul>
-                        </CardContent>
-                    </Card>
+                    <UCard>
+                        <template #header>
+                            <p class="text-sm font-semibold">Dernières saisies</p>
+                        </template>
+                        <ul class="space-y-2">
+                            <li v-for="entry in recentEntries" :key="entry.id"
+                                class="flex items-center justify-between text-sm">
+                                <div class="flex min-w-0 items-center gap-2">
+                                    <div class="h-2 w-2 shrink-0 rounded-full"
+                                         :style="{ backgroundColor: dotColor(entry.client?.name ?? '') }" />
+                                    <span class="truncate">{{ entry.project?.name ?? '—' }}</span>
+                                </div>
+                                <div class="ml-2 flex shrink-0 items-center gap-2">
+                                    <span class="text-xs text-muted">{{ formatDate(entry.date) }}</span>
+                                    <UBadge color="neutral" variant="subtle">{{ formatDays(entry.value) }}</UBadge>
+                                </div>
+                            </li>
+                            <li v-if="recentEntries.length === 0" class="text-sm text-muted">
+                                Aucune saisie
+                            </li>
+                        </ul>
+                    </UCard>
                 </div>
 
                 <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <Card>
-                        <CardHeader><CardTitle>Clients actifs</CardTitle></CardHeader>
-                        <CardContent>
-                            <ul class="space-y-3">
-                                <li v-for="client in activeClients" :key="client.id"
-                                    class="flex items-center gap-3">
-                                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-medium"
-                                         :class="avatarColor(client.name)">
-                                        {{ initials(client.name) }}
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <p class="truncate text-sm font-medium text-foreground">{{ client.name }}</p>
-                                        <p class="text-xs text-muted-foreground">{{ client.daily_rate }} €/j</p>
-                                    </div>
-                                    <div v-if="client.is_owner" class="flex shrink-0 items-center gap-1">
-                                        <button
-                                            type="button"
-                                            class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                            @click="editingClient = { ...client }"
-                                        >
-                                            <Pencil class="h-3.5 w-3.5" />
-                                        </button>
-                                        <button
-                                            type="button"
-                                            class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                                            @click="deletingClient = client"
-                                        >
-                                            <Trash2 class="h-3.5 w-3.5" />
-                                        </button>
-                                    </div>
-                                </li>
-                                <li v-if="activeClients.length === 0" class="text-sm text-muted-foreground">
-                                    Aucun client actif
-                                </li>
-                            </ul>
-                        </CardContent>
-                    </Card>
+                    <UCard>
+                        <template #header>
+                            <p class="text-sm font-semibold">Clients actifs</p>
+                        </template>
+                        <ul class="space-y-3">
+                            <li v-for="client in activeClients" :key="client.id"
+                                class="flex items-center gap-3">
+                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-medium"
+                                     :class="avatarColor(client.name)">
+                                    {{ initials(client.name) }}
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-medium">{{ client.name }}</p>
+                                    <p class="text-xs text-muted">{{ client.daily_rate }} €/j</p>
+                                </div>
+                                <div class="flex shrink-0 items-center gap-1">
+                                    <UButton
+                                        icon="i-lucide-pencil"
+                                        color="neutral"
+                                        variant="ghost"
+                                        size="xs"
+                                        @click="openEditClient(client)"
+                                    />
+                                    <UButton
+                                        icon="i-lucide-trash-2"
+                                        color="error"
+                                        variant="ghost"
+                                        size="xs"
+                                        @click="openDeleteClient(client)"
+                                    />
+                                </div>
+                            </li>
+                            <li v-if="activeClients.length === 0" class="text-sm text-muted">
+                                Aucun client actif
+                            </li>
+                        </ul>
+                    </UCard>
 
-                    <Card>
-                        <CardHeader><CardTitle>Projets en cours</CardTitle></CardHeader>
-                        <CardContent>
-                            <ul class="space-y-3">
-                                <li v-for="project in activeProjects" :key="project.id"
-                                    class="flex items-center justify-between gap-2">
-                                    <div class="min-w-0 flex-1">
-                                        <p class="truncate text-sm font-medium text-foreground">{{ project.name }}</p>
-                                        <p class="text-xs text-muted-foreground">{{ project.client?.name ?? '—' }}</p>
-                                    </div>
-                                    <div class="flex shrink-0 items-center gap-1">
-                                        <Badge variant="secondary">Actif</Badge>
-                                        <template v-if="project.is_owner">
-                                            <button
-                                                type="button"
-                                                class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                                @click="openShare(project)"
-                                            >
-                                                <Share2 class="h-4 w-4" />
-                                            </button>
-                                            <DropdownMenu :items="menuItemsProject(project)" class="shrink-0">
-                                                <button
-                                                    type="button"
-                                                    class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                                >
-                                                    <MoreVertical class="h-4 w-4" />
-                                                </button>
-                                            </DropdownMenu>
-                                        </template>
-                                    </div>
-                                </li>
-                                <li v-if="activeProjects.length === 0" class="text-sm text-muted-foreground">
-                                    Aucun projet actif
-                                </li>
-                            </ul>
-                        </CardContent>
-                    </Card>
+                    <UCard>
+                        <template #header>
+                            <p class="text-sm font-semibold">Projets en cours</p>
+                        </template>
+                        <ul class="space-y-3">
+                            <li v-for="project in activeProjects" :key="project.id"
+                                class="flex items-center justify-between gap-2">
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-medium">{{ project.name }}</p>
+                                    <p class="text-xs text-muted">{{ project.client?.name ?? '—' }}</p>
+                                </div>
+                                <div class="flex shrink-0 items-center gap-1">
+                                    <UBadge color="neutral" variant="subtle">Actif</UBadge>
+                                    <UButton
+                                        icon="i-lucide-share-2"
+                                        color="neutral"
+                                        variant="ghost"
+                                        size="xs"
+                                        @click="openShare(project)"
+                                    />
+                                    <UDropdownMenu :items="menuItemsProject(project)" class="shrink-0">
+                                            <UButton
+                                                icon="i-lucide-more-vertical"
+                                                color="neutral"
+                                                variant="ghost"
+                                                size="xs"
+                                            />
+                                        </UDropdownMenu>
+                                </div>
+                            </li>
+                            <li v-if="activeProjects.length === 0" class="text-sm text-muted">
+                                Aucun projet actif
+                            </li>
+                        </ul>
+                    </UCard>
                 </div>
 
             </div>
         </main>
     </div>
 
-    <Dialog :open="editingClient !== null" title="Modifier le client" @close="editingClient = null">
-        <div v-if="editingClient" class="space-y-4">
-            <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-foreground">Nom<span class="text-destructive ml-0.5">*</span></label>
-                <input v-model="editingClient.name" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+    <UModal v-model:open="editClientOpen" title="Modifier le client">
+        <template #body>
+            <div v-if="editingClient" class="space-y-4">
+                <UFormField label="Nom" required>
+                    <UInput v-model="editingClient.name" type="text" class="w-full" />
+                </UFormField>
+                <UFormField label="TJM (€/jour)" required>
+                    <UInput v-model="editingClient.daily_rate" type="number" min="0" step="0.01" class="w-full" />
+                </UFormField>
             </div>
-            <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-foreground">TJM (€/jour)<span class="text-destructive ml-0.5">*</span></label>
-                <input v-model="editingClient.daily_rate" type="number" min="0" step="0.01" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
-            </div>
-            <div class="flex justify-end gap-2 pt-2">
-                <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="editingClient = null">Annuler</button>
-                <button
-                    type="button"
-                    class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                    @click="router.put(updateClient(editingClient.id).url, { name: editingClient.name, daily_rate: editingClient.daily_rate }, { preserveScroll: true, onSuccess: () => editingClient = null })"
-                >Enregistrer</button>
-            </div>
-        </div>
-    </Dialog>
-
-    <Dialog :open="deletingClient !== null" title="Supprimer le client" @close="deletingClient = null">
-        <p class="text-sm text-muted-foreground">
-            Supprimer <span class="font-medium text-foreground">{{ deletingClient?.name }}</span> ?
-            Tous les projets et saisies associés seront définitivement supprimés.
-        </p>
-        <div v-if="deletingClient" class="mt-4 flex justify-end gap-2">
-            <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="deletingClient = null">Annuler</button>
-            <button
-                type="button"
-                class="h-9 rounded-md bg-destructive px-4 text-sm font-medium text-white transition-colors hover:bg-destructive/90"
-                @click="router.delete(destroyClient(deletingClient.id).url, { preserveScroll: true, onSuccess: () => deletingClient = null })"
-            >Supprimer</button>
-        </div>
-    </Dialog>
-
-    <Dialog :open="editingProject !== null" title="Modifier le projet" @close="editingProject = null">
-        <div v-if="editingProject" class="space-y-4">
-            <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-foreground">Client<span class="text-destructive ml-0.5">*</span></label>
-                <select v-model="editingProject.clientId" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring">
-                    <option v-for="c in ownedClients" :key="c.id" :value="c.id">{{ c.name }}</option>
-                </select>
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-foreground">Nom du projet<span class="text-destructive ml-0.5">*</span></label>
-                <input v-model="editingProject.name" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-foreground">Description</label>
-                <input v-model="editingProject.description" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label class="text-sm font-medium text-foreground">TJM du projet</label>
-                <input
-                    v-model="editingProject.daily_rate"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    :placeholder="editProjectClientRate !== null ? `${editProjectClientRate} €/j (TJM client)` : 'Hérite du TJM client'"
-                    class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+        </template>
+        <template #footer="{ close }">
+            <div class="flex justify-end gap-2">
+                <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
+                <UButton
+                    label="Enregistrer"
+                    @click="editingClient && router.put(updateClient(editingClient.id).url, { name: editingClient.name, daily_rate: editingClient.daily_rate }, { preserveScroll: true, onSuccess: () => { editClientOpen = false } })"
                 />
             </div>
-            <div class="flex justify-end gap-2 pt-2">
-                <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="editingProject = null">Annuler</button>
-                <button
-                    type="button"
-                    class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                    @click="router.put(updateProject(editingProject.id).url, { client_id: editingProject.clientId, name: editingProject.name, description: editingProject.description, daily_rate: editingProject.daily_rate }, { preserveScroll: true, onSuccess: () => editingProject = null })"
-                >Enregistrer</button>
+        </template>
+    </UModal>
+
+    <UModal v-model:open="deleteClientOpen" title="Supprimer le client">
+        <template #body>
+            <p class="text-sm text-muted">
+                Supprimer <span class="font-medium text-default">{{ deletingClient?.name }}</span> ?
+                Tous les projets et saisies associés seront définitivement supprimés.
+            </p>
+        </template>
+        <template #footer="{ close }">
+            <div class="flex justify-end gap-2">
+                <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
+                <UButton
+                    v-if="deletingClient"
+                    label="Supprimer"
+                    color="error"
+                    @click="router.delete(destroyClient(deletingClient.id).url, { preserveScroll: true, onSuccess: () => { deleteClientOpen = false } })"
+                />
             </div>
-        </div>
-    </Dialog>
+        </template>
+    </UModal>
 
-    <Dialog :open="sharingProject !== null" title="Partager le projet" @close="sharingProject = null">
-        <p class="text-sm text-muted-foreground">
-            Copiez ce lien et envoyez-le à la personne avec qui vous souhaitez partager
-            <span class="font-medium text-foreground">{{ sharingProject?.name }}</span>.
-        </p>
-        <div class="mt-4 flex gap-2">
-            <input
-                :value="shareLoading ? 'Chargement…' : shareUrl"
-                readonly
-                class="h-9 min-w-0 flex-1 rounded-md border border-input bg-muted px-3 text-sm text-foreground focus:outline-none"
-            />
-            <button
-                type="button"
-                :disabled="shareLoading || !shareUrl"
-                class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                @click="copyShareUrl"
-            >
-                {{ copied ? 'Copié !' : 'Copier' }}
-            </button>
-        </div>
-    </Dialog>
+    <UModal v-model:open="editProjectOpen" title="Modifier le projet">
+        <template #body>
+            <div v-if="editingProject" class="space-y-4">
+                <UFormField label="Client" required>
+                    <USelect
+                        v-model="editingProject.clientId"
+                        :items="ownedClients.map(c => ({ value: c.id, label: c.name }))"
+                        class="w-full"
+                    />
+                </UFormField>
+                <UFormField label="Nom du projet" required>
+                    <UInput v-model="editingProject.name" type="text" class="w-full" />
+                </UFormField>
+                <UFormField label="Description">
+                    <UInput v-model="editingProject.description" type="text" class="w-full" />
+                </UFormField>
+                <UFormField label="TJM du projet">
+                    <UInput
+                        v-model="editingProject.daily_rate"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        :placeholder="editProjectClientRate !== null ? `${editProjectClientRate} €/j (TJM client)` : 'Hérite du TJM client'"
+                        class="w-full"
+                    />
+                </UFormField>
+            </div>
+        </template>
+        <template #footer="{ close }">
+            <div class="flex justify-end gap-2">
+                <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
+                <UButton
+                    v-if="editingProject"
+                    label="Enregistrer"
+                    @click="router.put(updateProject(editingProject.id).url, { client_id: editingProject.clientId, name: editingProject.name, description: editingProject.description, daily_rate: editingProject.daily_rate }, { preserveScroll: true, onSuccess: () => { editProjectOpen = false } })"
+                />
+            </div>
+        </template>
+    </UModal>
 
-    <Dialog :open="deletingProject !== null" title="Supprimer le projet" @close="deletingProject = null">
-        <p class="text-sm text-muted-foreground">
-            Supprimer <span class="font-medium text-foreground">{{ deletingProject?.name }}</span> ? Cette action est irréversible.
-        </p>
-        <div v-if="deletingProject" class="mt-4 flex justify-end gap-2">
-            <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="deletingProject = null">Annuler</button>
-            <button
-                type="button"
-                class="h-9 rounded-md bg-destructive px-4 text-sm font-medium text-white transition-colors hover:bg-destructive/90"
-                @click="router.delete(destroyProject(deletingProject.id).url, { preserveScroll: true, onSuccess: () => deletingProject = null })"
-            >Supprimer</button>
-        </div>
-    </Dialog>
+    <UModal v-model:open="shareProjectOpen" title="Partager le projet">
+        <template #body>
+            <div class="space-y-3">
+                <p class="text-sm text-muted">
+                    Copiez ce lien et envoyez-le à la personne avec qui vous souhaitez partager
+                    <span class="font-medium text-default">{{ sharingProject?.name }}</span>.
+                </p>
+                <div class="flex gap-2">
+                    <UInput
+                        :model-value="shareLoading ? 'Chargement…' : shareUrl"
+                        readonly
+                        class="min-w-0 flex-1"
+                    />
+                    <UButton
+                        :label="copied ? 'Copié !' : 'Copier'"
+                        :disabled="shareLoading || !shareUrl"
+                        @click="copyShareUrl"
+                    />
+                </div>
+            </div>
+        </template>
+        <template #footer="{ close }">
+            <div class="flex justify-end gap-2">
+                <UButton label="Fermer" color="neutral" variant="outline" @click="close" />
+            </div>
+        </template>
+    </UModal>
+
+    <UModal v-model:open="deleteProjectOpen" title="Supprimer le projet">
+        <template #body>
+            <p class="text-sm text-muted">
+                Supprimer <span class="font-medium text-default">{{ deletingProject?.name }}</span> ? Cette action est irréversible.
+            </p>
+        </template>
+        <template #footer="{ close }">
+            <div class="flex justify-end gap-2">
+                <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
+                <UButton
+                    v-if="deletingProject"
+                    label="Supprimer"
+                    color="error"
+                    @click="router.delete(destroyProject(deletingProject.id).url, { preserveScroll: true, onSuccess: () => { deleteProjectOpen = false } })"
+                />
+            </div>
+        </template>
+    </UModal>
 </template>

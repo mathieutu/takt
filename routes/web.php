@@ -22,11 +22,9 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::match(['post', 'get'], 'logout', [AuthController::class, 'logout'])->name('logout');
-});
+    Route::get('logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::middleware('auth')->group(function () {
-    Route::get('/', [DashboardController::class, 'index'])->name('home');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('profile', [UserController::class, 'edit'])->name('profile');
     Route::put('profile', [UserController::class, 'update'])->name('profile.update');
@@ -52,6 +50,7 @@ Route::middleware('auth')->group(function () {
 
     // Pages
     Route::get('reports', [ActivitiesController::class, 'index'])->name('reports.index');
+
     Route::get('tracking', [TrackingController::class, 'index'])->name('tracking.index');
     Route::prefix('exports')->name('exports.')->group(function () {
         Route::get('/', [ExportsController::class, 'index'])->name('index');

@@ -8,7 +8,7 @@ import share8fb4b40 from "./share";
 
 /**
  * @see \App\Http\Controllers\ProjectController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:17
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:16
  * @route "/projects"
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -23,7 +23,7 @@ index.definition = {
 
 /**
  * @see \App\Http\Controllers\ProjectController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:17
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:16
  * @route "/projects"
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -32,7 +32,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\ProjectController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:17
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:16
  * @route "/projects"
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -42,7 +42,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\ProjectController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:17
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:16
  * @route "/projects"
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -59,7 +59,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\ProjectController::store
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:56
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:46
  * @route "/projects"
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -74,7 +74,7 @@ store.definition = {
 
 /**
  * @see \App\Http\Controllers\ProjectController::store
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:56
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:46
  * @route "/projects"
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -83,7 +83,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\ProjectController::store
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:56
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:46
  * @route "/projects"
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -100,10 +100,10 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
 
 /**
  * @see \App\Http\Controllers\ProjectController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:75
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:65
  * @route "/projects/{project}"
  */
-export const update = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
+export const update = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
     url: update.url(args, options),
     method: "put",
 })
@@ -115,10 +115,10 @@ update.definition = {
 
 /**
  * @see \App\Http\Controllers\ProjectController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:75
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:65
  * @route "/projects/{project}"
  */
-update.url = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+update.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
     if (typeof args === "string" || typeof args === "number") {
         args = { project: args }
     }
@@ -146,20 +146,20 @@ update.url = (args: { project: number | { id: number } } | [ project: number | {
 
 /**
  * @see \App\Http\Controllers\ProjectController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:75
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:65
  * @route "/projects/{project}"
  */
-update.put = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
+update.put = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
     url: update.url(args, options),
     method: "put",
 })
 
 /**
  * @see \App\Http\Controllers\ProjectController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:75
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:65
  * @route "/projects/{project}"
  */
-update.patch = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"patch"> => ({
+update.patch = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"patch"> => ({
     url: update.url(args, options),
     method: "patch",
 })
@@ -173,10 +173,10 @@ update.patch = (args: { project: number | { id: number } } | [ project: number |
 
 /**
  * @see \App\Http\Controllers\ProjectController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:84
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:74
  * @route "/projects/{project}"
  */
-export const destroy = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
+export const destroy = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
     url: destroy.url(args, options),
     method: "delete",
 })
@@ -188,10 +188,10 @@ destroy.definition = {
 
 /**
  * @see \App\Http\Controllers\ProjectController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:84
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:74
  * @route "/projects/{project}"
  */
-destroy.url = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+destroy.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
     if (typeof args === "string" || typeof args === "number") {
         args = { project: args }
     }
@@ -219,10 +219,10 @@ destroy.url = (args: { project: number | { id: number } } | [ project: number | 
 
 /**
  * @see \App\Http\Controllers\ProjectController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:84
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:74
  * @route "/projects/{project}"
  */
-destroy.delete = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
+destroy.delete = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
     url: destroy.url(args, options),
     method: "delete",
 })
@@ -239,7 +239,7 @@ destroy.delete = (args: { project: number | { id: number } } | [ project: number
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:138
  * @route "/projects/{project}/budget"
  */
-export const budget = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
+export const budget = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
     url: budget.url(args, options),
     method: "put",
 })
@@ -254,7 +254,7 @@ budget.definition = {
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:138
  * @route "/projects/{project}/budget"
  */
-budget.url = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+budget.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
     if (typeof args === "string" || typeof args === "number") {
         args = { project: args }
     }
@@ -285,7 +285,7 @@ budget.url = (args: { project: number | { id: number } } | [ project: number | {
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:138
  * @route "/projects/{project}/budget"
  */
-budget.put = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
+budget.put = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
     url: budget.url(args, options),
     method: "put",
 })
@@ -302,7 +302,7 @@ budget.put = (args: { project: number | { id: number } } | [ project: number | {
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:17
  * @route "/projects/{project}/share"
  */
-export const share = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
+export const share = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
     url: share.url(args, options),
     method: "post",
 })
@@ -317,7 +317,7 @@ share.definition = {
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:17
  * @route "/projects/{project}/share"
  */
-share.url = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+share.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
     if (typeof args === "string" || typeof args === "number") {
         args = { project: args }
     }
@@ -348,7 +348,7 @@ share.url = (args: { project: number | { id: number } } | [ project: number | { 
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:17
  * @route "/projects/{project}/share"
  */
-share.post = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
+share.post = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
     url: share.url(args, options),
     method: "post",
 })

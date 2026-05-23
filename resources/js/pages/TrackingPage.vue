@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { router, useHttp } from '@inertiajs/vue3'
-import { Pencil } from 'lucide-vue-next'
-import Dialog from '../components/ui/Dialog.vue'
-import Select from '../components/ui/Select.vue'
 import { store as storeBilling } from '@/wayfinder/routes/projects/billing'
 import { update as updateBilling } from '@/wayfinder/routes/billing'
 import { budget as updateBudget } from '@/wayfinder/routes/projects'
@@ -48,6 +45,7 @@ const localProjects = ref<ProjectData[]>(
 
 // ── Billing dialog ────────────────────────────────────────────────────────────
 
+const billingOpen    = ref(false)
 const editingBilling = ref<{ project: ProjectData; month: MonthRow } | null>(null)
 const billingForm    = ref({ amount_billed: '', payment_date: '', notes: '' })
 const billingError   = ref<string | null>(null)
@@ -60,6 +58,7 @@ function openBillingDialog(project: ProjectData, month: MonthRow) {
         notes:         month.notes ?? '',
     }
     billingError.value = null
+    billingOpen.value = true
 }
 
 async function saveBilling() {
@@ -96,10 +95,12 @@ async function saveBilling() {
     }
 
     editingBilling.value = null
+    billingOpen.value = false
 }
 
 // ── Budget dialog ─────────────────────────────────────────────────────────────
 
+const budgetOpen    = ref(false)
 const editingBudget = ref<{ project: ProjectData; value: string } | null>(null)
 
 function openBudgetEdit(project: ProjectData) {
@@ -107,6 +108,7 @@ function openBudgetEdit(project: ProjectData) {
         project,
         value: project.max_budget !== null ? String(project.max_budget) : '',
     }
+    budgetOpen.value = true
 }
 
 async function saveBudget() {
@@ -120,6 +122,7 @@ async function saveBudget() {
         const lp = localProjects.value.find(p => p.id === project.id)
         if (lp) lp.max_budget = data.max_budget
         editingBudget.value = null
+        budgetOpen.value = false
     }
 }
 
@@ -176,76 +179,69 @@ function localMaxBudget(projectId: number): number | null {
 </script>
 
 <template>
-    <div class="flex min-h-screen flex-col bg-background">
+    <div class="flex min-h-screen flex-col bg-default">
         <main class="flex-1 px-6 py-8">
             <div class="mx-auto max-w-5xl space-y-6">
 
-                <!-- Header -->
                 <div>
-                    <h1 class="text-lg font-semibold text-foreground">Suivi facturation</h1>
-                    <p class="text-sm text-muted-foreground">Sélectionnez un client pour voir le détail de facturation par projet.</p>
+                    <h1 class="text-lg font-semibold">Suivi facturation</h1>
+                    <p class="text-sm text-muted">Sélectionnez un client pour voir le détail de facturation par projet.</p>
                 </div>
 
-                <!-- Client dropdown -->
                 <div class="flex items-center gap-3">
-                    <label class="text-sm font-medium text-foreground">Client</label>
-                    <div class="w-72">
-                        <Select
-                            :model-value="selectedClientId"
-                            :options="clientOptions"
-                            placeholder="Choisir un client…"
-                            @change="selectClient"
-                        />
-                    </div>
+                    <label class="text-sm font-medium">Client</label>
+                    <USelect
+                        :model-value="selectedClientId"
+                        :items="clientOptions"
+                        placeholder="Choisir un client…"
+                        class="w-72"
+                        @update:model-value="selectClient"
+                    />
                 </div>
 
-                <!-- Empty states -->
-                <p v-if="!selectedClientId" class="text-sm text-muted-foreground">
+                <p v-if="!selectedClientId" class="text-sm text-muted">
                     Aucun client sélectionné.
                 </p>
-                <p v-else-if="localProjects.length === 0" class="text-sm text-muted-foreground">
+                <p v-else-if="localProjects.length === 0" class="text-sm text-muted">
                     Ce client n'a aucun projet.
                 </p>
 
-                <!-- Project cards -->
                 <div v-else class="space-y-6">
                     <div
                         v-for="project in localProjects"
                         :key="project.id"
-                        class="rounded-lg border border-border bg-card"
+                        class="rounded-lg border border-default bg-elevated"
                     >
-                        <!-- Card header -->
-                        <div class="flex items-center justify-between border-b border-border px-5 py-4">
+                        <div class="flex items-center justify-between border-b border-default px-5 py-4">
                             <div>
-                                <h2 class="text-sm font-semibold text-foreground">{{ project.name }}</h2>
-                                <p class="text-xs text-muted-foreground">TJ : {{ project.daily_rate.toLocaleString('fr-FR') }} €/j</p>
+                                <h2 class="text-sm font-semibold">{{ project.name }}</h2>
+                                <p class="text-xs text-muted">TJ : {{ project.daily_rate.toLocaleString('fr-FR') }} €/j</p>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="text-xs text-muted-foreground">Budget max :</span>
-                                <span class="text-sm font-medium text-foreground">
+                                <span class="text-xs text-muted">Budget max :</span>
+                                <span class="text-sm font-medium">
                                     {{ localMaxBudget(project.id) !== null ? fmt(localMaxBudget(project.id)!) : '—' }}
                                 </span>
-                                <button
-                                    type="button"
-                                    class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+                                <UButton
+                                    icon="i-lucide-pencil"
+                                    color="neutral"
+                                    variant="ghost"
+                                    size="xs"
                                     @click="openBudgetEdit(project)"
-                                >
-                                    <Pencil class="h-3.5 w-3.5" />
-                                </button>
+                                />
                             </div>
                         </div>
 
-                        <!-- Monthly table -->
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm">
                                 <thead>
-                                    <tr class="border-b border-border bg-muted/40">
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Mois</th>
-                                        <th class="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Jours</th>
-                                        <th class="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Fact. théorique</th>
-                                        <th class="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Fact. effectif</th>
-                                        <th class="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Max théorique</th>
-                                        <th class="px-4 py-2 text-right text-xs font-medium text-muted-foreground">Écart eff/théo</th>
+                                    <tr class="border-b border-default bg-muted/40">
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-muted">Mois</th>
+                                        <th class="px-4 py-2 text-right text-xs font-medium text-muted">Jours</th>
+                                        <th class="px-4 py-2 text-right text-xs font-medium text-muted">Fact. théorique</th>
+                                        <th class="px-4 py-2 text-right text-xs font-medium text-muted">Fact. effectif</th>
+                                        <th class="px-4 py-2 text-right text-xs font-medium text-muted">Max théorique</th>
+                                        <th class="px-4 py-2 text-right text-xs font-medium text-muted">Écart eff/théo</th>
                                         <th class="px-4 py-2 w-10"></th>
                                     </tr>
                                 </thead>
@@ -253,16 +249,16 @@ function localMaxBudget(projectId: number): number | null {
                                     <tr
                                         v-for="month in localMonths(project.id)"
                                         :key="month.month"
-                                        class="border-b border-border last:border-0 hover:bg-muted/20"
+                                        class="border-b border-default last:border-0 hover:bg-muted/20"
                                     >
-                                        <td class="px-4 py-2.5 font-medium text-foreground">{{ formatMonth(month.month) }}</td>
-                                        <td class="px-4 py-2.5 text-right text-foreground">{{ fmtDays(month.days_worked) }}</td>
-                                        <td class="px-4 py-2.5 text-right text-foreground">{{ fmt(month.days_worked * project.daily_rate) }}</td>
+                                        <td class="px-4 py-2.5 font-medium">{{ formatMonth(month.month) }}</td>
+                                        <td class="px-4 py-2.5 text-right">{{ fmtDays(month.days_worked) }}</td>
+                                        <td class="px-4 py-2.5 text-right">{{ fmt(month.days_worked * project.daily_rate) }}</td>
                                         <td class="px-4 py-2.5 text-right font-medium"
-                                            :class="month.amount_billed > 0 ? 'text-emerald-600' : 'text-muted-foreground'">
+                                            :class="month.amount_billed > 0 ? 'text-emerald-600' : 'text-muted'">
                                             {{ month.amount_billed > 0 ? fmt(month.amount_billed) : '—' }}
                                         </td>
-                                        <td class="px-4 py-2.5 text-right text-foreground">
+                                        <td class="px-4 py-2.5 text-right">
                                             {{ localMaxBudget(project.id) !== null ? fmt(localMaxBudget(project.id)!) : '—' }}
                                         </td>
                                         <td class="px-4 py-2.5 text-right"
@@ -270,17 +266,17 @@ function localMaxBudget(projectId: number): number | null {
                                             {{ fmt(month.amount_billed - (month.days_worked * project.daily_rate)) }}
                                         </td>
                                         <td class="px-4 py-2.5">
-                                            <button
-                                                type="button"
-                                                class="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+                                            <UButton
+                                                icon="i-lucide-pencil"
+                                                color="neutral"
+                                                variant="ghost"
+                                                size="xs"
                                                 @click="openBillingDialog(project, month)"
-                                            >
-                                                <Pencil class="h-3 w-3" />
-                                            </button>
+                                            />
                                         </td>
                                     </tr>
                                     <tr v-if="localMonths(project.id).length === 0">
-                                        <td colspan="7" class="px-4 py-6 text-center text-sm text-muted-foreground">
+                                        <td colspan="7" class="px-4 py-6 text-center text-sm text-muted">
                                             Aucune entrée CRA pour ce projet.
                                         </td>
                                     </tr>
@@ -288,34 +284,33 @@ function localMaxBudget(projectId: number): number | null {
                             </table>
                         </div>
 
-                        <!-- Summary footer -->
-                        <div class="border-t border-border bg-muted/30 px-5 py-4">
+                        <div class="border-t border-default bg-muted/30 px-5 py-4">
                             <div class="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-4">
                                 <div>
-                                    <p class="text-xs text-muted-foreground">Total jours</p>
-                                    <p class="text-sm font-semibold text-foreground">{{ fmtDays(projectSummary(project).totalDays) }}</p>
+                                    <p class="text-xs text-muted">Total jours</p>
+                                    <p class="text-sm font-semibold">{{ fmtDays(projectSummary(project).totalDays) }}</p>
                                 </div>
                                 <div>
-                                    <p class="text-xs text-muted-foreground">Fact. théorique</p>
-                                    <p class="text-sm font-semibold text-foreground">{{ fmt(projectSummary(project).totalTheorique) }}</p>
+                                    <p class="text-xs text-muted">Fact. théorique</p>
+                                    <p class="text-sm font-semibold">{{ fmt(projectSummary(project).totalTheorique) }}</p>
                                 </div>
                                 <div>
-                                    <p class="text-xs text-muted-foreground">Fact. effectif</p>
+                                    <p class="text-xs text-muted">Fact. effectif</p>
                                     <p class="text-sm font-semibold text-emerald-600">{{ fmt(projectSummary(project).totalEffectif) }}</p>
                                 </div>
                                 <div>
-                                    <p class="text-xs text-muted-foreground">Reste à facturer</p>
+                                    <p class="text-xs text-muted">Reste à facturer</p>
                                     <p class="text-sm font-semibold text-amber-600">{{ fmt(projectSummary(project).resteAFacturer) }}</p>
                                 </div>
                                 <template v-if="projectSummary(project).maxBudget !== null">
                                     <div>
-                                        <p class="text-xs text-muted-foreground">Budget max</p>
-                                        <p class="text-sm font-semibold text-foreground">{{ fmt(projectSummary(project).maxBudget!) }}</p>
+                                        <p class="text-xs text-muted">Budget max</p>
+                                        <p class="text-sm font-semibold">{{ fmt(projectSummary(project).maxBudget!) }}</p>
                                     </div>
                                     <div>
-                                        <p class="text-xs text-muted-foreground">Reste à consommer</p>
+                                        <p class="text-xs text-muted">Reste à consommer</p>
                                         <p class="text-sm font-semibold"
-                                           :class="projectSummary(project).resteAConsommer! < 0 ? 'text-destructive' : 'text-foreground'">
+                                           :class="projectSummary(project).resteAConsommer! < 0 ? 'text-error' : ''">
                                             {{ fmt(projectSummary(project).resteAConsommer!) }}
                                         </p>
                                     </div>
@@ -328,99 +323,68 @@ function localMaxBudget(projectId: number): number | null {
             </div>
         </main>
 
-        <!-- Billing dialog -->
-        <Dialog
-            :open="editingBilling !== null"
-            title="Saisir la facturation"
-            @close="editingBilling = null"
-        >
-            <div v-if="editingBilling" class="space-y-4">
-                <p class="text-sm text-muted-foreground">
-                    <span class="font-medium text-foreground">{{ editingBilling.project.name }}</span>
-                    — {{ formatMonth(editingBilling.month.month) }}
-                </p>
-
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Montant facturé (€)<span class="text-destructive ml-0.5">*</span></label>
-                    <input
-                        v-model="billingForm.amount_billed"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                    />
+        <UModal v-model:open="billingOpen" title="Saisir la facturation">
+            <template #body>
+                <div v-if="editingBilling" class="space-y-4">
+                    <p class="text-sm text-muted">
+                        <span class="font-medium text-default">{{ editingBilling.project.name }}</span>
+                        — {{ formatMonth(editingBilling.month.month) }}
+                    </p>
+                    <UFormField label="Montant facturé (€)" required>
+                        <UInput
+                            v-model="billingForm.amount_billed"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            class="w-full"
+                        />
+                    </UFormField>
+                    <UFormField label="Date de paiement">
+                        <UInput
+                            v-model="billingForm.payment_date"
+                            type="date"
+                            class="w-full"
+                        />
+                    </UFormField>
+                    <UFormField label="Notes">
+                        <UTextarea
+                            v-model="billingForm.notes"
+                            :rows="3"
+                            class="w-full"
+                        />
+                    </UFormField>
+                    <p v-if="billingError" class="text-xs text-error">{{ billingError }}</p>
                 </div>
-
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Date de paiement</label>
-                    <input
-                        v-model="billingForm.payment_date"
-                        type="date"
-                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                    />
+            </template>
+            <template #footer="{ close }">
+                <div class="flex justify-end gap-2">
+                    <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
+                    <UButton label="Enregistrer" :loading="billingHttp.processing" @click="saveBilling" />
                 </div>
+            </template>
+        </UModal>
 
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Notes</label>
-                    <textarea
-                        v-model="billingForm.notes"
-                        rows="3"
-                        class="rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                    />
+        <UModal v-model:open="budgetOpen" title="Modifier le budget max">
+            <template #body>
+                <div v-if="editingBudget" class="space-y-4">
+                    <UFormField label="Budget max (€)">
+                        <template #hint>Laisser vide pour ne pas définir</template>
+                        <UInput
+                            v-model="editingBudget.value"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            class="w-full"
+                        />
+                    </UFormField>
                 </div>
-
-                <p v-if="billingError" class="text-xs text-destructive">{{ billingError }}</p>
-
-                <div class="flex justify-end gap-2 pt-2">
-                    <button
-                        type="button"
-                        class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent"
-                        @click="editingBilling = null"
-                    >Annuler</button>
-                    <button
-                        type="button"
-                        :disabled="billingHttp.processing"
-                        class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                        @click="saveBilling"
-                    >{{ billingHttp.processing ? 'Enregistrement…' : 'Enregistrer' }}</button>
+            </template>
+            <template #footer="{ close }">
+                <div class="flex justify-end gap-2">
+                    <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
+                    <UButton label="Enregistrer" :loading="budgetHttp.processing" @click="saveBudget" />
                 </div>
-            </div>
-        </Dialog>
-
-        <!-- Budget dialog -->
-        <Dialog
-            :open="editingBudget !== null"
-            title="Modifier le budget max"
-            @close="editingBudget = null"
-        >
-            <div v-if="editingBudget" class="space-y-4">
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">
-                        Budget max (€)
-                        <span class="font-normal text-muted-foreground">— laisser vide pour ne pas définir</span>
-                    </label>
-                    <input
-                        v-model="editingBudget.value"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                    />
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button
-                        type="button"
-                        class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent"
-                        @click="editingBudget = null"
-                    >Annuler</button>
-                    <button
-                        type="button"
-                        :disabled="budgetHttp.processing"
-                        class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                        @click="saveBudget"
-                    >{{ budgetHttp.processing ? 'Enregistrement…' : 'Enregistrer' }}</button>
-                </div>
-            </div>
-        </Dialog>
+            </template>
+        </UModal>
     </div>
 </template>

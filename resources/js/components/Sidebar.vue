@@ -1,132 +1,99 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { Link, usePage } from '@inertiajs/vue3'
-import {
-    LayoutDashboard,
-    CalendarDays,
-    FolderKanban,
-    ReceiptText,
-    Download,
-    Settings,
-    LogOut,
-} from 'lucide-vue-next'
-import type { AuthUser } from '../types'
+import {watch} from 'vue'
+import {router, usePage} from '@inertiajs/vue3'
+import type {AuthUser} from '../types'
+import {dashboard, logout, profile} from '@/wayfinder/routes'
+import reports from "@/wayfinder/routes/reports";
+import projects from "@/wayfinder/routes/projects";
+import tracking from "@/wayfinder/routes/tracking";
+import exports from "@/wayfinder/routes/exports";
 
 defineProps<{
     user: AuthUser | null
+    open: boolean
+}>()
+
+const emit = defineEmits<{
+    'update:open': [value: boolean]
 }>()
 
 const page = usePage()
-const path = computed(() => page.url.split('?')[0])
 
 const navItems = [
-    { route: '/',          label: 'Tableau de bord',    icon: LayoutDashboard, exact: true },
-    { route: '/reports',   label: 'Saisie CRA',         icon: CalendarDays },
-    { route: '/projects',  label: 'Projets',            icon: FolderKanban },
-    { route: '/tracking',  label: 'Suivi facturation',  icon: ReceiptText },
-    { route: '/exports',   label: 'Export',             icon: Download },
+    {label: 'Tableau de bord', icon: 'i-lucide-layout-dashboard', to: dashboard(), exact: true},
+    {label: 'Saisie CRA', icon: 'i-lucide-calendar-days', to: reports.index()},
+    {label: 'Projets', icon: 'i-lucide-folder-kanban', to: projects.index()},
+    {label: 'Suivi facturation', icon: 'i-lucide-receipt-text', to: tracking.index()},
+    {label: 'Export', icon: 'i-lucide-download', to: exports.index()},
 ]
 
-function isActive(item: (typeof navItems)[0]): boolean {
-    if (item.exact) return path.value === item.route
-    return path.value.startsWith(item.route)
-}
+const settingsItems = [
+    {label: 'Paramètres', icon: 'i-lucide-settings', to: profile()},
+    {label: 'Log out', icon: 'i-lucide-log-out', to: logout()},
+]
 
-const activeTooltip = ref<string | null>(null)
-let tooltipTimer: ReturnType<typeof setTimeout> | null = null
 
-function showTooltip(id: string) {
-    tooltipTimer = setTimeout(() => { activeTooltip.value = id }, 200)
-}
-
-function hideTooltip() {
-    if (tooltipTimer) clearTimeout(tooltipTimer)
-    activeTooltip.value = null
-}
+watch(() => page.url, () => emit('update:open', false))
 </script>
 
 <template>
-    <aside class="hidden md:flex fixed left-0 top-14 z-40 h-[calc(100vh-3.5rem)] w-14 flex-col items-center border-r border-border bg-sidebar py-3">
-
-        <nav class="flex flex-1 flex-col items-center gap-1">
-            <div
-                v-for="item in navItems"
-                :key="item.route"
-                class="relative"
-                @mouseenter="showTooltip(item.route)"
-                @mouseleave="hideTooltip"
-            >
-                <Link
-                    :href="item.route"
-                    class="flex h-9 w-9 items-center justify-center rounded-md transition-colors"
-                    :class="isActive(item)
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
-                >
-                    <component :is="item.icon" class="h-4 w-4" />
-                </Link>
-                <Transition name="tooltip">
-                    <div
-                        v-if="activeTooltip === item.route"
-                        class="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded px-2 py-1 text-xs bg-foreground text-background"
-                    >
-                        {{ item.label }}
-                    </div>
-                </Transition>
-            </div>
-        </nav>
-
-        <div class="mt-auto flex flex-col items-center gap-1">
-            <div class="relative" @mouseenter="showTooltip('settings')" @mouseleave="hideTooltip">
-                <Link
-                    href="/profile"
-                    class="flex h-9 w-9 items-center justify-center rounded-md transition-colors"
-                    :class="path.startsWith('/profile')
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
-                >
-                    <Settings class="h-4 w-4" />
-                </Link>
-                <Transition name="tooltip">
-                    <div
-                        v-if="activeTooltip === 'settings'"
-                        class="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded px-2 py-1 text-xs bg-foreground text-background"
-                    >
-                        Paramètres
-                    </div>
-                </Transition>
-            </div>
-
-            <div class="relative" @mouseenter="showTooltip('logout')" @mouseleave="hideTooltip">
-                <Link
-                    href="/logout"
-                    method="post"
-                    as="button"
-                    type="button"
-                    class="flex h-9 w-9 items-center justify-center rounded-md transition-colors text-muted-foreground hover:bg-red-50 hover:text-destructive"
-                >
-                    <LogOut class="h-4 w-4" />
-                </Link>
-                <Transition name="tooltip">
-                    <div
-                        v-if="activeTooltip === 'logout'"
-                        class="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded px-2 py-1 text-xs bg-foreground text-background"
-                    >
-                        Se déconnecter
-                    </div>
-                </Transition>
-            </div>
-        </div>
+    <!-- Desktop sidebar (icônes uniquement + tooltips) -->
+    <aside
+        class="hidden md:flex fixed left-0 top-14 z-40 h-[calc(100vh-3.5rem)] w-14 flex-col border-r border-default bg-elevated py-2">
+        <UNavigationMenu
+            orientation="vertical"
+            collapsed
+            :tooltip="true"
+            :items="navItems"
+            :ui="{ link: 'justify-center' }"
+            class="flex-1 w-full"
+        />
+        <UNavigationMenu
+            orientation="vertical"
+            collapsed
+            :tooltip="true"
+            :items="settingsItems"
+            :ui="{ link: 'justify-center' }"
+            class="w-full"
+        />
     </aside>
-</template>
 
-<style scoped>
-.tooltip-enter-active,
-.tooltip-leave-active {
-    transition: opacity 0.1s ease;
-}
-.tooltip-enter-from,
-.tooltip-leave-to {
-    opacity: 0;
-}
-</style>
+    <!-- Mobile drawer -->
+    <USlideover
+        :open="open"
+        side="left"
+        :ui="{ content: 'max-w-64', body: 'p-0 sm:p-0 flex flex-col' }"
+        @update:open="emit('update:open', $event)"
+    >
+        <template #header="{ close }">
+            <div class="flex items-center justify-between w-full">
+                <div class="flex items-center gap-2">
+                    <img src="/public/images/logo.png" class="h-7 w-7 rounded-md object-cover">
+                    <span class="text-sm font-semibold">AssoFlow</span>
+                </div>
+                <UButton icon="i-lucide-x" color="neutral" variant="ghost" size="sm" @click="close"/>
+            </div>
+        </template>
+        <template #body>
+            <UNavigationMenu
+                orientation="vertical"
+                :items="navItems"
+                class="flex-1 py-2"
+            />
+            <div class="mt-auto border-t border-default py-2">
+                <UNavigationMenu
+                    orientation="vertical"
+                    :items="settingsItems"
+                />
+                <UButton
+                    label="Se déconnecter"
+                    icon="i-lucide-log-out"
+                    color="error"
+                    variant="ghost"
+                    class="w-full"
+                    @click="logout"
+                />
+            </div>
+        </template>
+    </USlideover>
+</template>

@@ -5,10 +5,10 @@ import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOpt
 
 /**
  * @see \App\Http\Controllers\ActivitiesController::store
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:72
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:68
  * @route "/projects/{project}/reports"
  */
-export const store = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
+export const store = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
     url: store.url(args, options),
     method: "post",
 })
@@ -20,10 +20,10 @@ store.definition = {
 
 /**
  * @see \App\Http\Controllers\ActivitiesController::store
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:72
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:68
  * @route "/projects/{project}/reports"
  */
-store.url = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+store.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
     if (typeof args === "string" || typeof args === "number") {
         args = { project: args }
     }
@@ -51,10 +51,10 @@ store.url = (args: { project: number | { id: number } } | [ project: number | { 
 
 /**
  * @see \App\Http\Controllers\ActivitiesController::store
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:72
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:68
  * @route "/projects/{project}/reports"
  */
-store.post = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
+store.post = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
     url: store.url(args, options),
     method: "post",
 })
@@ -68,10 +68,10 @@ store.post = (args: { project: number | { id: number } } | [ project: number | {
 
 /**
  * @see \App\Http\Controllers\ActivitiesController::projectReports
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:19
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:18
  * @route "/projects/{project}/reports"
  */
-export const index = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+export const index = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
     url: index.url(args, options),
     method: "get",
 })
@@ -83,10 +83,10 @@ index.definition = {
 
 /**
  * @see \App\Http\Controllers\ActivitiesController::projectReports
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:19
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:18
  * @route "/projects/{project}/reports"
  */
-index.url = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+index.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
     if (typeof args === "string" || typeof args === "number") {
         args = { project: args }
     }
@@ -114,20 +114,20 @@ index.url = (args: { project: number | { id: number } } | [ project: number | { 
 
 /**
  * @see \App\Http\Controllers\ActivitiesController::projectReports
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:19
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:18
  * @route "/projects/{project}/reports"
  */
-index.get = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+index.get = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
     url: index.url(args, options),
     method: "get",
 })
 
 /**
  * @see \App\Http\Controllers\ActivitiesController::projectReports
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:19
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:18
  * @route "/projects/{project}/reports"
  */
-index.head = (args: { project: number | { id: number } } | [ project: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"head"> => ({
+index.head = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"head"> => ({
     url: index.url(args, options),
     method: "head",
 })

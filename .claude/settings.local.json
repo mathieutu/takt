@@ -5,7 +5,12 @@
       "Bash(rtk find *)",
       "Bash(rtk read *)",
       "Bash(rtk grep *)",
-      "Skill(inertia-vue-development)"
+      "Skill(inertia-vue-development)",
+      "Bash(rtk wc *)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "laravel-boost"
+  ]
 }

@@ -59,15 +59,15 @@ login.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
  * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:60
  * @route "/logout"
  */
-export const logout = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
+export const logout = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
     url: logout.url(options),
-    method: "post",
+    method: "get",
 })
 
 logout.definition = {
-    methods: ["post","get","head"],
+    methods: ["get","head"],
     url: "/logout",
-} satisfies RouteDefinition<["post","get","head"]>
+} satisfies RouteDefinition<["get","head"]>
 
 /**
  * @see \App\Http\Controllers\AuthController::logout
@@ -77,16 +77,6 @@ logout.definition = {
 logout.url = (options?: RouteQueryOptions) => {
     return logout.definition.url + queryParams(options)
 }
-
-/**
- * @see \App\Http\Controllers\AuthController::logout
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:60
- * @route "/logout"
- */
-logout.post = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
-    url: logout.url(options),
-    method: "post",
-})
 
 /**
  * @see \App\Http\Controllers\AuthController::logout
@@ -117,45 +107,45 @@ logout.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\DashboardController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:14
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:13
  * @route "/"
  */
-export const home = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
-    url: home.url(options),
+export const dashboard = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+    url: dashboard.url(options),
     method: "get",
 })
 
-home.definition = {
+dashboard.definition = {
     methods: ["get","head"],
     url: "/",
 } satisfies RouteDefinition<["get","head"]>
 
 /**
  * @see \App\Http\Controllers\DashboardController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:14
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:13
  * @route "/"
  */
-home.url = (options?: RouteQueryOptions) => {
-    return home.definition.url + queryParams(options)
+dashboard.url = (options?: RouteQueryOptions) => {
+    return dashboard.definition.url + queryParams(options)
 }
 
 /**
  * @see \App\Http\Controllers\DashboardController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:14
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:13
  * @route "/"
  */
-home.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
-    url: home.url(options),
+dashboard.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+    url: dashboard.url(options),
     method: "get",
 })
 
 /**
  * @see \App\Http\Controllers\DashboardController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:14
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:13
  * @route "/"
  */
-home.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
-    url: home.url(options),
+dashboard.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
+    url: dashboard.url(options),
     method: "head",
 })
 
@@ -221,7 +211,7 @@ profile.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 const routes = {
     login,
     logout,
-    home,
+    dashboard,
     profile,
 }
 

@@ -21,7 +21,7 @@ export namespace Inertia {
         /**
          * @see [\App\Http\Controllers\ProjectController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
          */
-        export type ProjectsPage = Inertia.SharedData & { projects: string[], clients: unknown, open: boolean }
+        export type ProjectsPage = Inertia.SharedData & { projects: unknown, clients: unknown, open: boolean }
 
         /**
          * @see [\App\Http\Controllers\ActivitiesController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php)
@@ -41,7 +41,7 @@ export namespace Inertia {
         /**
          * @see [\App\Http\Controllers\ShareController::apply](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php)
          */
-        export type SharedActivityReportPage = Inertia.SharedData & { projectName: string, clientName: string, projectId: number, currentYear: unknown, currentMonth: unknown, reports: unknown }
+        export type SharedActivityReportPage = Inertia.SharedData & { projectName: string, clientName: string, projectId: string, currentYear: unknown, currentMonth: unknown, reports: unknown }
     }
 }
 

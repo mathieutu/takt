@@ -1,10 +1,6 @@
 <script setup lang="ts">
-import { MoreVertical, Pencil, Plus, Share2, Trash2, Users } from 'lucide-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
 import { router, useForm, useHttp } from '@inertiajs/vue3'
-import Dialog from '../components/ui/Dialog.vue'
-import DropdownMenu from '../components/ui/DropdownMenu.vue'
-import Select from '../components/ui/Select.vue'
 import { store as storeProject, update as updateProject, destroy as destroyProject } from '@/wayfinder/routes/projects'
 import { update as updateClient, destroy as destroyClient } from '@/wayfinder/routes/clients'
 import { revoke as shareRoute } from '@/wayfinder/routes/projects/share'
@@ -13,7 +9,6 @@ type Client = {
     id: number
     name: string
     daily_rate: number
-    is_owner: boolean
 }
 
 type Project = {
@@ -24,7 +19,6 @@ type Project = {
     client_id: number
     client_name: string
     created_at: string
-    is_owner: boolean
     is_shared: boolean
 }
 
@@ -38,16 +32,22 @@ const props = withDefaults(defineProps<{
     open: false,
 })
 
-const search = ref('')
-const createOpen = ref(false)
-const editingProject = ref<Project | null>(null)
+const search          = ref('')
+const createOpen      = ref(false)
+const editProjectOpen = ref(false)
+const deleteProjectOpen = ref(false)
+const editClientOpen  = ref(false)
+const deleteClientOpen = ref(false)
+const shareProjectOpen = ref(false)
+
+const editingProject  = ref<Project | null>(null)
 const deletingProject = ref<Project | null>(null)
-const deletingClient = ref<Client | null>(null)
-const sharingProject = ref<Project | null>(null)
-const shareUrl = ref('')
-const copied = ref(false)
-const shareLoading = ref(false)
-const editingClient = ref<Client | null>(null)
+const deletingClient  = ref<Client | null>(null)
+const sharingProject  = ref<Project | null>(null)
+const shareUrl        = ref('')
+const copied          = ref(false)
+const shareLoading    = ref(false)
+const editingClient   = ref<Client | null>(null)
 
 const defaultClientId = props.clients.length > 0 ? String(props.clients[0]?.id) : 'new'
 
@@ -96,6 +96,18 @@ const editClientRate = computed(() => {
     return client?.daily_rate ?? null
 })
 
+const createModalOpen = computed({
+    get: () => createOpen.value || createForm.hasErrors,
+    set: (val) => { createOpen.value = val },
+})
+
+const clientSelectItems = computed(() => [
+    { value: 'new', label: '+ Nouveau client' },
+    { type: 'separator' as const },
+    { type: 'label' as const, label: 'Clients existants' },
+    ...props.clients.map(c => ({ value: String(c.id), label: c.name })),
+])
+
 const avatarColors = [
     'bg-blue-100 text-blue-700',
     'bg-violet-100 text-violet-700',
@@ -117,13 +129,15 @@ function initials(name: string) {
 
 function openEdit(project: Project) {
     editingProject.value = { ...project }
+    editProjectOpen.value = true
 }
 
 function menuItems(project: Project) {
-    return [
-        { label: 'Modifier', action: () => openEdit(project) },
-        { label: 'Supprimer', action: () => { deletingProject.value = project }, variant: 'destructive' as const },
-    ]
+    return [[
+        { label: 'Modifier', icon: 'i-lucide-pencil', onSelect: () => openEdit(project) },
+    ], [
+        { label: 'Supprimer', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => { deletingProject.value = project; deleteProjectOpen.value = true } },
+    ]]
 }
 
 function submitCreateForm() {
@@ -144,7 +158,7 @@ function submitUpdateProject() {
         client_id: editingProject.value.client_id,
     }, {
         preserveScroll: true,
-        onSuccess: () => { editingProject.value = null },
+        onSuccess: () => { editProjectOpen.value = false },
     })
 }
 
@@ -155,7 +169,7 @@ function submitUpdateClient() {
         daily_rate: editingClient.value.daily_rate,
     }, {
         preserveScroll: true,
-        onSuccess: () => { editingClient.value = null },
+        onSuccess: () => { editClientOpen.value = false },
     })
 }
 
@@ -163,7 +177,7 @@ function submitDeleteProject() {
     if (!deletingProject.value) return
     router.delete(destroyProject(deletingProject.value.id).url, {
         preserveScroll: true,
-        onSuccess: () => { deletingProject.value = null },
+        onSuccess: () => { deleteProjectOpen.value = false },
     })
 }
 
@@ -171,7 +185,7 @@ function submitDeleteClient() {
     if (!deletingClient.value) return
     router.delete(destroyClient(deletingClient.value.id).url, {
         preserveScroll: true,
-        onSuccess: () => { deletingClient.value = null },
+        onSuccess: () => { deleteClientOpen.value = false },
     })
 }
 
@@ -182,6 +196,7 @@ function openShare(project: Project) {
     shareUrl.value = ''
     copied.value = false
     shareLoading.value = true
+    shareProjectOpen.value = true
     http.post(shareRoute(project.id).url, {
         onSuccess: (data: any) => {
             shareUrl.value = data.url
@@ -207,6 +222,7 @@ function revokeShare() {
     router.delete(shareRoute(sharingProject.value.id).url, {
         preserveScroll: true,
         onSuccess: () => {
+            shareProjectOpen.value = false
             sharingProject.value = null
             shareUrl.value = ''
         },
@@ -215,33 +231,31 @@ function revokeShare() {
 </script>
 
 <template>
-    <div class="flex min-h-screen flex-col bg-background">
+    <div class="flex min-h-screen flex-col bg-default">
         <main class="flex-1 px-6 py-8">
             <div class="mx-auto max-w-5xl space-y-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h1 class="text-lg font-semibold text-foreground">Projets</h1>
-                        <p class="text-sm text-muted-foreground">{{ projects.length }} projet{{ projects.length !== 1 ? 's' : '' }} au total</p>
+                        <h1 class="text-lg font-semibold">Projets</h1>
+                        <p class="text-sm text-muted">{{ projects.length }} projet{{ projects.length !== 1 ? 's' : '' }} au total</p>
                     </div>
-                    <button
-                        type="button"
-                        class="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                    <UButton
+                        label="Nouveau projet"
+                        icon="i-lucide-plus"
                         @click="createOpen = true"
-                    >
-                        <Plus class="h-4 w-4" />
-                        Nouveau projet
-                    </button>
+                    />
                 </div>
 
-                <input
+                <UInput
                     v-if="projects.length > 0"
                     v-model="search"
                     type="text"
                     placeholder="Rechercher un projet ou un client..."
-                    class="h-9 w-80 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    icon="i-lucide-search"
+                    class="w-80"
                 />
 
-                <p v-if="filtered.length === 0 && search" class="text-sm text-muted-foreground">
+                <p v-if="filtered.length === 0 && search" class="text-sm text-muted">
                     Aucun projet ne correspond à votre recherche.
                 </p>
 
@@ -249,7 +263,7 @@ function revokeShare() {
                     <div
                         v-for="project in filtered"
                         :key="project.id"
-                        class="rounded-lg border border-border bg-card p-5"
+                        class="rounded-lg border border-default bg-elevated p-5"
                     >
                         <div class="flex items-start justify-between gap-2">
                             <div class="flex min-w-0 flex-1 items-center gap-3">
@@ -260,90 +274,78 @@ function revokeShare() {
                                     {{ initials(project.name) }}
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="truncate text-sm font-semibold text-foreground">{{ project.name }}</p>
-                                    <p class="truncate text-xs text-muted-foreground">{{ project.client_name }}</p>
+                                    <p class="truncate text-sm font-semibold">{{ project.name }}</p>
+                                    <p class="truncate text-xs text-muted">{{ project.client_name }}</p>
                                 </div>
                             </div>
                             <div class="flex shrink-0 items-center gap-1">
-                                <button
-                                    v-if="project.is_owner"
-                                    type="button"
-                                    class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                                <UButton
+                                    icon="i-lucide-share-2"
+                                    color="neutral"
+                                    variant="ghost"
+                                    size="xs"
                                     @click="openShare(project)"
-                                >
-                                    <Share2 class="h-4 w-4" />
-                                </button>
-                                <DropdownMenu v-if="project.is_owner" :items="menuItems(project)" class="shrink-0">
-                                    <button
-                                        type="button"
-                                        class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                    >
-                                        <MoreVertical class="h-4 w-4" />
-                                    </button>
-                                </DropdownMenu>
+                                />
+                                <UDropdownMenu :items="menuItems(project)" class="shrink-0">
+                                    <UButton
+                                        icon="i-lucide-more-vertical"
+                                        color="neutral"
+                                        variant="ghost"
+                                        size="xs"
+                                    />
+                                </UDropdownMenu>
                             </div>
                         </div>
 
-                        <p v-if="project.description" class="mt-3 text-xs text-muted-foreground line-clamp-2">{{ project.description }}</p>
+                        <p v-if="project.description" class="mt-3 text-xs text-muted line-clamp-2">{{ project.description }}</p>
 
                         <div class="mt-3 flex items-center justify-between">
                             <div class="flex items-center gap-2">
-                                <span v-if="project.daily_rate" class="text-xs font-medium text-foreground">{{ project.daily_rate }} €/jour</span>
-                                <span v-else class="text-xs text-muted-foreground">TJM client</span>
+                                <span v-if="project.daily_rate" class="text-xs font-medium">{{ project.daily_rate }} €/jour</span>
+                                <span v-else class="text-xs text-muted">TJM client</span>
                                 <span
-                                    v-if="!project.is_owner"
-                                    class="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700"
-                                >
-                                    <Users class="h-3 w-3" />
-                                    Partagé avec moi
-                                </span>
-                                <span
-                                    v-else-if="project.is_shared"
-                                    class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                                    v-if="project.is_shared"
+                                    class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted"
                                     title="Ce projet est partagé"
                                 >
-                                    <Users class="h-3 w-3" />
+                                    <UIcon name="i-lucide-users" class="h-3 w-3" />
                                     Partagé
                                 </span>
                             </div>
-                            <span v-if="project.created_at" class="text-xs text-muted-foreground">{{ project.created_at }}</span>
+                            <span v-if="project.created_at" class="text-xs text-muted">{{ project.created_at }}</span>
                         </div>
                     </div>
                 </div>
 
                 <div v-if="clients.length > 0" class="space-y-1">
-                    <p class="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Clients</p>
+                    <p class="mb-2 text-xs font-medium uppercase tracking-wide text-muted">Clients</p>
                     <div
                         v-for="client in clients"
                         :key="client.id"
-                        class="flex items-center justify-between rounded-md px-3 py-2 hover:bg-accent"
+                        class="flex items-center justify-between rounded-md px-3 py-2 hover:bg-elevated"
                     >
                         <div class="flex items-center gap-2">
                             <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium" :class="avatarColor(client.name)">
                                 {{ initials(client.name) }}
                             </div>
-                            <span class="text-sm text-foreground">{{ client.name }}</span>
-                            <span class="text-xs text-muted-foreground">{{ client.daily_rate }} €/j</span>
+                            <span class="text-sm">{{ client.name }}</span>
+                            <span class="text-xs text-muted">{{ client.daily_rate }} €/j</span>
                         </div>
                         <div class="flex items-center gap-1">
-                            <div class="flex items-center gap-1">
-                            <button
-                                v-if="client.is_owner"
-                                type="button"
-                                class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                @click="editingClient = { ...client }"
-                            >
-                                <Pencil class="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                                v-if="client.is_owner"
-                                    type="button"
-                                    class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                                    @click="deletingClient = client"
-                                >
-                                    <Trash2 class="h-3.5 w-3.5" />
-                                </button>
-                        </div>
+                            <UButton
+                                icon="i-lucide-pencil"
+                                color="neutral"
+                                variant="ghost"
+                                size="xs"
+                                @click="editingClient = { ...client }; editClientOpen = true"
+                            />
+                            <UButton
+                                icon="i-lucide-trash-2"
+                                color="error"
+                                variant="ghost"
+                                size="xs"
+                                @click="deletingClient = client; deleteClientOpen = true"
+                            />
                         </div>
                     </div>
                 </div>
@@ -351,199 +353,194 @@ function revokeShare() {
             </div>
         </main>
 
-        <Dialog :open="editingClient !== null" title="Modifier le client" @close="editingClient = null">
-            <form v-if="editingClient" class="space-y-4" @submit.prevent="submitUpdateClient">
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Nom<span class="text-destructive ml-0.5">*</span></label>
-                    <input v-model="editingClient.name" name="name" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+        <UModal v-model:open="editClientOpen" title="Modifier le client">
+            <template #body>
+                <form v-if="editingClient" class="space-y-4" @submit.prevent="submitUpdateClient">
+                    <UFormField label="Nom" required>
+                        <UInput v-model="editingClient.name" type="text" class="w-full" />
+                    </UFormField>
+                    <UFormField label="TJM (€/jour)" required>
+                        <UInput v-model="editingClient.daily_rate" type="number" min="0" step="0.01" class="w-full" />
+                    </UFormField>
+                </form>
+            </template>
+            <template #footer="{ close }">
+                <div class="flex justify-end gap-2">
+                    <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
+                    <UButton label="Enregistrer" @click="submitUpdateClient" />
                 </div>
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">TJM (€/jour)<span class="text-destructive ml-0.5">*</span></label>
-                    <input v-model="editingClient.daily_rate" name="daily_rate" type="number" min="0" step="0.01" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="editingClient = null">Annuler</button>
-                    <button type="submit" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">Enregistrer</button>
-                </div>
-            </form>
-        </Dialog>
+            </template>
+        </UModal>
 
-        <Dialog :open="deletingClient !== null" title="Supprimer le client" @close="deletingClient = null">
-            <p class="text-sm text-muted-foreground">
-                Supprimer <span class="font-medium text-foreground">{{ deletingClient?.name }}</span> ?
-                Tous les projets et saisies associés seront définitivement supprimés.
-            </p>
-            <div v-if="deletingClient" class="mt-4 flex justify-end gap-2">
-                <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="deletingClient = null">Annuler</button>
-                <button type="button" class="h-9 rounded-md bg-destructive px-4 text-sm font-medium text-white transition-colors hover:bg-destructive/90" @click="submitDeleteClient">Supprimer</button>
-            </div>
-        </Dialog>
-
-        <Dialog :open="createOpen || createForm.hasErrors" title="Nouveau projet" @close="createOpen = false">
-            <form class="space-y-4" @submit.prevent="submitCreateForm">
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Client<span class="text-destructive ml-0.5">*</span></label>
-                    <Select
-                        v-model="createForm.client_id"
-                        name="client_id"
-                        :options="[
-                            { value: 'new', label: '+ Nouveau client' },
-                            ...clients.filter(c => c.is_owner).map(c => ({ value: c.id, label: c.name, group: 'Clients existants' })),
-                        ]"
-                        :error="!!createForm.errors.client_id"
-                    />
-                    <p v-if="createForm.errors.client_id" class="text-xs text-destructive">{{ createForm.errors.client_id }}</p>
+        <UModal v-model:open="deleteClientOpen" title="Supprimer le client">
+            <template #body>
+                <p class="text-sm text-muted">
+                    Supprimer <span class="font-medium text-default">{{ deletingClient?.name }}</span> ?
+                    Tous les projets et saisies associés seront définitivement supprimés.
+                </p>
+            </template>
+            <template #footer="{ close }">
+                <div class="flex justify-end gap-2">
+                    <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
+                    <UButton label="Supprimer" color="error" @click="submitDeleteClient" />
                 </div>
+            </template>
+        </UModal>
 
-                <template v-if="isNewClient">
-                    <div class="rounded-md border border-border bg-muted/40 p-3 space-y-3">
-                        <div class="flex flex-col gap-1.5">
-                            <label class="text-sm font-medium text-foreground">Nom du client<span class="text-destructive ml-0.5">*</span></label>
-                            <input
-                                v-model="createForm.client_name"
-                                name="client_name"
-                                type="text"
-                                class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                                :class="{ 'border-destructive focus:ring-destructive': createForm.errors.client_name }"
-                            />
-                            <p v-if="createForm.errors.client_name" class="text-xs text-destructive">{{ createForm.errors.client_name }}</p>
+        <UModal v-model:open="createModalOpen" title="Nouveau projet">
+            <template #body>
+                <form class="space-y-4" @submit.prevent="submitCreateForm">
+                    <UFormField label="Client" required :error="createForm.errors.client_id">
+                        <USelect
+                            v-model="createForm.client_id"
+                            :items="clientSelectItems"
+                            :color="createForm.errors.client_id ? 'error' : undefined"
+                            class="w-full"
+                        />
+                    </UFormField>
+
+                    <template v-if="isNewClient">
+                        <div class="rounded-md border border-default bg-muted/40 p-3 space-y-3">
+                            <UFormField label="Nom du client" required :error="createForm.errors.client_name">
+                                <UInput
+                                    v-model="createForm.client_name"
+                                    type="text"
+                                    :color="createForm.errors.client_name ? 'error' : undefined"
+                                    class="w-full"
+                                />
+                            </UFormField>
+                            <UFormField label="TJM du client (€/jour)" required :error="createForm.errors.client_rate">
+                                <UInput
+                                    v-model="createForm.client_rate"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    :color="createForm.errors.client_rate ? 'error' : undefined"
+                                    class="w-full"
+                                />
+                            </UFormField>
                         </div>
-                        <div class="flex flex-col gap-1.5">
-                            <label class="text-sm font-medium text-foreground">TJM du client (€/jour)<span class="text-destructive ml-0.5">*</span></label>
-                            <input
-                                v-model="createForm.client_rate"
-                                name="client_rate"
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                                :class="{ 'border-destructive focus:ring-destructive': createForm.errors.client_rate }"
-                            />
-                            <p v-if="createForm.errors.client_rate" class="text-xs text-destructive">{{ createForm.errors.client_rate }}</p>
-                        </div>
+                    </template>
+
+                    <UFormField label="Nom du projet" required :error="createForm.errors.name">
+                        <UInput
+                            v-model="createForm.name"
+                            type="text"
+                            :color="createForm.errors.name ? 'error' : undefined"
+                            class="w-full"
+                        />
+                    </UFormField>
+
+                    <UFormField label="Description">
+                        <UInput v-model="createForm.description" type="text" class="w-full" />
+                    </UFormField>
+
+                    <UFormField label="TJM du projet" :error="createForm.errors.daily_rate">
+                        <UInput
+                            v-model="createForm.daily_rate"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            :placeholder="selectedCreateClientRate !== null ? `${selectedCreateClientRate} €/j (TJM client)` : 'Hérite du TJM client'"
+                            :color="createForm.errors.daily_rate ? 'error' : undefined"
+                            class="w-full"
+                        />
+                    </UFormField>
+                </form>
+            </template>
+            <template #footer="{ close }">
+                <div class="flex flex-col sm:flex-row justify-end gap-2">
+                    <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
+                    <UButton label="Créer" :loading="createForm.processing" @click="submitCreateForm" />
+                </div>
+            </template>
+        </UModal>
+
+        <UModal v-model:open="editProjectOpen" title="Modifier le projet">
+            <template #body>
+                <form v-if="editingProject" class="space-y-4" @submit.prevent="submitUpdateProject">
+                    <UFormField label="Client" required>
+                        <USelect
+                            v-model="editingProject.client_id"
+                            :items="clients.map(c => ({ value: c.id, label: c.name }))"
+                            class="w-full"
+                        />
+                    </UFormField>
+                    <UFormField label="Nom du projet" required>
+                        <UInput v-model="editingProject.name" type="text" class="w-full" />
+                    </UFormField>
+                    <UFormField label="Description">
+                        <UInput v-model="editingProject.description" type="text" class="w-full" />
+                    </UFormField>
+                    <UFormField label="TJM du projet">
+                        <UInput
+                            v-model="editingProject.daily_rate"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            :placeholder="editClientRate !== null ? `${editClientRate} €/j (TJM client)` : 'Hérite du TJM client'"
+                            class="w-full"
+                        />
+                    </UFormField>
+                </form>
+            </template>
+            <template #footer="{ close }">
+                <div class="flex justify-end gap-2">
+                    <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
+                    <UButton label="Enregistrer" @click="submitUpdateProject" />
+                </div>
+            </template>
+        </UModal>
+
+        <UModal v-model:open="shareProjectOpen" title="Partager le projet">
+            <template #body>
+                <div class="space-y-3">
+                    <p class="text-sm text-muted">
+                        Copiez ce lien et envoyez-le à la personne avec qui vous souhaitez partager
+                        <span class="font-medium text-default">{{ sharingProject?.name }}</span>.
+                    </p>
+                    <div class="flex gap-2">
+                        <UInput
+                            :model-value="shareLoading ? 'Chargement…' : shareUrl"
+                            readonly
+                            class="min-w-0 flex-1"
+                        />
+                        <UButton
+                            :label="copied ? 'Copié !' : 'Copier'"
+                            :disabled="shareLoading || !shareUrl"
+                            @click="copyShareUrl"
+                        />
                     </div>
-                </template>
+                    <div v-if="shareUrl" class="flex justify-end border-t border-default pt-3">
+                        <button
+                            type="button"
+                            class="text-xs text-muted underline-offset-2 hover:text-error hover:underline transition-colors"
+                            @click="revokeShare"
+                        >
+                            Désactiver ce lien de partage
+                        </button>
+                    </div>
+                </div>
+            </template>
+            <template #footer="{ close }">
+                <div class="flex justify-end gap-2">
+                    <UButton label="Fermer" color="neutral" variant="outline" @click="close" />
+                </div>
+            </template>
+        </UModal>
 
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Nom du projet<span class="text-destructive ml-0.5">*</span></label>
-                    <input
-                        v-model="createForm.name"
-                        name="name"
-                        type="text"
-                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                        :class="{ 'border-destructive focus:ring-destructive': createForm.errors.name }"
-                    />
-                    <p v-if="createForm.errors.name" class="text-xs text-destructive">{{ createForm.errors.name }}</p>
+        <UModal v-model:open="deleteProjectOpen" title="Supprimer le projet">
+            <template #body>
+                <p class="text-sm text-muted">
+                    Supprimer <span class="font-medium text-default">{{ deletingProject?.name }}</span> ? Cette action est irréversible.
+                </p>
+            </template>
+            <template #footer="{ close }">
+                <div class="flex justify-end gap-2">
+                    <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
+                    <UButton label="Supprimer" color="error" @click="submitDeleteProject" />
                 </div>
-
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Description</label>
-                    <input
-                        v-model="createForm.description"
-                        name="description"
-                        type="text"
-                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                    />
-                </div>
-
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">TJM du projet</label>
-                    <input
-                        v-model="createForm.daily_rate"
-                        name="daily_rate"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        :placeholder="selectedCreateClientRate !== null ? `${selectedCreateClientRate} €/j (TJM client)` : 'Hérite du TJM client'"
-                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                        :class="{ 'border-destructive focus:ring-destructive': createForm.errors.daily_rate }"
-                    />
-                    <p v-if="createForm.errors.daily_rate" class="text-xs text-destructive">{{ createForm.errors.daily_rate }}</p>
-                </div>
-
-                <div class="flex flex-col sm:flex-row justify-end gap-2 pt-2">
-                    <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="createOpen = false">Annuler</button>
-                    <button type="submit" :disabled="createForm.processing" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50">Créer</button>
-                </div>
-            </form>
-        </Dialog>
-
-        <Dialog :open="editingProject !== null" title="Modifier le projet" @close="editingProject = null">
-            <form v-if="editingProject" class="space-y-4" @submit.prevent="submitUpdateProject">
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Client<span class="text-destructive ml-0.5">*</span></label>
-                    <Select
-                        v-model="editingProject.client_id"
-                        name="client_id"
-                        :options="clients.filter(c => c.is_owner).map(c => ({ value: c.id, label: c.name }))"
-                    />
-                </div>
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Nom du projet<span class="text-destructive ml-0.5">*</span></label>
-                    <input v-model="editingProject.name" name="name" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
-                </div>
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Description</label>
-                    <input v-model="editingProject.description" name="description" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
-                </div>
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">TJM du projet</label>
-                    <input
-                        v-model="editingProject.daily_rate"
-                        name="daily_rate"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        :placeholder="editClientRate !== null ? `${editClientRate} €/j (TJM client)` : 'Hérite du TJM client'"
-                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                    />
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="editingProject = null">Annuler</button>
-                    <button type="submit" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">Enregistrer</button>
-                </div>
-            </form>
-        </Dialog>
-
-        <Dialog :open="sharingProject !== null" title="Partager le projet" @close="sharingProject = null">
-            <p class="text-sm text-muted-foreground">
-                Copiez ce lien et envoyez-le à la personne avec qui vous souhaitez partager
-                <span class="font-medium text-foreground">{{ sharingProject?.name }}</span>.
-            </p>
-            <div class="mt-4 flex gap-2">
-                <input
-                    :value="shareLoading ? 'Chargement…' : shareUrl"
-                    readonly
-                    class="h-9 min-w-0 flex-1 rounded-md border border-input bg-muted px-3 text-sm text-foreground focus:outline-none"
-                />
-                <button
-                    type="button"
-                    :disabled="shareLoading || !shareUrl"
-                    class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                    @click="copyShareUrl"
-                >
-                    {{ copied ? 'Copié !' : 'Copier' }}
-                </button>
-            </div>
-            <div v-if="shareUrl" class="mt-3 flex justify-end border-t border-border pt-3">
-                <button
-                    type="button"
-                    class="text-xs text-muted-foreground underline-offset-2 hover:text-destructive hover:underline transition-colors"
-                    @click="revokeShare"
-                >
-                    Désactiver ce lien de partage
-                </button>
-            </div>
-        </Dialog>
-
-        <Dialog :open="deletingProject !== null" title="Supprimer le projet" @close="deletingProject = null">
-            <p class="text-sm text-muted-foreground">
-                Supprimer <span class="font-medium text-foreground">{{ deletingProject?.name }}</span> ? Cette action est irréversible.
-            </p>
-            <div v-if="deletingProject" class="mt-4 flex justify-end gap-2">
-                <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="deletingProject = null">Annuler</button>
-                <button type="button" class="h-9 rounded-md bg-destructive px-4 text-sm font-medium text-white transition-colors hover:bg-destructive/90" @click="submitDeleteProject">Supprimer</button>
-            </div>
-        </Dialog>
+            </template>
+        </UModal>
     </div>
 </template>

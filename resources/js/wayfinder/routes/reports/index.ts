@@ -5,10 +5,10 @@ import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOpt
 
 /**
  * @see \App\Http\Controllers\ActivitiesController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:79
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:75
  * @route "/reports/{report}"
  */
-export const update = (args: { report: number | { id: number } } | [ report: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
+export const update = (args: { report: string | { id: string } } | [ report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
     url: update.url(args, options),
     method: "put",
 })
@@ -20,10 +20,10 @@ update.definition = {
 
 /**
  * @see \App\Http\Controllers\ActivitiesController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:79
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:75
  * @route "/reports/{report}"
  */
-update.url = (args: { report: number | { id: number } } | [ report: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+update.url = (args: { report: string | { id: string } } | [ report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
     if (typeof args === "string" || typeof args === "number") {
         args = { report: args }
     }
@@ -51,20 +51,20 @@ update.url = (args: { report: number | { id: number } } | [ report: number | { i
 
 /**
  * @see \App\Http\Controllers\ActivitiesController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:79
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:75
  * @route "/reports/{report}"
  */
-update.put = (args: { report: number | { id: number } } | [ report: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
+update.put = (args: { report: string | { id: string } } | [ report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
     url: update.url(args, options),
     method: "put",
 })
 
 /**
  * @see \App\Http\Controllers\ActivitiesController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:79
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:75
  * @route "/reports/{report}"
  */
-update.patch = (args: { report: number | { id: number } } | [ report: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"patch"> => ({
+update.patch = (args: { report: string | { id: string } } | [ report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"patch"> => ({
     url: update.url(args, options),
     method: "patch",
 })
@@ -78,10 +78,10 @@ update.patch = (args: { report: number | { id: number } } | [ report: number | {
 
 /**
  * @see \App\Http\Controllers\ActivitiesController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:88
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:84
  * @route "/reports/{report}"
  */
-export const destroy = (args: { report: number | { id: number } } | [ report: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
+export const destroy = (args: { report: string | { id: string } } | [ report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
     url: destroy.url(args, options),
     method: "delete",
 })
@@ -93,10 +93,10 @@ destroy.definition = {
 
 /**
  * @see \App\Http\Controllers\ActivitiesController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:88
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:84
  * @route "/reports/{report}"
  */
-destroy.url = (args: { report: number | { id: number } } | [ report: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+destroy.url = (args: { report: string | { id: string } } | [ report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
     if (typeof args === "string" || typeof args === "number") {
         args = { report: args }
     }
@@ -124,10 +124,10 @@ destroy.url = (args: { report: number | { id: number } } | [ report: number | { 
 
 /**
  * @see \App\Http\Controllers\ActivitiesController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:88
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:84
  * @route "/reports/{report}"
  */
-destroy.delete = (args: { report: number | { id: number } } | [ report: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
+destroy.delete = (args: { report: string | { id: string } } | [ report: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
     url: destroy.url(args, options),
     method: "delete",
 })
@@ -141,7 +141,7 @@ destroy.delete = (args: { report: number | { id: number } } | [ report: number |
 
 /**
  * @see \App\Http\Controllers\ActivitiesController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:32
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:31
  * @route "/reports"
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -156,7 +156,7 @@ index.definition = {
 
 /**
  * @see \App\Http\Controllers\ActivitiesController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:32
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:31
  * @route "/reports"
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -165,7 +165,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\ActivitiesController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:32
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:31
  * @route "/reports"
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -175,7 +175,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\ActivitiesController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:32
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php:31
  * @route "/reports"
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({

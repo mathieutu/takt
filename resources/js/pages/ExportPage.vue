@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { Download, ChevronDown, X, RotateCcw } from 'lucide-vue-next'
+import { ref, computed, watch } from 'vue'
 import { index as indexRoute, csv as csvRoute, xlsx as xlsxRoute } from '@/wayfinder/routes/exports'
 
 type Entry         = { id: number; start_date: string; day_coverage: number; label: string; comments: string }
@@ -37,32 +36,13 @@ const _init = readUrlParams()
 const localProjectIds = ref<number[]>(_init.ids)
 const localDateStart  = ref(_init.dateStart)
 const localDateEnd    = ref(_init.dateEnd)
-const dropdownOpen        = ref(false)
-const dropdownRef         = ref<HTMLElement | null>(null)
-const exportDropdownOpen  = ref(false)
-const exportDropdownRef   = ref<HTMLElement | null>(null)
 const localProjects   = ref<Project[]>([...props.projects])
 const loading         = ref(false)
 const hasLoaded       = ref(props.projects.length > 0 || props.selectedProjectIds.length > 0)
 
-function handleOutsideClick(e: MouseEvent) {
-    if (dropdownRef.value && !dropdownRef.value.contains(e.target as Node))
-        dropdownOpen.value = false
-    if (exportDropdownRef.value && !exportDropdownRef.value.contains(e.target as Node))
-        exportDropdownOpen.value = false
-}
-onMounted(() => document.addEventListener('mousedown', handleOutsideClick))
-onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
-
-function toggleProject(id: number) {
-    const idx = localProjectIds.value.indexOf(id)
-    if (idx === -1) localProjectIds.value.push(id)
-    else localProjectIds.value.splice(idx, 1)
-}
-
-function removeProject(id: number) {
-    localProjectIds.value = localProjectIds.value.filter(p => p !== id)
-}
+const projectOptions = computed(() =>
+    props.allProjects.map(p => ({ value: p.id, label: p.name, description: p.client_name }))
+)
 
 const selectedProjects = computed(() =>
     props.allProjects.filter(p => localProjectIds.value.includes(p.id))
@@ -74,6 +54,10 @@ const dropdownLabel = computed(() => {
     if (n === 1) return '1 projet sélectionné'
     return `${n} projets sélectionnés`
 })
+
+function removeProject(id: number) {
+    localProjectIds.value = localProjectIds.value.filter(p => p !== id)
+}
 
 const allEntries = computed(() => {
     const rows: { date: string; project_name: string; client_name: string; daily_rate: number; day_coverage: number; label: string }[] = []
@@ -110,6 +94,11 @@ function buildExportParams() {
 
 const exportUrl     = computed(() => `${csvRoute.url()}?${buildExportParams()}`)
 const xlsxExportUrl = computed(() => `${xlsxRoute.url()}?${buildExportParams()}`)
+
+const exportMenuItems = computed(() => [[
+    { label: 'Exporter CSV', icon: 'i-lucide-download', onSelect: () => { window.location.href = exportUrl.value } },
+    { label: 'Exporter XLSX', icon: 'i-lucide-download', onSelect: () => { window.location.href = xlsxExportUrl.value } },
+]])
 
 function syncUrl() {
     const params = new URLSearchParams()
@@ -190,87 +179,54 @@ function coverageLabel(v: number) {
     <div class="px-6 py-8">
         <div class="mx-auto max-w-5xl space-y-6">
 
-                <div>
-                    <h1 class="text-lg font-semibold text-foreground">Exports</h1>
-                    <p class="text-sm text-muted-foreground">Prévisualisez et exportez vos activités</p>
-                </div>
+            <div>
+                <h1 class="text-lg font-semibold">Exports</h1>
+                <p class="text-sm text-muted">Prévisualisez et exportez vos activités</p>
+            </div>
 
-                <div class="rounded-lg border border-border bg-card p-4 space-y-3">
+            <UCard>
+                <div class="space-y-3">
                     <div class="flex flex-wrap items-end gap-3">
 
-                        <div class="flex flex-col gap-1.5 relative min-w-65" ref="dropdownRef">
-                            <label class="text-xs font-medium text-muted-foreground">Projets</label>
-                            <button
-                                type="button"
-                                @click="dropdownOpen = !dropdownOpen"
-                                class="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm text-foreground transition-colors hover:bg-accent/40 focus:outline-none"
+                        <div class="flex flex-col gap-1.5 min-w-65">
+                            <label class="text-xs font-medium text-muted">Projets</label>
+                            <USelectMenu
+                                v-model="localProjectIds"
+                                :items="projectOptions"
+                                value-key="value"
+                                multiple
+                                placeholder="Sélectionner des projets…"
+                                class="min-w-65"
                             >
-                                <span :class="localProjectIds.length === 0 ? 'text-muted-foreground' : 'text-foreground'">
-                                    {{ dropdownLabel }}
-                                </span>
-                                <ChevronDown class="h-4 w-4 text-muted-foreground shrink-0 ml-2 transition-transform" :class="dropdownOpen ? 'rotate-180' : ''" />
-                            </button>
-
-                            <div
-                                v-if="dropdownOpen"
-                                class="absolute top-full left-0 z-20 mt-1 w-full min-w-65 rounded-md border border-border shadow-lg"
-                                style="background-color: var(--background)"
-                            >
-                                <div class="max-h-52 overflow-y-auto p-1">
-                                    <label
-                                        v-for="p in allProjects"
-                                        :key="p.id"
-                                        class="flex items-center gap-2.5 rounded px-2.5 py-2 text-sm cursor-pointer hover:bg-accent/60 transition-colors"
-                                        @click.prevent="toggleProject(p.id)"
-                                    >
-                                        <span
-                                            class="flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors"
-                                            :class="localProjectIds.includes(p.id) ? 'bg-primary border-primary' : 'border-input bg-background'"
-                                        >
-                                            <svg v-if="localProjectIds.includes(p.id)" viewBox="0 0 10 8" fill="none" class="h-2.5 w-2.5">
-                                                <path d="M1 4l2.5 2.5L9 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                            </svg>
-                                        </span>
-                                        <span class="flex-1 text-foreground truncate">{{ p.name }}</span>
-                                        <span class="text-muted-foreground text-xs shrink-0">{{ p.client_name }}</span>
-                                    </label>
-                                    <p v-if="allProjects.length === 0" class="px-3 py-2 text-sm text-muted-foreground">
-                                        Aucun projet disponible
-                                    </p>
-                                </div>
-                            </div>
+                                <template #default>
+                                    <span :class="localProjectIds.length === 0 ? 'text-muted' : 'text-default'">
+                                        {{ dropdownLabel }}
+                                    </span>
+                                </template>
+                            </USelectMenu>
                         </div>
 
                         <div class="flex items-end gap-2">
                             <div class="flex flex-col gap-1.5">
-                                <label class="text-xs font-medium text-muted-foreground">Du</label>
-                                <input
-                                    v-model="localDateStart"
-                                    type="date"
-                                    class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                                />
+                                <label class="text-xs font-medium text-muted">Du</label>
+                                <UInput v-model="localDateStart" type="date" />
                             </div>
-                            <span class="pb-2 text-muted-foreground">—</span>
+                            <span class="pb-2 text-muted">—</span>
                             <div class="flex flex-col gap-1.5">
-                                <label class="text-xs font-medium text-muted-foreground">Au</label>
-                                <input
-                                    v-model="localDateEnd"
-                                    type="date"
-                                    class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                                />
+                                <label class="text-xs font-medium text-muted">Au</label>
+                                <UInput v-model="localDateEnd" type="date" />
                             </div>
                         </div>
 
-                        <button
+                        <UButton
                             v-if="hasLoaded || localProjectIds.length > 0 || localDateStart || localDateEnd"
-                            type="button"
+                            icon="i-lucide-rotate-ccw"
+                            label="Réinitialiser"
+                            color="neutral"
+                            variant="outline"
                             :disabled="loading"
-                            class="inline-flex h-9 items-center gap-2 rounded-md border border-border px-4 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                             @click="clearExport"
-                        >
-                            <RotateCcw class="h-4 w-4" />
-                            Réinitialiser
-                        </button>
+                        />
                     </div>
 
                     <div v-if="selectedProjects.length > 0" class="flex flex-wrap gap-1.5">
@@ -280,106 +236,79 @@ function coverageLabel(v: number) {
                             class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
                         >
                             {{ p.name }}
-                            <button type="button" @click="removeProject(p.id)" class="ml-0.5 hover:text-primary/60 transition-colors">
-                                <X class="h-3 w-3" />
+                            <button type="button" class="ml-0.5 hover:text-primary/60 transition-colors" @click="removeProject(p.id)">
+                                <UIcon name="i-lucide-x" class="h-3 w-3" />
                             </button>
                         </span>
                     </div>
                 </div>
+            </UCard>
 
-                <p v-if="!hasLoaded && localProjectIds.length === 0" class="text-sm text-muted-foreground">
-                    Sélectionnez un ou plusieurs projets pour charger les activités.
-                </p>
+            <p v-if="!hasLoaded && localProjectIds.length === 0" class="text-sm text-muted">
+                Sélectionnez un ou plusieurs projets pour charger les activités.
+            </p>
 
-                <p v-else-if="hasLoaded && allEntries.length === 0" class="text-sm text-muted-foreground">
-                    Aucune activité pour les filtres sélectionnés.
-                </p>
+            <p v-else-if="hasLoaded && allEntries.length === 0" class="text-sm text-muted">
+                Aucune activité pour les filtres sélectionnés.
+            </p>
 
-                <div v-else-if="hasLoaded" class="space-y-3">
-                    <div class="overflow-hidden rounded-lg border border-border">
+            <div v-else-if="hasLoaded" class="space-y-3">
+                <div class="overflow-hidden rounded-lg border border-default">
                     <table class="w-full text-sm">
                         <thead>
-                            <tr class="border-b border-border bg-muted/40">
-                                <th class="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">Date</th>
-                                <th class="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">Projet</th>
-                                <th class="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">Client</th>
-                                <th class="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground">Intitulé</th>
-                                <th class="px-4 py-2.5 text-right text-xs font-medium text-muted-foreground">Durée</th>
-                                <th class="px-4 py-2.5 text-right text-xs font-medium text-muted-foreground">Montant</th>
+                            <tr class="border-b border-default bg-muted/40">
+                                <th class="px-4 py-2.5 text-left text-xs font-medium text-muted">Date</th>
+                                <th class="px-4 py-2.5 text-left text-xs font-medium text-muted">Projet</th>
+                                <th class="px-4 py-2.5 text-left text-xs font-medium text-muted">Client</th>
+                                <th class="px-4 py-2.5 text-left text-xs font-medium text-muted">Intitulé</th>
+                                <th class="px-4 py-2.5 text-right text-xs font-medium text-muted">Durée</th>
+                                <th class="px-4 py-2.5 text-right text-xs font-medium text-muted">Montant</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr
                                 v-for="(entry, i) in allEntries"
                                 :key="i"
-                                class="border-b border-border last:border-0 hover:bg-accent/40 transition-colors"
+                                class="border-b border-default last:border-0 hover:bg-elevated/40 transition-colors"
                             >
-                                <td class="px-4 py-2.5 text-muted-foreground">{{ formatDate(entry.date) }}</td>
-                                <td class="px-4 py-2.5 font-medium text-foreground">{{ entry.project_name }}</td>
-                                <td class="px-4 py-2.5 text-muted-foreground">{{ entry.client_name }}</td>
-                                <td class="px-4 py-2.5 text-muted-foreground">{{ entry.label || '—' }}</td>
-                                <td class="px-4 py-2.5 text-right font-medium text-foreground">{{ coverageLabel(entry.day_coverage) }}</td>
-                                <td class="px-4 py-2.5 text-right text-foreground">
-                                    {{ entry.daily_rate > 0 ? ((entry.day_coverage / 100) * entry.daily_rate).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '\u00a0€' : '—' }}
+                                <td class="px-4 py-2.5 text-muted">{{ formatDate(entry.date) }}</td>
+                                <td class="px-4 py-2.5 font-medium">{{ entry.project_name }}</td>
+                                <td class="px-4 py-2.5 text-muted">{{ entry.client_name }}</td>
+                                <td class="px-4 py-2.5 text-muted">{{ entry.label || '—' }}</td>
+                                <td class="px-4 py-2.5 text-right font-medium">{{ coverageLabel(entry.day_coverage) }}</td>
+                                <td class="px-4 py-2.5 text-right">
+                                    {{ entry.daily_rate > 0 ? ((entry.day_coverage / 100) * entry.daily_rate).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' €' : '—' }}
                                 </td>
                             </tr>
                         </tbody>
                         <tfoot>
-                            <tr class="border-t border-border bg-muted/40">
-                                <td colspan="4" class="px-4 py-2.5 text-xs font-medium text-muted-foreground">Total</td>
-                                <td class="px-4 py-2.5 text-right text-sm font-semibold text-foreground">
+                            <tr class="border-t border-default bg-muted/40">
+                                <td colspan="4" class="px-4 py-2.5 text-xs font-medium text-muted">Total</td>
+                                <td class="px-4 py-2.5 text-right text-sm font-semibold">
                                     {{ totalDays % 1 === 0 ? totalDays : totalDays.toFixed(1) }}j
                                 </td>
-                                <td class="px-4 py-2.5 text-right text-sm font-semibold text-foreground">
-                                    {{ totalCA > 0 ? totalCA.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '\u00a0€' : '—' }}
+                                <td class="px-4 py-2.5 text-right text-sm font-semibold">
+                                    {{ totalCA > 0 ? totalCA.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' €' : '—' }}
                                 </td>
                             </tr>
                         </tfoot>
                     </table>
-                    </div>
-
-                    <div class="flex justify-end">
-                        <div class="relative flex" ref="exportDropdownRef">
-                            <a
-                                :href="exportUrl"
-                                class="inline-flex h-9 items-center gap-2 rounded-l-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                            >
-                                <Download class="h-4 w-4" />
-                                Exporter CSV
-                            </a>
-                            <button
-                                type="button"
-                                @click="exportDropdownOpen = !exportDropdownOpen"
-                                class="inline-flex h-9 w-8 items-center justify-center rounded-r-md border-l border-primary-foreground/20 bg-primary text-primary-foreground transition-colors hover:bg-primary/90"
-                            >
-                                <ChevronDown class="h-4 w-4 transition-transform" :class="exportDropdownOpen ? 'rotate-180' : ''" />
-                            </button>
-
-                            <div
-                                v-if="exportDropdownOpen"
-                                class="absolute bottom-full right-0 z-20 mb-1 w-36 rounded-md border border-border shadow-lg overflow-hidden"
-                                style="background-color: var(--background)"
-                            >
-                                <a
-                                    :href="exportUrl"
-                                    @click="exportDropdownOpen = false"
-                                    class="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent/60 transition-colors"
-                                >
-                                    <Download class="h-3.5 w-3.5 text-muted-foreground" />
-                                    Exporter CSV
-                                </a>
-                                <a
-                                    :href="xlsxExportUrl"
-                                    @click="exportDropdownOpen = false"
-                                    class="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent/60 transition-colors"
-                                >
-                                    <Download class="h-3.5 w-3.5 text-muted-foreground" />
-                                    Exporter XLSX
-                                </a>
-                            </div>
-                        </div>
-                    </div>
                 </div>
+
+                <div class="flex justify-end">
+                    <UButtonGroup>
+                        <UButton
+                            as="a"
+                            :href="exportUrl"
+                            label="Exporter CSV"
+                            icon="i-lucide-download"
+                        />
+                        <UDropdownMenu :items="exportMenuItems" :content="{ align: 'end', side: 'top' }">
+                            <UButton icon="i-lucide-chevron-down" />
+                        </UDropdownMenu>
+                    </UButtonGroup>
+                </div>
+            </div>
 
         </div>
     </div>

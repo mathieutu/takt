@@ -1,144 +1,40 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { Link, usePage } from '@inertiajs/vue3'
-import {
-    Menu,
-    X,
-    LayoutDashboard,
-    CalendarDays,
-    FolderKanban,
-    Download,
-    Settings,
-    LogOut,
-} from 'lucide-vue-next'
+import { computed } from 'vue'
 import type { AuthUser } from '../types'
 
 const props = defineProps<{
     user: AuthUser | null
 }>()
 
-const page = usePage()
-const path = computed(() => page.url.split('?')[0])
+const emit = defineEmits<{
+    'toggle-sidebar': []
+}>()
 
 const greeting = computed(() => {
     const first = props.user?.name?.split(' ')[0]
     return first || props.user?.email || ''
 })
-
-const navItems = [
-    { route: '/',        label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
-    { route: '/reports', label: 'Saisie CRA',      icon: CalendarDays },
-    { route: '/projects', label: 'Projets',        icon: FolderKanban },
-    { route: '/exports',  label: 'Export',         icon: Download },
-]
-
-function isActive(item: (typeof navItems)[0]): boolean {
-    if (item.exact) return path.value === item.route
-    return path.value.startsWith(item.route)
-}
-
-const drawerOpen = ref(false)
 </script>
 
 <template>
-    <header class="fixed top-0 left-0 right-0 z-50 flex h-14 items-center justify-between border-b border-border bg-sidebar px-4">
-        <!-- Logo -->
+    <header class="fixed top-0 left-0 right-0 z-50 flex h-14 items-center justify-between border-b border-default bg-elevated px-4">
         <div class="flex items-center gap-2">
-            <div class="flex h-7 w-7 items-center justify-center rounded-md object-cover">
-                <img src="/public/images/logo.png" class="w-full h-full object-cover">
-            </div>
-            <span class="text-sm font-semibold text-foreground">AssoFlow</span>
+            <img src="/public/images/logo.png" class="h-7 w-7 rounded-md object-cover">
+            <span class="text-sm font-semibold">AssoFlow</span>
         </div>
 
-        <!-- Desktop: greeting -->
         <div class="hidden md:flex items-center gap-1 text-sm">
-            <span class="text-muted-foreground">Bonjour,</span>
-            <span class="font-medium text-foreground">{{ greeting }}</span>
+            <span class="text-muted">Bonjour,</span>
+            <span class="font-medium">{{ greeting }}</span>
         </div>
 
-        <!-- Mobile: burger -->
-        <button
-            type="button"
-            class="md:hidden flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-            @click="drawerOpen = true"
-        >
-            <Menu class="h-5 w-5" />
-        </button>
+        <UButton
+            class="md:hidden"
+            icon="i-lucide-menu"
+            color="neutral"
+            variant="ghost"
+            aria-label="Menu"
+            @click="emit('toggle-sidebar')"
+        />
     </header>
-
-    <!-- Mobile drawer -->
-    <Transition name="drawer">
-        <div v-if="drawerOpen" class="md:hidden fixed inset-0 z-50 flex">
-            <div class="absolute inset-0 bg-black/40" @click="drawerOpen = false" />
-
-            <nav class="relative flex h-full w-64 flex-col bg-sidebar border-r border-border py-4 px-4">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <div class="flex h-7 w-7 items-center justify-center rounded-md">
-                            <img src="/public/images/logo.png" class="w-full h-full object-cover">
-                        </div>
-                        <span class="text-sm font-semibold text-foreground">AssoFlow</span>
-                    </div>
-                    <button
-                        type="button"
-                        class="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent transition-colors"
-                        @click="drawerOpen = false"
-                    >
-                        <X class="h-4 w-4" />
-                    </button>
-                </div>
-
-                <div class="flex flex-1 flex-col gap-1">
-                    <Link
-                        v-for="item in navItems"
-                        :key="item.route"
-                        :href="item.route"
-                        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors"
-                        :class="isActive(item)
-                            ? 'bg-primary text-primary-foreground'
-                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
-                        @click="drawerOpen = false"
-                    >
-                        <component :is="item.icon" class="h-4 w-4 shrink-0" />
-                        {{ item.label }}
-                    </Link>
-                </div>
-
-                <div class="flex flex-col gap-1 pt-4 border-t border-border">
-                    <Link
-                        href="/profile"
-                        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors"
-                        :class="path.startsWith('/profile')
-                            ? 'bg-primary text-primary-foreground'
-                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'"
-                        @click="drawerOpen = false"
-                    >
-                        <Settings class="h-4 w-4 shrink-0" />
-                        Paramètres
-                    </Link>
-                    <Link
-                        href="/logout"
-                        method="post"
-                        as="button"
-                        type="button"
-                        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors text-muted-foreground hover:bg-red-50 hover:text-destructive"
-                    >
-                        <LogOut class="h-4 w-4 shrink-0" />
-                        Se déconnecter
-                    </Link>
-                </div>
-            </nav>
-        </div>
-    </Transition>
 </template>
-
-<style scoped>
-.drawer-enter-active,
-.drawer-leave-active {
-    transition: opacity 0.2s ease;
-}
-.drawer-enter-from,
-.drawer-leave-to {
-    opacity: 0;
-}
-</style>

@@ -1,8 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { Plus, MoreVertical } from 'lucide-vue-next'
-import Dialog from '../components/ui/Dialog.vue'
-import DropdownMenu from '../components/ui/DropdownMenu.vue'
 import { router, useForm } from '@inertiajs/vue3'
 import { store as storeClient, update as updateClient, destroy as destroyClient } from '@/wayfinder/routes/clients'
 
@@ -21,7 +18,9 @@ const props = withDefaults(defineProps<{
 
 const search = ref('')
 const createOpen = ref(false)
+const editOpen = ref(false)
 const editingClient = ref<Client | null>(null)
+const deleteOpen = ref(false)
 const deletingClient = ref<Client | null>(null)
 
 const form = useForm({
@@ -60,6 +59,12 @@ function initials(name: string) {
 
 function openEdit(client: Client) {
     editingClient.value = { ...client }
+    editOpen.value = true
+}
+
+function openDelete(client: Client) {
+    deletingClient.value = client
+    deleteOpen.value = true
 }
 
 function submitCreate() {
@@ -79,7 +84,7 @@ function submitEdit() {
         daily_rate: editingClient.value.daily_rate,
     }, {
         preserveScroll: true,
-        onSuccess: () => { editingClient.value = null },
+        onSuccess: () => { editOpen.value = false },
     })
 }
 
@@ -87,53 +92,48 @@ function submitDelete() {
     if (!deletingClient.value) return
     router.delete(destroyClient(deletingClient.value.id).url, {
         preserveScroll: true,
-        onSuccess: () => { deletingClient.value = null },
+        onSuccess: () => { deleteOpen.value = false },
     })
 }
 
-const hasCreateErrors = computed(() => !!form.errors.name || !!form.errors.daily_rate)
-
 function menuItems(client: Client) {
-    return [
-        { label: 'Modifier', action: () => openEdit(client) },
-        { label: 'Supprimer', action: () => { deletingClient.value = client }, variant: 'destructive' as const },
-    ]
+    return [[
+        { label: 'Modifier', icon: 'i-lucide-pencil', onSelect: () => openEdit(client) },
+    ], [
+        { label: 'Supprimer', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => openDelete(client) },
+    ]]
 }
 </script>
 
 <template>
-    <div class="flex min-h-screen flex-col bg-background">
+    <div class="flex min-h-screen flex-col">
         <main class="flex-1 px-6 py-8">
             <div class="mx-auto max-w-5xl space-y-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h1 class="text-lg font-semibold text-foreground">Clients</h1>
-                        <p class="text-sm text-muted-foreground">{{ clients.length }} client{{ clients.length !== 1 ? 's' : '' }} au total</p>
+                        <h1 class="text-lg font-semibold">Clients</h1>
+                        <p class="text-sm text-muted">{{ clients.length }} client{{ clients.length !== 1 ? 's' : '' }} au total</p>
                     </div>
-                    <button
-                        type="button"
-                        class="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                    <UButton
+                        label="Nouveau client"
+                        icon="i-lucide-plus"
                         @click="createOpen = true"
-                    >
-                        <Plus class="h-4 w-4" />
-                        Nouveau client
-                    </button>
-                </div>
-
-                <div class="flex items-center gap-3">
-                    <input
-                        v-model="search"
-                        type="text"
-                        placeholder="Rechercher un client..."
-                        class="h-9 w-72 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                 </div>
 
-                <p v-if="filtered.length === 0 && search" class="text-sm text-muted-foreground">
+                <UInput
+                    v-model="search"
+                    type="text"
+                    placeholder="Rechercher un client..."
+                    icon="i-lucide-search"
+                    class="w-72"
+                />
+
+                <p v-if="filtered.length === 0 && search" class="text-sm text-muted">
                     Aucun client ne correspond à votre recherche.
                 </p>
 
-                <p v-else-if="clients.length === 0" class="text-sm text-muted-foreground">
+                <p v-else-if="clients.length === 0" class="text-sm text-muted">
                     Aucun client pour l'instant.
                 </p>
 
@@ -141,7 +141,7 @@ function menuItems(client: Client) {
                     <div
                         v-for="client in filtered"
                         :key="client.id"
-                        class="rounded-lg border border-border bg-card p-5"
+                        class="rounded-lg border border-default bg-elevated p-5"
                     >
                         <div class="flex items-start justify-between gap-2">
                             <div class="flex min-w-0 flex-1 items-center gap-3">
@@ -152,21 +152,21 @@ function menuItems(client: Client) {
                                     {{ initials(client.name) }}
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="truncate text-sm font-semibold text-foreground">{{ client.name }}</p>
-                                    <p class="text-xs text-muted-foreground">{{ client.daily_rate }} €/jour</p>
+                                    <p class="truncate text-sm font-semibold">{{ client.name }}</p>
+                                    <p class="text-xs text-muted">{{ client.daily_rate }} €/jour</p>
                                 </div>
                             </div>
-                            <DropdownMenu :items="menuItems(client)" class="shrink-0">
-                                <button
-                                    type="button"
-                                    class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                                >
-                                    <MoreVertical class="h-4 w-4" />
-                                </button>
-                            </DropdownMenu>
+                            <UDropdownMenu :items="menuItems(client)" class="shrink-0">
+                                <UButton
+                                    icon="i-lucide-more-vertical"
+                                    color="neutral"
+                                    variant="ghost"
+                                    size="xs"
+                                />
+                            </UDropdownMenu>
                         </div>
 
-                        <p v-if="client.created_at" class="mt-4 text-xs text-muted-foreground">
+                        <p v-if="client.created_at" class="mt-4 text-xs text-muted">
                             Créé le {{ client.created_at }}
                         </p>
                     </div>
@@ -174,62 +174,68 @@ function menuItems(client: Client) {
             </div>
         </main>
 
-        <Dialog :open="createOpen || hasCreateErrors" title="Nouveau client" @close="createOpen = false">
-            <div class="space-y-4">
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Nom<span class="text-destructive ml-0.5">*</span></label>
-                    <input
-                        v-model="form.name"
-                        type="text"
-                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                        :class="{ 'border-destructive focus:ring-destructive': form.errors.name }"
-                    />
-                    <p v-if="form.errors.name" class="text-xs text-destructive">{{ form.errors.name }}</p>
+        <UModal v-model:open="createOpen" title="Nouveau client">
+            <template #body>
+                <div class="space-y-4">
+                    <UFormField label="Nom" required :error="form.errors.name">
+                        <UInput
+                            v-model="form.name"
+                            type="text"
+                            :color="form.errors.name ? 'error' : undefined"
+                            class="w-full"
+                        />
+                    </UFormField>
+                    <UFormField label="TJM (€/jour)" required :error="form.errors.daily_rate">
+                        <UInput
+                            v-model="form.daily_rate"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            :color="form.errors.daily_rate ? 'error' : undefined"
+                            class="w-full"
+                        />
+                    </UFormField>
                 </div>
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">TJM (€/jour)<span class="text-destructive ml-0.5">*</span></label>
-                    <input
-                        v-model="form.daily_rate"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                        :class="{ 'border-destructive focus:ring-destructive': form.errors.daily_rate }"
-                    />
-                    <p v-if="form.errors.daily_rate" class="text-xs text-destructive">{{ form.errors.daily_rate }}</p>
+            </template>
+            <template #footer="{ close }">
+                <div class="flex justify-end gap-2">
+                    <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
+                    <UButton label="Créer" :loading="form.processing" @click="submitCreate" />
                 </div>
-                <div class="flex flex-col sm:flex-row justify-end gap-2 pt-2">
-                    <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="createOpen = false">Annuler</button>
-                    <button type="button" :disabled="form.processing" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90" @click="submitCreate">Créer</button>
-                </div>
-            </div>
-        </Dialog>
+            </template>
+        </UModal>
 
-        <Dialog :open="editingClient !== null" title="Modifier le client" @close="editingClient = null">
-            <div v-if="editingClient" class="space-y-4">
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">Nom<span class="text-destructive ml-0.5">*</span></label>
-                    <input v-model="editingClient.name" type="text" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+        <UModal v-model:open="editOpen" title="Modifier le client">
+            <template #body>
+                <div v-if="editingClient" class="space-y-4">
+                    <UFormField label="Nom" required>
+                        <UInput v-model="editingClient.name" type="text" class="w-full" />
+                    </UFormField>
+                    <UFormField label="TJM (€/jour)" required>
+                        <UInput v-model="editingClient.daily_rate" type="number" min="0" step="0.01" class="w-full" />
+                    </UFormField>
                 </div>
-                <div class="flex flex-col gap-1.5">
-                    <label class="text-sm font-medium text-foreground">TJM (€/jour)<span class="text-destructive ml-0.5">*</span></label>
-                    <input v-model="editingClient.daily_rate" type="number" min="0" step="0.01" class="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+            </template>
+            <template #footer="{ close }">
+                <div class="flex justify-end gap-2">
+                    <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
+                    <UButton label="Enregistrer" @click="submitEdit" />
                 </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="editingClient = null">Annuler</button>
-                    <button type="button" class="h-9 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90" @click="submitEdit">Enregistrer</button>
-                </div>
-            </div>
-        </Dialog>
+            </template>
+        </UModal>
 
-        <Dialog :open="deletingClient !== null" title="Supprimer le client" @close="deletingClient = null">
-            <p class="text-sm text-muted-foreground">
-                Supprimer <span class="font-medium text-foreground">{{ deletingClient?.name }}</span> ? Cette action est irréversible.
-            </p>
-            <div class="mt-4 flex justify-end gap-2">
-                <button type="button" class="h-9 rounded-md border border-border px-4 text-sm text-foreground transition-colors hover:bg-accent" @click="deletingClient = null">Annuler</button>
-                <button type="button" class="h-9 rounded-md bg-destructive px-4 text-sm font-medium text-white transition-colors hover:bg-destructive/90" @click="submitDelete">Supprimer</button>
-            </div>
-        </Dialog>
+        <UModal v-model:open="deleteOpen" title="Supprimer le client">
+            <template #body>
+                <p class="text-sm text-muted">
+                    Supprimer <span class="font-medium text-default">{{ deletingClient?.name }}</span> ? Cette action est irréversible.
+                </p>
+            </template>
+            <template #footer="{ close }">
+                <div class="flex justify-end gap-2">
+                    <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
+                    <UButton label="Supprimer" color="error" @click="submitDelete" />
+                </div>
+            </template>
+        </UModal>
     </div>
 </template>
