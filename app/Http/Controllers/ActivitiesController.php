@@ -6,7 +6,6 @@ use App\Http\Requests\StoreActivityTimeRequest;
 use App\Http\Requests\UpdateActivityTimeRequest;
 use App\Models\ActivityTime;
 use App\Models\Project;
-use App\Models\SharedProject;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -37,12 +36,10 @@ class ActivitiesController extends Controller
         $userId = Auth::id();
 
         $ownedIds = Project::whereHas('client', fn ($q) => $q->where('user_id', $userId))->pluck('id');
-        $sharedIds = SharedProject::where('user_id', $userId)->pluck('project_id');
 
         $projects = Project::with('client')
-            ->whereIn('id', $ownedIds->merge($sharedIds)->unique())
-            ->get()
-            ->map(fn ($p) => tap($p, fn ($p) => $p->is_owner = $ownedIds->contains($p->id)));
+            ->whereIn('id', $ownedIds)
+            ->get();
 
         $reports = ActivityTime::whereIn('project_id', $projects->pluck('id'))->get();
 
@@ -56,7 +53,6 @@ class ActivitiesController extends Controller
                 'daily_rate' => $p->daily_rate
                     ? (float) $p->daily_rate
                     : ($p->client?->daily_rate ? (float) $p->client->daily_rate : 0),
-                'is_owner' => $p->is_owner,
             ])->values(),
             'reports' => $reports->map(fn ($r) => [
                 'id' => $r->id,

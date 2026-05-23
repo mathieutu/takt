@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Carbon;
 
@@ -25,10 +24,6 @@ use Illuminate\Support\Carbon;
  */
 class Share extends Model
 {
-    use HasUuids;
-
-    const UPDATED_AT = null;
-
     public function sharing(): MorphTo
     {
         return $this->morphTo(type: 'share_type', id: 'share_id');

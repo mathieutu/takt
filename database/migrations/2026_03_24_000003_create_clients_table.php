@@ -12,10 +12,8 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('name');
             $table->unsignedInteger('daily_rate');
-            $table->uuid('user_id')->index();
+            $table->foreignUuid('user_id')->constrained('users')->cascadeOnDelete()->cascadeOnUpdate();
             $table->timestamps();
-
-            $table->foreign('user_id')->references('id')->on('users')->cascadeOnUpdate()->cascadeOnDelete();
         });
     }
 

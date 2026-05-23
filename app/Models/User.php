@@ -6,7 +6,6 @@ use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\Access\Authorizable;
@@ -25,15 +24,12 @@ use Illuminate\Support\Carbon;
  * @property-read int|null $clients_count
  * @property-read Collection<int, Project> $projects
  * @property-read int|null $projects_count
- * @property-read Collection<int, SharedProject> $sharedProjects
- * @property-read int|null $shared_projects_count
  *
  * @mixin \Eloquent
  */
 class User extends Model implements AuthenticatableContract, AuthorizableContract
 {
     use Authenticatable, Authorizable;
-    use HasUuids;
 
     protected $guarded = [];
 
@@ -47,10 +43,5 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     public function projects(): HasManyThrough
     {
         return $this->hasManyThrough(Project::class, Client::class, 'user_id', 'client_id');
-    }
-
-    public function sharedProjects(): HasMany
-    {
-        return $this->hasMany(SharedProject::class);
     }
 }

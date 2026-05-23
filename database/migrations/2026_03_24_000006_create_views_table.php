@@ -9,9 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('views', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('title');
-            $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreignUuid('project_id')->constrained('projects')->cascadeOnDelete()->cascadeOnUpdate();
             $table->date('start_date');
             $table->date('end_date');
             $table->longText('comments')->nullable();

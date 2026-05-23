@@ -9,10 +9,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('projects', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('name');
-            $table->foreignId('client_id')->constrained('clients')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreignUuid('client_id')->constrained('clients')->cascadeOnDelete()->cascadeOnUpdate();
             $table->unsignedInteger('daily_rate')->nullable();
+            $table->unsignedInteger('max_budget')->nullable();
             $table->longText('description')->nullable();
             $table->timestamps();
         });

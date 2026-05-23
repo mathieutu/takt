@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
- * @property int $id
- * @property int $project_id
+ * @property string $id
+ * @property string $project_id
  * @property string|null $label
  * @property Carbon $start_date
  * @property string|null $comments

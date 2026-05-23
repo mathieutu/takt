@@ -6,7 +6,6 @@ use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Client;
 use App\Models\Project;
-use App\Models\SharedProject;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -18,16 +17,9 @@ class ProjectController extends Controller
     {
         $userId = Auth::id();
 
-        $ownedIds = Project::whereHas('client', fn ($q) => $q->where('user_id', $userId))->pluck('id');
-        $sharedIds = SharedProject::where('user_id', $userId)->pluck('project_id');
-
         $projects = Project::with('client')->withExists('sharer')
-            ->whereIn('id', $ownedIds->merge($sharedIds)->unique())
-            ->get()
-            ->map(fn ($p) => tap($p, function ($p) use ($ownedIds) {
-                $p->is_owner = $ownedIds->contains($p->id);
-                $p->is_shared = $p->sharer_exists;
-            }));
+            ->whereHas('client', fn ($q) => $q->where('user_id', $userId))
+            ->get();
 
         $clients = Client::where('user_id', $userId)->get();
 
@@ -40,14 +32,12 @@ class ProjectController extends Controller
                 'client_id' => $p->client_id,
                 'client_name' => $p->client->name,
                 'created_at' => $p->created_at?->translatedFormat('j M Y') ?? '',
-                'is_owner' => $p->is_owner,
-                'is_shared' => $p->is_shared,
+                'is_shared' => $p->sharer_exists,
             ])->values(),
             'clients' => $clients->map(fn ($c) => [
                 'id' => $c->id,
                 'name' => $c->name,
                 'daily_rate' => (float) $c->daily_rate,
-                'is_owner' => true,
             ])->values(),
             'open' => request()->has('open'),
         ]);

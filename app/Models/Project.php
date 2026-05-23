@@ -5,14 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
 
 /**
- * @property int $id
+ * @property string $id
  * @property string $name
- * @property int $client_id
+ * @property string $client_id
  * @property int|null $daily_rate
  * @property string|null $description
  * @property Carbon|null $created_at
@@ -23,13 +22,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, BillingEntry> $billingEntries
  * @property-read int|null $billing_entries_count
  * @property-read Client $client
- * @property-read Collection<int, SharedProject> $shared
- * @property-read int|null $shared_count
- * @property-read Collection<int, User> $sharedTo
- * @property-read int|null $shared_to_count
  * @property-read Share|null $sharer
- * @property-read Collection<int, View> $vues
- * @property-read int|null $vues_count
  *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project newQuery()
@@ -63,21 +56,6 @@ class Project extends Model
     public function activityTimes(): HasMany
     {
         return $this->hasMany(ActivityTime::class);
-    }
-
-    public function vues(): HasMany
-    {
-        return $this->hasMany(View::class);
-    }
-
-    public function shared(): HasMany
-    {
-        return $this->hasMany(SharedProject::class);
-    }
-
-    public function sharedTo(): HasManyThrough
-    {
-        return $this->hasManyThrough(User::class, SharedProject::class, 'project_id', 'id', 'id', 'user_id');
     }
 
     public function billingEntries(): HasMany

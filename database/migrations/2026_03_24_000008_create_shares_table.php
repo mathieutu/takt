@@ -9,11 +9,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('shares', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
             $table->string('share_type');
-            $table->unsignedBigInteger('share_id');
+            $table->string('share_id');
             $table->unique(['share_type', 'share_id']);
-            $table->timestamp('created_at');
+            $table->timestamps();
         });
     }
 

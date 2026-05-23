@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\ActivityTime;
 use App\Models\Client;
 use App\Models\Project;
-use App\Models\SharedProject;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
@@ -18,16 +17,9 @@ class DashboardController
         $clients = Client::where('user_id', $userId)->get();
         $clientIds = $clients->pluck('id')->all();
 
-        $ownedProjectIds = Project::whereIn('client_id', $clientIds)->pluck('id');
-        $sharedProjectIds = SharedProject::where('user_id', $userId)->pluck('project_id');
-
         $projects = Project::with('client', 'sharer')
-            ->whereIn('id', $ownedProjectIds->merge($sharedProjectIds)->unique())
-            ->get()
-            ->map(fn ($p) => tap($p, function ($p) use ($ownedProjectIds) {
-                $p->is_owner = $ownedProjectIds->contains($p->id);
-                $p->is_shared = $p->sharer !== null;
-            }));
+            ->whereIn('client_id', $clientIds)
+            ->get();
 
         $projectIds = $projects->pluck('id')->all();
 
@@ -47,7 +39,6 @@ class DashboardController
             'id' => $c->id,
             'name' => $c->name,
             'daily_rate' => (float) $c->daily_rate,
-            'is_owner' => true,
         ])->values();
 
         $projectsData = $projects->map(fn ($p) => [
@@ -56,8 +47,7 @@ class DashboardController
             'name' => $p->name,
             'description' => $p->description ?? '',
             'daily_rate' => $p->daily_rate !== null ? (float) $p->daily_rate : null,
-            'is_owner' => $p->is_owner,
-            'is_shared' => $p->is_shared,
+            'is_shared' => $p->sharer !== null,
         ])->values();
 
         return Inertia::render('DashboardPage', [
