@@ -21,51 +21,51 @@ Assoflow est une application Laravel conçue pour gérer les projets, les client
 
 1. Cloner le dépôt :
 
-    ```bash
-    git clone https://github.com/votre-depot/assoflow.git
-    cd assoflow
-    ```
+   ```bash
+   git clone https://github.com/votre-depot/assoflow.git
+   cd assoflow
+   ```
 
 2. Installer les dépendances PHP :
 
-    ```bash
-    composer install
-    ```
+   ```bash
+   composer install
+   ```
 
 3. Copier le fichier d'environnement :
 
-    ```bash
-    cp .env.example .env
-    ```
+   ```bash
+   cp .env.example .env
+   ```
 
 4. Générer la clé d'application :
 
-    ```bash
-    php artisan key:generate
-    ```
+   ```bash
+   php artisan key:generate
+   ```
 
 5. Installer les dépendances Node.js :
 
-    ```bash
-    npm install
-    ```
+   ```bash
+   npm install
+   ```
 
 6. Compiler les assets :
 
-    ```bash
-    npm run build
-    ```
+   ```bash
+   npm run build
+   ```
 
 7. Lancer la base de données :
 
-    ```bash
-    docker run -p 3306:3306 -e MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=1 -d mariadb
-    ```
+   ```bash
+   docker run -p 3306:3306 -e MARIADB_ALLOW_EMPTY_ROOT_PASSWORD=1 -d mariadb
+   ```
 
 8. Exécuter les migrations :
-    ```bash
-    php artisan migrate
-    ```
+   ```bash
+   php artisan migrate
+   ```
 
 ## Structure du projet
 
