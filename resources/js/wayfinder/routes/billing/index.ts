@@ -5,7 +5,7 @@ import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOpt
 
 /**
  * @see \App\Http\Controllers\TrackingController::updateBilling
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:116
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:99
  * @route "/billing/{entry}"
  */
 export const update = (args: { entry: string | { id: string } } | [ entry: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
@@ -20,7 +20,7 @@ update.definition = {
 
 /**
  * @see \App\Http\Controllers\TrackingController::updateBilling
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:116
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:99
  * @route "/billing/{entry}"
  */
 update.url = (args: { entry: string | { id: string } } | [ entry: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -51,7 +51,7 @@ update.url = (args: { entry: string | { id: string } } | [ entry: string | { id:
 
 /**
  * @see \App\Http\Controllers\TrackingController::updateBilling
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:116
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:99
  * @route "/billing/{entry}"
  */
 update.put = (args: { entry: string | { id: string } } | [ entry: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({

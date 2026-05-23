@@ -5,7 +5,7 @@ import { queryParams, type RouteDefinition, type RouteQueryOptions } from "./../
 
 /**
  * @see \App\Http\Controllers\TrackingController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:16
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:15
  * @route "/tracking"
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -20,7 +20,7 @@ index.definition = {
 
 /**
  * @see \App\Http\Controllers\TrackingController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:16
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:15
  * @route "/tracking"
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -29,7 +29,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\TrackingController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:16
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:15
  * @route "/tracking"
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -39,7 +39,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\TrackingController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:16
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:15
  * @route "/tracking"
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({

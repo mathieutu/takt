@@ -8,19 +8,22 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('activity_times', function (Blueprint $table) {
+        Schema::create('timesheet_entries', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('project_id')->constrained('projects')->cascadeOnDelete()->cascadeOnUpdate();
-            $table->string('label')->nullable();
-            $table->date('start_date')->index();
-            $table->longText('comments')->nullable();
-            $table->unsignedInteger('day_coverage')->default(0);
+            $table->date('date')->index();
+            $table->unsignedInteger('coverage')->default(0);
+            $table->string('title')->nullable();
+            $table->longText('description')->nullable();
             $table->timestamps();
+
+            $table->unique(['project_id', 'date']);
         });
+
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('activity_times');
+        Schema::dropIfExists('timesheet_entries');
     }
 };

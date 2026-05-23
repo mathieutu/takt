@@ -7,6 +7,7 @@ defineOptions({ layout: () => false })
 
 defineProps<{
   users: Array<{ id: string, name: string, email: string }>,
+  redirectUrl: string | null,
 }>()
 
 useFlash()
@@ -52,7 +53,7 @@ useFlash()
           <template v-else>
             <UButton
               as="a"
-              href="/login/redirect"
+              :href="redirectUrl"
               label="Se connecter avec GitHub"
               icon="i-simple-icons-github"
               block

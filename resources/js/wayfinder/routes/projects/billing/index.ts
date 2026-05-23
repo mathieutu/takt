@@ -5,7 +5,7 @@ import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOpt
 
 /**
  * @see \App\Http\Controllers\TrackingController::storeBilling
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:85
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:71
  * @route "/projects/{project}/billing"
  */
 export const store = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -20,7 +20,7 @@ store.definition = {
 
 /**
  * @see \App\Http\Controllers\TrackingController::storeBilling
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:85
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:71
  * @route "/projects/{project}/billing"
  */
 store.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -51,7 +51,7 @@ store.url = (args: { project: string | { id: string } } | [ project: string | { 
 
 /**
  * @see \App\Http\Controllers\TrackingController::storeBilling
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:85
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:71
  * @route "/projects/{project}/billing"
  */
 store.post = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({

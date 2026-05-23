@@ -6,12 +6,12 @@ export namespace Inertia {
         /**
          * @see [\App\Http\Controllers\AuthController::show](/Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php)
          */
-        export type LoginPage = Inertia.SharedData & { users: App.Models.User[] | [] }
+        export type LoginPage = Inertia.SharedData & { users: App.Models.User[] | [], redirectUrl: string | null }
 
         /**
-         * @see [\App\Http\Controllers\DashboardController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php)
+         * @see [\App\Http\Controllers\DashboardController::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php)
          */
-        export type DashboardPage = Inertia.SharedData & { entries: string[], clients: unknown, projects: string[] }
+        export type DashboardPage = Inertia.SharedData & { entries: unknown, clients: unknown, projects: unknown }
 
         /**
          * @see [\App\Http\Controllers\UserController::edit](/Users/mathieutu/Projects/cra/app/Http/Controllers/UserController.php)
@@ -24,24 +24,24 @@ export namespace Inertia {
         export type ProjectsPage = Inertia.SharedData & { projects: unknown, clients: unknown, open: boolean }
 
         /**
-         * @see [\App\Http\Controllers\ActivitiesController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php)
+         * @see [\App\Http\Controllers\TimesheetHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php)
          */
-        export type ActivityReportPage = Inertia.SharedData & { currentYear: unknown, currentMonth: unknown, projects: string[], reports: string[] }
+        export type TimesheetPage = Inertia.SharedData & { current: { year: number, month: number }, urls: { nextMonth: string, prevMonth: string }, projects: unknown, entries: unknown, holidays: [] }
 
         /**
          * @see [\App\Http\Controllers\TrackingController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php)
          */
-        export type TrackingPage = Inertia.SharedData & { clients: string[], selectedClientId: number | null, projects: unknown }
+        export type TrackingPage = Inertia.SharedData & { clients: unknown, selectedClientId: string | null | [] | null, projects: string[] }
 
         /**
          * @see [\App\Http\Controllers\ExportsController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php)
          */
-        export type ExportPage = Inertia.SharedData & { allProjects: unknown, selectedProjectIds: [], dateStart: string, dateEnd: string, projects: unknown }
+        export type ExportPage = Inertia.SharedData & { allProjects: unknown, selectedProjectIds: unknown, dateStart: string, dateEnd: string, projects: [] }
 
         /**
-         * @see [\App\Http\Controllers\ShareController::apply](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php)
+         * @see [\App\Http\Controllers\SharedTimesheetController::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/SharedTimesheetController.php)
          */
-        export type SharedActivityReportPage = Inertia.SharedData & { projectName: string, clientName: string, projectId: string, currentYear: unknown, currentMonth: unknown, reports: unknown }
+        export type SharedTimesheetPage = Inertia.SharedData & { month: unknown, shareToken: string, projectName: unknown, clientName: unknown, projectId: unknown, entries: unknown, holidays: [] }
     }
 }
 
@@ -77,14 +77,14 @@ export namespace App {
             }
 
             export namespace DashboardController {
-                export namespace Index {
+                export namespace __invoke {
                     /**
-                     * @see [\App\Http\Controllers\DashboardController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php)
+                     * @see [\App\Http\Controllers\DashboardController::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php)
                      */
                     export type Response = Inertia.Pages.DashboardPage
 
                     /**
-                     * @see [\App\Http\Controllers\DashboardController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php)
+                     * @see [\App\Http\Controllers\DashboardController::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
@@ -162,54 +162,15 @@ export namespace App {
                 }
             }
 
-            export namespace ActivitiesController {
-                export namespace Store {
+            export namespace TimesheetHandler {
+                export namespace __invoke {
                     /**
-                     * @see [\App\Http\Controllers\ActivitiesController::store](/Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php)
+                     * @see [\App\Http\Controllers\TimesheetHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php)
                      */
-                    export type Response = Record<string, never>
+                    export type Response = Inertia.Pages.TimesheetPage
 
                     /**
-                     * @see [\App\Http\Controllers\ActivitiesController::store](/Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php)
-                     */
-                    export type Request = {    label?: string | null;
-                        start_date: string;
-                        day_coverage?: number | null;
-                        comments?: string | null;}
-                }
-
-                export namespace Index {
-                    /**
-                     * @see [\App\Http\Controllers\ActivitiesController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php)
-                     */
-                    export type Response = Inertia.Pages.ActivityReportPage
-
-                    /**
-                     * @see [\App\Http\Controllers\ActivitiesController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php)
-                     */
-                    export type Request = Record<string, unknown>
-                }
-
-                export namespace Update {
-                    /**
-                     * @see [\App\Http\Controllers\ActivitiesController::update](/Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php)
-                     */
-                    export type Request = {    label?: string | null;
-                        start_date?: string | null;
-                        day_coverage?: number | null;
-                        comments?: string | null;}
-                }
-
-                export namespace Destroy {
-                    /**
-                     * @see [\App\Http\Controllers\ActivitiesController::destroy](/Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php)
-                     */
-                    export type Request = Record<string, unknown>
-                }
-
-                export namespace ProjectReports {
-                    /**
-                     * @see [\App\Http\Controllers\ActivitiesController::projectReports](/Users/mathieutu/Projects/cra/app/Http/Controllers/ActivitiesController.php)
+                     * @see [\App\Http\Controllers\TimesheetHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php)
                      */
                     export type Request = Record<string, unknown>
                 }
@@ -283,29 +244,15 @@ export namespace App {
                 }
             }
 
-            export namespace ShareController {
-                export namespace Apply {
+            export namespace SharedTimesheetController {
+                export namespace __invoke {
                     /**
-                     * @see [\App\Http\Controllers\ShareController::apply](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php)
+                     * @see [\App\Http\Controllers\SharedTimesheetController::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/SharedTimesheetController.php)
                      */
-                    export type Response = Inertia.Pages.SharedActivityReportPage
+                    export type Response = Inertia.Pages.SharedTimesheetPage
 
                     /**
-                     * @see [\App\Http\Controllers\ShareController::apply](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php)
-                     */
-                    export type Request = Record<string, unknown>
-                }
-
-                export namespace Generate {
-                    /**
-                     * @see [\App\Http\Controllers\ShareController::generate](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php)
-                     */
-                    export type Request = Record<string, unknown>
-                }
-
-                export namespace Revoke {
-                    /**
-                     * @see [\App\Http\Controllers\ShareController::revoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php)
+                     * @see [\App\Http\Controllers\SharedTimesheetController::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/SharedTimesheetController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
@@ -331,6 +278,33 @@ export namespace App {
                 export namespace Destroy {
                     /**
                      * @see [\App\Http\Controllers\ClientController::destroy](/Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+            }
+
+            export namespace TimesheetEntryController {
+                export namespace Sync {
+                    /**
+                     * @see [\App\Http\Controllers\TimesheetEntryController::sync](/Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetEntryController.php)
+                     */
+                    export type Request = {    "*.coverage": number;
+                        "*.title"?: string | null;
+                        "*.description"?: string | null;}
+                }
+            }
+
+            export namespace ProjectShareController {
+                export namespace Store {
+                    /**
+                     * @see [\App\Http\Controllers\ProjectShareController::store](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectShareController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+
+                export namespace Destroy {
+                    /**
+                     * @see [\App\Http\Controllers\ProjectShareController::destroy](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectShareController.php)
                      */
                     export type Request = Record<string, unknown>
                 }

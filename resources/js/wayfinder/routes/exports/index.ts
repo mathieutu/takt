@@ -5,7 +5,7 @@ import { queryParams, type RouteDefinition, type RouteQueryOptions } from "./../
 
 /**
  * @see \App\Http\Controllers\ExportsController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:159
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:16
  * @route "/exports"
  */
 export const index = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -20,7 +20,7 @@ index.definition = {
 
 /**
  * @see \App\Http\Controllers\ExportsController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:159
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:16
  * @route "/exports"
  */
 index.url = (options?: RouteQueryOptions) => {
@@ -29,7 +29,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\ExportsController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:159
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:16
  * @route "/exports"
  */
 index.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -39,7 +39,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\ExportsController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:159
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:16
  * @route "/exports"
  */
 index.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -56,7 +56,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\ExportsController::exportCsv
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:17
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:44
  * @route "/exports/csv"
  */
 export const csv = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -71,7 +71,7 @@ csv.definition = {
 
 /**
  * @see \App\Http\Controllers\ExportsController::exportCsv
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:17
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:44
  * @route "/exports/csv"
  */
 csv.url = (options?: RouteQueryOptions) => {
@@ -80,7 +80,7 @@ csv.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\ExportsController::exportCsv
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:17
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:44
  * @route "/exports/csv"
  */
 csv.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -90,7 +90,7 @@ csv.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\ExportsController::exportCsv
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:17
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:44
  * @route "/exports/csv"
  */
 csv.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -107,7 +107,7 @@ csv.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\ExportsController::exportXlsx
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:69
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:86
  * @route "/exports/xlsx"
  */
 export const xlsx = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -122,7 +122,7 @@ xlsx.definition = {
 
 /**
  * @see \App\Http\Controllers\ExportsController::exportXlsx
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:69
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:86
  * @route "/exports/xlsx"
  */
 xlsx.url = (options?: RouteQueryOptions) => {
@@ -131,7 +131,7 @@ xlsx.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\ExportsController::exportXlsx
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:69
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:86
  * @route "/exports/xlsx"
  */
 xlsx.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -141,7 +141,7 @@ xlsx.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\ExportsController::exportXlsx
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:69
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php:86
  * @route "/exports/xlsx"
  */
 xlsx.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({

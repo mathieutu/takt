@@ -3,7 +3,7 @@ import { router, useForm, useHttp } from '@inertiajs/vue3'
 import { computed, onMounted, ref, watch } from 'vue'
 import { destroy as destroyClient, update as updateClient } from '@/wayfinder/routes/clients'
 import { destroy as destroyProject, store as storeProject, update as updateProject } from '@/wayfinder/routes/projects'
-import { revoke as shareRoute } from '@/wayfinder/routes/projects/share'
+import { destroy as destroyShare, store as shareRoute } from '@/wayfinder/routes/projects/share'
 
 type Client = {
   id: number,
@@ -239,7 +239,7 @@ function copyShareUrl() {
 
 function revokeShare() {
   if (!sharingProject.value) return
-  router.delete(shareRoute(sharingProject.value.id).url, {
+  router.delete(destroyShare(sharingProject.value.id).url, {
     preserveScroll: true,
     onSuccess: () => {
       shareProjectOpen.value = false

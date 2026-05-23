@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { csv as csvRoute, index as indexRoute, xlsx as xlsxRoute } from '@/wayfinder/routes/exports'
 
-type Entry = { id: number, start_date: string, day_coverage: number, label: string, comments: string }
+type Entry = { date: string, coverage: number, title: string, description: string }
 type Project = { id: number, name: string, client_name: string, daily_rate: number, entries: Entry[] }
 type ProjectOption = { id: number, name: string, client_name: string }
 
@@ -65,18 +65,18 @@ const allEntries = computed(() => {
     project_name: string,
     client_name: string,
     daily_rate: number,
-    day_coverage: number,
-    label: string,
+    coverage: number,
+    title: string,
   }[] = []
   for (const p of localProjects.value) {
     for (const e of p.entries) {
       rows.push({
-        date: e.start_date,
+        date: e.date,
         project_name: p.name,
         client_name: p.client_name,
         daily_rate: p.daily_rate,
-        day_coverage: e.day_coverage,
-        label: e.label,
+        coverage: e.coverage,
+        title: e.title,
       })
     }
   }
@@ -84,11 +84,11 @@ const allEntries = computed(() => {
 })
 
 const totalDays = computed(() =>
-  allEntries.value.reduce((s, e) => s + e.day_coverage / 100, 0),
+  allEntries.value.reduce((s, e) => s + e.coverage / 100, 0),
 )
 
 const totalCA = computed(() =>
-  allEntries.value.reduce((s, e) => s + (e.day_coverage / 100) * e.daily_rate, 0),
+  allEntries.value.reduce((s, e) => s + (e.coverage / 100) * e.daily_rate, 0),
 )
 
 function buildExportParams() {
@@ -291,11 +291,11 @@ function coverageLabel(v: number) {
                 <td class="px-4 py-2.5 text-muted">{{ formatDate(entry.date) }}</td>
                 <td class="px-4 py-2.5 font-medium">{{ entry.project_name }}</td>
                 <td class="px-4 py-2.5 text-muted">{{ entry.client_name }}</td>
-                <td class="px-4 py-2.5 text-muted">{{ entry.label || '—' }}</td>
-                <td class="px-4 py-2.5 text-right font-medium">{{ coverageLabel(entry.day_coverage) }}</td>
+                <td class="px-4 py-2.5 text-muted">{{ entry.title || '—' }}</td>
+                <td class="px-4 py-2.5 text-right font-medium">{{ coverageLabel(entry.coverage) }}</td>
                 <td class="px-4 py-2.5 text-right">
                   {{
-                    entry.daily_rate > 0 ? `${((entry.day_coverage / 100) * entry.daily_rate).toLocaleString('fr-FR', {
+                    entry.daily_rate > 0 ? `${((entry.coverage / 100) * entry.daily_rate).toLocaleString('fr-FR', {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
                     })} €` : '—'

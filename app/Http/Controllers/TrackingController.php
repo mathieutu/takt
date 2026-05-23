@@ -3,72 +3,58 @@
 namespace App\Http\Controllers;
 
 use App\Models\BillingEntry;
-use App\Models\Client;
 use App\Models\Project;
-use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class TrackingController
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
-        $userId = Auth::id();
+        $clients = $request->user()->clients()->orderBy('name')->get(['id', 'name', 'daily_rate']);
 
-        $clients = Client::where('user_id', $userId)
-            ->orderBy('name')
-            ->get(['id', 'name', 'daily_rate']);
-
+        $selectedClientId = $request->query('client_id');
         $projects = collect();
-        $selectedClientId = $request->query('client_id') ? (int) $request->query('client_id') : null;
 
         if ($selectedClientId) {
-            $client = $clients->firstWhere('id', $selectedClientId);
-            if (! $client) {
-                throw new NotFoundHttpException;
-            }
+            $client = $clients->firstWhere('id', $selectedClientId)
+                ?? throw new NotFoundHttpException;
 
-            $projectsList = Project::where('client_id', $client->id)
-                ->with(['activityTimes', 'billingEntries'])
+            $projects = Project::where('client_id', $client->id)
+                ->with(['timesheetEntries', 'billingEntries'])
                 ->orderBy('name')
-                ->get();
+                ->get()
+                ->map(function (Project $project) use ($client) {
+                    $rate = (float) ($project->daily_rate ?? $client->daily_rate ?? 0);
 
-            foreach ($projectsList as $project) {
-                $rate = (float) ($project->daily_rate ?? $client->daily_rate ?? 0);
+                    $billingByMonth = $project->billingEntries
+                        ->keyBy(fn ($b) => $b->month->format('Y-m'));
 
-                $byMonth = $project->activityTimes
-                    ->groupBy(fn ($a) => Carbon::parse($a->start_date)->format('Y-m'));
-
-                $billingByMonth = $project->billingEntries
-                    ->keyBy(fn ($b) => Carbon::parse($b->month)->format('Y-m'));
-
-                $months = $byMonth
-                    ->map(function ($activities, $month) use ($billingByMonth) {
-                        $entry = $billingByMonth->get($month);
-
-                        return [
+                    $months = $project->timesheetEntries
+                        ->groupBy(fn ($e) => $e->date->format('Y-m'))
+                        ->map(fn ($entries, $month) => [
                             'month' => $month,
-                            'days_worked' => round($activities->sum('day_coverage') / 100, 2),
-                            'billing_entry_id' => $entry?->id,
-                            'amount_billed' => $entry ? (float) $entry->amount_billed : 0.0,
-                            'payment_date' => $entry?->payment_date?->format('Y-m-d'),
-                            'notes' => $entry?->notes,
-                        ];
-                    })
-                    ->sortKeys()
-                    ->values();
+                            'days_worked' => round($entries->sum('coverage') / 100, 2),
+                            'billing_entry_id' => $billingByMonth->get($month)?->id,
+                            'amount_billed' => (float) ($billingByMonth->get($month)?->amount_billed ?? 0),
+                            'payment_date' => $billingByMonth->get($month)?->payment_date?->toDateString(),
+                            'notes' => $billingByMonth->get($month)?->notes,
+                        ])
+                        ->sortKeys()
+                        ->values();
 
-                $projects->push([
-                    'id' => $project->id,
-                    'name' => $project->name,
-                    'daily_rate' => $rate,
-                    'max_budget' => $project->max_budget !== null ? (float) $project->max_budget : null,
-                    'client_name' => $client->name,
-                    'months' => $months,
-                ]);
-            }
+                    return [
+                        'id' => $project->id,
+                        'name' => $project->name,
+                        'daily_rate' => $rate,
+                        'max_budget' => $project->max_budget !== null ? (float) $project->max_budget : null,
+                        'client_name' => $client->name,
+                        'months' => $months,
+                    ];
+                });
         }
 
         return Inertia::render('TrackingPage', [
@@ -82,18 +68,15 @@ class TrackingController
         ]);
     }
 
-    public function storeBilling(Request $request, Project $project)
+    public function storeBilling(Request $request, Project $project): JsonResponse
     {
-        $project->load('client');
-        if ($project->client->user_id !== Auth::id()) {
-            throw new NotFoundHttpException;
-        }
+        abort_unless($request->user()->can('update', $project), 403);
 
         $validated = $request->validate([
-            'month' => 'required|date_format:Y-m',
-            'amount_billed' => 'required|numeric|min:0',
-            'payment_date' => 'nullable|date',
-            'notes' => 'nullable|string|max:1000',
+            'month' => ['required', 'date_format:Y-m'],
+            'amount_billed' => ['required', 'numeric', 'min:0'],
+            'payment_date' => ['nullable', 'date'],
+            'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $entry = BillingEntry::updateOrCreate(
@@ -102,27 +85,25 @@ class TrackingController
                 'amount_billed' => $validated['amount_billed'],
                 'payment_date' => $validated['payment_date'] ?? null,
                 'notes' => $validated['notes'] ?? null,
-            ]
+            ],
         );
 
         return response()->json([
             'id' => $entry->id,
             'amount_billed' => (float) $entry->amount_billed,
-            'payment_date' => $entry->payment_date?->format('Y-m-d'),
+            'payment_date' => $entry->payment_date?->toDateString(),
             'notes' => $entry->notes,
         ]);
     }
 
-    public function updateBilling(Request $request, BillingEntry $entry)
+    public function updateBilling(Request $request, BillingEntry $entry): JsonResponse
     {
-        if ($entry->project->client->user_id !== Auth::id()) {
-            throw new NotFoundHttpException;
-        }
+        abort_unless($request->user()->can('update', $entry->project), 403);
 
         $validated = $request->validate([
-            'amount_billed' => 'required|numeric|min:0',
-            'payment_date' => 'nullable|date',
-            'notes' => 'nullable|string|max:1000',
+            'amount_billed' => ['required', 'numeric', 'min:0'],
+            'payment_date' => ['nullable', 'date'],
+            'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $entry->update($validated);
@@ -130,22 +111,20 @@ class TrackingController
         return response()->json([
             'id' => $entry->id,
             'amount_billed' => (float) $entry->amount_billed,
-            'payment_date' => $entry->payment_date?->format('Y-m-d'),
+            'payment_date' => $entry->payment_date?->toDateString(),
             'notes' => $entry->notes,
         ]);
     }
 
-    public function updateBudget(Request $request, Project $project)
+    public function updateBudget(Request $request, Project $project): JsonResponse
     {
-        if ($project->client->user_id !== Auth::id()) {
-            throw new NotFoundHttpException;
-        }
+        abort_unless($request->user()->can('update', $project), 403);
 
         $validated = $request->validate([
-            'max_budget' => 'nullable|numeric|min:0',
+            'max_budget' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        $project->update(['max_budget' => $validated['max_budget']]);
+        $project->update($validated);
 
         return response()->json([
             'max_budget' => $project->max_budget !== null ? (float) $project->max_budget : null,

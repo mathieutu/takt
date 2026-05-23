@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Support\Carbon;
 
 /**
  * @property string $id
  * @property string $share_type
- * @property int $share_id
- * @property Carbon $created_at
- * @property-read Model|\Eloquent $sharing
+ * @property string $share_id
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Model|\Eloquent $sharing
  *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Share newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Share newQuery()
@@ -19,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Share whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Share whereShareId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Share whereShareType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Share whereUpdatedAt($value)
  *
  * @mixin \Eloquent
  */

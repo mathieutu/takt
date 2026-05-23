@@ -38,10 +38,10 @@ export type Project = {
 export type Report = {
   id: number,
   project_id: number,
-  start_date: string,
-  day_coverage: number,
-  label: string,
-  comments: string,
+  date: string,
+  coverage: number,
+  title: string,
+  description: string,
 }
 
 export type MonthRow = {

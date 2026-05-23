@@ -18,70 +18,73 @@ class DatabaseSeeder extends Seeder
 
     private function seedAlice(): void
     {
+        $d = fn (int $days): string => now()->subDays($days)->toDateString();
+
         $alice = User::create([
             'name' => 'Alice Martin',
             'email' => 'alice.martin@example.com',
         ]);
 
-        $mairie = $alice->clients()->create(['name' => 'Mairie de Lyon', 'daily_rate' => 600]);
-        $innotech = $alice->clients()->create(['name' => 'Startup InnoTech', 'daily_rate' => 750]);
-        $cabinet = $alice->clients()->create(['name' => 'Cabinet Lefebvre & Co', 'daily_rate' => 500]);
+        $mairie = $alice->clients()->create(['name' => 'Mairie de Lyon', 'daily_rate' => 60000]);
+        $innotech = $alice->clients()->create(['name' => 'Startup InnoTech', 'daily_rate' => 75000]);
+        $cabinet = $alice->clients()->create(['name' => 'Cabinet Lefebvre & Co', 'daily_rate' => 50000]);
 
         $portail = $mairie->projects()->create([
             'name' => 'Refonte du portail citoyen',
-            'daily_rate' => 650,
+            'daily_rate' => 65000,
             'description' => 'Refonte complète du site web municipal avec un espace citoyen sécurisé et des services en ligne.',
         ]);
-        $portail->activityTimes()->createMany([
-            ['label' => 'Cadrage et spécifications',   'start_date' => '2026-01-06', 'day_coverage' => 2, 'comments' => 'Atelier avec les équipes métier de la mairie.'],
-            ['label' => 'Maquettes UX/UI',             'start_date' => '2026-01-13', 'day_coverage' => 3],
-            ['label' => 'Développement frontend',      'start_date' => '2026-01-27', 'day_coverage' => 5, 'comments' => 'Intégration des maquettes validées.'],
-            ['label' => 'Développement backend / API', 'start_date' => '2026-02-10', 'day_coverage' => 4],
-            ['label' => 'Tests et recette',            'start_date' => '2026-02-24', 'day_coverage' => 2, 'comments' => 'Recette client avec 3 cycles de corrections.'],
+        $portail->timesheetEntries()->createMany([
+            ['title' => 'Cadrage et spécifications',   'date' => $d(28), 'coverage' => 50,  'description' => 'Atelier avec les équipes métier de la mairie.'],
+            ['title' => 'Maquettes UX/UI',             'date' => $d(21), 'coverage' => 100],
+            ['title' => 'Développement frontend',      'date' => $d(14), 'coverage' => 100, 'description' => 'Intégration des maquettes validées.'],
+            ['title' => 'Développement backend / API', 'date' => $d(7),  'coverage' => 100],
+            ['title' => 'Tests et recette',            'date' => $d(2),  'coverage' => 50,  'description' => 'Recette client avec 3 cycles de corrections.'],
         ]);
 
         $portail->share();
 
         $audit = $mairie->projects()->create([
             'name' => 'Audit accessibilité numérique',
+            'daily_rate' => 60000,
             'description' => "Audit RGAA des services numériques de la mairie et plan d'action correctif.",
         ]);
-        $audit->activityTimes()->createMany([
-            ['label' => 'Analyse des pages existantes', 'start_date' => '2026-01-05', 'day_coverage' => 1],
-            ['label' => 'Rédaction rapport RGAA',       'start_date' => '2026-01-12', 'day_coverage' => 1, 'comments' => 'Rapport avec 47 non-conformités identifiées.'],
+        $audit->timesheetEntries()->createMany([
+            ['title' => 'Analyse des pages existantes', 'date' => $d(25), 'coverage' => 33],
+            ['title' => 'Rédaction rapport RGAA',       'date' => $d(10), 'coverage' => 50, 'description' => 'Rapport avec 47 non-conformités identifiées.'],
         ]);
 
         $mvp = $innotech->projects()->create([
             'name' => 'MVP application mobile',
-            'daily_rate' => 800,
+            'daily_rate' => 80000,
             'description' => 'Développement du produit minimum viable pour la plateforme de mise en relation B2B.',
         ]);
-        $mvp->activityTimes()->createMany([
-            ['label' => 'Architecture technique',      'start_date' => '2026-01-05', 'day_coverage' => 1, 'comments' => 'Choix stack React Native + Node.js.'],
-            ['label' => 'Sprint 1 - Authentification', 'start_date' => '2026-01-12', 'day_coverage' => 3],
-            ['label' => 'Sprint 2 - Dashboard',        'start_date' => '2026-01-26', 'day_coverage' => 4, 'comments' => 'Inclusion des graphiques et filtres.'],
-            ['label' => 'Sprint 3 - Messagerie',       'start_date' => '2026-02-09', 'day_coverage' => 3],
+        $mvp->timesheetEntries()->createMany([
+            ['title' => 'Architecture technique',      'date' => $d(27), 'coverage' => 33,  'description' => 'Choix stack React Native + Node.js.'],
+            ['title' => 'Sprint 1 - Authentification', 'date' => $d(20), 'coverage' => 100],
+            ['title' => 'Sprint 2 - Dashboard',        'date' => $d(13), 'coverage' => 100, 'description' => 'Inclusion des graphiques et filtres.'],
+            ['title' => 'Sprint 3 - Messagerie',       'date' => $d(5),  'coverage' => 100],
         ]);
 
         $mvp->share();
 
         $api = $innotech->projects()->create([
             'name' => 'Intégration API partenaires',
-            'daily_rate' => 750,
+            'daily_rate' => 75000,
         ]);
-        $api->activityTimes()->createMany([
-            ['label' => 'Étude des APIs partenaires', 'start_date' => '2026-02-02', 'day_coverage' => 1, 'comments' => 'Documentation Stripe, Twilio, Salesforce.'],
-            ['label' => 'Développement connecteurs',  'start_date' => '2026-02-09', 'day_coverage' => 4],
+        $api->timesheetEntries()->createMany([
+            ['title' => 'Étude des APIs partenaires', 'date' => $d(22), 'coverage' => 33,  'description' => 'Documentation Stripe, Twilio, Salesforce.'],
+            ['title' => 'Développement connecteurs',  'date' => $d(8),  'coverage' => 100],
         ]);
 
         $rapports = $cabinet->projects()->create([
             'name' => 'Automatisation des rapports mensuels',
-            'daily_rate' => 500,
+            'daily_rate' => 50000,
             'description' => 'Mise en place de scripts de génération automatique des rapports comptables mensuels.',
         ]);
-        $rapports->activityTimes()->createMany([
-            ['label' => 'Analyse des templates existants', 'start_date' => '2026-01-08', 'day_coverage' => 1],
-            ['label' => 'Développement scripts Python',    'start_date' => '2026-01-15', 'day_coverage' => 2, 'comments' => 'Scripts de génération PDF via WeasyPrint.'],
+        $rapports->timesheetEntries()->createMany([
+            ['title' => 'Analyse des templates existants', 'date' => $d(29), 'coverage' => 33],
+            ['title' => 'Développement scripts Python',    'date' => $d(15), 'coverage' => 50, 'description' => 'Scripts de génération PDF via WeasyPrint.'],
         ]);
     }
 

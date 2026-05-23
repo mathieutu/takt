@@ -56,7 +56,7 @@ login.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\AuthController::logout
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:60
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:61
  * @route "/logout"
  */
 export const logout = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -71,7 +71,7 @@ logout.definition = {
 
 /**
  * @see \App\Http\Controllers\AuthController::logout
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:60
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:61
  * @route "/logout"
  */
 logout.url = (options?: RouteQueryOptions) => {
@@ -80,7 +80,7 @@ logout.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\AuthController::logout
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:60
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:61
  * @route "/logout"
  */
 logout.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -90,7 +90,7 @@ logout.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\AuthController::logout
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:60
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:61
  * @route "/logout"
  */
 logout.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -106,8 +106,8 @@ logout.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 
 /**
- * @see \App\Http\Controllers\DashboardController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:13
+ * @see \App\Http\Controllers\DashboardController::__invoke
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:11
  * @route "/"
  */
 export const dashboard = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -121,8 +121,8 @@ dashboard.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see \App\Http\Controllers\DashboardController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:13
+ * @see \App\Http\Controllers\DashboardController::__invoke
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:11
  * @route "/"
  */
 dashboard.url = (options?: RouteQueryOptions) => {
@@ -130,8 +130,8 @@ dashboard.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see \App\Http\Controllers\DashboardController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:13
+ * @see \App\Http\Controllers\DashboardController::__invoke
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:11
  * @route "/"
  */
 dashboard.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -140,8 +140,8 @@ dashboard.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 })
 
 /**
- * @see \App\Http\Controllers\DashboardController::index
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:13
+ * @see \App\Http\Controllers\DashboardController::__invoke
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:11
  * @route "/"
  */
 dashboard.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -207,12 +207,64 @@ profile.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 
 
+/**
+ * @see \App\Http\Controllers\TimesheetHandler::__invoke
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php:14
+ * @route "/timesheet"
+ */
+export const timesheet = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+    url: timesheet.url(options),
+    method: "get",
+})
+
+timesheet.definition = {
+    methods: ["get","head"],
+    url: "/timesheet",
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+ * @see \App\Http\Controllers\TimesheetHandler::__invoke
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php:14
+ * @route "/timesheet"
+ */
+timesheet.url = (options?: RouteQueryOptions) => {
+    return timesheet.definition.url + queryParams(options)
+}
+
+/**
+ * @see \App\Http\Controllers\TimesheetHandler::__invoke
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php:14
+ * @route "/timesheet"
+ */
+timesheet.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+    url: timesheet.url(options),
+    method: "get",
+})
+
+/**
+ * @see \App\Http\Controllers\TimesheetHandler::__invoke
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php:14
+ * @route "/timesheet"
+ */
+timesheet.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
+    url: timesheet.url(options),
+    method: "head",
+})
+
+
+
+
+
+
+
+
 
 const routes = {
     login,
     logout,
     dashboard,
     profile,
+    timesheet,
 }
 
 export default routes

@@ -4,8 +4,8 @@
 import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOptions } from "./../../index";
 
 /**
- * @see \App\Http\Controllers\ShareController::apply
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:37
+ * @see \App\Http\Controllers\SharedTimesheetController::__invoke
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SharedTimesheetController.php:17
  * @route "/share/{share}"
  */
 export const apply = (args: { share: string | { id: string } } | [ share: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -19,8 +19,8 @@ apply.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see \App\Http\Controllers\ShareController::apply
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:37
+ * @see \App\Http\Controllers\SharedTimesheetController::__invoke
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SharedTimesheetController.php:17
  * @route "/share/{share}"
  */
 apply.url = (args: { share: string | { id: string } } | [ share: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -50,8 +50,8 @@ apply.url = (args: { share: string | { id: string } } | [ share: string | { id: 
 }
 
 /**
- * @see \App\Http\Controllers\ShareController::apply
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:37
+ * @see \App\Http\Controllers\SharedTimesheetController::__invoke
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SharedTimesheetController.php:17
  * @route "/share/{share}"
  */
 apply.get = (args: { share: string | { id: string } } | [ share: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -60,8 +60,8 @@ apply.get = (args: { share: string | { id: string } } | [ share: string | { id: 
 })
 
 /**
- * @see \App\Http\Controllers\ShareController::apply
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:37
+ * @see \App\Http\Controllers\SharedTimesheetController::__invoke
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SharedTimesheetController.php:17
  * @route "/share/{share}"
  */
 apply.head = (args: { share: string | { id: string } } | [ share: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"head"> => ({

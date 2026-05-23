@@ -4,26 +4,26 @@
 import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOptions } from "./../../../index";
 
 /**
- * @see \App\Http\Controllers\ShareController::revoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:26
+ * @see \App\Http\Controllers\ProjectShareController::store
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectShareController.php:11
  * @route "/projects/{project}/share"
  */
-export const revoke = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
-    url: revoke.url(args, options),
-    method: "delete",
+export const store = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
+    url: store.url(args, options),
+    method: "post",
 })
 
-revoke.definition = {
-    methods: ["delete"],
+store.definition = {
+    methods: ["post"],
     url: "/projects/{project}/share",
-} satisfies RouteDefinition<["delete"]>
+} satisfies RouteDefinition<["post"]>
 
 /**
- * @see \App\Http\Controllers\ShareController::revoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:26
+ * @see \App\Http\Controllers\ProjectShareController::store
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectShareController.php:11
  * @route "/projects/{project}/share"
  */
-revoke.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
+store.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
     if (typeof args === "string" || typeof args === "number") {
         args = { project: args }
     }
@@ -44,18 +44,81 @@ revoke.url = (args: { project: string | { id: string } } | [ project: string | {
         project: typeof args.project === "object" ? args.project.id : args.project,
     }
     
-    return revoke.definition.url
+    return store.definition.url
         .replace("{project}", parsedArgs.project.toString())
         .replace(/\/+$/, "") + queryParams(options)
 }
 
 /**
- * @see \App\Http\Controllers\ShareController::revoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:26
+ * @see \App\Http\Controllers\ProjectShareController::store
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectShareController.php:11
  * @route "/projects/{project}/share"
  */
-revoke.delete = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
-    url: revoke.url(args, options),
+store.post = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
+    url: store.url(args, options),
+    method: "post",
+})
+
+
+
+
+
+
+
+
+/**
+ * @see \App\Http\Controllers\ProjectShareController::destroy
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectShareController.php:18
+ * @route "/projects/{project}/share"
+ */
+export const destroy = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
+    url: destroy.url(args, options),
+    method: "delete",
+})
+
+destroy.definition = {
+    methods: ["delete"],
+    url: "/projects/{project}/share",
+} satisfies RouteDefinition<["delete"]>
+
+/**
+ * @see \App\Http\Controllers\ProjectShareController::destroy
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectShareController.php:18
+ * @route "/projects/{project}/share"
+ */
+destroy.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
+    if (typeof args === "string" || typeof args === "number") {
+        args = { project: args }
+    }
+    
+    if (typeof args === "object" && !Array.isArray(args) && "id" in args) {
+        args = { project: args.id }
+    }
+    
+    if (Array.isArray(args)) {
+        args = {
+        project: args[0],
+    }
+    }
+    
+    args = applyUrlDefaults(args)
+    
+    const parsedArgs = {
+        project: typeof args.project === "object" ? args.project.id : args.project,
+    }
+    
+    return destroy.definition.url
+        .replace("{project}", parsedArgs.project.toString())
+        .replace(/\/+$/, "") + queryParams(options)
+}
+
+/**
+ * @see \App\Http\Controllers\ProjectShareController::destroy
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectShareController.php:18
+ * @route "/projects/{project}/share"
+ */
+destroy.delete = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
+    url: destroy.url(args, options),
     method: "delete",
 })
 
@@ -68,7 +131,8 @@ revoke.delete = (args: { project: string | { id: string } } | [ project: string 
 
 
 const share = {
-    revoke,
+    store,
+    destroy,
 }
 
 export default share

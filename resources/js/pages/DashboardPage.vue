@@ -3,8 +3,11 @@ import { router, useHttp } from '@inertiajs/vue3'
 import { BarElement, CategoryScale, Chart as ChartJS, LinearScale, Tooltip, type TooltipItem } from 'chart.js'
 import { computed, onMounted, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
+import { formatDate, formatDays } from '@/utils/date.ts'
+import { formatCurrency } from '@/utils/number.ts'
 import { destroy as destroyClient, update as updateClient } from '@/wayfinder/routes/clients'
-import { destroy as destroyProject, share as shareRoute, update as updateProject } from '@/wayfinder/routes/projects'
+import { destroy as destroyProject, update as updateProject } from '@/wayfinder/routes/projects'
+import { store as shareRoute } from '@/wayfinder/routes/projects/share'
 
 const props = defineProps<{
   entries: Entry[],
@@ -183,18 +186,6 @@ function getWorkingDays(year: number, month: number): number {
     d.setDate(d.getDate() + 1)
   }
   return count
-}
-
-function formatDays(d: number): string {
-  return d % 1 === 0 ? `${d}j` : `${d.toFixed(1)}j`
-}
-
-function formatCurrency(n: number): string {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n)
-}
-
-function formatDate(date: string): string {
-  return new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
 }
 
 const monthEntries = computed(() => entriesForMonth(currentYear, currentMonth))

@@ -16,6 +16,7 @@ class AuthController extends Controller
     {
         return Inertia::render('LoginPage', [
             'users' => ! config('auth.enabled') ? User::all(['id', 'name', 'email']) : [],
+            'redirectUrl' => config('auth.enabled') ? route('login.redirect') : null,
         ]);
     }
 

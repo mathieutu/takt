@@ -2,18 +2,18 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Carbon;
 
 /**
  * @property string $id
  * @property string $project_id
- * @property Carbon $month
+ * @property CarbonImmutable $month
  * @property numeric $amount_billed
- * @property Carbon|null $payment_date
+ * @property CarbonImmutable|null $payment_date
  * @property string|null $notes
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
  * @property-read Project $project
  *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|BillingEntry newModelQuery()

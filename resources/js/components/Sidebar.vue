@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { AuthUser } from '../types'
+import type { NavigationMenuItem } from '@nuxt/ui/components/NavigationMenu.vue.d.ts'
+import type { AuthUser } from '@/types'
 import { usePage } from '@inertiajs/vue3'
 import { watch } from 'vue'
-import { dashboard, logout, profile } from '@/wayfinder/routes'
+import { dashboard, logout, profile, timesheet } from '@/wayfinder/routes'
 import exports from '@/wayfinder/routes/exports'
 import projects from '@/wayfinder/routes/projects'
-import reports from '@/wayfinder/routes/reports'
 import tracking from '@/wayfinder/routes/tracking'
 
 defineProps<{
@@ -21,16 +21,16 @@ const page = usePage()
 
 const navItems = [
   { label: 'Tableau de bord', icon: 'i-lucide-layout-dashboard', to: dashboard(), exact: true },
-  { label: 'Saisie CRA', icon: 'i-lucide-calendar-days', to: reports.index() },
+  { label: 'Saisie CRA', icon: 'i-lucide-calendar-days', to: timesheet() },
   { label: 'Projets', icon: 'i-lucide-folder-kanban', to: projects.index() },
   { label: 'Suivi facturation', icon: 'i-lucide-receipt-text', to: tracking.index() },
   { label: 'Export', icon: 'i-lucide-download', to: exports.index() },
-]
+] satisfies NavigationMenuItem[]
 
 const settingsItems = [
   { label: 'Paramètres', icon: 'i-lucide-settings', to: profile() },
   { label: 'Log out', icon: 'i-lucide-log-out', to: logout() },
-]
+] satisfies NavigationMenuItem[]
 
 watch(() => page.url, () => emit('update:open', false))
 </script>
@@ -68,7 +68,7 @@ watch(() => page.url, () => emit('update:open', false))
     <template #header="{ close }">
       <div class="flex items-center justify-between w-full">
         <div class="flex items-center gap-2">
-          <img src="/public/images/logo.png" class="h-7 w-7 rounded-md object-cover" />
+          <img alt="" src="/public/images/logo.png" class="h-7 w-7 rounded-md object-cover" />
           <span class="text-sm font-semibold">AssoFlow</span>
         </div>
         <UButton icon="i-lucide-x" color="neutral" variant="ghost" size="sm" @click="close" />
