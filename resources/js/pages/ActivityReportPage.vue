@@ -1,16 +1,23 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
-import { useHttp } from '@inertiajs/vue3'
-import { store as storeReport } from '@/wayfinder/routes/projects/reports'
-import { update as updateReport, destroy as destroyReport } from '@/wayfinder/routes/reports'
+import {ref, computed, watch, nextTick} from 'vue'
+import {useHttp} from '@inertiajs/vue3'
+import {store as storeReport} from '@/wayfinder/routes/projects/reports'
+import {update as updateReport, destroy as destroyReport} from '@/wayfinder/routes/reports'
 
-const createHttp = useHttp({ start_date: '', day_coverage: 0 })
-const updateCovHttp = useHttp({ day_coverage: 0 })
+const createHttp = useHttp({start_date: '', day_coverage: 0})
+const updateCovHttp = useHttp({day_coverage: 0})
 const destroyHttp = useHttp()
-const editHttp = useHttp({ label: '', comments: '' })
+const editHttp = useHttp({label: '', comments: ''})
 
 type Project = { id: number; name: string; client_name: string; daily_rate: number }
-type Report = { id: number; project_id: number; start_date: string; day_coverage: number; label: string; comments: string }
+type Report = {
+    id: number;
+    project_id: number;
+    start_date: string;
+    day_coverage: number;
+    label: string;
+    comments: string
+}
 
 const props = withDefaults(defineProps<{
     currentYear?: number
@@ -30,7 +37,7 @@ const displayMonth = ref(props.currentMonth)
 const viewReportOpen = ref(false)
 const editReportOpen = ref(false)
 const editingReport = ref<Report | null>(null)
-const editForm = ref({ label: '', comments: '' })
+const editForm = ref({label: '', comments: ''})
 const viewingReport = ref<Report | null>(null)
 
 const MONTHS_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
@@ -40,6 +47,7 @@ const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart
 
 const holidaysCache = new Map<number, Map<string, string>>()
 const holidays = ref<Map<string, string>>(new Map())
+const tableScrollRef = ref<HTMLElement | null>(null)
 
 async function loadHolidays(year: number) {
     if (holidaysCache.has(year)) {
@@ -59,8 +67,32 @@ async function loadHolidays(year: number) {
     }
 }
 
-onMounted(() => loadHolidays(displayYear.value))
-watch(displayYear, (year) => loadHolidays(year))
+function centerTodayColumn(behavior: ScrollBehavior = 'auto') {
+    const isCurrentMonthDisplayed =
+        displayYear.value === today.getFullYear() && displayMonth.value === today.getMonth() + 1
+
+    if (!isCurrentMonthDisplayed || !tableScrollRef.value) {
+        return
+    }
+
+    const todayColumn = tableScrollRef.value.querySelector<HTMLElement>(`#day-col-${todayStr}`)
+
+    if (!todayColumn) {
+        return
+    }
+
+    todayColumn.scrollIntoView({
+        behavior,
+        block: 'nearest',
+        inline: 'center',
+    })
+}
+
+watch(displayYear, (year) => loadHolidays(year), {immediate: true})
+watch([displayYear, displayMonth], async () => {
+    await nextTick()
+    centerTodayColumn('smooth')
+}, {immediate: true})
 
 const monthPrefix = computed(() =>
     `${displayYear.value}-${String(displayMonth.value).padStart(2, '0')}-`
@@ -71,11 +103,11 @@ const daysInMonth = computed(() => {
     const m = displayMonth.value
     const count = new Date(y, m, 0).getDate()
     const DAY_LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S']
-    return Array.from({ length: count }, (_, i) => {
+    return Array.from({length: count}, (_, i) => {
         const d = i + 1
         const dateStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
         const dow = new Date(y, m - 1, d).getDay()
-        return { d, dateStr, isWeekend: dow === 0 || dow === 6, letter: DAY_LETTERS[dow] }
+        return {d, dateStr, isWeekend: dow === 0 || dow === 6, letter: DAY_LETTERS[dow]}
     })
 })
 
@@ -94,27 +126,33 @@ const projectStats = computed(() =>
         const days = localReports.value
             .filter(r => r.project_id === p.id && r.start_date.startsWith(monthPrefix.value))
             .reduce((s, r) => s + r.day_coverage / 100, 0)
-        return { project: p, days, ca: days * p.daily_rate }
+        return {project: p, days, ca: days * p.daily_rate}
     })
 )
 
-const ownedStats = computed(() => projectStats.value)
+const projectStatsById = computed(() =>
+    new Map(projectStats.value.map((projectStat) => [projectStat.project.id, projectStat]))
+)
 
-const totalDays = computed(() => ownedStats.value.reduce((s, ps) => s + ps.days, 0))
-const totalCa = computed(() => ownedStats.value.reduce((s, ps) => s + ps.ca, 0))
+const totalDays = computed(() => projectStats.value.reduce((s, ps) => s + ps.days, 0))
+const totalCa = computed(() => projectStats.value.reduce((s, ps) => s + ps.ca, 0))
 
 function fmtDays(v: number) {
     return `${v % 1 === 0 ? v : v.toFixed(1)}j`
 }
 
 function prevMonth() {
-    if (displayMonth.value === 1) { displayMonth.value = 12; displayYear.value-- }
-    else displayMonth.value--
+    if (displayMonth.value === 1) {
+        displayMonth.value = 12;
+        displayYear.value--
+    } else displayMonth.value--
 }
 
 function nextMonth() {
-    if (displayMonth.value === 12) { displayMonth.value = 1; displayYear.value++ }
-    else displayMonth.value++
+    if (displayMonth.value === 12) {
+        displayMonth.value = 1;
+        displayYear.value++
+    } else displayMonth.value++
 }
 
 async function clickDay(projectId: number, dateStr: string) {
@@ -124,7 +162,14 @@ async function clickDay(projectId: number, dateStr: string) {
 
     if (!existing) {
         const tempId = -Date.now()
-        localReports.value.push({ id: tempId, project_id: projectId, start_date: dateStr, day_coverage: 100, label: '', comments: '' })
+        localReports.value.push({
+            id: tempId,
+            project_id: projectId,
+            start_date: dateStr,
+            day_coverage: 100,
+            label: '',
+            comments: ''
+        })
         createHttp.start_date = dateStr
         createHttp.day_coverage = 100
         const created = await createHttp.post(storeReport(projectId).url)
@@ -143,12 +188,12 @@ async function clickDay(projectId: number, dateStr: string) {
         }
     } else if (existing.day_coverage > 50) {
         const idx = localReports.value.findIndex(r => r.id === existing.id)
-        if (idx !== -1) localReports.value[idx] = { ...localReports.value[idx], day_coverage: 50 }
+        if (idx !== -1) localReports.value[idx] = {...localReports.value[idx], day_coverage: 50}
         updateCovHttp.day_coverage = 50
         updateCovHttp.put(updateReport(existing.id).url, {
             onError: () => {
                 const idx2 = localReports.value.findIndex(r => r.id === existing.id)
-                if (idx2 !== -1) localReports.value[idx2] = { ...localReports.value[idx2], day_coverage: 100 }
+                if (idx2 !== -1) localReports.value[idx2] = {...localReports.value[idx2], day_coverage: 100}
             },
         })
     } else {
@@ -160,14 +205,15 @@ async function clickDay(projectId: number, dateStr: string) {
 }
 
 function coverageLabel(v: number) {
-    if (v === 100) return '1j'
-    if (v === 50) return '½j'
+    if (v === 100) return '1'
+    if (v === 50) return '½'
+    if (v === 33) return '⅓'
     return ''
 }
 
 function openEdit(report: Report) {
     editingReport.value = report
-    editForm.value = { label: report.label ?? '', comments: report.comments ?? '' }
+    editForm.value = {label: report.label ?? '', comments: report.comments ?? ''}
     editReportOpen.value = true
 }
 
@@ -216,29 +262,37 @@ async function saveEdit() {
             <main class="flex flex-1 flex-col overflow-hidden px-3 py-4 md:px-6 md:py-6">
 
                 <div class="mb-4 shrink-0 flex items-center justify-between">
-                    <h2 class="text-sm font-semibold text-default">Compte-rendu d'activité</h2>
+                    <div class="flex items-center gap-3">
+                        <h2 class="text-sm font-semibold text-default">Compte-rendu d'activité</h2>
+                        <span class="text-xs text-muted">{{ fmtDays(totalDays) }} ({{
+                                totalCa.toLocaleString('fr-FR')
+                            }} €)</span>
+                    </div>
                     <div class="flex shrink-0 items-center gap-2">
-                        <UButton icon="i-lucide-chevron-left" color="neutral" variant="ghost" size="xs" @click="prevMonth" />
+                        <UButton icon="i-lucide-chevron-left" color="neutral" variant="ghost" size="xs"
+                                 @click="prevMonth"/>
                         <span class="min-w-35 text-center text-sm font-medium text-default">
                             {{ MONTHS_FR[displayMonth - 1] }} {{ displayYear }}
                         </span>
-                        <UButton icon="i-lucide-chevron-right" color="neutral" variant="ghost" size="xs" @click="nextMonth" />
+                        <UButton icon="i-lucide-chevron-right" color="neutral" variant="ghost" size="xs"
+                                 @click="nextMonth"/>
                     </div>
                 </div>
 
                 <div class="flex-1 min-h-0">
-                <div class="overflow-y-auto rounded-md border border-default max-h-full">
-                    <table class="border-collapse" style="table-layout: fixed; width: max-content; min-width: 100%;">
-                        <colgroup>
-                            <col style="width: 160px; min-width: 160px;" />
-                            <col v-for="day in daysInMonth" :key="day.d" style="width: 56px; min-width: 56px;" />
-                        </colgroup>
-                        <thead>
+                    <div ref="tableScrollRef" class="overflow-auto rounded-md border border-default max-h-full">
+                        <table class="border-collapse"
+                               style="table-layout: fixed; width: max-content; min-width: 100%;">
+                            <colgroup>
+                                <col style="width: 220px; min-width: 220px;"/>
+                                <col v-for="day in daysInMonth" :key="day.d" style="width: 56px; min-width: 56px;"/>
+                            </colgroup>
+                            <thead>
                             <tr>
                                 <th class="sticky left-0 top-0 z-30 border-b border-r border-default bg-default px-3 py-2 text-left text-xs font-medium text-muted">
                                     Projet
                                 </th>
-                                <th v-for="day in daysInMonth" :key="day.d"
+                                <th v-for="day in daysInMonth" :key="day.d" :id="`day-col-${day.dateStr}`"
                                     class="sticky top-0 z-10 border-b border-r border-default px-0 py-1.5 text-center"
                                     :class="[
                                         holidays.has(day.dateStr) || day.isWeekend ? 'bg-elevated' : 'bg-default',
@@ -246,17 +300,17 @@ async function saveEdit() {
                                     ]"
                                     :title="holidays.get(day.dateStr)">
                                     <div class="text-xs font-semibold leading-none"
-                                        :class="day.dateStr === todayStr ? 'text-primary' : 'text-default'">
+                                         :class="day.dateStr === todayStr ? 'text-primary' : 'text-default'">
                                         {{ day.d }}
                                     </div>
                                     <div class="mt-0.5 text-[10px] leading-none"
-                                        :class="day.dateStr === todayStr ? 'text-primary' : 'text-muted'">
+                                         :class="day.dateStr === todayStr ? 'text-primary' : 'text-muted'">
                                         {{ day.letter }}
                                     </div>
                                 </th>
                             </tr>
-                        </thead>
-                        <tbody>
+                            </thead>
+                            <tbody>
                             <tr v-if="!projects?.length">
                                 <td :colspan="daysInMonth.length + 1"
                                     class="px-4 py-8 text-center text-sm text-muted">
@@ -266,7 +320,15 @@ async function saveEdit() {
                             <tr v-for="project in projects" :key="project.id" class="group/row">
                                 <td class="sticky left-0 z-10 border-b border-r border-default bg-default px-3 py-2">
                                     <div class="truncate text-sm font-medium text-default">{{ project.name }}</div>
-                                    <div class="truncate text-xs text-muted">{{ project.client_name }}</div>
+                                    <div class="truncate text-xs text-muted flex items-center gap-1">
+                                        <span class="flex-1">{{ project.client_name }}</span>
+                                        <span>{{
+                                                fmtDays(projectStatsById.get(project.id)?.days ?? 0)
+                                            }} ({{
+                                                (projectStatsById.get(project.id)?.ca ?? 0).toLocaleString('fr-FR')
+                                            }} €)</span>
+
+                                    </div>
                                 </td>
                                 <td v-for="day in daysInMonth" :key="day.dateStr"
                                     class="group/cell relative border-b border-r border-default transition-colors select-none overflow-hidden cursor-pointer"
@@ -281,22 +343,24 @@ async function saveEdit() {
                                     ]"
                                     @click="clickDay(project.id, day.dateStr)">
                                     <span v-if="reportByKey.get(`${project.id}:${day.dateStr}`)"
-                                        class="absolute bottom-2 left-0 right-0 text-center text-sm font-bold text-primary">
-                                        {{ coverageLabel(reportByKey.get(`${project.id}:${day.dateStr}`)!.day_coverage) }}
+                                          class="absolute bottom-2 left-0 right-0 text-center text-sm font-bold text-primary">
+                                        {{
+                                            coverageLabel(reportByKey.get(`${project.id}:${day.dateStr}`)!.day_coverage)
+                                        }}
                                     </span>
                                     <button
                                         v-if="reportByKey.get(`${project.id}:${day.dateStr}`) && reportByKey.get(`${project.id}:${day.dateStr}`)!.id > 0"
                                         type="button"
                                         class="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded opacity-0 transition-opacity hover:bg-primary/25 group-hover/cell:opacity-100"
                                         @click.stop="openEdit(reportByKey.get(`${project.id}:${day.dateStr}`)!)">
-                                        <UIcon name="i-lucide-pencil" class="h-3 w-3 text-primary" />
+                                        <UIcon name="i-lucide-pencil" class="h-3 w-3 text-primary"/>
                                     </button>
                                     <button
                                         v-else-if="reportByKey.get(`${project.id}:${day.dateStr}`) && (reportByKey.get(`${project.id}:${day.dateStr}`)!.label || reportByKey.get(`${project.id}:${day.dateStr}`)!.comments)"
                                         type="button"
                                         class="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded opacity-0 transition-opacity hover:bg-primary/25 group-hover/cell:opacity-100"
                                         @click.stop="openViewReport(reportByKey.get(`${project.id}:${day.dateStr}`)!)">
-                                        <UIcon name="i-lucide-eye" class="h-3 w-3 text-primary" />
+                                        <UIcon name="i-lucide-eye" class="h-3 w-3 text-primary"/>
                                     </button>
                                     <span
                                         v-if="reportByKey.get(`${project.id}:${day.dateStr}`)?.label || reportByKey.get(`${project.id}:${day.dateStr}`)?.comments"
@@ -304,9 +368,9 @@ async function saveEdit() {
                                     </span>
                                 </td>
                             </tr>
-                        </tbody>
-                    </table>
-                </div>
+                            </tbody>
+                        </table>
+                    </div>
 
                 </div><!-- end flex-1 min-h-0 -->
                 <div class="mt-auto shrink-0">
@@ -321,11 +385,7 @@ async function saveEdit() {
                         </div>
                         <div class="flex items-center gap-1.5">
                             <span class="h-3 w-3 rounded-sm border border-default bg-elevated"></span>
-                            <span class="text-xs text-muted">Week-end</span>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <span class="h-3 w-3 rounded-sm border border-default bg-elevated"></span>
-                            <span class="text-xs text-muted">Jour férié</span>
+                            <span class="text-xs text-muted">Week-ends et jours fériés</span>
                         </div>
                     </div>
                     <div class="pt-2 flex items-center justify-between border-t border-default md:hidden">
@@ -333,39 +393,8 @@ async function saveEdit() {
                         <span class="text-sm font-semibold text-default">{{ totalCa.toLocaleString('fr-FR') }} €</span>
                     </div>
                 </div>
+
             </main>
-
-            <aside class="hidden w-64 shrink-0 border-l border-default px-5 py-6 md:block overflow-y-auto">
-                <p class="mb-4 text-xs font-semibold uppercase tracking-wider text-muted">Récap du mois</p>
-
-                <div class="space-y-4">
-                    <div v-for="ps in ownedStats" :key="ps.project.id">
-                        <p class="mb-1 truncate text-xs font-semibold text-default">{{ ps.project.name }}</p>
-                        <div class="space-y-0.5">
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="text-muted">Jours saisis</span>
-                                <span class="font-medium text-default">{{ fmtDays(ps.days) }}</span>
-                            </div>
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="text-muted">CA estimé</span>
-                                <span class="font-medium text-default">{{ ps.ca.toLocaleString('fr-FR') }} €</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-4 border-t border-default pt-4 space-y-1.5">
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="font-semibold text-default">Total</span>
-                        <span class="font-semibold text-default">{{ fmtDays(totalDays) }}</span>
-                    </div>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-muted">CA total</span>
-                        <span class="font-semibold text-default">{{ totalCa.toLocaleString('fr-FR') }} €</span>
-                    </div>
-                </div>
-
-            </aside>
         </div>
     </div>
 
@@ -384,7 +413,7 @@ async function saveEdit() {
         </template>
         <template #footer="{ close }">
             <div class="flex justify-end">
-                <UButton label="Fermer" color="neutral" variant="outline" @click="close" />
+                <UButton label="Fermer" color="neutral" variant="outline" @click="close"/>
             </div>
         </template>
     </UModal>
@@ -393,17 +422,19 @@ async function saveEdit() {
         <template #body>
             <div class="space-y-4">
                 <UFormField label="Titre">
-                    <UInput v-model="editForm.label" type="text" placeholder="Ex : Développement feature X" class="w-full" />
+                    <UInput v-model="editForm.label" type="text" placeholder="Ex : Développement feature X"
+                            class="w-full"/>
                 </UFormField>
                 <UFormField label="Description">
-                    <UTextarea v-model="editForm.comments" :rows="3" placeholder="Détails de l'activité…" class="w-full" />
+                    <UTextarea v-model="editForm.comments" :rows="3" placeholder="Détails de l'activité…"
+                               class="w-full"/>
                 </UFormField>
             </div>
         </template>
         <template #footer="{ close }">
             <div class="flex justify-end gap-2">
-                <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
-                <UButton label="Enregistrer" @click="saveEdit" />
+                <UButton label="Annuler" color="neutral" variant="outline" @click="close"/>
+                <UButton label="Enregistrer" @click="saveEdit"/>
             </div>
         </template>
     </UModal>
