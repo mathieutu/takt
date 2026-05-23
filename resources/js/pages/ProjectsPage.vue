@@ -5,9 +5,9 @@ import { router, useForm, useHttp } from '@inertiajs/vue3'
 import Dialog from '../components/ui/Dialog.vue'
 import DropdownMenu from '../components/ui/DropdownMenu.vue'
 import Select from '../components/ui/Select.vue'
-import { store as storeProject, update as updateProject, destroy as destroyProject } from '@/routes/projects'
-import { update as updateClient, destroy as destroyClient } from '@/routes/clients'
-import { revoke as shareRoute } from '@/routes/projects/share'
+import { store as storeProject, update as updateProject, destroy as destroyProject } from '@/wayfinder/routes/projects'
+import { update as updateClient, destroy as destroyClient } from '@/wayfinder/routes/clients'
+import { revoke as shareRoute } from '@/wayfinder/routes/projects/share'
 
 type Client = {
     id: number

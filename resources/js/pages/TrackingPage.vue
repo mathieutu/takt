@@ -4,10 +4,10 @@ import { router, useHttp } from '@inertiajs/vue3'
 import { Pencil } from 'lucide-vue-next'
 import Dialog from '../components/ui/Dialog.vue'
 import Select from '../components/ui/Select.vue'
-import { store as storeBilling } from '@/routes/projects/billing'
-import { update as updateBilling } from '@/routes/billing'
-import { budget as updateBudget } from '@/routes/projects'
-import { index as trackingIndex } from '@/routes/tracking'
+import { store as storeBilling } from '@/wayfinder/routes/projects/billing'
+import { update as updateBilling } from '@/wayfinder/routes/billing'
+import { budget as updateBudget } from '@/wayfinder/routes/projects'
+import { index as trackingIndex } from '@/wayfinder/routes/tracking'
 
 const billingHttp = useHttp({ month: '', amount_billed: 0, payment_date: null as string | null, notes: null as string | null })
 const budgetHttp = useHttp({ max_budget: null as number | null })

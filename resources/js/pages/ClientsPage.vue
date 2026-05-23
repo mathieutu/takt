@@ -4,7 +4,7 @@ import { Plus, MoreVertical } from 'lucide-vue-next'
 import Dialog from '../components/ui/Dialog.vue'
 import DropdownMenu from '../components/ui/DropdownMenu.vue'
 import { router, useForm } from '@inertiajs/vue3'
-import { store as storeClient, update as updateClient, destroy as destroyClient } from '@/routes/clients'
+import { store as storeClient, update as updateClient, destroy as destroyClient } from '@/wayfinder/routes/clients'
 
 type Client = {
     id: number

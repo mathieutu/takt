@@ -3,8 +3,8 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { ChevronLeft, ChevronRight, Pencil, Eye, Users } from 'lucide-vue-next'
 import Dialog from '../components/ui/Dialog.vue'
 import { useHttp } from '@inertiajs/vue3'
-import { store as storeReport } from '@/routes/projects/reports'
-import { update as updateReport, destroy as destroyReport } from '@/routes/reports'
+import { store as storeReport } from '@/wayfinder/routes/projects/reports'
+import { update as updateReport, destroy as destroyReport } from '@/wayfinder/routes/reports'
 
 const createHttp = useHttp({ start_date: '', day_coverage: 0 })
 const updateCovHttp = useHttp({ day_coverage: 0 })

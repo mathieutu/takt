@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {Link, useForm} from '@inertiajs/vue3'
-import {disabled} from '@/routes/login'
+import {disabled} from '@/wayfinder/routes/login'
 
 defineOptions({layout: () => false})
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { Download, ChevronDown, X, RotateCcw } from 'lucide-vue-next'
-import { index as indexRoute, csv as csvRoute, xlsx as xlsxRoute } from '@/routes/exports'
+import { index as indexRoute, csv as csvRoute, xlsx as xlsxRoute } from '@/wayfinder/routes/exports'
 
 type Entry         = { id: number; start_date: string; day_coverage: number; label: string; comments: string }
 type Project       = { id: number; name: string; client_name: string; daily_rate: number; entries: Entry[] }
