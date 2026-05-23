@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import {computed} from 'vue'
-import {useForm, usePage} from '@inertiajs/vue3'
+import {useForm} from '@inertiajs/vue3'
 import {update, destroy} from '@/wayfinder/routes/profile'
 import Card from '../components/ui/Card.vue'
 import CardHeader from '../components/ui/CardHeader.vue'
 import CardTitle from '../components/ui/CardTitle.vue'
 import CardContent from '../components/ui/CardContent.vue'
+import {computed} from "vue";
 
 const props = defineProps<{
     user: {
@@ -14,9 +14,6 @@ const props = defineProps<{
         github_id: string | null
     }
 }>()
-
-const page = usePage()
-const success = computed(() => page.props.flash?.success)
 
 const form = useForm({
     name: props.user.name,
@@ -44,11 +41,6 @@ function deleteAccount() {
             <div>
                 <h1 class="text-lg font-semibold text-foreground">Profil</h1>
                 <p class="text-sm text-muted-foreground">Gérez votre profil et vos informations</p>
-            </div>
-
-            <div v-if="success"
-                 class="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                Vos informations ont été mises à jour.
             </div>
 
             <form @submit.prevent="submit" class="space-y-6">

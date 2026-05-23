@@ -1,4 +1,4 @@
-import type { Component } from 'vue'
+import type {Component} from 'vue'
 
 // ── Inertia page props ────────────────────────────────────────────────────────
 
@@ -7,20 +7,12 @@ export interface AuthUser {
     email: string
 }
 
+
 export interface PageProps {
     auth: { user: AuthUser | null }
-    flash: { success?: string | null }
     csrfToken: string
-    [key: string]: unknown
-}
 
-declare module '@inertiajs/vue3' {
-    interface PageProps {
-        auth: { user: AuthUser | null }
-        flash: { success?: string | null }
-        csrfToken: string
-        [key: string]: unknown
-    }
+    [key: string]: unknown
 }
 
 // ── Domain types ──────────────────────────────────────────────────────────────

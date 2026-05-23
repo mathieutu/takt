@@ -45,6 +45,8 @@ class UserController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/')->with('success', 'Your account has been deleted.');
+        return redirect()
+            ->route('login')
+            ->with('success', 'Your account has been deleted.');
     }
 }

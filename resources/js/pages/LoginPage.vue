@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {Link, useForm} from '@inertiajs/vue3'
 import {disabled} from '@/wayfinder/routes/login'
+import Toaster from "@/components/ui/Toaster.vue";
 
 defineOptions({layout: () => false})
 
@@ -11,6 +12,7 @@ defineProps<{
 </script>
 
 <template>
+    <Toaster/>
     <div class="flex min-h-screen flex-col items-center justify-center bg-background px-4">
         <div class="mb-8 flex items-center gap-2">
             <div class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg">

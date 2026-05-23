@@ -14,6 +14,6 @@ export default defineConfig({
         tailwindcss(),
         vue(),
         inertia({ssr: false}),
-        wayfinder()
+        // wayfinder()
     ],
 })

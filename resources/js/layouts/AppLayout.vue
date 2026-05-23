@@ -4,6 +4,7 @@ import { usePage } from '@inertiajs/vue3'
 import type { PageProps } from '../types'
 import Header from '../components/Header.vue'
 import Sidebar from '../components/Sidebar.vue'
+import Toaster from '../components/ui/Toaster.vue'
 
 const page = usePage<PageProps>()
 const user = computed(() => page.props.auth?.user)
@@ -16,5 +17,6 @@ const user = computed(() => page.props.auth?.user)
         <main class="mt-14 md:ml-14 flex-1 overflow-y-auto">
             <slot />
         </main>
+        <Toaster />
     </div>
 </template>
