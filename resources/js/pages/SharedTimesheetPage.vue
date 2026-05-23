@@ -2,25 +2,22 @@
 import type { PageProps } from '../types'
 import { Link, usePage } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
-import AppLayout from '../layouts/AppLayout.vue'
 import { coverageLabel, daysInMonth, formatDays, formatMonthName, offsetMonth, parseMonth, TODAY } from '@/utils/timesheet'
-import { apply as shareApply } from '@/wayfinder/routes/share'
 import { login } from '@/wayfinder/routes'
+import { apply as shareApply } from '@/wayfinder/routes/share'
+import AppLayout from '../layouts/AppLayout.vue'
 
 // @ts-expect-error Inertia v3 runtime accepts false to disable layout; types are incomplete
 defineOptions({ layout: false })
 
-type EntryData = { coverage: number; title: string; description: string }
-type ViewingEntry = { date: string } & EntryData
-
 const props = withDefaults(defineProps<{
-  month?: string
-  shareToken?: string
-  projectName?: string
-  clientName?: string
-  projectId?: string
-  entries?: Record<string, EntryData>
-  holidays?: Record<string, string>
+  month?: string,
+  shareToken?: string,
+  projectName?: string,
+  clientName?: string,
+  projectId?: string,
+  entries?: Record<string, EntryData>,
+  holidays?: Record<string, string>,
 }>(), {
   month: () => new Date().toISOString().slice(0, 7),
   shareToken: '',
@@ -30,6 +27,8 @@ const props = withDefaults(defineProps<{
   entries: () => ({}),
   holidays: () => ({}),
 })
+type EntryData = { coverage: number, title: string, description: string }
+type ViewingEntry = { date: string } & EntryData
 
 const page = usePage<PageProps>()
 const isAuthenticated = computed(() => !!page.props.auth?.user)

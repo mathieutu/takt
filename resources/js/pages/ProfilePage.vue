@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3'
-import { computed } from 'vue'
+import { Form, router } from '@inertiajs/vue3'
+import { ref } from 'vue'
+import { useConfirm } from '@/composables/useConfirm.ts'
 import { destroy, update } from '@/wayfinder/routes/profile'
 
 const props = defineProps<{
@@ -11,24 +12,13 @@ const props = defineProps<{
   },
 }>()
 
-const form = useForm({
-  name: props.user.name,
-  email: props.user.email,
+const values = ref(props.user)
+
+const deleteUser = useConfirm({
+  title: 'Supprimer définitivement votre compte ?',
+  description: 'Cette action est irréversible. Toutes vos données seront perdues.',
+  onConfirm: () => router.visit(destroy()),
 })
-
-const initials = computed(() =>
-  form.name.split(' ').map((w: string) => w[0] ?? '').slice(0, 2).join('').toUpperCase(),
-)
-
-function submit() {
-  form.put(update().url, { preserveScroll: true })
-}
-
-function deleteAccount() {
-  if (confirm('Supprimer définitivement votre compte ? Cette action est irréversible.')) {
-    form.delete(destroy().url)
-  }
-}
 </script>
 
 <template>
@@ -39,38 +29,28 @@ function deleteAccount() {
         <p class="text-sm text-muted">Gérez votre profil et vos informations</p>
       </div>
 
-      <form class="space-y-6" @submit.prevent="submit">
-        <UCard>
-          <template #header>
-            <div class="flex items-center gap-3">
-              <div class="hidden sm:flex h-10 w-10 items-center justify-center rounded-full bg-elevated text-sm font-semibold shrink-0">
-                {{ initials }}
-              </div>
-              <div class="min-w-0 overflow-hidden">
-                <p class="text-sm font-medium truncate">{{ form.name }}</p>
-                <p class="text-xs text-muted truncate">{{ form.email }}</p>
-              </div>
-            </div>
-          </template>
-
+      <UCard>
+        <template #header>
+          <h2 class="text-sm font-semibold">Informations</h2>
+        </template>
+        <Form v-slot="{ errors, processing }" class="space-y-6" :action="update()" novalidate>
           <div class="space-y-4">
-            <UFormField label="Nom" required :error="form.errors.name">
+            <UFormField label="Nom" required :error="errors.name">
               <UInput
-                v-model="form.name"
+                v-model="values.name"
                 type="text"
+                name="name"
                 autocomplete="name"
-                :color="form.errors.name ? 'error' : undefined"
                 class="w-full"
               />
             </UFormField>
 
-            <UFormField label="Adresse e-mail" required :error="form.errors.email">
+            <UFormField label="Adresse e-mail" required :error="errors.email">
               <UInput
-                v-model="form.email"
+                v-model="values.email"
                 name="email"
                 type="email"
                 autocomplete="email"
-                :color="form.errors.email ? 'error' : undefined"
                 class="w-full"
               />
             </UFormField>
@@ -83,12 +63,11 @@ function deleteAccount() {
               </div>
             </div>
           </div>
-        </UCard>
-
-        <div class="flex justify-end">
-          <UButton type="submit" :loading="form.processing" label="Enregistrer" />
-        </div>
-      </form>
+          <div class="flex justify-end">
+            <UButton type="submit" :loading="processing" label="Enregistrer" />
+          </div>
+        </Form>
+      </UCard>
 
       <UCard>
         <template #header>
@@ -105,7 +84,7 @@ function deleteAccount() {
             label="Supprimer"
             color="error"
             variant="outline"
-            @click="deleteAccount"
+            @click="deleteUser"
           />
         </div>
       </UCard>
