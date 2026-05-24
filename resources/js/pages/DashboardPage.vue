@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { router, useHttp } from '@inertiajs/vue3'
 import { BarElement, CategoryScale, Chart as ChartJS, LinearScale, Tooltip, type TooltipItem } from 'chart.js'
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { formatDate, formatDays } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
@@ -16,12 +16,6 @@ const props = defineProps<{
 }>()
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip)
-
-onMounted(() => {
-  if (props.projects.length === 0) {
-    router.visit('/projects?open=1', { replace: true })
-  }
-})
 
 type Entry = { id: number, projectId: number, date: string, value: number, label: string | null }
 type Client = { id: number, name: string, daily_rate: number }

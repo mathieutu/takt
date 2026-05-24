@@ -209,7 +209,7 @@ profile.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\TimesheetHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php:14
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php:15
  * @route "/timesheet"
  */
 export const timesheet = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -224,7 +224,7 @@ timesheet.definition = {
 
 /**
  * @see \App\Http\Controllers\TimesheetHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php:14
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php:15
  * @route "/timesheet"
  */
 timesheet.url = (options?: RouteQueryOptions) => {
@@ -233,7 +233,7 @@ timesheet.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\TimesheetHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php:14
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php:15
  * @route "/timesheet"
  */
 timesheet.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -243,7 +243,7 @@ timesheet.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\TimesheetHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php:14
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php:15
  * @route "/timesheet"
  */
 timesheet.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({

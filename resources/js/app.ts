@@ -6,5 +6,7 @@ import '../css/app.css'
 
 createInertiaApp({
   layout: () => AppLayout,
-  withApp: app => app.use(ui),
+  withApp(app) {
+    app.use(ui)
+  },
 })

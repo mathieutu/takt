@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property string $id
@@ -40,6 +41,8 @@ use Illuminate\Database\Eloquent\Relations\MorphOne;
  */
 class Project extends Model
 {
+    use SoftDeletes;
+
     protected $with = ['client'];
 
     protected function casts(): array

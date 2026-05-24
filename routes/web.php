@@ -33,10 +33,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('profile', [UserController::class, 'destroy'])->name('profile.destroy');
 
     // Clients
-    Route::apiResource('clients', ClientController::class)->only(['store', 'update', 'destroy']);
+    Route::resource('clients', ClientController::class)->only(['edit', 'update', 'destroy'])->withTrashed(['destroy']);
+    Route::post('clients/{client}/restore', [ClientController::class, 'restore'])->name('clients.restore')->withTrashed();
 
     // Projects
-    Route::apiResource('projects', ProjectController::class)->except(['show']);
+    Route::resource('projects', ProjectController::class)->except(['show'])->withTrashed(['destroy']);
+    Route::post('projects/{project}/restore', [ProjectController::class, 'restore'])->name('projects.restore')->withTrashed();
+
     Route::post('projects/{project}/share', [ProjectShareController::class, 'store'])->name('projects.share.store');
     Route::delete('projects/{project}/share', [ProjectShareController::class, 'destroy'])->name('projects.share.destroy');
     Route::post('projects/{project}/billing', [TrackingController::class, 'storeBilling'])->name('projects.billing.store');

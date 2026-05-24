@@ -11,7 +11,13 @@ import { formatCurrency } from '@/utils/number.ts'
 import { sync as syncEntries } from '@/wayfinder/routes/projects/entries'
 
 type EntryData = { coverage: number, title: string, description: string }
-type Project = { id: string, name: string, client_name: string, daily_rate: number, entries: Record<string, EntryData> }
+type Project = {
+  id: string,
+  name: string,
+  client: { name: string },
+  daily_rate: number,
+  entries: Record<string, EntryData>,
+}
 type EditingEntry = { projectId: string, date: string } & EntryData
 
 type PageProps = {
@@ -182,7 +188,7 @@ function entryDateLabel(date: string): string {
                   <td class="sticky left-0 z-10 border-b border-r border-default bg-default px-3 py-2">
                     <div class="truncate text-sm font-medium text-default">{{ project.name }}</div>
                     <div class="truncate text-xs text-muted flex items-center gap-1">
-                      <span class="flex-1">{{ project.client_name }}</span>
+                      <span class="flex-1">{{ project.client.name }}</span>
                       <span>
                         {{ formatDays(project.days ?? 0) }}
                         ({{ formatCurrency(project.revenue ?? 0) }})

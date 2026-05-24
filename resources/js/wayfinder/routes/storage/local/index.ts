@@ -4,7 +4,7 @@
 import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOptions } from "./../../../index";
 
 /**
- * @see /Users/mathieutu/Projects/cra/vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:106
+ * @see /Users/mathieutu/Projects/cra/vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:119
  * @route "/storage/{path}"
  */
 export const upload = (args: { path: string | number } | [ path: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
@@ -18,7 +18,7 @@ upload.definition = {
 } satisfies RouteDefinition<["put"]>
 
 /**
- * @see /Users/mathieutu/Projects/cra/vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:106
+ * @see /Users/mathieutu/Projects/cra/vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:119
  * @route "/storage/{path}"
  */
 upload.url = (args: { path: string | number } | [ path: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -44,7 +44,7 @@ upload.url = (args: { path: string | number } | [ path: string | number ] | stri
 }
 
 /**
- * @see /Users/mathieutu/Projects/cra/vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:106
+ * @see /Users/mathieutu/Projects/cra/vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:119
  * @route "/storage/{path}"
  */
 upload.put = (args: { path: string | number } | [ path: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"put"> => ({

@@ -5,7 +5,7 @@ import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOpt
 import localA914886 from "./local";
 
 /**
- * @see /Users/mathieutu/Projects/cra/vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:98
+ * @see /Users/mathieutu/Projects/cra/vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:111
  * @route "/storage/{path}"
  */
 export const local = (args: { path: string | number } | [ path: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -19,7 +19,7 @@ local.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see /Users/mathieutu/Projects/cra/vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:98
+ * @see /Users/mathieutu/Projects/cra/vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:111
  * @route "/storage/{path}"
  */
 local.url = (args: { path: string | number } | [ path: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -45,7 +45,7 @@ local.url = (args: { path: string | number } | [ path: string | number ] | strin
 }
 
 /**
- * @see /Users/mathieutu/Projects/cra/vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:98
+ * @see /Users/mathieutu/Projects/cra/vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:111
  * @route "/storage/{path}"
  */
 local.get = (args: { path: string | number } | [ path: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -54,7 +54,7 @@ local.get = (args: { path: string | number } | [ path: string | number ] | strin
 })
 
 /**
- * @see /Users/mathieutu/Projects/cra/vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:98
+ * @see /Users/mathieutu/Projects/cra/vendor/laravel/framework/src/Illuminate/Filesystem/FilesystemServiceProvider.php:111
  * @route "/storage/{path}"
  */
 local.head = (args: { path: string | number } | [ path: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"head"> => ({

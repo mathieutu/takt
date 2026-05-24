@@ -7,10 +7,10 @@ export type ConfirmDialogOptions = {
   onConfirm?: () => void,
 }
 
-export const useConfirm = (defaultOptions: Partial<ConfirmDialogOptions>) => {
+export const useConfirm = (defaultOptions: Partial<ConfirmDialogOptions> = {}) => {
   const overlay = useOverlay()
 
-  return async (options: Partial<ConfirmDialogOptions>): Promise<boolean> => {
+  return async (options: Partial<ConfirmDialogOptions> = {}): Promise<boolean> => {
     const props = { ...defaultOptions, ...options }
     const modal = overlay.create(ConfirmDialog, {
       destroyOnClose: true,

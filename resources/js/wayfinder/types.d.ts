@@ -21,12 +21,12 @@ export namespace Inertia {
         /**
          * @see [\App\Http\Controllers\ProjectController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
          */
-        export type ProjectsPage = Inertia.SharedData & { projects: unknown, clients: unknown, open: boolean }
+        export type ProjectsPage = Inertia.SharedData & { projects: unknown, clients: unknown, search: string, client_id: string, with_trashed: boolean, sort: string }
 
         /**
          * @see [\App\Http\Controllers\TimesheetHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php)
          */
-        export type TimesheetPage = Inertia.SharedData & { current: { year: number, month: number }, urls: { nextMonth: string, prevMonth: string }, projects: unknown, entries: unknown, holidays: [] }
+        export type TimesheetPage = Inertia.SharedData & { current: { year: number, month: number }, urls: { nextMonth: string, prevMonth: string }, holidays: [], projects: unknown }
 
         /**
          * @see [\App\Http\Controllers\TrackingController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php)
@@ -139,9 +139,7 @@ export namespace App {
                     export type Request = {    name: string;
                         description?: string | null;
                         daily_rate?: number | null;
-                        client_id: string;
-                        client_name?: string;
-                        client_rate?: number;}
+                        max_budget?: number | null;}
                 }
 
                 export namespace Update {
@@ -151,12 +149,34 @@ export namespace App {
                     export type Request = {    name: string;
                         description?: string | null;
                         daily_rate?: number | null;
+                        max_budget?: number | null;
                         client_id: string;}
+                }
+
+                export namespace Create {
+                    /**
+                     * @see [\App\Http\Controllers\ProjectController::create](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+
+                export namespace Edit {
+                    /**
+                     * @see [\App\Http\Controllers\ProjectController::edit](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
+                     */
+                    export type Request = Record<string, unknown>
                 }
 
                 export namespace Destroy {
                     /**
                      * @see [\App\Http\Controllers\ProjectController::destroy](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+
+                export namespace Restore {
+                    /**
+                     * @see [\App\Http\Controllers\ProjectController::restore](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
@@ -275,18 +295,32 @@ export namespace App {
                         daily_rate: number;}
                 }
 
+                export namespace Edit {
+                    /**
+                     * @see [\App\Http\Controllers\ClientController::edit](/Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+
                 export namespace Destroy {
                     /**
                      * @see [\App\Http\Controllers\ClientController::destroy](/Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
+
+                export namespace Restore {
+                    /**
+                     * @see [\App\Http\Controllers\ClientController::restore](/Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
             }
 
-            export namespace TimesheetEntryController {
-                export namespace Sync {
+            export namespace SyncProjectEntriesHandler {
+                export namespace __invoke {
                     /**
-                     * @see [\App\Http\Controllers\TimesheetEntryController::sync](/Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetEntryController.php)
+                     * @see [\App\Http\Controllers\SyncProjectEntriesHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/SyncProjectEntriesHandler.php)
                      */
                     export type Request = {    "*.coverage": number;
                         "*.title"?: string | null;

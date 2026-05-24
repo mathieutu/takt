@@ -15,6 +15,7 @@ return new class extends Migration
             $table->unsignedInteger('daily_rate');
             $table->unsignedInteger('max_budget')->nullable();
             $table->longText('description')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

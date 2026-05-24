@@ -6,6 +6,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property string $id
@@ -32,6 +33,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Client extends Model
 {
+    use SoftDeletes;
+
     protected function casts(): array
     {
         return ['daily_rate' => 'integer'];

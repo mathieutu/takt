@@ -5,7 +5,7 @@ import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOpt
 
 /**
  * @see \App\Http\Controllers\ClientController::store
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:13
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:28
  * @route "/clients"
  */
 export const store = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -20,7 +20,7 @@ store.definition = {
 
 /**
  * @see \App\Http\Controllers\ClientController::store
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:13
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:28
  * @route "/clients"
  */
 store.url = (options?: RouteQueryOptions) => {
@@ -29,7 +29,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\ClientController::store
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:13
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:28
  * @route "/clients"
  */
 store.post = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -45,8 +45,81 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
 
 
 /**
+ * @see \App\Http\Controllers\ClientController::edit
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:15
+ * @route "/clients/{client}/edit"
+ */
+export const edit = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+    url: edit.url(args, options),
+    method: "get",
+})
+
+edit.definition = {
+    methods: ["get","head"],
+    url: "/clients/{client}/edit",
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+ * @see \App\Http\Controllers\ClientController::edit
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:15
+ * @route "/clients/{client}/edit"
+ */
+edit.url = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
+    if (typeof args === "string" || typeof args === "number") {
+        args = { client: args }
+    }
+    
+    if (typeof args === "object" && !Array.isArray(args) && "id" in args) {
+        args = { client: args.id }
+    }
+    
+    if (Array.isArray(args)) {
+        args = {
+        client: args[0],
+    }
+    }
+    
+    args = applyUrlDefaults(args)
+    
+    const parsedArgs = {
+        client: typeof args.client === "object" ? args.client.id : args.client,
+    }
+    
+    return edit.definition.url
+        .replace("{client}", parsedArgs.client.toString())
+        .replace(/\/+$/, "") + queryParams(options)
+}
+
+/**
+ * @see \App\Http\Controllers\ClientController::edit
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:15
+ * @route "/clients/{client}/edit"
+ */
+edit.get = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+    url: edit.url(args, options),
+    method: "get",
+})
+
+/**
+ * @see \App\Http\Controllers\ClientController::edit
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:15
+ * @route "/clients/{client}/edit"
+ */
+edit.head = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"head"> => ({
+    url: edit.url(args, options),
+    method: "head",
+})
+
+
+
+
+
+
+
+
+/**
  * @see \App\Http\Controllers\ClientController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:23
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:38
  * @route "/clients/{client}"
  */
 export const update = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
@@ -61,7 +134,7 @@ update.definition = {
 
 /**
  * @see \App\Http\Controllers\ClientController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:23
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:38
  * @route "/clients/{client}"
  */
 update.url = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -92,7 +165,7 @@ update.url = (args: { client: string | { id: string } } | [ client: string | { i
 
 /**
  * @see \App\Http\Controllers\ClientController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:23
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:38
  * @route "/clients/{client}"
  */
 update.put = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
@@ -102,7 +175,7 @@ update.put = (args: { client: string | { id: string } } | [ client: string | { i
 
 /**
  * @see \App\Http\Controllers\ClientController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:23
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:38
  * @route "/clients/{client}"
  */
 update.patch = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"patch"> => ({
@@ -119,7 +192,7 @@ update.patch = (args: { client: string | { id: string } } | [ client: string | {
 
 /**
  * @see \App\Http\Controllers\ClientController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:32
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:56
  * @route "/clients/{client}"
  */
 export const destroy = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
@@ -134,7 +207,7 @@ destroy.definition = {
 
 /**
  * @see \App\Http\Controllers\ClientController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:32
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:56
  * @route "/clients/{client}"
  */
 destroy.url = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -165,7 +238,7 @@ destroy.url = (args: { client: string | { id: string } } | [ client: string | { 
 
 /**
  * @see \App\Http\Controllers\ClientController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:32
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:56
  * @route "/clients/{client}"
  */
 destroy.delete = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
@@ -180,11 +253,76 @@ destroy.delete = (args: { client: string | { id: string } } | [ client: string |
 
 
 
+/**
+ * @see \App\Http\Controllers\ClientController::restore
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:47
+ * @route "/clients/{client}/restore"
+ */
+export const restore = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
+    url: restore.url(args, options),
+    method: "post",
+})
+
+restore.definition = {
+    methods: ["post"],
+    url: "/clients/{client}/restore",
+} satisfies RouteDefinition<["post"]>
+
+/**
+ * @see \App\Http\Controllers\ClientController::restore
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:47
+ * @route "/clients/{client}/restore"
+ */
+restore.url = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
+    if (typeof args === "string" || typeof args === "number") {
+        args = { client: args }
+    }
+    
+    if (typeof args === "object" && !Array.isArray(args) && "id" in args) {
+        args = { client: args.id }
+    }
+    
+    if (Array.isArray(args)) {
+        args = {
+        client: args[0],
+    }
+    }
+    
+    args = applyUrlDefaults(args)
+    
+    const parsedArgs = {
+        client: typeof args.client === "object" ? args.client.id : args.client,
+    }
+    
+    return restore.definition.url
+        .replace("{client}", parsedArgs.client.toString())
+        .replace(/\/+$/, "") + queryParams(options)
+}
+
+/**
+ * @see \App\Http\Controllers\ClientController::restore
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:47
+ * @route "/clients/{client}/restore"
+ */
+restore.post = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
+    url: restore.url(args, options),
+    method: "post",
+})
+
+
+
+
+
+
+
+
 
 const clients = {
     store,
+    edit,
     update,
     destroy,
+    restore,
 }
 
 export default clients

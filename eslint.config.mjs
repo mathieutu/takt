@@ -59,6 +59,7 @@ export default antfu(
   {
     files: ['**/*.vue'],
     rules: {
+      'vue/prop-name-casing': 'off',
       'vue/singleline-html-element-content-newline': 'off',
       'vue/html-self-closing': [
         'error',

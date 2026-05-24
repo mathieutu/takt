@@ -2,15 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request): Response|RedirectResponse
     {
         $projects = $request->user()->projects()->with('timesheetEntries', 'sharer')->get();
+
+        if ($projects->isEmpty()) {
+            return redirect()->route('projects.create');
+        }
 
         $entries = $projects->flatMap->timesheetEntries
             ->sortByDesc('date')

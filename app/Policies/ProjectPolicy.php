@@ -16,4 +16,9 @@ class ProjectPolicy
     {
         return $user->id === $project->client->user_id;
     }
+
+    public function restore(User $user, Project $project): bool
+    {
+        return $user->id === $project->client->user_id;
+    }
 }

@@ -2,81 +2,145 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreProjectRequest;
-use App\Http\Requests\UpdateProjectRequest;
-use App\Models\Client;
+use App\Http\Concerns\BuildsProjectsPageProps;
 use App\Models\Project;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ProjectController extends Controller
 {
-    public function index(): Response
+    use BuildsProjectsPageProps;
+
+    public function index(Request $request): Response|RedirectResponse
     {
-        $userId = Auth::id();
+        if ($request->user()->projects()->withTrashed()->doesntExist()) {
+            return redirect()->route('projects.create');
+        }
 
-        $projects = Project::with('client')->withExists('sharer')
-            ->whereHas('client', fn ($q) => $q->where('user_id', $userId))
-            ->get();
+        return Inertia::render('ProjectsPage', $this->projectsPageProps($request));
+    }
 
-        $clients = Client::where('user_id', $userId)->get();
-
-        return Inertia::render('ProjectsPage', [
-            'projects' => $projects->map(fn ($p) => [
-                'id' => $p->id,
-                'name' => $p->name,
-                'description' => $p->description ?? '',
-                'daily_rate' => $p->daily_rate ? (float) $p->daily_rate : null,
-                'client_id' => $p->client_id,
-                'client_name' => $p->client->name,
-                'created_at' => $p->created_at?->translatedFormat('j M Y') ?? '',
-                'is_shared' => $p->sharer_exists,
-            ])->values(),
-            'clients' => $clients->map(fn ($c) => [
-                'id' => $c->id,
-                'name' => $c->name,
-                'daily_rate' => (float) $c->daily_rate,
-            ])->values(),
-            'open' => request()->has('open'),
+    public function create(Request $request): Response
+    {
+        return Inertia::render('ProjectForm', [
+            'page' => $this->projectsPageProps($request),
+            'modal' => [
+                'project' => null,
+                'clients' => $request->user()->clients()->get()->map->export(['id', 'name', 'daily_rate']),
+            ],
         ]);
     }
 
-    public function store(StoreProjectRequest $request): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
-        $userId = Auth::id();
-        $data = $request->validated();
+        $user = $request->user();
+        $isNewClient = ! $request->input('client_id');
 
-        if ($request->client_id === 'new') {
-            $client = Client::create([
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'daily_rate' => ['nullable', 'numeric', 'min:0'],
+            'max_budget' => ['nullable', 'numeric', 'min:0'],
+            ...(! $isNewClient ? [
+                'client_id' => ['required', 'uuid', Rule::exists('clients', 'id')->where('user_id', $user->id)],
+            ] : [
+                // Used when creating a new client inline
+                'client_name' => ['required', 'string', 'max:255'],
+                'client_rate' => ['required', 'numeric', 'min:0'],
+            ]),
+        ]);
+
+        if ($isNewClient) {
+            $client = $user->clients()->create([
                 'name' => $data['client_name'],
                 'daily_rate' => $data['client_rate'],
-                'user_id' => $userId,
             ]);
+
             $data['client_id'] = $client->id;
         }
 
-        Project::create($data);
+        Project::create([
+            'name' => $data['name'],
+            'description' => $data['description'],
+            'daily_rate' => $data['daily_rate'],
+            'max_budget' => $data['max_budget'],
+            'client_id' => $data['client_id'],
+        ]);
 
-        return to_route('projects.index');
+        return redirect()
+            ->route('projects.index')
+            ->with('success', 'Project created successfully.');
     }
 
-    public function update(UpdateProjectRequest $request, Project $project): RedirectResponse
+    public function edit(Request $request, Project $project): Response
     {
         $this->authorize('update', $project);
 
-        $project->update($request->validated());
+        return Inertia::render('ProjectForm', [
+            'page' => $this->projectsPageProps($request),
+            'modal' => [
+                'project' => $project->export([
+                    'id',
+                    'name',
+                    'description',
+                    'daily_rate',
+                    'max_budget',
+                    'client_id',
+                ]),
+                'clients' => $request->user()->clients()->get()->map->export(['id', 'name', 'daily_rate']),
+            ],
+        ]);
+    }
 
-        return redirect()->back();
+    public function update(Request $request, Project $project): RedirectResponse
+    {
+        $this->authorize('update', $project);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'daily_rate' => ['nullable', 'numeric', 'min:0'],
+            'max_budget' => ['nullable', 'numeric', 'min:0'],
+            'client_id' => ['required', Rule::exists('clients', 'id')->where('user_id', $request->user()->id)],
+        ]);
+
+        $project->update($data);
+
+        return redirect()
+            ->route('projects.index')
+            ->with('success', 'Project updated successfully.');
     }
 
     public function destroy(Project $project): RedirectResponse
     {
         $this->authorize('delete', $project);
 
+        if ($project->deleted_at) {
+            $project->forceDelete();
+
+            return redirect()
+                ->route('projects.index')
+                ->with('success', 'Project permanently deleted successfully.');
+        }
+
         $project->delete();
 
-        return redirect()->back();
+        return redirect()
+            ->route('projects.index')
+            ->with('success', 'Project archived successfully.');
+    }
+
+    public function restore(Project $project): RedirectResponse
+    {
+        $this->authorize('restore', $project);
+
+        $project->restore();
+
+        return redirect()
+            ->route('projects.index')
+            ->with('success', 'Project restored successfully.');
     }
 }
