@@ -28,6 +28,8 @@ const props = withDefaults(defineProps<{
   client_id?: string,
   with_trashed?: boolean,
   sort?: string,
+  has_trashed?: boolean,
+  has_active?: boolean,
 }>(), {
   projects: () => [],
   clients: () => [],
@@ -35,6 +37,8 @@ const props = withDefaults(defineProps<{
   client_id: '',
   with_trashed: false,
   sort: 'date_desc',
+  has_trashed: false,
+  has_active: false,
 })
 </script>
 

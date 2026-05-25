@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('projects', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name');
-            $table->foreignUuid('client_id')->constrained('clients')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreignUuid('client_id')->constrained('clients')->restrictOnDelete()->cascadeOnUpdate();
             $table->unsignedInteger('daily_rate');
             $table->unsignedInteger('max_budget')->nullable();
             $table->longText('description')->nullable();

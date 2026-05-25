@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('timesheet_entries', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('project_id')->constrained('projects')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreignUuid('project_id')->constrained('projects')->restrictOnDelete()->cascadeOnUpdate();
             $table->date('date')->index();
             $table->unsignedInteger('coverage')->default(0);
             $table->string('title')->nullable();

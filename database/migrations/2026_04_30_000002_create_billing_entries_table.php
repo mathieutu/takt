@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('billing_entries', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('project_id')->constrained('projects')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->foreignUuid('project_id')->constrained('projects')->restrictOnDelete()->cascadeOnUpdate();
             $table->date('month');
             $table->decimal('amount_billed', 10, 2)->default(0);
             $table->date('payment_date')->nullable();

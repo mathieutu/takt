@@ -26,5 +26,6 @@ declare module 'vue' {
     USelectMenu: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/SelectMenu.vue')['default']
     USlideover: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Slideover.vue')['default']
     UTextarea: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Textarea.vue')['default']
+    UTooltip: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Tooltip.vue')['default']
   }
 }

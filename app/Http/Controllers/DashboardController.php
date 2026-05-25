@@ -14,7 +14,7 @@ class DashboardController
         $projects = $request->user()->projects()->with('timesheetEntries', 'sharer')->get();
 
         if ($projects->isEmpty()) {
-            return redirect()->route('projects.create');
+            return redirect()->route('projects.index');
         }
 
         $entries = $projects->flatMap->timesheetEntries

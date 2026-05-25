@@ -39,6 +39,7 @@ Route::middleware('auth')->group(function () {
     // Projects
     Route::resource('projects', ProjectController::class)->except(['show'])->withTrashed(['destroy']);
     Route::post('projects/{project}/restore', [ProjectController::class, 'restore'])->name('projects.restore')->withTrashed();
+    Route::post('projects/{project}/duplicate', [ProjectController::class, 'duplicate'])->name('projects.duplicate')->withTrashed();
 
     Route::post('projects/{project}/share', [ProjectShareController::class, 'store'])->name('projects.share.store');
     Route::delete('projects/{project}/share', [ProjectShareController::class, 'destroy'])->name('projects.share.destroy');

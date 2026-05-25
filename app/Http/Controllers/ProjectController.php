@@ -16,8 +16,19 @@ class ProjectController extends Controller
 
     public function index(Request $request): Response|RedirectResponse
     {
-        if ($request->user()->projects()->withTrashed()->doesntExist()) {
-            return redirect()->route('projects.create');
+        $user = $request->user();
+
+        if ($user->projects()->doesntExist()) {
+            $hasArchived = $user->projects()->onlyTrashed()->exists()
+                || $user->clients()->onlyTrashed()->exists();
+
+            if (! $hasArchived) {
+                return redirect()->route('projects.create');
+            }
+
+            if (! $request->boolean('with_trashed')) {
+                return redirect()->route('projects.index', ['with_trashed' => true]);
+            }
         }
 
         return Inertia::render('ProjectsPage', $this->projectsPageProps($request));
@@ -75,6 +86,15 @@ class ProjectController extends Controller
             ->with('success', 'Project created successfully.');
     }
 
+    public function duplicate(Project $project): RedirectResponse
+    {
+        $newProject = tap($project->replicate(['deleted_at']))->save();
+
+        return redirect()
+            ->route('projects.edit', ['project' => $newProject])
+            ->with('success', 'Project duplicated successfully.');
+    }
+
     public function edit(Request $request, Project $project): Response
     {
         $this->authorize('update', $project);
@@ -114,22 +134,28 @@ class ProjectController extends Controller
             ->with('success', 'Project updated successfully.');
     }
 
-    public function destroy(Project $project): RedirectResponse
+    public function destroy(Project $project, Request $request): RedirectResponse
     {
         $this->authorize('delete', $project);
 
         if ($project->deleted_at) {
+            if ($project->timesheetEntries()->exists() || $project->billingEntries()->exists()) {
+                return redirect()
+                    ->back()
+                    ->with('error', 'Cannot permanently delete a project with existing entries.');
+            }
+
             $project->forceDelete();
 
             return redirect()
-                ->route('projects.index')
+                ->back()
                 ->with('success', 'Project permanently deleted successfully.');
         }
 
         $project->delete();
 
         return redirect()
-            ->route('projects.index')
+            ->back()
             ->with('success', 'Project archived successfully.');
     }
 
@@ -140,7 +166,7 @@ class ProjectController extends Controller
         $project->restore();
 
         return redirect()
-            ->route('projects.index')
+            ->back()
             ->with('success', 'Project restored successfully.');
     }
 }

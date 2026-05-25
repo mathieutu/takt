@@ -36,7 +36,7 @@ class ClientController extends Controller
 
         $client->update($request->validated());
 
-        return redirect()->back()->with('success', 'Client successfully updated.');
+        return redirect()->route('projects.index')->with('success', 'Client successfully updated.');
     }
 
     public function restore(Client $client): RedirectResponse
@@ -53,13 +53,14 @@ class ClientController extends Controller
         $this->authorize('delete', $client);
 
         if (! $client->deleted_at) {
+            $client->projects()->delete();
             $client->delete();
 
-            return redirect()->back()->with('success', 'Client successfully archived.');
+            return redirect()->back()->with('success', 'Client and its projects successfully archived.');
         }
 
-        if ($client->projects()->exists()) {
-            return redirect()->back()->with('error', 'Cannot delete client with existing projects.');
+        if ($client->projects()->withTrashed()->exists()) {
+            return redirect()->back()->with('error', 'Cannot delete a client with existing projects.');
         }
 
         $client->forceDelete();

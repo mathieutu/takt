@@ -2,6 +2,7 @@
 
 namespace App\Http\Concerns;
 
+use App\Models\Project;
 use Illuminate\Http\Request;
 
 trait BuildsProjectsPageProps
@@ -14,18 +15,31 @@ trait BuildsProjectsPageProps
         $sort = $request->string('sort', 'date_desc')->toString();
 
         return [
-            'projects' => function () use ($request, $search, $clientId, $withTrashed, $sort) {
-                $query = $request->user()->projects()->withExists('sharer');
+            'has_trashed' => fn () => (
+                $request->user()->projects()->onlyTrashed()->exists()
+                || $request->user()->clients()->onlyTrashed()->exists()
+            ),
 
-                if ($withTrashed) {
-                    $query->withTrashed();
-                }
+            'has_active' => fn () => $request->user()->projects()->exists(),
+
+            'projects' => function () use ($request, $search, $clientId, $withTrashed, $sort) {
+                $user = $request->user();
+
+                $query = $withTrashed ?
+                    Project::withTrashed()
+                        ->with(['client' => fn ($q) => $q->withTrashed()])
+                        ->whereIn('client_id', $user->clients()->withTrashed()->pluck('id'))
+                    : $user->projects();
 
                 if ($search) {
-                    $query->where(fn ($q) => (
-                        $q->where('projects.name', 'like', "%{$search}%")
-                            ->orWhereRelation('client', 'clients.name', 'like', "%{$search}%")
-                    ));
+                    $clientsQuery = $withTrashed
+                        ? $user->clients()->withTrashed()
+                        : $user->clients();
+
+                    $query->where(fn ($q) => $q
+                        ->where('projects.name', 'like', "%{$search}%")
+                        ->orWhereIn('projects.client_id', $clientsQuery->where('name', 'like', "%{$search}%")->select('id'))
+                    );
                 }
 
                 if ($clientId) {

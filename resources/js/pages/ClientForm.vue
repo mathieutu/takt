@@ -41,6 +41,8 @@ const { modal } = defineProps<{
     client_id?: string,
     with_trashed?: boolean,
     sort?: string,
+    has_trashed?: boolean,
+    has_active?: boolean,
   },
 }>()
 

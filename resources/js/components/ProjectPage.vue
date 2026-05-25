@@ -40,6 +40,8 @@ defineProps<{
   client_id?: string,
   with_trashed?: boolean,
   sort?: string,
+  has_trashed?: boolean,
+  has_active?: boolean,
 }>()
 
 const sortOptions = [
@@ -65,23 +67,27 @@ const deleteProject = (project: Project) => confirm({
 
 const deleteClient = (client: Client) => confirm({
   title: client.deleted_at ? `Delete "${client.name}"?` : `Archive "${client.name}"?`,
-  description: client.deleted_at ? 'All data will be lost permanently.' : 'You will be able to restore it later',
+  description: client.deleted_at
+    ? 'All data will be lost permanently.'
+    : 'This will also archive all its projects. You will be able to restore them later.',
   onConfirm: () => router.visit(clientRoutes.destroy(client), { preserveScroll: true }),
 })
+const duplicateProject = (project: Project) => router.visit(projectsRoutes.store(), { data: {
+  client_id: project.client.id,
+  name: `[copy] ${project.name}`,
+  description: project.description,
+  daily_rate: project.daily_rate,
+  max_budget: project.max_budget,
+} })
 
 const projectMenuItems = (project: Project): DropdownMenuItem[][] => {
-  if (project.deleted_at) {
-    return [[
-      { label: 'Restore', icon: 'i-lucide-rotate-ccw', as: Link, href: projectsRoutes.restore(project) },
-    ], [
-      { label: 'Delete permanently', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => deleteProject(project) },
-    ]]
-  }
-
   return [[
-    { label: 'Edit', icon: 'i-lucide-pencil', as: Link, href: projectsRoutes.edit(project), only: ['modal'] },
+    project.deleted_at
+      ? { label: 'Restore', icon: 'i-lucide-rotate-ccw', href: projectsRoutes.restore(project) }
+      : { label: 'Edit', icon: 'i-lucide-pencil', href: projectsRoutes.edit(project), only: ['modal'] },
+    { label: 'Duplicate', icon: 'i-lucide-copy', href: projectsRoutes.duplicate(project) },
   ], [
-    { label: 'Archive', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => deleteProject(project) },
+    { label: project.deleted_at ? 'Delete permanently' : 'Archive', icon: 'i-lucide-trash-2', color: 'error', onSelect: () => deleteProject(project) },
   ]]
 }
 
@@ -192,14 +198,26 @@ function revokeShare() {
               { preserveState: true, replace: true },
             )"
           />
-          <UButton
-            :label="with_trashed ? 'Hide archived' : 'Show archived'"
-            :icon="with_trashed ? 'i-lucide-eye-off' : 'i-lucide-archive'"
-            :color="with_trashed ? 'error' : 'neutral'"
-            variant="outline"
-            size="sm"
-            :href="projectsRoutes.index({ mergeQuery: { with_trashed: !with_trashed } })"
-          />
+          <template v-if="has_trashed">
+            <UButton
+              v-if="!with_trashed"
+              label="Show archived"
+              icon="i-lucide-archive"
+              color="neutral"
+              variant="outline"
+              size="sm"
+              :href="projectsRoutes.index({ mergeQuery: { with_trashed: true } })"
+            />
+            <UButton
+              v-else-if="has_active"
+              label="Hide archived"
+              icon="i-lucide-eye-off"
+              color="error"
+              variant="outline"
+              size="sm"
+              :href="projectsRoutes.index({ mergeQuery: { with_trashed: null } })"
+            />
+          </template>
         </div>
 
         <p v-if="projects.length === 0" class="text-sm text-muted">
@@ -227,14 +245,15 @@ function revokeShare() {
                 </div>
               </div>
               <div class="flex shrink-0 items-center gap-1">
-                <UButton
-                  v-if="!project.deleted_at"
-                  icon="i-lucide-share-2"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  @click="openShare(project)"
-                />
+                <UTooltip v-if="!project.deleted_at" text="Share">
+                  <UButton
+                    icon="i-lucide-share-2"
+                    color="neutral"
+                    variant="ghost"
+                    size="xs"
+                    @click="openShare(project)"
+                  />
+                </UTooltip>
                 <UDropdownMenu :items="projectMenuItems(project)" class="shrink-0">
                   <UButton
                     icon="i-lucide-more-vertical"
@@ -278,18 +297,17 @@ function revokeShare() {
           <div class="mb-2 flex items-center justify-between">
             <p class="text-xs font-medium uppercase tracking-wide text-muted">Clients</p>
           </div>
-          <Link
+          <div
             v-for="client in clients"
             :key="client.id"
             class="flex items-center justify-between rounded-md px-3 py-2 transition-colors"
-            :class="[
-              client.deleted_at ? 'opacity-60' : 'cursor-pointer',
-              !client.deleted_at && client_id === client.id ? 'bg-primary/10 ring-1 ring-primary/20' : 'hover:bg-elevated',
-            ]"
-            :href="projectsRoutes.index({ mergeQuery: { client_id: client.id === client_id ? null : client.id } })"
-            :disabled="client.deleted_at"
+            :class="!client.deleted_at && client_id === client.id ? 'bg-primary/10 ring-1 ring-primary/20' : 'hover:bg-elevated'"
           >
-            <div class="flex items-center gap-2">
+            <Link
+              class="flex flex-1 min-w-0 items-center gap-2"
+              :class="client.deleted_at ? 'opacity-60 pointer-events-none' : 'cursor-pointer'"
+              :href="projectsRoutes.index({ mergeQuery: { client_id: client.id === client_id ? null : client.id } })"
+            >
               <span
                 class="text-sm"
                 :class="[
@@ -305,36 +323,42 @@ function revokeShare() {
                 <UIcon name="i-lucide-archive" class="h-3 w-3" />
                 Archived
               </span>
-            </div>
-            <div class="flex items-center gap-1" @click.stop>
+            </Link>
+            <div class="flex items-center gap-1">
               <template v-if="client.deleted_at">
-                <UButton
-                  icon="i-lucide-rotate-ccw"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  @click="router.visit(clientRoutes.restore(client))"
-                />
+                <UTooltip text="Restore">
+                  <UButton
+                    icon="i-lucide-rotate-ccw"
+                    color="neutral"
+                    variant="ghost"
+                    size="xs"
+                    @click="router.visit(clientRoutes.restore(client))"
+                  />
+                </UTooltip>
               </template>
               <template v-else>
+                <UTooltip text="Edit">
+                  <UButton
+                    :as="Link"
+                    :href="clientRoutes.edit(client)"
+                    icon="i-lucide-pencil"
+                    color="neutral"
+                    variant="ghost"
+                    size="xs"
+                  />
+                </UTooltip>
+              </template>
+              <UTooltip :text="client.deleted_at ? 'Delete permanently' : 'Archive'">
                 <UButton
-                  :href="clientRoutes.edit(client)"
-                  :only="['modal']"
-                  icon="i-lucide-pencil"
-                  color="neutral"
+                  icon="i-lucide-trash-2"
+                  color="error"
                   variant="ghost"
                   size="xs"
+                  @click="deleteClient(client)"
                 />
-              </template>
-              <UButton
-                icon="i-lucide-trash-2"
-                color="error"
-                variant="ghost"
-                size="xs"
-                @click.prevent="deleteClient(client)"
-              />
+              </UTooltip>
             </div>
-          </Link>
+          </div>
         </div>
       </div>
     </main>
