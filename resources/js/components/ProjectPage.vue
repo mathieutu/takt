@@ -148,7 +148,7 @@ function revokeShare() {
               {{ projects.length }} project{{ projects.length !== 1 ? 's' : '' }}
               <template v-if="client_id">
                 — <Link
-                  class="text-primary hover:underline"
+                  class="text-primary hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary rounded"
                   :href="projectsRoutes.index({ mergeQuery: { client_id: null } })"
                 >
                   {{ clients.find(c => c.id === client_id)?.name }}
@@ -158,7 +158,6 @@ function revokeShare() {
             </p>
           </div>
           <UButton
-            :as="Link"
             :href="projectsRoutes.create()"
             :only="['modal']"
             label="New project"
@@ -339,7 +338,6 @@ function revokeShare() {
               <template v-else>
                 <UTooltip text="Edit">
                   <UButton
-                    :as="Link"
                     :href="clientRoutes.edit(client)"
                     icon="i-lucide-pencil"
                     color="neutral"

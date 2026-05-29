@@ -22,6 +22,15 @@ export default defineConfig({
         colors: {
           primary: 'pink',
         },
+        button: {
+          compoundVariants: [
+            {
+              color: 'neutral',
+              variant: 'ghost',
+              class: 'hover:bg-accented active:bg-accented focus-visible:bg-accented',
+            },
+          ],
+        },
       },
     }),
     // wayfinder()
