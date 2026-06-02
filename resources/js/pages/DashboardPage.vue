@@ -466,7 +466,7 @@ const barChartOptions = {
         <UButton
           label="Enregistrer"
           @click="editingClient && router.put(
-            updateClient(editingClient.id).url, {
+            updateClient(editingClient).url, {
               name: editingClient.name, daily_rate: editingClient.daily_rate,
             }, { preserveScroll: true, onSuccess: () => { editClientOpen = false } })"
         />

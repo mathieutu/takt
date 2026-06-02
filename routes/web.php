@@ -5,8 +5,9 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExportsController;
 use App\Http\Controllers\ProjectController;
-use App\Http\Controllers\ProjectShareController;
-use App\Http\Controllers\SharedTimesheetController;
+use App\Http\Controllers\ReceivedShareController;
+use App\Http\Controllers\ShareController;
+use App\Http\Controllers\SharedController;
 use App\Http\Controllers\SyncProjectEntriesHandler;
 use App\Http\Controllers\TimesheetHandler;
 use App\Http\Controllers\TrackingController;
@@ -35,14 +36,15 @@ Route::middleware('auth')->group(function () {
     // Clients
     Route::resource('clients', ClientController::class)->only(['edit', 'update', 'destroy'])->withTrashed(['destroy']);
     Route::post('clients/{client}/restore', [ClientController::class, 'restore'])->name('clients.restore')->withTrashed();
+    Route::post('clients/{client}/share', [ShareController::class, 'storeClient'])->name('clients.share.store');
+    Route::delete('clients/{client}/share', [ShareController::class, 'destroyClient'])->name('clients.share.destroy');
 
     // Projects
     Route::resource('projects', ProjectController::class)->except(['show'])->withTrashed(['destroy']);
     Route::post('projects/{project}/restore', [ProjectController::class, 'restore'])->name('projects.restore')->withTrashed();
     Route::post('projects/{project}/duplicate', [ProjectController::class, 'duplicate'])->name('projects.duplicate')->withTrashed();
-
-    Route::post('projects/{project}/share', [ProjectShareController::class, 'store'])->name('projects.share.store');
-    Route::delete('projects/{project}/share', [ProjectShareController::class, 'destroy'])->name('projects.share.destroy');
+    Route::post('projects/{project}/share', [ShareController::class, 'storeProject'])->name('projects.share.store');
+    Route::delete('projects/{project}/share', [ShareController::class, 'destroyProject'])->name('projects.share.destroy');
     Route::post('projects/{project}/billing', [TrackingController::class, 'storeBilling'])->name('projects.billing.store');
     Route::put('projects/{project}/budget', [TrackingController::class, 'updateBudget'])->name('projects.budget');
 
@@ -52,6 +54,9 @@ Route::middleware('auth')->group(function () {
 
     // Billing
     Route::put('billing/{entry}', [TrackingController::class, 'updateBilling'])->name('billing.update');
+
+    // Received shares
+    Route::delete('received-shares/{receivedShare}', [ReceivedShareController::class, 'destroy'])->name('received-shares.destroy');
 
     // Pages
     Route::get('timesheet', TimesheetHandler::class)->name('timesheet');
@@ -64,4 +69,4 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-Route::get('share/{share}', SharedTimesheetController::class)->name('share.apply');
+Route::get('shares/{share}', SharedController::class)->name('shares.show');

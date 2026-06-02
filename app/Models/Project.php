@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Shareable;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read int|null $billing_entries_count
  * @property-read Client $client
  * @property-read Share|null $sharer
+ * @property-read bool $sharer_exists
  * @property-read Collection<int, TimesheetEntry> $timesheetEntries
  * @property-read int|null $timesheet_entries_count
  *
@@ -41,7 +42,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Project extends Model
 {
-    use SoftDeletes;
+    use Shareable, SoftDeletes;
 
     protected $with = ['client'];
 
@@ -66,15 +67,5 @@ class Project extends Model
     public function billingEntries(): HasMany
     {
         return $this->hasMany(BillingEntry::class);
-    }
-
-    public function sharer(): MorphOne
-    {
-        return $this->morphOne(Share::class, 'sharing', type: 'share_type', id: 'share_id');
-    }
-
-    public function share(): Share
-    {
-        return $this->sharer()->firstOrCreate([]);
     }
 }

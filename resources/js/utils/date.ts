@@ -1,14 +1,14 @@
 export type Day = { n: number, date: string, isWeekend: boolean, letter: string }
 
-const DAY_LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'] as const
+const DAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'] as const
 
 export const TODAY = new Date().toISOString().slice(0, 10)
 
 export const formatMonthName = (year: number, month: number): string => {
-  const name = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date(year, month - 1))
+  const name = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(new Date(year, month - 1))
   return name.charAt(0).toUpperCase() + name.slice(1)
 }
-export const formatDays = (days: number): string => `${days % 1 === 0 ? days : days.toFixed(1)}j`
+export const formatDays = (days: number): string => `${days % 1 === 0 ? days : days.toFixed(1)}d`
 
 export const daysInMonth = ({ year, month }: { year: number, month: number }): Day[] => {
   const count = new Date(year, month, 0).getDate()
@@ -20,7 +20,32 @@ export const daysInMonth = ({ year, month }: { year: number, month: number }): D
   })
 }
 
-export const formatDate = (date: string): string => new Date(date).toLocaleDateString('fr-FR', {
+export const formatDate = (date: string): string => new Date(date).toLocaleDateString('en-US', {
   day: 'numeric',
   month: 'short',
 })
+
+export const parseMonth = (month: string): { year: number, month: number } => {
+  const [year, m] = month.split('-').map(Number)
+  return { year: year!, month: m! }
+}
+
+export const offsetMonth = (month: string, offset: number): string => {
+  const { year, month: m } = parseMonth(month)
+  const date = new Date(year, m - 1 + offset, 1)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+}
+
+export const coverageLabel = (coverage: number): string => {
+  if (coverage >= 100) return '1'
+  if (coverage >= 80) return '⅘'
+  if (coverage >= 75) return '¾'
+  if (coverage >= 66) return '⅔'
+  if (coverage >= 60) return '⅗'
+  if (coverage >= 50) return '½'
+  if (coverage >= 40) return '⅖'
+  if (coverage >= 33) return '⅓'
+  if (coverage >= 25) return '¼'
+  if (coverage >= 20) return '⅕'
+  return '⅐'
+}

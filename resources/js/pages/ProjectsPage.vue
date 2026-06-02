@@ -7,6 +7,7 @@ type Client = {
   daily_rate: number,
   deleted_at: string | null,
   created_at: string,
+  is_shared: boolean,
 }
 
 type Project = {
@@ -21,9 +22,19 @@ type Project = {
   is_shared: boolean,
 }
 
+type ReceivedShare = {
+  id: string,
+  share_id: string,
+  type: string,
+  name: string | null,
+  client_name: string | null,
+  shared_by: string | null,
+}
+
 const props = withDefaults(defineProps<{
   projects?: Project[],
   clients?: Client[],
+  shares_received?: ReceivedShare[],
   search?: string,
   client_id?: string,
   with_trashed?: boolean,
@@ -33,6 +44,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   projects: () => [],
   clients: () => [],
+  shares_received: () => [],
   search: '',
   client_id: '',
   with_trashed: false,

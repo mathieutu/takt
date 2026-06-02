@@ -90,9 +90,51 @@ class DatabaseSeeder extends Seeder
 
     private function seedBob(): void
     {
-        User::create([
+        $d = fn (int $days): string => now()->subDays($days)->toDateString();
+
+        $alice = User::where('email', 'alice.martin@example.com')->first();
+
+        $bob = User::create([
             'name' => 'Bob Dupont',
             'email' => 'bob.dupont@example.com',
         ]);
+
+        $agence = $bob->clients()->create(['name' => 'Agence Pixel', 'daily_rate' => 70000]);
+        $conseil = $bob->clients()->create(['name' => 'Conseil Régional', 'daily_rate' => 55000]);
+
+        // Projet de Bob partagé avec Alice
+        $design = $agence->projects()->create([
+            'name' => 'Refonte identité visuelle',
+            'daily_rate' => 70000,
+            'description' => 'Nouveau logo, charte graphique et déclinaisons pour print et digital.',
+        ]);
+        $design->timesheetEntries()->createMany([
+            ['title' => 'Brief créatif',           'date' => $d(18), 'coverage' => 50],
+            ['title' => 'Proposition de concepts', 'date' => $d(11), 'coverage' => 100, 'description' => '3 pistes créatives présentées au client.'],
+            ['title' => 'Finalisation charte',     'date' => $d(4),  'coverage' => 100],
+        ]);
+        $alice->receivedShares()->create(['share_id' => $design->share()->id]);
+
+        // Client entier de Bob partagé avec Alice (2 projets)
+        $portailAgents = $conseil->projects()->create([
+            'name' => 'Portail agents',
+            'daily_rate' => 55000,
+            'description' => 'Intranet pour les agents du conseil régional.',
+        ]);
+        $portailAgents->timesheetEntries()->createMany([
+            ['title' => 'Spécifications fonctionnelles', 'date' => $d(23), 'coverage' => 50],
+            ['title' => 'Développement',                 'date' => $d(9),  'coverage' => 100],
+        ]);
+
+        $elearning = $conseil->projects()->create([
+            'name' => 'Plateforme e-learning',
+            'daily_rate' => 60000,
+        ]);
+        $elearning->timesheetEntries()->createMany([
+            ['title' => 'Architecture LMS',  'date' => $d(16), 'coverage' => 33],
+            ['title' => 'Intégration SCORM', 'date' => $d(3),  'coverage' => 50],
+        ]);
+
+        $alice->receivedShares()->create(['share_id' => $conseil->share()->id]);
     }
 }

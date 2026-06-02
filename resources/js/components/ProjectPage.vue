@@ -7,8 +7,11 @@ import { useConfirm } from '@/composables/useConfirm'
 import { formatDate } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
 import clientRoutes from '@/wayfinder/routes/clients'
+import { destroy as destroyClientShare, store as shareClientRoute } from '@/wayfinder/routes/clients/share'
+import { destroy as destroyReceivedShare } from '@/wayfinder/routes/received-shares'
 import projectsRoutes from '@/wayfinder/routes/projects'
-import { destroy as destroyShare, store as shareRoute } from '@/wayfinder/routes/projects/share'
+import { destroy as destroyProjectShare, store as shareProjectRoute } from '@/wayfinder/routes/projects/share'
+import { apply as shareApply } from '@/wayfinder/routes/share'
 
 type Client = {
   id: string,
@@ -16,6 +19,7 @@ type Client = {
   daily_rate: number,
   deleted_at: string | null,
   created_at: string,
+  is_shared: boolean,
 }
 
 type Project = {
@@ -33,9 +37,19 @@ type Project = {
   is_shared: boolean,
 }
 
+type ReceivedShare = {
+  id: string,
+  share_id: string,
+  type: string,
+  name: string | null,
+  client_name: string | null,
+  shared_by: string | null,
+}
+
 defineProps<{
   projects: Project[],
   clients: Client[],
+  shares_received: ReceivedShare[],
   search?: string,
   client_id?: string,
   with_trashed?: boolean,
@@ -51,8 +65,11 @@ const sortOptions = [
   { label: 'Rate (low)', value: 'rate_asc' },
 ]
 
-const shareProjectOpen = ref(false)
-const sharingProject = ref<Project | null>(null)
+type ShareableType = 'project' | 'client'
+
+const shareOpen = ref(false)
+const sharingType = ref<ShareableType>('project')
+const sharingItem = ref<Project | Client | null>(null)
 const shareUrl = ref('')
 const copied = ref(false)
 const shareLoading = ref(false)
@@ -72,13 +89,6 @@ const deleteClient = (client: Client) => confirm({
     : 'This will also archive all its projects. You will be able to restore them later.',
   onConfirm: () => router.visit(clientRoutes.destroy(client), { preserveScroll: true }),
 })
-const duplicateProject = (project: Project) => router.visit(projectsRoutes.store(), { data: {
-  client_id: project.client.id,
-  name: `[copy] ${project.name}`,
-  description: project.description,
-  daily_rate: project.daily_rate,
-  max_budget: project.max_budget,
-} })
 
 const projectMenuItems = (project: Project): DropdownMenuItem[][] => {
   return [[
@@ -97,13 +107,19 @@ const onSearch = useDebounceFn((value: string) => {
 
 const http = useHttp()
 
-function openShare(project: Project) {
-  sharingProject.value = project
+function openShare(type: ShareableType, item: Project | Client) {
+  sharingType.value = type
+  sharingItem.value = item
   shareUrl.value = ''
   copied.value = false
   shareLoading.value = true
-  shareProjectOpen.value = true
-  http.post(shareRoute(project.id).url, {
+  shareOpen.value = true
+
+  const route = type === 'project'
+    ? shareProjectRoute(item.id).url
+    : shareClientRoute(item.id).url
+
+  http.post(route, {
     onSuccess: (data: any) => {
       shareUrl.value = data.url
     },
@@ -125,14 +141,27 @@ function copyShareUrl() {
 }
 
 function revokeShare() {
-  if (!sharingProject.value) return
-  router.delete(destroyShare(sharingProject.value.id).url, {
+  if (!sharingItem.value) { return }
+
+  const url = sharingType.value === 'project'
+    ? destroyProjectShare(sharingItem.value.id).url
+    : destroyClientShare(sharingItem.value.id).url
+
+  router.delete(url, {
     preserveScroll: true,
+    only: ['projects', 'clients', 'shares_received'],
     onSuccess: () => {
-      shareProjectOpen.value = false
-      sharingProject.value = null
+      shareOpen.value = false
+      sharingItem.value = null
       shareUrl.value = ''
     },
+  })
+}
+
+function removeReceivedShare(receivedShare: ReceivedShare) {
+  router.delete(destroyReceivedShare(receivedShare.id).url, {
+    preserveScroll: true,
+    only: ['shares_received'],
   })
 }
 </script>
@@ -224,7 +253,7 @@ function revokeShare() {
           <template v-else>No projects yet.</template>
         </p>
 
-        <div v-if="projects.length > 0" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div v-if="projects.length > 0 || shares_received.some(s => s.type === 'projects')" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div
             v-for="project in projects"
             :key="project.id"
@@ -250,17 +279,19 @@ function revokeShare() {
                     color="neutral"
                     variant="ghost"
                     size="xs"
-                    @click="openShare(project)"
+                    @click="openShare('project', project)"
                   />
                 </UTooltip>
-                <UDropdownMenu :items="projectMenuItems(project)" class="shrink-0">
-                  <UButton
-                    icon="i-lucide-more-vertical"
-                    color="neutral"
-                    variant="ghost"
-                    size="xs"
-                  />
-                </UDropdownMenu>
+                <UTooltip text="Options">
+                  <UDropdownMenu :items="projectMenuItems(project)" class="shrink-0">
+                    <UButton
+                      icon="i-lucide-more-vertical"
+                      color="neutral"
+                      variant="ghost"
+                      size="xs"
+                    />
+                  </UDropdownMenu>
+                </UTooltip>
               </div>
             </div>
 
@@ -281,7 +312,7 @@ function revokeShare() {
                 <span
                   v-else-if="project.is_shared"
                   class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted"
-                  title="This project is shared"
+                  title="Shared with others"
                 >
                   <UIcon name="i-lucide-users" class="h-3 w-3" />
                   Shared
@@ -290,9 +321,39 @@ function revokeShare() {
               <span v-if="project.created_at" class="text-xs text-muted">{{ formatDate(project.created_at) }}</span>
             </div>
           </div>
+
+          <!-- Received project shares -->
+          <Link
+            v-for="share in shares_received.filter(s => s.type === 'projects')"
+            :key="share.id"
+            :href="shareApply.url(share.share_id)"
+            class="rounded-lg border border-default bg-elevated p-5 flex flex-col h-full justify-between opacity-75 hover:opacity-100 transition-opacity"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold">{{ share.name }}</p>
+                <p class="truncate text-xs text-muted">{{ share.client_name }}</p>
+              </div>
+              <UTooltip text="Remove">
+                <UButton
+                  icon="i-lucide-x"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  @click.prevent="removeReceivedShare(share)"
+                />
+              </UTooltip>
+            </div>
+            <div class="mt-3 flex items-center gap-2">
+              <span class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                <UIcon name="i-lucide-share-2" class="h-3 w-3" />
+                Shared by {{ share.shared_by }}
+              </span>
+            </div>
+          </Link>
         </div>
 
-        <div v-if="clients.length > 0" class="space-y-1">
+        <div v-if="clients.length > 0 || shares_received.some(s => s.type === 'clients')" class="space-y-1">
           <div class="mb-2 flex items-center justify-between">
             <p class="text-xs font-medium uppercase tracking-wide text-muted">Clients</p>
           </div>
@@ -322,6 +383,14 @@ function revokeShare() {
                 <UIcon name="i-lucide-archive" class="h-3 w-3" />
                 Archived
               </span>
+              <span
+                v-else-if="client.is_shared"
+                class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted"
+                title="Shared with others"
+              >
+                <UIcon name="i-lucide-users" class="h-3 w-3" />
+                Shared
+              </span>
             </Link>
             <div class="flex items-center gap-1">
               <template v-if="client.deleted_at">
@@ -336,6 +405,15 @@ function revokeShare() {
                 </UTooltip>
               </template>
               <template v-else>
+                <UTooltip text="Share">
+                  <UButton
+                    icon="i-lucide-share-2"
+                    color="neutral"
+                    variant="ghost"
+                    size="xs"
+                    @click="openShare('client', client)"
+                  />
+                </UTooltip>
                 <UTooltip text="Edit">
                   <UButton
                     :href="clientRoutes.edit(client)"
@@ -357,18 +435,45 @@ function revokeShare() {
               </UTooltip>
             </div>
           </div>
+
+          <!-- Received client shares -->
+          <div
+            v-for="share in shares_received.filter(s => s.type === 'clients')"
+            :key="share.id"
+            class="flex items-center justify-between rounded-md px-3 py-2 hover:bg-elevated transition-colors"
+          >
+            <Link
+              :href="shareApply.url(share.share_id)"
+              class="flex flex-1 min-w-0 items-center gap-2 cursor-pointer"
+            >
+              <span class="text-sm">{{ share.name }}</span>
+              <span class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                <UIcon name="i-lucide-share-2" class="h-3 w-3" />
+                Shared by {{ share.shared_by }}
+              </span>
+            </Link>
+            <UTooltip text="Remove">
+              <UButton
+                icon="i-lucide-x"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                @click="removeReceivedShare(share)"
+              />
+            </UTooltip>
+          </div>
         </div>
       </div>
     </main>
 
     <slot />
 
-    <UModal v-model:open="shareProjectOpen" title="Share project">
+    <UModal v-model:open="shareOpen" :title="`Share ${sharingType === 'project' ? 'project' : 'client'}`">
       <template #body>
         <div class="space-y-3">
           <p class="text-sm text-muted">
             Copy this link and send it to the person you want to share
-            <span class="font-medium text-default">{{ sharingProject?.name }}</span> with.
+            <span class="font-medium text-default">{{ sharingItem?.name }}</span> with.
           </p>
           <div class="flex gap-2">
             <UInput
@@ -382,14 +487,15 @@ function revokeShare() {
               @click="copyShareUrl"
             />
           </div>
-          <div v-if="shareUrl" class="flex justify-end border-t border-default pt-3">
-            <button
-              type="button"
-              class="text-xs text-muted underline-offset-2 hover:text-error hover:underline transition-colors"
+          <div v-if="shareUrl" class="flex justify-between items-center border-t border-default pt-3">
+            <UButton
+              label="Revoke link"
+              icon="i-lucide-link-2-off"
+              color="error"
+              variant="ghost"
+              size="sm"
               @click="revokeShare"
-            >
-              Disable this share link
-            </button>
+            />
           </div>
         </div>
       </template>

@@ -3,6 +3,7 @@
 namespace App\Http\Concerns;
 
 use App\Models\Project;
+use App\Models\ReceivedShare;
 use Illuminate\Http\Request;
 
 trait BuildsProjectsPageProps
@@ -51,7 +52,7 @@ trait BuildsProjectsPageProps
                     str_ends_with($sort, 'asc') ? 'asc' : 'desc',
                 );
 
-                return $query->get()->map->export([
+                return $query->withExists('sharer')->get()->map->export([
                     'id',
                     'name',
                     'description',
@@ -63,6 +64,7 @@ trait BuildsProjectsPageProps
                     'sharer_exists as is_shared',
                 ]);
             },
+
             'clients' => function () use ($request, $search, $withTrashed, $sort) {
                 $query = $request->user()->clients();
 
@@ -79,14 +81,41 @@ trait BuildsProjectsPageProps
                     str_ends_with($sort, 'asc') ? 'asc' : 'desc',
                 );
 
-                return $query->get()->map->export([
+                return $query->withExists('sharer')->get()->map->export([
                     'id',
                     'name',
                     'daily_rate',
                     'created_at',
                     'deleted_at',
+                    'sharer_exists as is_shared',
                 ]);
             },
+
+            'shares_received' => function () use ($request) {
+                return $request->user()->receivedShares()
+                    ->with(['share.shareable'])
+                    ->get()
+                    ->each(function (ReceivedShare $rs): void {
+                        match ($rs->share->shareable_type) {
+                            'projects' => $rs->share->shareable?->loadMissing('client.user'),
+                            'clients' => $rs->share->shareable?->loadMissing('user'),
+                            default => null,
+                        };
+                    })
+                    ->map(fn (ReceivedShare $rs) => [
+                        'id' => $rs->id,
+                        'share_id' => $rs->share->id,
+                        'type' => $rs->share->shareable_type,
+                        'name' => $rs->share->shareable?->name,
+                        'client_name' => $rs->share->shareable_type === 'projects'
+                            ? $rs->share->shareable?->client?->name
+                            : null,
+                        'shared_by' => $rs->share->shareable_type === 'projects'
+                            ? $rs->share->shareable?->client?->user?->name
+                            : $rs->share->shareable?->user?->name,
+                    ]);
+            },
+
             'search' => $search,
             'client_id' => $clientId,
             'with_trashed' => $withTrashed,

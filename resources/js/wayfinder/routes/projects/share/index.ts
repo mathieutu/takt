@@ -4,8 +4,8 @@
 import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOptions } from "./../../../index";
 
 /**
- * @see \App\Http\Controllers\ProjectShareController::store
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectShareController.php:11
+ * @see \App\Http\Controllers\ShareController::storeProject
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:13
  * @route "/projects/{project}/share"
  */
 export const store = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -19,8 +19,8 @@ store.definition = {
 } satisfies RouteDefinition<["post"]>
 
 /**
- * @see \App\Http\Controllers\ProjectShareController::store
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectShareController.php:11
+ * @see \App\Http\Controllers\ShareController::storeProject
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:13
  * @route "/projects/{project}/share"
  */
 store.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -50,8 +50,8 @@ store.url = (args: { project: string | { id: string } } | [ project: string | { 
 }
 
 /**
- * @see \App\Http\Controllers\ProjectShareController::store
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectShareController.php:11
+ * @see \App\Http\Controllers\ShareController::storeProject
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:13
  * @route "/projects/{project}/share"
  */
 store.post = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -67,8 +67,8 @@ store.post = (args: { project: string | { id: string } } | [ project: string | {
 
 
 /**
- * @see \App\Http\Controllers\ProjectShareController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectShareController.php:18
+ * @see \App\Http\Controllers\ShareController::destroyProject
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:18
  * @route "/projects/{project}/share"
  */
 export const destroy = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
@@ -82,8 +82,8 @@ destroy.definition = {
 } satisfies RouteDefinition<["delete"]>
 
 /**
- * @see \App\Http\Controllers\ProjectShareController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectShareController.php:18
+ * @see \App\Http\Controllers\ShareController::destroyProject
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:18
  * @route "/projects/{project}/share"
  */
 destroy.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -113,8 +113,8 @@ destroy.url = (args: { project: string | { id: string } } | [ project: string | 
 }
 
 /**
- * @see \App\Http\Controllers\ProjectShareController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectShareController.php:18
+ * @see \App\Http\Controllers\ShareController::destroyProject
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:18
  * @route "/projects/{project}/share"
  */
 destroy.delete = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({

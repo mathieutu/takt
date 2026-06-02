@@ -23,6 +23,8 @@ use Illuminate\Foundation\Auth\Access\Authorizable;
  * @property-read int|null $clients_count
  * @property-read Collection<int, Project> $projects
  * @property-read int|null $projects_count
+ * @property-read Collection<int, ReceivedShare> $receivedShares
+ * @property-read int|null $received_shares_count
  *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newQuery()
@@ -53,5 +55,10 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     public function projects(): HasManyThrough
     {
         return $this->hasManyThrough(Project::class, Client::class);
+    }
+
+    public function receivedShares(): HasMany
+    {
+        return $this->hasMany(ReceivedShare::class);
     }
 }

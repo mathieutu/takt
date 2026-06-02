@@ -48,11 +48,6 @@ export namespace Inertia {
          * @see [\App\Http\Controllers\ExportsController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php)
          */
         export type ExportPage = Inertia.SharedData & { allProjects: unknown, selectedProjectIds: unknown, dateStart: string, dateEnd: string, projects: [] }
-
-        /**
-         * @see [\App\Http\Controllers\SharedTimesheetController::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/SharedTimesheetController.php)
-         */
-        export type SharedTimesheetPage = Inertia.SharedData & { month: unknown, shareToken: string, projectName: unknown, clientName: unknown, projectId: unknown, entries: unknown, holidays: [] }
     }
 }
 
@@ -328,20 +323,6 @@ export namespace App {
                 }
             }
 
-            export namespace SharedTimesheetController {
-                export namespace __invoke {
-                    /**
-                     * @see [\App\Http\Controllers\SharedTimesheetController::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/SharedTimesheetController.php)
-                     */
-                    export type Response = Inertia.Pages.SharedTimesheetPage
-
-                    /**
-                     * @see [\App\Http\Controllers\SharedTimesheetController::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/SharedTimesheetController.php)
-                     */
-                    export type Request = Record<string, unknown>
-                }
-            }
-
             export namespace SyncProjectEntriesHandler {
                 export namespace __invoke {
                     /**
@@ -353,17 +334,49 @@ export namespace App {
                 }
             }
 
-            export namespace ProjectShareController {
-                export namespace Store {
+            export namespace ShareController {
+                export namespace StoreClient {
                     /**
-                     * @see [\App\Http\Controllers\ProjectShareController::store](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectShareController.php)
+                     * @see [\App\Http\Controllers\ShareController::storeClient](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
 
+                export namespace DestroyClient {
+                    /**
+                     * @see [\App\Http\Controllers\ShareController::destroyClient](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+
+                export namespace StoreProject {
+                    /**
+                     * @see [\App\Http\Controllers\ShareController::storeProject](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+
+                export namespace DestroyProject {
+                    /**
+                     * @see [\App\Http\Controllers\ShareController::destroyProject](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+            }
+
+            export namespace ReceivedShareController {
                 export namespace Destroy {
                     /**
-                     * @see [\App\Http\Controllers\ProjectShareController::destroy](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectShareController.php)
+                     * @see [\App\Http\Controllers\ReceivedShareController::destroy](/Users/mathieutu/Projects/cra/app/Http/Controllers/ReceivedShareController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+            }
+
+            export namespace SharedController {
+                export namespace __invoke {
+                    /**
+                     * @see [\App\Http\Controllers\SharedController::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/SharedController.php)
                      */
                     export type Request = Record<string, unknown>
                 }

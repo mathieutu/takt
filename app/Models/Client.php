@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Shareable;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,6 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property CarbonImmutable|null $updated_at
  * @property-read Collection<int, Project> $projects
  * @property-read int|null $projects_count
+ * @property-read Share|null $sharer
+ * @property-read bool $sharer_exists
  * @property-read User $user
  *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Client newModelQuery()
@@ -33,7 +36,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Client extends Model
 {
-    use SoftDeletes;
+    use Shareable, SoftDeletes;
 
     protected function casts(): array
     {

@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::create('shares', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->string('share_type');
-            $table->string('share_id');
-            $table->unique(['share_type', 'share_id']);
+            $table->string('shareable_type');
+            $table->string('shareable_id');
+            $table->unique(['shareable_type', 'shareable_id']);
             $table->timestamps();
         });
     }
