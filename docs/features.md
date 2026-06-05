@@ -122,22 +122,6 @@ Filtrage par client (`?client_id=X`). Pour chaque projet, un tableau croise les 
 
 ---
 
-## Exports
-
-Export des saisies d'activité filtrées par projets et période, en CSV ou XLSX.
-
-| Méthode | URI | Controller | Action |
-|---------|-----|------------|--------|
-| GET | `/dashboard/exports` | `ExportsController` | `index` |
-| GET | `/dashboard/exports/csv` | `ExportsController` | `exportCsv` |
-| GET | `/dashboard/exports/xlsx` | `ExportsController` | `exportXlsx` |
-
-**Page Vue :** `ExportPage.vue`
-
-Le CSV est encodé UTF-8 avec BOM. Le XLSX est formaté (en-têtes colorés, alternance de lignes grises) via PhpSpreadsheet. Les filtres (projets, dates) sont synchronisés dans l'URL.
-
----
-
 ## Paramètres du compte
 
 Édition du profil : email, nom/prénom (ou nom d'organisation), et changement de mot de passe optionnel.

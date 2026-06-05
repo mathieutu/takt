@@ -4,7 +4,6 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ExportsController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ShareController;
 use App\Http\Controllers\SharedController;
@@ -56,12 +55,6 @@ Route::middleware('auth')->group(function () {
 
     // Pages
     Route::get('timesheet', TimesheetHandler::class)->name('timesheet');
-
-    Route::prefix('exports')->name('exports.')->group(function () {
-        Route::get('/', [ExportsController::class, 'index'])->name('index');
-        Route::get('csv', [ExportsController::class, 'exportCsv'])->name('csv');
-        Route::get('xlsx', [ExportsController::class, 'exportXlsx'])->name('xlsx');
-    });
 });
 
 Route::get('shares/{token}', SharedController::class)->name('shares.show');

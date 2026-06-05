@@ -45,11 +45,6 @@ export namespace Inertia {
          * @see [\App\Http\Controllers\TimesheetHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php)
          */
         export type TimesheetPage = Inertia.SharedData & { current: { year: number, month: number }, urls: { nextMonth: string, prevMonth: string }, holidays: [], projects: unknown }
-
-        /**
-         * @see [\App\Http\Controllers\ExportsController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php)
-         */
-        export type ExportPage = Inertia.SharedData & { allProjects: unknown, selectedProjectIds: unknown, dateStart: string, dateEnd: string, projects: [] }
     }
 }
 
@@ -303,34 +298,6 @@ export namespace App {
 
                     /**
                      * @see [\App\Http\Controllers\TimesheetHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php)
-                     */
-                    export type Request = Record<string, unknown>
-                }
-            }
-
-            export namespace ExportsController {
-                export namespace Index {
-                    /**
-                     * @see [\App\Http\Controllers\ExportsController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php)
-                     */
-                    export type Response = Inertia.Pages.ExportPage
-
-                    /**
-                     * @see [\App\Http\Controllers\ExportsController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php)
-                     */
-                    export type Request = Record<string, unknown>
-                }
-
-                export namespace ExportCsv {
-                    /**
-                     * @see [\App\Http\Controllers\ExportsController::exportCsv](/Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php)
-                     */
-                    export type Request = Record<string, unknown>
-                }
-
-                export namespace ExportXlsx {
-                    /**
-                     * @see [\App\Http\Controllers\ExportsController::exportXlsx](/Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php)
                      */
                     export type Request = Record<string, unknown>
                 }

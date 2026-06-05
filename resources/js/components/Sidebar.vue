@@ -4,7 +4,6 @@ import type { AuthUser } from '@/types'
 import { usePage } from '@inertiajs/vue3'
 import { computed, watch } from 'vue'
 import { dashboard, login, logout, profile, timesheet } from '@/wayfinder/routes'
-import exports from '@/wayfinder/routes/exports'
 import projects from '@/wayfinder/routes/projects'
 
 const { user } = defineProps<{
@@ -22,7 +21,6 @@ const navItems = [
   { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: dashboard(), exact: true },
   { label: 'Timesheet', icon: 'i-lucide-calendar-days', to: timesheet() },
   { label: 'Projects', icon: 'i-lucide-folder-kanban', to: projects.index() },
-  { label: 'Export', icon: 'i-lucide-download', to: exports.index() },
 ] satisfies NavigationMenuItem[]
 
 const settingsItems = computed(() => [
