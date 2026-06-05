@@ -84,7 +84,7 @@ watch(() => form.client_rate, clientRate => {
 })
 
 const clientSelectItems = computed(() => [
-  ...(!modal.project ? [{ value: null, label: '+ Nouveau client' }, { type: 'separator' as const }, { type: 'label' as const, label: 'Clients existants' }] : []),
+  ...(!modal.project ? [{ value: null, label: '+ New client' }, { type: 'separator' as const }, { type: 'label' as const, label: 'Existing clients' }] : []),
   ...modal.clients.map(c => ({ value: c.id, label: c.name })),
 ])
 
@@ -96,7 +96,7 @@ const close = () => router.visit(index())
   <ProjectPage v-bind="page">
     <UModal
       :open="true"
-      :title="modal.project ? 'Modifier le projet' : 'Nouveau projet'"
+      :title="modal.project ? 'Edit Project' : 'New Project'"
       @update:open="(v: boolean) => !v && close()"
     >
       <template #body>
@@ -111,14 +111,14 @@ const close = () => router.visit(index())
 
           <template v-if="!form.client_id && !modal.project">
             <div class="rounded-md border border-default bg-muted/40 p-3 space-y-3">
-              <UFormField label="Nom du client" required :error="form.errors.client_name">
+              <UFormField label="Client Name" required :error="form.errors.client_name">
                 <UInput
                   v-model="form.client_name"
                   type="text"
                   class="w-full"
                 />
               </UFormField>
-              <UFormField label="TJM du client (€/jour)" required :error="form.errors.client_rate">
+              <UFormField label="Client Daily Rate (€/day)" required :error="form.errors.client_rate">
                 <UInput
                   type="number"
                   min="0"
@@ -131,7 +131,7 @@ const close = () => router.visit(index())
             </div>
           </template>
 
-          <UFormField label="Nom du projet" required :error="form.errors.name">
+          <UFormField label="Project Name" required :error="form.errors.name">
             <UInput
               v-model="form.name"
               type="text"
@@ -143,7 +143,7 @@ const close = () => router.visit(index())
             <UInput v-model="form.description" type="text" class="w-full" />
           </UFormField>
 
-          <UFormField label="TJM du projet (€/jour)" required :error="form.errors.daily_rate">
+          <UFormField label="Project Daily Rate (€/day)" required :error="form.errors.daily_rate">
             <UInput
               type="number"
               min="0"
@@ -154,12 +154,12 @@ const close = () => router.visit(index())
             />
           </UFormField>
 
-          <UFormField label="Budget maximum (€/mois)" :error="form.errors.max_month_budget">
+          <UFormField label="Max Budget (€/month)" :error="form.errors.max_month_budget">
             <UInput
               type="number"
               min="0"
               step="0.01"
-              placeholder="Illimité"
+              placeholder="Unlimited"
               :modelValue="form.max_month_budget && form.max_month_budget / 100"
               class="w-full"
               @update:modelValue="(val: number) => form.max_month_budget = Math.round(val * 100)"
@@ -169,11 +169,11 @@ const close = () => router.visit(index())
       </template>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <UButton :as="Link" :href="index()" label="Annuler" color="neutral" variant="outline" />
+          <UButton :as="Link" :href="index()" label="Cancel" color="neutral" variant="outline" />
           <UButton
             type="submit"
             form="project-form"
-            :label="modal.project ? 'Enregistrer' : 'Créer'"
+            :label="modal.project ? 'Save' : 'Create'"
             :loading="form.processing"
             @click="submit"
           />

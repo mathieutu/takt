@@ -75,7 +75,7 @@ const onCellClick = (projectId: string, date: string) => {
     only: ['projects'],
     preserveState: true,
     preserveScroll: true,
-    // @ts-expect-error Problème avec types inertia
+    // @ts-expect-error issue with Inertia types
     optimistic: ({ projects }: Props) => ({
       projects: projects.map(p => p.id !== projectId ? p : {
         ...p,

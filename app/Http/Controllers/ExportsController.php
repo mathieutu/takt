@@ -51,7 +51,7 @@ class ExportsController
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF"); // BOM UTF-8 for Excel
 
-            fputcsv($handle, ['Projet', 'Client', 'Date', 'Label', 'Couverture (%)', 'Taux / j (€)', 'Montant (€)', 'Commentaires'], ';');
+            fputcsv($handle, ['Project', 'Client', 'Date', 'Label', 'Coverage (%)', 'Rate / day (€)', 'Amount (€)', 'Notes'], ';');
 
             foreach ($projects as $project) {
                 $rate = $project->daily_rate ?? $project->client->daily_rate ?? 0;
@@ -90,7 +90,7 @@ class ExportsController
         $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet()->setTitle('Export');
 
-        $headers = ['Projet', 'Client', 'Date', 'Label', 'Couverture (%)', 'Taux / j (€)', 'Montant (€)', 'Commentaires'];
+        $headers = ['Project', 'Client', 'Date', 'Label', 'Coverage (%)', 'Rate / day (€)', 'Amount (€)', 'Notes'];
         $sheet->fromArray($headers, null, 'A1');
         $sheet->getStyle('A1:H1')->applyFromArray([
             'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFFFF'], 'size' => 11],

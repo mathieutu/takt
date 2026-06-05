@@ -25,14 +25,14 @@ useFlash()
 
       <UCard class="w-full max-w-sm">
         <template #header>
-          <h1 class="text-base font-semibold">Connexion</h1>
-          <p class="mt-1 text-sm text-muted">Accédez à votre espace de gestion</p>
+          <h1 class="text-base font-semibold">Sign in</h1>
+          <p class="mt-1 text-sm text-muted">Access your management space</p>
         </template>
 
         <div class="flex flex-col gap-3">
           <template v-if="users.length > 0">
             <p class="text-xs font-medium text-muted uppercase tracking-wide">
-              Connexion rapide (local)
+              Quick login (local)
             </p>
             <div class="flex flex-col gap-2">
               <Link
@@ -54,7 +54,7 @@ useFlash()
             <UButton
               as="a"
               :href="redirectUrl"
-              label="Se connecter avec GitHub"
+              label="Sign in with GitHub"
               icon="i-simple-icons-github"
               block
             />

@@ -20,7 +20,7 @@ const props = withDefaults(defineProps<{
   projects: () => [],
 })
 
-const MONTHS_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 function readUrlParams() {
   const p = new URLSearchParams(window.location.search)
@@ -50,9 +50,9 @@ const selectedProjects = computed(() =>
 
 const dropdownLabel = computed(() => {
   const n = localProjectIds.value.length
-  if (n === 0) return 'Sélectionner des projets…'
-  if (n === 1) return '1 projet sélectionné'
-  return `${n} projets sélectionnés`
+  if (n === 0) return 'Select projects…'
+  if (n === 1) return '1 project selected'
+  return `${n} projects selected`
 })
 
 function removeProject(id: number) {
@@ -104,14 +104,14 @@ const xlsxExportUrl = computed(() => `${xlsxRoute.url()}?${buildExportParams()}`
 
 const exportMenuItems = computed(() => [[
   {
-    label: 'Exporter CSV',
+    label: 'Export CSV',
     icon: 'i-lucide-download',
     onSelect: () => {
       window.location.href = exportUrl.value
     },
   },
   {
-    label: 'Exporter XLSX',
+    label: 'Export XLSX',
     icon: 'i-lucide-download',
     onSelect: () => {
       window.location.href = xlsxExportUrl.value
@@ -184,7 +184,7 @@ function clearExport() {
 
 function formatDate(dateStr: string) {
   const [y, m, d] = dateStr.split('-')
-  return `${d} ${MONTHS_FR[Number.parseInt(m) - 1].slice(0, 3)}. ${y}`
+  return `${d} ${MONTHS[Number.parseInt(m) - 1].slice(0, 3)}. ${y}`
 }
 
 function coverageLabel(v: number) {
@@ -199,20 +199,20 @@ function coverageLabel(v: number) {
     <div class="mx-auto max-w-5xl space-y-6">
       <div>
         <h1 class="text-lg font-semibold">Exports</h1>
-        <p class="text-sm text-muted">Prévisualisez et exportez vos activités</p>
+        <p class="text-sm text-muted">Preview and export your activities</p>
       </div>
 
       <UCard>
         <div class="space-y-3">
           <div class="flex flex-wrap items-end gap-3">
             <div class="flex flex-col gap-1.5 min-w-65">
-              <label class="text-xs font-medium text-muted">Projets</label>
+              <label class="text-xs font-medium text-muted">Projects</label>
               <USelectMenu
                 v-model="localProjectIds"
                 :items="projectOptions"
                 valueKey="value"
                 multiple
-                placeholder="Sélectionner des projets…"
+                placeholder="Select projects…"
                 class="min-w-65"
               >
                 <template #default>
@@ -225,12 +225,12 @@ function coverageLabel(v: number) {
 
             <div class="flex items-end gap-2">
               <div class="flex flex-col gap-1.5">
-                <label class="text-xs font-medium text-muted">Du</label>
+                <label class="text-xs font-medium text-muted">From</label>
                 <UInput v-model="localDateStart" type="date" />
               </div>
               <span class="pb-2 text-muted">—</span>
               <div class="flex flex-col gap-1.5">
-                <label class="text-xs font-medium text-muted">Au</label>
+                <label class="text-xs font-medium text-muted">To</label>
                 <UInput v-model="localDateEnd" type="date" />
               </div>
             </div>
@@ -238,7 +238,7 @@ function coverageLabel(v: number) {
             <UButton
               v-if="hasLoaded || localProjectIds.length > 0 || localDateStart || localDateEnd"
               icon="i-lucide-rotate-ccw"
-              label="Réinitialiser"
+              label="Reset"
               color="neutral"
               variant="outline"
               :disabled="loading"
@@ -262,11 +262,11 @@ function coverageLabel(v: number) {
       </UCard>
 
       <p v-if="!hasLoaded && localProjectIds.length === 0" class="text-sm text-muted">
-        Sélectionnez un ou plusieurs projets pour charger les activités.
+        Select one or more projects to load activities.
       </p>
 
       <p v-else-if="hasLoaded && allEntries.length === 0" class="text-sm text-muted">
-        Aucune activité pour les filtres sélectionnés.
+        No activity for the selected filters.
       </p>
 
       <div v-else-if="hasLoaded" class="space-y-3">
@@ -275,11 +275,11 @@ function coverageLabel(v: number) {
             <thead>
               <tr class="border-b border-default bg-muted/40">
                 <th class="px-4 py-2.5 text-left text-xs font-medium text-muted">Date</th>
-                <th class="px-4 py-2.5 text-left text-xs font-medium text-muted">Projet</th>
+                <th class="px-4 py-2.5 text-left text-xs font-medium text-muted">Project</th>
                 <th class="px-4 py-2.5 text-left text-xs font-medium text-muted">Client</th>
-                <th class="px-4 py-2.5 text-left text-xs font-medium text-muted">Intitulé</th>
-                <th class="px-4 py-2.5 text-right text-xs font-medium text-muted">Durée</th>
-                <th class="px-4 py-2.5 text-right text-xs font-medium text-muted">Montant</th>
+                <th class="px-4 py-2.5 text-left text-xs font-medium text-muted">Title</th>
+                <th class="px-4 py-2.5 text-right text-xs font-medium text-muted">Duration</th>
+                <th class="px-4 py-2.5 text-right text-xs font-medium text-muted">Amount</th>
               </tr>
             </thead>
             <tbody>
@@ -295,7 +295,7 @@ function coverageLabel(v: number) {
                 <td class="px-4 py-2.5 text-right font-medium">{{ coverageLabel(entry.coverage) }}</td>
                 <td class="px-4 py-2.5 text-right">
                   {{
-                    entry.daily_rate > 0 ? `${((entry.coverage / 100) * entry.daily_rate).toLocaleString('fr-FR', {
+                    entry.daily_rate > 0 ? `${((entry.coverage / 100) * entry.daily_rate).toLocaleString('en-US', {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
                     })} €` : '—'
@@ -311,7 +311,7 @@ function coverageLabel(v: number) {
                 </td>
                 <td class="px-4 py-2.5 text-right text-sm font-semibold">
                   {{
-                    totalCA > 0 ? `${totalCA.toLocaleString('fr-FR', {
+                    totalCA > 0 ? `${totalCA.toLocaleString('en-US', {
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
                     })} €` : '—'
@@ -327,7 +327,7 @@ function coverageLabel(v: number) {
             <UButton
               as="a"
               :href="exportUrl"
-              label="Exporter CSV"
+              label="Export CSV"
               icon="i-lucide-download"
             />
             <UDropdownMenu :items="exportMenuItems" :content="{ align: 'end', side: 'top' }">

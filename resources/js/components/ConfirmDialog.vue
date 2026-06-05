@@ -27,8 +27,8 @@ const emits = defineEmits<{
       </div>
     </template>
     <template #footer>
-      <UButton label="Annuler" color="neutral" variant="outline" @click="emits('close', false)" />
-      <UButton label="Confirmer" color="error" @click="emits('close', true)" />
+      <UButton label="Cancel" color="neutral" variant="outline" @click="emits('close', false)" />
+      <UButton label="Confirm" color="error" @click="emits('close', true)" />
     </template>
   </UModal>
 </template>

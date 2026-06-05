@@ -19,14 +19,14 @@ const emit = defineEmits<{
 const page = usePage()
 
 const navItems = [
-  { label: 'Tableau de bord', icon: 'i-lucide-layout-dashboard', to: dashboard(), exact: true },
-  { label: 'Saisie CRA', icon: 'i-lucide-calendar-days', to: timesheet() },
-  { label: 'Projets', icon: 'i-lucide-folder-kanban', to: projects.index() },
+  { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: dashboard(), exact: true },
+  { label: 'Timesheet', icon: 'i-lucide-calendar-days', to: timesheet() },
+  { label: 'Projects', icon: 'i-lucide-folder-kanban', to: projects.index() },
   { label: 'Export', icon: 'i-lucide-download', to: exports.index() },
 ] satisfies NavigationMenuItem[]
 
 const settingsItems = computed(() => [
-  { label: 'Paramètres', icon: 'i-lucide-settings', to: profile() },
+  { label: 'Settings', icon: 'i-lucide-settings', to: profile() },
   user
     ? { label: 'Log out', icon: 'i-lucide-log-out', to: logout() }
     : { label: 'Login', icon: 'i-lucide-log-in', to: login() },
@@ -36,7 +36,7 @@ watch(() => page.url, () => emit('update:open', false))
 </script>
 
 <template>
-  <!-- Desktop sidebar (icônes uniquement + tooltips) -->
+  <!-- Desktop sidebar (icons only + tooltips) -->
   <aside
     class="hidden md:flex fixed left-0 top-14 z-40 h-[calc(100vh-3.5rem)] w-14 flex-col border-r border-default bg-elevated py-2"
   >
@@ -86,7 +86,7 @@ watch(() => page.url, () => emit('update:open', false))
           :items="settingsItems"
         />
         <UButton
-          label="Se déconnecter"
+          label="Log out"
           icon="i-lucide-log-out"
           color="error"
           variant="ghost"

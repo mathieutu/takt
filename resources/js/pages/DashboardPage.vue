@@ -27,7 +27,7 @@ const now = new Date()
 const currentYear = now.getFullYear()
 const currentMonth = now.getMonth() + 1
 
-const MONTHS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 const AVATAR_COLORS = [
   'bg-blue-100 text-blue-700',
@@ -143,14 +143,14 @@ const barChartData = computed(() => {
       m += 12
       y -= 1
     }
-    labels.push(MONTHS_FR[m - 1])
+    labels.push(MONTHS[m - 1])
     data.push(sumDays(entriesForMonth(y, m)))
     colors.push(m === currentMonth && y === currentYear ? 'var(--ui-primary)' : 'var(--ui-border)')
   }
   return {
     labels,
     datasets: [{
-      label: 'Jours facturés',
+      label: 'Billable days',
       data,
       backgroundColor: colors,
       borderRadius: 4,
@@ -178,67 +178,67 @@ const barChartOptions = {
     <main class="flex-1 px-6 py-8">
       <div class="mx-auto max-w-5xl space-y-6">
         <div>
-          <h1 class="text-lg font-semibold">Tableau de bord</h1>
-          <p class="text-sm text-muted">Vue d'ensemble de votre activité</p>
+          <h1 class="text-lg font-semibold">Dashboard</h1>
+          <p class="text-sm text-muted">Overview of your activity</p>
         </div>
 
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
-                <p class="text-sm font-semibold">Jours ce mois</p>
+                <p class="text-sm font-semibold">Days this month</p>
                 <UIcon name="i-lucide-calendar" class="text-muted" />
               </div>
             </template>
             <p class="text-2xl font-bold">{{ formatDays(monthDays) }}</p>
-            <p class="mt-1 text-xs text-muted">sur {{ workingDays }} jours ouvrés</p>
+            <p class="mt-1 text-xs text-muted">out of {{ workingDays }} working days</p>
             <div class="mt-2 h-1.5 w-full rounded-full bg-muted">
               <div
                 class="h-1.5 rounded-full bg-primary transition-all"
                 :style="{ width: `${Math.min(fillRate, 100)}%` }"
               />
             </div>
-            <p class="mt-1 text-xs text-muted">{{ fillRate }}% rempli</p>
+            <p class="mt-1 text-xs text-muted">{{ fillRate }}% filled</p>
           </UCard>
 
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
-                <p class="text-sm font-semibold">CA ce mois</p>
+                <p class="text-sm font-semibold">Revenue this month</p>
                 <UIcon name="i-lucide-trending-up" class="text-muted" />
               </div>
             </template>
             <p class="text-2xl font-bold">{{ formatCurrency(monthRevenue) }}</p>
-            <p class="mt-1 text-xs text-muted">{{ formatDays(monthDays) }} facturés</p>
+            <p class="mt-1 text-xs text-muted">{{ formatDays(monthDays) }} billed</p>
           </UCard>
 
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
-                <p class="text-sm font-semibold">Clients actifs</p>
+                <p class="text-sm font-semibold">Active clients</p>
                 <UIcon name="i-lucide-users" class="text-muted" />
               </div>
             </template>
             <p class="text-2xl font-bold">{{ activeClients.length }}</p>
-            <p class="mt-1 text-xs text-muted">{{ clients.length }} clients total</p>
+            <p class="mt-1 text-xs text-muted">{{ clients.length }} total clients</p>
           </UCard>
 
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
-                <p class="text-sm font-semibold">CA {{ currentYear }}</p>
+                <p class="text-sm font-semibold">Revenue {{ currentYear }}</p>
                 <UIcon name="i-lucide-folder-kanban" class="text-muted" />
               </div>
             </template>
             <p class="text-2xl font-bold">{{ formatCurrency(yearRevenue) }}</p>
-            <p class="mt-1 text-xs text-muted">{{ formatDays(sumDays(yearEntries)) }} facturés</p>
+            <p class="mt-1 text-xs text-muted">{{ formatDays(sumDays(yearEntries)) }} billed</p>
           </UCard>
         </div>
 
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <UCard class="lg:col-span-2">
             <template #header>
-              <p class="text-sm font-semibold">Activité sur 12 mois</p>
+              <p class="text-sm font-semibold">Activity over 12 months</p>
             </template>
             <div class="h-52">
               <Bar :data="barChartData" :options="barChartOptions" />
@@ -247,7 +247,7 @@ const barChartOptions = {
 
           <UCard>
             <template #header>
-              <p class="text-sm font-semibold">Dernières saisies</p>
+              <p class="text-sm font-semibold">Recent entries</p>
             </template>
             <ul class="space-y-2">
               <li
@@ -267,7 +267,7 @@ const barChartOptions = {
                 </div>
               </li>
               <li v-if="recentEntries.length === 0" class="text-sm text-muted">
-                Aucune saisie
+                No entries
               </li>
             </ul>
           </UCard>
@@ -276,7 +276,7 @@ const barChartOptions = {
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <UCard>
             <template #header>
-              <p class="text-sm font-semibold">Clients actifs</p>
+              <p class="text-sm font-semibold">Active clients</p>
             </template>
             <ul class="space-y-3">
               <li
@@ -295,14 +295,14 @@ const barChartOptions = {
                 </div>
               </li>
               <li v-if="activeClients.length === 0" class="text-sm text-muted">
-                Aucun client actif
+                No active clients
               </li>
             </ul>
           </UCard>
 
           <UCard>
             <template #header>
-              <p class="text-sm font-semibold">Projets en cours</p>
+              <p class="text-sm font-semibold">Active projects</p>
             </template>
             <ul class="space-y-3">
               <li
@@ -314,11 +314,11 @@ const barChartOptions = {
                   <p class="text-xs text-muted">{{ project.client?.name ?? '—' }}</p>
                 </div>
                 <div class="flex shrink-0 items-center gap-1">
-                  <UBadge color="neutral" variant="subtle">Actif</UBadge>
+                  <UBadge color="neutral" variant="subtle">Active</UBadge>
                 </div>
               </li>
               <li v-if="activeProjects.length === 0" class="text-sm text-muted">
-                Aucun projet actif
+                No active projects
               </li>
             </ul>
           </UCard>
