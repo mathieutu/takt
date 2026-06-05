@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import type { PageProps as GlobalPageProps } from '@/types'
-import { Form, router, usePage } from '@inertiajs/vue3'
+import { Form, router } from '@inertiajs/vue3'
 import { computed, nextTick, ref, watch } from 'vue'
 import TimesheetGrid from '@/components/TimesheetGrid.vue'
 import {
@@ -10,7 +9,6 @@ import {
   TODAY,
 } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
-import { login } from '@/wayfinder/routes'
 import { sync as syncEntries } from '@/wayfinder/routes/projects/entries'
 
 type EntryData = { coverage: number, title: string, description: string }
@@ -20,21 +18,17 @@ type Project = {
   client: { name: string },
   daily_rate: number,
   entries: Record<string, EntryData>,
+  deleted_at?: string | null,
 }
-type ActiveEntry = { projectId: string, date: string } & EntryData
+type ActiveEntry = { projectId: string, date: string, isArchived: boolean } & EntryData
 
 type Props = {
   current: { year: number, month: number },
   urls: { nextMonth: string, prevMonth: string },
   projects: Project[],
   holidays: Record<string, string>,
-  shared_by?: string,
-  back_url?: string,
 }
 const props = defineProps<Props>()
-
-const page = usePage<GlobalPageProps>()
-const isAuthenticated = computed(() => !!page.props.auth?.user)
 
 const holidays = computed(() => new Map(Object.entries(props.holidays)))
 
@@ -72,10 +66,6 @@ const totalDays = computed(() => projectsWithStats.value.reduce((sum, { days }) 
 const totalRevenue = computed(() => projectsWithStats.value.reduce((sum, { revenue }) => sum + revenue, 0))
 
 const onCellClick = (projectId: string, date: string) => {
-  if (props.shared_by) {
-    return
-  }
-
   const project = props.projects.find(p => p.id === projectId)!
   const existing = project.entries[date] ?? null
   const newCoverage = !existing || existing.coverage === 0 ? 100 : existing.coverage > 50 ? 50 : 0
@@ -104,10 +94,7 @@ const onCellClick = (projectId: string, date: string) => {
 
 const openEntry = (projectId: string, date: string) => {
   const project = props.projects.find(p => p.id === projectId)!
-  if (!project.entries[date]) {
-    return
-  }
-  activeEntry.value = { projectId, date, ...project.entries[date]! }
+  activeEntry.value = { projectId, date, isArchived: !!project.deleted_at, ...project.entries[date]! }
 }
 
 function entryDateLabel(date: string): string {
@@ -118,76 +105,57 @@ function entryDateLabel(date: string): string {
 
 <template>
   <div class="flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden bg-default">
-    <div
-      v-if="shared_by && !isAuthenticated"
-      class="shrink-0 flex items-center justify-between gap-4 border-b border-primary/20 bg-primary/5 px-4 py-2.5"
-    >
-      <p class="text-sm text-muted">
-        Shared by <span class="font-medium text-default">{{ shared_by }}</span>
-        — <a :href="login().url" class="font-medium text-primary hover:underline">Sign in</a> or
-        <a :href="login().url" class="font-medium text-primary hover:underline">create an account</a>
-        to save these projects and track your own activity.
-      </p>
-    </div>
+    <main class="flex flex-1 flex-col overflow-hidden px-3 py-4 md:px-6 md:py-6">
+      <div class="mb-4 shrink-0 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <h2 class="text-sm font-semibold text-default">Activity report</h2>
+          <span class="text-xs text-muted">
+            {{ formatDays(totalDays) }} ({{ formatCurrency(totalRevenue) }})
+          </span>
+        </div>
+        <div class="flex shrink-0 items-center gap-2">
+          <UTooltip text="Previous month">
+            <UButton :to="urls.prevMonth" icon="i-lucide-chevron-left" color="neutral" variant="ghost" size="xs" />
+          </UTooltip>
+          <span class="min-w-35 text-center text-sm font-medium text-default">
+            {{ formatMonthName(current.year, current.month) }} {{ current.year }}
+          </span>
+          <UTooltip text="Next month">
+            <UButton :to="urls.nextMonth" icon="i-lucide-chevron-right" color="neutral" variant="ghost" size="xs" />
+          </UTooltip>
+        </div>
+      </div>
 
-    <div class="flex flex-1 overflow-hidden">
-      <main class="flex flex-1 flex-col overflow-hidden px-3 py-4 md:px-6 md:py-6">
-        <div class="mb-4 shrink-0 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <UTooltip v-if="back_url" text="Back to client">
-              <UButton :href="back_url" icon="i-lucide-chevron-left" color="neutral" variant="ghost" size="xs" />
-            </UTooltip>
-            <h2 class="text-sm font-semibold text-default">Activity report</h2>
-            <span class="text-xs text-muted">
-              {{ formatDays(totalDays) }} ({{ formatCurrency(totalRevenue) }})
-              <template v-if="shared_by"> · Shared by {{ shared_by }}</template>
-            </span>
-          </div>
-          <div class="flex shrink-0 items-center gap-2">
-            <UTooltip text="Previous month">
-              <UButton :to="urls.prevMonth" icon="i-lucide-chevron-left" color="neutral" variant="ghost" size="xs" />
-            </UTooltip>
-            <span class="min-w-35 text-center text-sm font-medium text-default">
-              {{ formatMonthName(current.year, current.month) }} {{ current.year }}
-            </span>
-            <UTooltip text="Next month">
-              <UButton :to="urls.nextMonth" icon="i-lucide-chevron-right" color="neutral" variant="ghost" size="xs" />
-            </UTooltip>
+      <div class="flex-1 min-h-0">
+        <div ref="tableScrollRef" class="overflow-auto max-h-full">
+          <TimesheetGrid
+            :days="days"
+            :holidays="holidays"
+            :projects="projectsWithStats"
+            @cellClick="onCellClick"
+            @actionClick="openEntry"
+          />
+        </div>
+      </div>
+
+      <div class="mt-auto shrink-0">
+        <div class="pt-3 hidden items-center gap-5 sm:flex">
+          <div class="flex items-center gap-1.5">
+            <span class="h-3 w-3 rounded-sm border border-default bg-elevated" />
+            <span class="text-xs text-muted">Weekends and holidays</span>
           </div>
         </div>
-
-        <div class="flex-1 min-h-0">
-          <div ref="tableScrollRef" class="overflow-auto rounded-md border border-default max-h-full">
-            <TimesheetGrid
-              :days="days"
-              :holidays="holidays"
-              :projects="projectsWithStats"
-              :readonly="!!shared_by"
-              @cellClick="onCellClick"
-              @actionClick="openEntry"
-            />
-          </div>
+        <div class="pt-2 flex items-center justify-between border-t border-default md:hidden">
+          <span class="text-sm text-muted">{{ formatDays(totalDays) }} logged</span>
+          <span class="text-sm font-semibold text-default">{{ formatCurrency(totalRevenue) }}</span>
         </div>
-
-        <div class="mt-auto shrink-0">
-          <div class="pt-3 hidden items-center gap-5 sm:flex">
-            <div class="flex items-center gap-1.5">
-              <span class="h-3 w-3 rounded-sm border border-default bg-elevated" />
-              <span class="text-xs text-muted">Weekends and holidays</span>
-            </div>
-          </div>
-          <div class="pt-2 flex items-center justify-between border-t border-default md:hidden">
-            <span class="text-sm text-muted">{{ formatDays(totalDays) }} logged</span>
-            <span class="text-sm font-semibold text-default">{{ formatCurrency(totalRevenue) }}</span>
-          </div>
-        </div>
-      </main>
-    </div>
+      </div>
+    </main>
   </div>
 
   <UModal v-model:open="activeEntry" :title="activeEntry ? entryDateLabel(activeEntry.date) : ''">
     <template #body>
-      <template v-if="shared_by">
+      <template v-if="activeEntry?.isArchived">
         <div class="space-y-4">
           <div v-if="activeEntry?.title" class="flex flex-col gap-1">
             <p class="text-xs font-medium text-muted">Title</p>
@@ -253,7 +221,7 @@ function entryDateLabel(date: string): string {
     </template>
     <template #footer="{ close }">
       <div class="flex justify-end gap-2">
-        <UButton v-if="shared_by" label="Close" color="neutral" variant="outline" @click="close" />
+        <UButton v-if="activeEntry?.isArchived" label="Close" color="neutral" variant="outline" @click="close" />
         <template v-else>
           <UButton label="Cancel" color="neutral" variant="outline" @click="close" />
           <UButton type="submit" form="entry-form" label="Save" />

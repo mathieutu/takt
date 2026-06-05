@@ -16,6 +16,9 @@ class TimesheetHandler
     {
         $date = $request->date('month', 'Y-m') ?? now()->startOfMonth();
         $projects = $request->user()->projects()
+            ->withTrashed()
+            ->where('projects.created_at', '<=', $date->endOfMonth())
+            ->where(fn ($q) => $q->whereNull('projects.deleted_at')->orWhere('projects.deleted_at', '>=', $date->startOfMonth()))
             ->with(['timesheetEntries' => fn (HasMany $query) => $query->whereMonth('date', $date)])
             ->get();
 
@@ -31,6 +34,7 @@ class TimesheetHandler
                 'name',
                 'client' => ['name'],
                 'daily_rate',
+                'deleted_at',
             ])->merge([
                 'entries' => $p->timesheetEntries
                     ->keyBy(fn (TimesheetEntry $e) => $e->date->toDateString())

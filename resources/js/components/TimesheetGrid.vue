@@ -14,19 +14,57 @@ export type GridProject = {
   entries: Record<string, EntryData>,
   days?: number,
   revenue?: number,
+  deleted_at?: string | null,
 }
 
-defineProps<{
+const { holidays } = defineProps<{
   days: Day[],
   holidays: Map<string, string>,
   projects: GridProject[],
-  readonly?: boolean,
 }>()
 
 const emit = defineEmits<{
   cellClick: [projectId: string, date: string],
   actionClick: [projectId: string, date: string],
 }>()
+
+function getCellClasses(project: GridProject, day: Day): string[] {
+  const coverage = project.entries[day.date]?.coverage ?? 0
+  const isDeleted = !!project.deleted_at
+  const isHolidayOrWeekend = holidays.has(day.date) || day.isWeekend
+  const isToday = day.date === TODAY
+  const classes = []
+
+  // Cursor
+  classes.push(isDeleted ? 'cursor-disabled' : 'cursor-pointer')
+
+  if (isToday) {
+    classes.push('border-primary/50')
+  }
+
+  if (isDeleted) {
+    classes.push('pointer-events-none')
+  }
+
+  // Background
+  if (coverage >= 100) {
+    return [...classes, 'bg-primary/25 hover:bg-primary/30']
+  }
+
+  if (coverage > 0 && coverage < 100) {
+    return [...classes, 'bg-primary/10 hover:bg-primary/15']
+  }
+
+  if (isHolidayOrWeekend) {
+    classes.push('bg-elevated')
+  }
+
+  if (coverage === 0) {
+    classes.push('hover:bg-elevated/60')
+  }
+
+  return classes
+}
 </script>
 
 <template>
@@ -37,17 +75,18 @@ const emit = defineEmits<{
     </colgroup>
     <thead>
       <tr>
-        <th class="sticky left-0 top-0 z-30 border-b border-r border-default bg-default px-3 py-2 text-left text-xs font-medium text-muted">
+        <th class="sticky left-0 top-0 z-30 border border-default bg-default px-3 py-2 text-left text-xs font-medium text-muted">
           Project
         </th>
         <th
-          v-for="day in days"
+          v-for="(day, index) in days"
           :id="`day-col-${day.date}`"
           :key="day.n"
-          class="sticky top-0 z-10 border-b border-r border-default px-0 py-1.5 text-center"
+          class="sticky top-0 z-10 border-b border-r border-t border-default px-0 py-1.5 text-center"
           :class="[
             holidays.has(day.date) || day.isWeekend ? 'bg-elevated' : 'bg-default',
-            day.date === TODAY ? 'bg-primary/15!' : '',
+            day.date === TODAY ? 'border-primary/50' : '',
+            days[index + 1]?.date === TODAY ? 'border-r-primary/50' : '',
           ]"
           :title="holidays.get(day.date)"
         >
@@ -67,15 +106,16 @@ const emit = defineEmits<{
         </td>
       </tr>
       <tr v-for="project in projects" :key="project.id" class="group/row">
-        <td class="sticky left-0 z-10 border-b border-r border-default bg-default px-3 py-2">
+        <td class="sticky left-0 z-10 border-b border-r border-l border-default bg-default px-3 py-2">
           <div class="flex items-center gap-1 min-w-0">
-            <div class="truncate text-sm font-medium text-default flex-1">{{ project.name }}</div>
+            <UTooltip v-if="project.deleted_at" text="Archived">
+              <UIcon name="i-lucide-archive" class="w-3.5 h-3.5 shrink-0 text-muted" />
+            </UTooltip>
+            <div class="truncate text-sm font-medium flex-1" :class="project.deleted_at ? 'text-muted' : 'text-default'">{{ project.name }}</div>
             <Link
-              v-if="!readonly"
-              :href="billingShow(project).url"
+              :href="billingShow(project)"
               class="shrink-0 text-muted hover:text-default transition-colors"
               title="Billing"
-              @click.stop
             >
               <UIcon name="i-lucide-receipt-text" class="w-3.5 h-3.5" />
             </Link>
@@ -89,21 +129,11 @@ const emit = defineEmits<{
           </div>
         </td>
         <td
-          v-for="day in days"
+          v-for="(day, index) in days"
           :key="day.date"
           class="group/cell h-13 relative border-b border-r border-default transition-colors select-none overflow-hidden"
-          :class="{
-            'cursor-pointer': !readonly,
-            'cursor-default': readonly,
-            'bg-elevated': !(project.entries[day.date]?.coverage) && (holidays.has(day.date) || day.isWeekend),
-            'bg-primary/25': (project.entries[day.date]?.coverage ?? 0) >= 100,
-            'hover:bg-primary/30': (project.entries[day.date]?.coverage ?? 0) >= 100 && !readonly,
-            'bg-primary/10': (project.entries[day.date]?.coverage ?? 0) > 0 && (project.entries[day.date]?.coverage ?? 0) < 100,
-            'hover:bg-primary/15': (project.entries[day.date]?.coverage ?? 0) > 0 && (project.entries[day.date]?.coverage ?? 0) < 100 && !readonly,
-            'hover:bg-elevated/60': !(project.entries[day.date]?.coverage) && !readonly,
-            'ring-1 ring-inset ring-primary/50': day.date === TODAY && !(project.entries[day.date]?.coverage),
-          }"
-          @click="!readonly ? emit('cellClick', project.id, day.date) : undefined"
+          :class="[getCellClasses(project, day), days[index + 1]?.date === TODAY ? 'border-r-primary/50' : '']"
+          @click="!project.deleted_at ? emit('cellClick', project.id, day.date) : undefined"
         >
           <span
             v-if="project.entries[day.date]?.coverage"
@@ -116,15 +146,15 @@ const emit = defineEmits<{
             class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary/70 transition-opacity group-hover/cell:opacity-0"
           />
           <UTooltip
-            v-if="!readonly || (project.entries[day.date]?.title || project.entries[day.date]?.description)"
-            :text="readonly ? 'View details' : 'Edit entry'"
+            v-if="!project.deleted_at || (project.entries[day.date]?.title || project.entries[day.date]?.description)"
+            :text="project.deleted_at ? 'View details' : 'Edit entry'"
           >
             <button
               type="button"
               class="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded opacity-0 transition-opacity hover:bg-primary/25 group-hover/cell:opacity-100"
               @click.stop="emit('actionClick', project.id, day.date)"
             >
-              <UIcon :name="readonly ? 'i-lucide-eye' : 'i-lucide-pencil'" class="h-3 w-3 text-primary" />
+              <UIcon :name="project.deleted_at ? 'i-lucide-eye' : 'i-lucide-pencil'" class="h-3 w-3 text-primary" />
             </button>
           </UTooltip>
         </td>
