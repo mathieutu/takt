@@ -205,12 +205,16 @@ const dayLabel = (date: string): string => {
               <p class="text-xs text-muted truncate">{{ project.client.name }}</p>
             </div>
             <div class="shrink-0 flex items-end flex-col gap-3">
-              <div class="flex items-center gap-4 text-sm text-muted">
+              <div class="flex items-center gap-1 text-sm text-muted">
                 <span>{{ formatCurrency(project.daily_rate) }}/day</span>
-                <span v-if="project.max_month_budget">
-                  {{ formatCurrency(project.max_month_budget) }}/mo
-                  ({{ formatDays(project.max_month_budget / project.daily_rate) }}) max
-                </span>
+                <template v-if="project.max_month_budget">
+                  <span>•</span>
+                  <span>
+                    max
+                    {{ formatCurrency(project.max_month_budget) }}/mo
+                    ({{ formatDays(project.max_month_budget / project.daily_rate) }})
+                  </span>
+                </template>
               </div>
               <UButton
                 v-if="!is_shared"
