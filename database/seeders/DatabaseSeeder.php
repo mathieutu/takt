@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -25,8 +26,8 @@ class DatabaseSeeder extends Seeder
             'email' => 'alice.martin@example.com',
         ]);
 
-        $mairie = $alice->clients()->create(['name' => 'Mairie de Lyon', 'daily_rate' => 60000]);
-        $innotech = $alice->clients()->create(['name' => 'Startup InnoTech', 'daily_rate' => 75000]);
+        $mairie = $alice->clients()->create(['name' => 'Mairie de Lyon', 'daily_rate' => 60000, 'share_token' => (string) Str::uuid()]);
+        $innotech = $alice->clients()->create(['name' => 'Startup InnoTech', 'daily_rate' => 75000, 'share_token' => (string) Str::uuid()]);
         $cabinet = $alice->clients()->create(['name' => 'Cabinet Lefebvre & Co', 'daily_rate' => 50000]);
 
         $portail = $mairie->projects()->create([
@@ -49,8 +50,6 @@ class DatabaseSeeder extends Seeder
             ['amount' => 65000, 'paid_at' => null, 'notes' => 'Facture n°2024-02 — en attente'],
         ]);
 
-        $portail->share();
-
         $audit = $mairie->projects()->create([
             'name' => 'Audit accessibilité numérique',
             'daily_rate' => 60000,
@@ -72,8 +71,6 @@ class DatabaseSeeder extends Seeder
             ['title' => 'Sprint 2 - Dashboard',        'date' => $d(13), 'coverage' => 100, 'description' => 'Inclusion des graphiques et filtres.'],
             ['title' => 'Sprint 3 - Messagerie',       'date' => $d(5),  'coverage' => 100],
         ]);
-
-        $mvp->share();
 
         $api = $innotech->projects()->create([
             'name' => 'Intégration API partenaires',
@@ -99,8 +96,6 @@ class DatabaseSeeder extends Seeder
     {
         $d = fn (int $days): string => now()->subDays($days)->toDateString();
 
-        $alice = User::where('email', 'alice.martin@example.com')->first();
-
         $bob = User::create([
             'name' => 'Bob Dupont',
             'email' => 'bob.dupont@example.com',
@@ -109,7 +104,6 @@ class DatabaseSeeder extends Seeder
         $agence = $bob->clients()->create(['name' => 'Agence Pixel', 'daily_rate' => 70000]);
         $conseil = $bob->clients()->create(['name' => 'Conseil Régional', 'daily_rate' => 55000]);
 
-        // Projet de Bob partagé avec Alice
         $design = $agence->projects()->create([
             'name' => 'Refonte identité visuelle',
             'daily_rate' => 70000,
@@ -120,9 +114,7 @@ class DatabaseSeeder extends Seeder
             ['title' => 'Proposition de concepts', 'date' => $d(11), 'coverage' => 100, 'description' => '3 pistes créatives présentées au client.'],
             ['title' => 'Finalisation charte',     'date' => $d(4),  'coverage' => 100],
         ]);
-        $alice->receivedShares()->create(['share_id' => $design->share()->id]);
 
-        // Client entier de Bob partagé avec Alice (2 projets)
         $portailAgents = $conseil->projects()->create([
             'name' => 'Portail agents',
             'daily_rate' => 55000,
@@ -141,7 +133,5 @@ class DatabaseSeeder extends Seeder
             ['title' => 'Architecture LMS',  'date' => $d(16), 'coverage' => 33],
             ['title' => 'Intégration SCORM', 'date' => $d(3),  'coverage' => 50],
         ]);
-
-        $alice->receivedShares()->create(['share_id' => $conseil->share()->id]);
     }
 }

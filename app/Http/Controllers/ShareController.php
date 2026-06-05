@@ -3,45 +3,28 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
-use App\Models\Project;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class ShareController
 {
-    public function storeProject(Request $request, Project $project): JsonResponse
+    public function storeClient(Request $request, Client $client): RedirectResponse
     {
-        return $this->store($request, $project);
-    }
+        abort_unless($request->user()->can('update', $client), 403);
 
-    public function destroyProject(Request $request, Project $project): RedirectResponse
-    {
-        return $this->destroy($request, $project);
-    }
+        if (! $client->share_token) {
+            $client->update(['share_token' => (string) Str::uuid()]);
+        }
 
-    public function storeClient(Request $request, Client $client): JsonResponse
-    {
-        return $this->store($request, $client);
+        return back();
     }
 
     public function destroyClient(Request $request, Client $client): RedirectResponse
     {
-        return $this->destroy($request, $client);
-    }
+        abort_unless($request->user()->can('update', $client), 403);
 
-    private function store(Request $request, Project|Client $shareable): JsonResponse
-    {
-        abort_unless($request->user()->can('update', $shareable), 403);
-
-        return response()->json(['url' => $shareable->share()->url()]);
-    }
-
-    private function destroy(Request $request, Project|Client $shareable): RedirectResponse
-    {
-        abort_unless($request->user()->can('update', $shareable), 403);
-
-        $shareable->sharer()->delete();
+        $client->update(['share_token' => null]);
 
         return back();
     }

@@ -31,7 +31,7 @@ class BillingController extends Controller
     {
         $this->authorize('update', $client);
 
-        $projects = $client->projects()->orderBy('created_at')->get();
+        $projects = $client->projects()->withTrashed()->orderBy('created_at')->get();
 
         abort_if($projects->isEmpty(), 404);
 
@@ -55,7 +55,7 @@ class BillingController extends Controller
 
         $project->invoices()->create($validated);
 
-        return redirect()->route('projects.billing.show', $project);
+        return redirect()->back();
     }
 
     public function update(Request $request, Invoice $invoice): RedirectResponse
@@ -70,7 +70,7 @@ class BillingController extends Controller
 
         $invoice->update($validated);
 
-        return redirect()->route('projects.billing.show', $invoice->project);
+        return redirect()->back();
     }
 
     public function destroy(Invoice $invoice): RedirectResponse

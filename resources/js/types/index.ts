@@ -31,7 +31,6 @@ export type Project = {
   description: string,
   daily_rate: number | null,
   is_owner: boolean,
-  is_shared?: boolean,
   created_at?: string,
 }
 

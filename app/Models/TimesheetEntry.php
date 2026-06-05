@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $description
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
- * @property-read Project $project
+ * @property-read Project|null $project
  *
  * @method static Builder<static>|TimesheetEntry inMonth(\Carbon\CarbonInterface $date)
  * @method static Builder<static>|TimesheetEntry newModelQuery()

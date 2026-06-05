@@ -66,6 +66,7 @@ trait BuildsProjectBillingEntry
             'name' => $project->name,
             'daily_rate' => $project->daily_rate,
             'max_month_budget' => $project->max_month_budget,
+            'deleted_at' => $project->deleted_at?->toDateTimeString(),
             'client' => ['name' => $clientNameOverride ?? $project->client->name],
             'months' => $months->values(),
             'outstanding' => $outstanding,

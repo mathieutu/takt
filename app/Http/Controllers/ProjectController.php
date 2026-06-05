@@ -164,6 +164,7 @@ class ProjectController extends Controller
         $this->authorize('restore', $project);
 
         $project->restore();
+        $project->client->restore();
 
         return redirect()
             ->back()

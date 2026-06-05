@@ -11,7 +11,7 @@ class DashboardController
 {
     public function __invoke(Request $request): Response|RedirectResponse
     {
-        $projects = $request->user()->projects()->with('timesheetEntries', 'sharer')->get();
+        $projects = $request->user()->projects()->with('timesheetEntries')->get();
 
         if ($projects->isEmpty()) {
             return redirect()->route('projects.index');
@@ -42,7 +42,6 @@ class DashboardController
             'name' => $p->name,
             'description' => $p->description ?? '',
             'daily_rate' => $p->daily_rate !== null ? (float) $p->daily_rate : null,
-            'is_shared' => $p->sharer !== null,
         ])->values();
 
         return Inertia::render('DashboardPage', [

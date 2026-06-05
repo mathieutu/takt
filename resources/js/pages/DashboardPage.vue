@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import { router, useHttp } from '@inertiajs/vue3'
 import { BarElement, CategoryScale, Chart as ChartJS, LinearScale, Tooltip, type TooltipItem } from 'chart.js'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { formatDate, formatDays } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
-import { destroy as destroyClient, update as updateClient } from '@/wayfinder/routes/clients'
-import { destroy as destroyProject, update as updateProject } from '@/wayfinder/routes/projects'
-import { store as shareRoute } from '@/wayfinder/routes/projects/share'
 
 const props = defineProps<{
   entries: Entry[],
@@ -24,94 +20,7 @@ type Project = {
   clientId: number,
   name: string,
   daily_rate: number | null,
-  is_shared: boolean,
   description: string,
-}
-type ActiveProject = Project & { client: Client | undefined }
-
-const editClientOpen = ref(false)
-const deleteClientOpen = ref(false)
-const editProjectOpen = ref(false)
-const deleteProjectOpen = ref(false)
-const shareProjectOpen = ref(false)
-
-const editingClient = ref<Client | null>(null)
-const deletingClient = ref<Client | null>(null)
-const editingProject = ref<ActiveProject | null>(null)
-const deletingProject = ref<ActiveProject | null>(null)
-const sharingProject = ref<ActiveProject | null>(null)
-const shareUrl = ref('')
-const copied = ref(false)
-const shareLoading = ref(false)
-
-const ownedClients = computed(() => props.clients)
-
-const editProjectClientRate = computed(() => {
-  if (!editingProject.value) return null
-  const client = props.clients.find(c => c.id === editingProject.value!.clientId)
-  return client?.daily_rate ?? null
-})
-
-function openEditClient(client: Client) {
-  editingClient.value = { ...client }
-  editClientOpen.value = true
-}
-
-function openDeleteClient(client: Client) {
-  deletingClient.value = client
-  deleteClientOpen.value = true
-}
-
-function openShare(project: ActiveProject) {
-  sharingProject.value = project
-  shareUrl.value = ''
-  copied.value = false
-  shareLoading.value = true
-  shareProjectOpen.value = true
-
-  useHttp().post(shareRoute(project.id).url, {
-    onSuccess: (data: { url: string }) => {
-      shareUrl.value = data.url
-    },
-    onError: () => {
-      shareUrl.value = ''
-      console.error('Erreur lors de la génération du lien de partage')
-    },
-    onFinish: () => {
-      shareLoading.value = false
-    },
-  })
-}
-
-function copyShareUrl() {
-  navigator.clipboard.writeText(shareUrl.value)
-  copied.value = true
-  setTimeout(() => {
-    copied.value = false
-  }, 2000)
-}
-
-function menuItemsProject(project: ActiveProject) {
-  return [[
-    {
-      label: 'Modifier',
-      icon: 'i-lucide-pencil',
-      onSelect: () => {
-        editingProject.value = { ...project }
-        editProjectOpen.value = true
-      },
-    },
-  ], [
-    {
-      label: 'Supprimer',
-      icon: 'i-lucide-trash-2',
-      color: 'error' as const,
-      onSelect: () => {
-        deletingProject.value = project
-        deleteProjectOpen.value = true
-      },
-    },
-  ]]
 }
 
 const now = new Date()
@@ -384,22 +293,6 @@ const barChartOptions = {
                   <p class="truncate text-sm font-medium">{{ client.name }}</p>
                   <p class="text-xs text-muted">{{ client.daily_rate }} €/j</p>
                 </div>
-                <div class="flex shrink-0 items-center gap-1">
-                  <UButton
-                    icon="i-lucide-pencil"
-                    color="neutral"
-                    variant="ghost"
-                    size="xs"
-                    @click="openEditClient(client)"
-                  />
-                  <UButton
-                    icon="i-lucide-trash-2"
-                    color="error"
-                    variant="ghost"
-                    size="xs"
-                    @click="openDeleteClient(client)"
-                  />
-                </div>
               </li>
               <li v-if="activeClients.length === 0" class="text-sm text-muted">
                 Aucun client actif
@@ -422,21 +315,6 @@ const barChartOptions = {
                 </div>
                 <div class="flex shrink-0 items-center gap-1">
                   <UBadge color="neutral" variant="subtle">Actif</UBadge>
-                  <UButton
-                    icon="i-lucide-share-2"
-                    color="neutral"
-                    variant="ghost"
-                    size="xs"
-                    @click="openShare(project)"
-                  />
-                  <UDropdownMenu :items="menuItemsProject(project)" class="shrink-0">
-                    <UButton
-                      icon="i-lucide-more-vertical"
-                      color="neutral"
-                      variant="ghost"
-                      size="xs"
-                    />
-                  </UDropdownMenu>
                 </div>
               </li>
               <li v-if="activeProjects.length === 0" class="text-sm text-muted">
@@ -448,150 +326,4 @@ const barChartOptions = {
       </div>
     </main>
   </div>
-
-  <UModal v-model:open="editClientOpen" title="Modifier le client">
-    <template #body>
-      <div v-if="editingClient" class="space-y-4">
-        <UFormField label="Nom" required>
-          <UInput v-model="editingClient.name" type="text" class="w-full" />
-        </UFormField>
-        <UFormField label="TJM (€/jour)" required>
-          <UInput v-model="editingClient.daily_rate" type="number" min="0" step="0.01" class="w-full" />
-        </UFormField>
-      </div>
-    </template>
-    <template #footer="{ close }">
-      <div class="flex justify-end gap-2">
-        <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
-        <UButton
-          label="Enregistrer"
-          @click="editingClient && router.put(
-            updateClient(editingClient).url, {
-              name: editingClient.name, daily_rate: editingClient.daily_rate,
-            }, { preserveScroll: true, onSuccess: () => { editClientOpen = false } })"
-        />
-      </div>
-    </template>
-  </UModal>
-
-  <UModal v-model:open="deleteClientOpen" title="Supprimer le client">
-    <template #body>
-      <p class="text-sm text-muted">
-        Supprimer <span class="font-medium text-default">{{ deletingClient?.name }}</span> ?
-        Tous les projets et saisies associés seront définitivement supprimés.
-      </p>
-    </template>
-    <template #footer="{ close }">
-      <div class="flex justify-end gap-2">
-        <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
-        <UButton
-          v-if="deletingClient"
-          label="Supprimer"
-          color="error"
-          @click="router.delete(
-            destroyClient(deletingClient.id).url,
-            { preserveScroll: true, onSuccess: () => { deleteClientOpen = false },
-            })"
-        />
-      </div>
-    </template>
-  </UModal>
-
-  <UModal v-model:open="editProjectOpen" title="Modifier le projet">
-    <template #body>
-      <div v-if="editingProject" class="space-y-4">
-        <UFormField label="Client" required>
-          <USelect
-            v-model="editingProject.clientId"
-            :items="ownedClients.map(c => ({ value: c.id, label: c.name }))"
-            class="w-full"
-          />
-        </UFormField>
-        <UFormField label="Nom du projet" required>
-          <UInput v-model="editingProject.name" type="text" class="w-full" />
-        </UFormField>
-        <UFormField label="Description">
-          <UInput v-model="editingProject.description" type="text" class="w-full" />
-        </UFormField>
-        <UFormField label="TJM du projet">
-          <UInput
-            v-model="editingProject.daily_rate"
-            type="number"
-            min="0"
-            step="0.01"
-            :placeholder="editProjectClientRate !== null ? `${editProjectClientRate} €/j (TJM client)` : 'Hérite du TJM client'"
-            class="w-full"
-          />
-        </UFormField>
-      </div>
-    </template>
-    <template #footer="{ close }">
-      <div class="flex justify-end gap-2">
-        <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
-        <UButton
-          v-if="editingProject"
-          label="Enregistrer"
-          @click="router.put(
-            updateProject(editingProject.id).url,
-            {
-              client_id: editingProject.clientId,
-              name: editingProject.name,
-              description: editingProject.description,
-              daily_rate: editingProject.daily_rate,
-            }, { preserveScroll: true, onSuccess: () => { editProjectOpen = false } })"
-        />
-      </div>
-    </template>
-  </UModal>
-
-  <UModal v-model:open="shareProjectOpen" title="Partager le projet">
-    <template #body>
-      <div class="space-y-3">
-        <p class="text-sm text-muted">
-          Copiez ce lien et envoyez-le à la personne avec qui vous souhaitez partager
-          <span class="font-medium text-default">{{ sharingProject?.name }}</span>.
-        </p>
-        <div class="flex gap-2">
-          <UInput
-            :modelValue="shareLoading ? 'Chargement…' : shareUrl"
-            readonly
-            class="min-w-0 flex-1"
-          />
-          <UButton
-            :label="copied ? 'Copié !' : 'Copier'"
-            :disabled="shareLoading || !shareUrl"
-            @click="copyShareUrl"
-          />
-        </div>
-      </div>
-    </template>
-    <template #footer="{ close }">
-      <div class="flex justify-end gap-2">
-        <UButton label="Fermer" color="neutral" variant="outline" @click="close" />
-      </div>
-    </template>
-  </UModal>
-
-  <UModal v-model:open="deleteProjectOpen" title="Supprimer le projet">
-    <template #body>
-      <p class="text-sm text-muted">
-        Supprimer <span class="font-medium text-default">{{ deletingProject?.name }}</span> ? Cette action est
-        irréversible.
-      </p>
-    </template>
-    <template #footer="{ close }">
-      <div class="flex justify-end gap-2">
-        <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
-        <UButton
-          v-if="deletingProject"
-          label="Supprimer"
-          color="error"
-          @click="router.delete(
-            destroyProject(deletingProject.id).url,
-            { preserveScroll: true, onSuccess: () => { deleteProjectOpen = false },
-            })"
-        />
-      </div>
-    </template>
-  </UModal>
 </template>

@@ -5,66 +5,62 @@ import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOpt
 
 /**
  * @see \App\Http\Controllers\SharedController::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SharedController.php:17
- * @route "/shares/{share}"
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SharedController.php:15
+ * @route "/shares/{token}"
  */
-export const show = (args: { share: string | { id: string } } | [ share: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+export const show = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
     url: show.url(args, options),
     method: "get",
 })
 
 show.definition = {
     methods: ["get","head"],
-    url: "/shares/{share}",
+    url: "/shares/{token}",
 } satisfies RouteDefinition<["get","head"]>
 
 /**
  * @see \App\Http\Controllers\SharedController::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SharedController.php:17
- * @route "/shares/{share}"
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SharedController.php:15
+ * @route "/shares/{token}"
  */
-show.url = (args: { share: string | { id: string } } | [ share: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
+show.url = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions) => {
     if (typeof args === "string" || typeof args === "number") {
-        args = { share: args }
-    }
-    
-    if (typeof args === "object" && !Array.isArray(args) && "id" in args) {
-        args = { share: args.id }
+        args = { token: args }
     }
     
     if (Array.isArray(args)) {
         args = {
-        share: args[0],
+        token: args[0],
     }
     }
     
     args = applyUrlDefaults(args)
     
     const parsedArgs = {
-        share: typeof args.share === "object" ? args.share.id : args.share,
+        token: args.token,
     }
     
     return show.definition.url
-        .replace("{share}", parsedArgs.share.toString())
+        .replace("{token}", parsedArgs.token.toString())
         .replace(/\/+$/, "") + queryParams(options)
 }
 
 /**
  * @see \App\Http\Controllers\SharedController::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SharedController.php:17
- * @route "/shares/{share}"
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SharedController.php:15
+ * @route "/shares/{token}"
  */
-show.get = (args: { share: string | { id: string } } | [ share: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+show.get = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
     url: show.url(args, options),
     method: "get",
 })
 
 /**
  * @see \App\Http\Controllers\SharedController::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SharedController.php:17
- * @route "/shares/{share}"
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SharedController.php:15
+ * @route "/shares/{token}"
  */
-show.head = (args: { share: string | { id: string } } | [ share: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"head"> => ({
+show.head = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"head"> => ({
     url: show.url(args, options),
     method: "head",
 })

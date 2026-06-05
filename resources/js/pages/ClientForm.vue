@@ -27,7 +27,6 @@ type BackgroundProject = {
   client: { id: string, name: string },
   created_at: string,
   deleted_at: string | null,
-  is_shared: boolean,
 }
 
 const { modal } = defineProps<{

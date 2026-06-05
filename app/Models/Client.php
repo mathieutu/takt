@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\Shareable;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,29 +13,34 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $name
  * @property int $daily_rate
  * @property string $user_id
+ * @property string|null $share_token
+ * @property CarbonImmutable|null $deleted_at
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property-read Collection<int, Project> $projects
  * @property-read int|null $projects_count
- * @property-read Share|null $sharer
- * @property-read bool $sharer_exists
  * @property-read User $user
  *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Client newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Client newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Client onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Client query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Client whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Client whereDailyRate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Client whereDeletedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Client whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Client whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Client whereShareToken($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Client whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Client whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Client withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Client withoutTrashed()
  *
  * @mixin \Eloquent
  */
 class Client extends Model
 {
-    use Shareable, SoftDeletes;
+    use SoftDeletes;
 
     protected function casts(): array
     {

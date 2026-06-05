@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { coverageLabel, formatDate, formatDays, formatMonthName, parseMonth } from '@/utils/date'
 import { formatCurrency } from '@/utils/number'
 import { destroy as destroyInvoice, update as updateInvoice } from '@/wayfinder/routes/invoices'
@@ -35,16 +35,24 @@ type ProjectWithBilling = {
   name: string,
   daily_rate: number,
   max_month_budget: number | null,
+  deleted_at: string | null,
   client: { name: string },
   months: MonthRow[],
   outstanding: OutstandingInvoice[],
 }
 
-defineProps<{
+const props = defineProps<{
   projects: ProjectWithBilling[],
   is_shared: boolean,
   shared_by?: string,
 }>()
+
+const archivedProjects = computed(() => props.projects.filter(p => p.deleted_at))
+const showArchived = ref(archivedProjects.value.length === props.projects.length)
+
+const visibleProjects = computed(() =>
+  showArchived.value ? props.projects : props.projects.filter(p => !p.deleted_at),
+)
 
 // ── Expand state ───────────────────────────────────────────────────────────────
 
@@ -166,8 +174,8 @@ const dayLabel = (date: string): string => {
 
     <main class="flex-1 px-4 py-6 md:px-8 md:py-8">
       <div class="mx-auto max-w-5xl space-y-6">
-        <div v-if="!is_shared">
-          <UTooltip text="Back to projects">
+        <div class="flex items-center justify-between">
+          <UTooltip v-if="!is_shared" text="Back to projects">
             <UButton
               :href="projectsIndex()"
               icon="i-lucide-arrow-left"
@@ -176,9 +184,18 @@ const dayLabel = (date: string): string => {
               size="sm"
             />
           </UTooltip>
+          <UButton
+            v-if="archivedProjects.length !== projects.length"
+            :label="showArchived ? 'Hide archived' : 'Show archived projects'"
+            :icon="showArchived ? 'i-lucide-eye-off' : 'i-lucide-archive'"
+            color="neutral"
+            variant="outline"
+            size="sm"
+            @click="showArchived = !showArchived"
+          />
         </div>
 
-        <template v-for="(project, index) in projects" :key="project.id">
+        <template v-for="(project, index) in visibleProjects" :key="project.id">
           <div v-if="index > 0" class="border-t-2 border-default" />
 
           <!-- Project header -->

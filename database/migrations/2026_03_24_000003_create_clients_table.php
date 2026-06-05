@@ -13,6 +13,7 @@ return new class extends Migration
             $table->string('name');
             $table->unsignedInteger('daily_rate');
             $table->foreignUuid('user_id')->constrained('users')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->uuid('share_token')->nullable()->unique();
             $table->softDeletes();
             $table->timestamps();
         });

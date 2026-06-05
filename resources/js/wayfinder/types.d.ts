@@ -39,7 +39,7 @@ export namespace Inertia {
          * @see [\App\Http\Controllers\BillingController::show](/Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php)
          * @see [\App\Http\Controllers\SharedController::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/SharedController.php)
          */
-        export type ProjectBillingPage = Inertia.SharedData & { projects?: [][], is_shared: false, shared_by?: unknown }
+        export type ProjectBillingPage = Inertia.SharedData & { projects: [][], is_shared: false, shared_by?: unknown }
 
         /**
          * @see [\App\Http\Controllers\TimesheetHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php)
@@ -372,29 +372,6 @@ export namespace App {
                 export namespace DestroyClient {
                     /**
                      * @see [\App\Http\Controllers\ShareController::destroyClient](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php)
-                     */
-                    export type Request = Record<string, unknown>
-                }
-
-                export namespace StoreProject {
-                    /**
-                     * @see [\App\Http\Controllers\ShareController::storeProject](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php)
-                     */
-                    export type Request = Record<string, unknown>
-                }
-
-                export namespace DestroyProject {
-                    /**
-                     * @see [\App\Http\Controllers\ShareController::destroyProject](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php)
-                     */
-                    export type Request = Record<string, unknown>
-                }
-            }
-
-            export namespace ReceivedShareController {
-                export namespace Destroy {
-                    /**
-                     * @see [\App\Http\Controllers\ReceivedShareController::destroy](/Users/mathieutu/Projects/cra/app/Http/Controllers/ReceivedShareController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
