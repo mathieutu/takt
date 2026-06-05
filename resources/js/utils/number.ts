@@ -1,4 +1,4 @@
-export const formatCurrency = (amount: number): string => new Intl.NumberFormat('fr-FR', {
+export const formatCurrency = (amount: number): string => new Intl.NumberFormat(undefined, {
   style: 'currency',
   currency: 'EUR',
   maximumFractionDigits: 0,

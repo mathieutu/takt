@@ -1,328 +1,421 @@
 <script setup lang="ts">
-import { BarElement, CategoryScale, Chart as ChartJS, LinearScale, Tooltip, type TooltipItem } from 'chart.js'
+import {
+  BarElement,
+  CategoryScale,
+  type ChartDataset,
+  Chart as ChartJS,
+  Filler,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Tooltip,
+  type TooltipItem,
+} from 'chart.js'
 import { computed } from 'vue'
 import { Bar } from 'vue-chartjs'
-import { formatDate, formatDays } from '@/utils/date.ts'
+import { formatDays } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
+import { timesheet } from '@/wayfinder/routes'
+import { show as showBilling } from '@/wayfinder/routes/projects/billing'
 
-const props = defineProps<{
-  entries: Entry[],
-  clients: Client[],
-  projects: Project[],
-}>()
+const props = defineProps<DashboardProps>()
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip)
+ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Tooltip, Filler)
 
-type Entry = { id: number, projectId: number, date: string, value: number, label: string | null }
-type Client = { id: number, name: string, daily_rate: number }
-type Project = {
-  id: number,
-  clientId: number,
-  name: string,
-  daily_rate: number | null,
-  description: string,
+type DashboardProps = {
+  kpis: {
+    monthDays: number,
+    workingDays: number,
+    fillRate: number,
+    monthRevenue: number,
+    projectedRevenue: number,
+    yearRevenue: number,
+    outstandingAmount: number,
+    outstandingCount: number,
+    overdueCount: number,
+    weightedRate: number,
+    trendDays: number,
+    trendRevenue: number,
+    trendYear: number,
+  },
+  chart: {
+    labels: string[],
+    projects: Array<{ name: string, data: number[] }>,
+    billed: number[],
+  },
+  projects: Array<{
+    id: string,
+    clientId: string,
+    name: string,
+    clientName: string,
+    dailyRate: number,
+    maxMonthBudget: number | null,
+    theoreticalBudget: number,
+    cumulativeWorked: number,
+    thisMonthWorked: number,
+    lastActivity: string | null,
+    unbilled: number,
+  }>,
+  monthAdvancement: number,
 }
 
 const now = new Date()
-const currentYear = now.getFullYear()
-const currentMonth = now.getMonth() + 1
+const currentMonthLabel = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+// ── Chart colors ──────────────────────────────────────────────────────────────
 
-const AVATAR_COLORS = [
-  'bg-blue-100 text-blue-700',
-  'bg-violet-100 text-violet-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-amber-100 text-amber-700',
-  'bg-rose-100 text-rose-700',
-  'bg-cyan-100 text-cyan-700',
+const PROJECT_PALETTE = [
+  '--color-indigo-500',
+  '--color-rose-500',
+  '--color-amber-500',
+  '--color-teal-500',
+  '--color-purple-500',
 ]
 
-const DOT_COLORS = ['#3b82f6', '#7c3aed', '#10b981', '#f59e0b', '#f43f5e', '#06b6d4']
-
-function hashName(name: string): number {
-  let hash = 0
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  return Math.abs(hash)
-}
-
-function avatarColor(name: string): string {
-  return AVATAR_COLORS[hashName(name) % AVATAR_COLORS.length]
-}
-
-function dotColor(name: string): string {
-  return DOT_COLORS[hashName(name) % DOT_COLORS.length]
-}
-
-function initials(name: string): string {
-  return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
-}
-
-function getProjectRate(projectId: number): number {
-  const project = props.projects.find(p => p.id === projectId)
-  if (!project) return 0
-  if (project.daily_rate !== null) return project.daily_rate
-  const client = props.clients.find(c => c.id === project.clientId)
-  return client?.daily_rate ?? 0
-}
-
-function sumDays(ents: Entry[]): number {
-  return ents.reduce((acc, e) => acc + e.value, 0)
-}
-
-function sumRevenue(ents: Entry[]): number {
-  return ents.reduce((acc, e) => acc + e.value * getProjectRate(e.projectId), 0)
-}
-
-function entriesForMonth(year: number, month: number): Entry[] {
-  return props.entries.filter(e => {
-    const d = new Date(e.date)
-    return d.getFullYear() === year && d.getMonth() + 1 === month
-  })
-}
-
-function getWorkingDays(year: number, month: number): number {
-  let count = 0
-  const d = new Date(year, month - 1, 1)
-  while (d.getMonth() === month - 1) {
-    if (d.getDay() !== 0 && d.getDay() !== 6) count++
-    d.setDate(d.getDate() + 1)
-  }
-  return count
-}
-
-const monthEntries = computed(() => entriesForMonth(currentYear, currentMonth))
-const monthDays = computed(() => sumDays(monthEntries.value))
-const monthRevenue = computed(() => sumRevenue(monthEntries.value))
-const workingDays = computed(() => getWorkingDays(currentYear, currentMonth))
-const fillRate = computed(() =>
-  workingDays.value > 0 ? Math.round((monthDays.value / workingDays.value) * 100) : 0,
+const getCssColor = (varName: string): string => (
+  window.getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
 )
 
-const yearEntries = computed(() => props.entries.filter(e => new Date(e.date).getFullYear() === currentYear))
-const yearRevenue = computed(() => sumRevenue(yearEntries.value))
+const withAlpha = (color: string, alpha: number): string => color.replace(/\)$/, ` / ${alpha})`)
 
-const cutoff = new Date()
-cutoff.setDate(cutoff.getDate() - 90)
+// ── Computed ──────────────────────────────────────────────────────────────────
 
-const activeProjectIds = computed(() =>
-  new Set(props.entries.filter(e => new Date(e.date) >= cutoff).map(e => e.projectId)),
-)
+const projectsWithStats = computed(() => {
+  const totalDays = props.projects.reduce(
+    (sum, p) => sum + (p.dailyRate > 0 ? p.cumulativeWorked / p.dailyRate : 0),
+    0,
+  )
 
-const activeClientIds = computed(() =>
-  new Set(props.projects.filter(p => activeProjectIds.value.has(p.id)).map(p => p.clientId)),
-)
-
-const activeClients = computed(() => props.clients.filter(c => activeClientIds.value.has(c.id)))
-
-const activeProjects = computed(() =>
-  props.projects
-    .filter(p => activeProjectIds.value.has(p.id))
-    .map(p => ({ ...p, client: props.clients.find(c => c.id === p.clientId) })),
-)
-
-const recentEntries = computed(() =>
-  [...props.entries]
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 7)
-    .map(e => {
-      const project = props.projects.find(p => p.id === e.projectId)
-      const client = project ? props.clients.find(c => c.id === project.clientId) : undefined
-      return { ...e, project, client }
-    }),
-)
-
-const barChartData = computed(() => {
-  const labels: string[] = []
-  const data: number[] = []
-  const colors: string[] = []
-  for (let i = 11; i >= 0; i--) {
-    let m = currentMonth - i
-    let y = currentYear
-    if (m <= 0) {
-      m += 12
-      y -= 1
-    }
-    labels.push(MONTHS[m - 1])
-    data.push(sumDays(entriesForMonth(y, m)))
-    colors.push(m === currentMonth && y === currentYear ? 'var(--ui-primary)' : 'var(--ui-border)')
-  }
-  return {
-    labels,
-    datasets: [{
-      label: 'Billable days',
-      data,
-      backgroundColor: colors,
-      borderRadius: 4,
-      borderSkipped: false as const,
-    }],
-  }
+  return props.projects
+    .map(p => {
+      const cumulativePercent = p.theoreticalBudget
+        ? Math.round((p.cumulativeWorked / p.theoreticalBudget) * 100)
+        : 0
+      const monthlyPercent = p.maxMonthBudget
+        ? Math.round((p.thisMonthWorked / p.maxMonthBudget) * 100)
+        : 0
+      const isMonthOverrun = monthlyPercent > 100
+      const isMonthWarning = !isMonthOverrun && monthlyPercent > props.monthAdvancement * 100 * 1.1
+      const daysWorked = p.dailyRate ? Math.round(p.cumulativeWorked / p.dailyRate) : 0
+      const timeShare = totalDays ? Math.round((daysWorked / totalDays) * 100) : 0
+      const daysSince = p.lastActivity
+        ? Math.floor((now.getTime() - new Date(p.lastActivity).getTime()) / 86_400_000)
+        : null
+      return {
+        ...p,
+        cumulativePercent,
+        monthlyPercent,
+        isMonthOverrun,
+        isMonthWarning,
+        daysWorked,
+        timeShare,
+        daysSince,
+      }
+    })
+    .sort((a, b) => b.dailyRate - a.dailyRate)
 })
+
+const barChartData = computed(() => ({
+  labels: props.chart.labels,
+  datasets: [
+    ...props.chart.projects.map((project, pi) => {
+      const color = getCssColor(PROJECT_PALETTE[pi % PROJECT_PALETTE.length]!)
+      return {
+        type: 'bar',
+        label: project.name,
+        data: project.data.map(v => v / 100),
+        backgroundColor: project.data.map((_, mi) =>
+          mi === props.chart.labels.length - 1 ? color : withAlpha(color, 0.45),
+        ),
+        stack: 'worked',
+        borderRadius: pi === props.chart.projects.length - 1 ? { topLeft: 4, topRight: 4 } : 0,
+        borderSkipped: false,
+        order: 2,
+      } satisfies ChartDataset<'bar', number[]>
+    }),
+    {
+      type: 'line',
+      label: 'Billed',
+      data: props.chart.billed.map(v => v / 100),
+      borderColor: getCssColor('--color-green-500'),
+      backgroundColor: 'transparent',
+      tension: 0.4,
+      pointRadius: 3,
+      pointHoverRadius: 5,
+      borderWidth: 2,
+      order: 1,
+    } satisfies ChartDataset<'line', number[]>,
+  ],
+}))
 
 const barChartOptions = {
   responsive: true,
   maintainAspectRatio: false,
+  interaction: { mode: 'index' as const, intersect: false },
   plugins: {
-    legend: { display: false },
-    tooltip: { callbacks: { label: (ctx: TooltipItem<'bar'>) => `${ctx.parsed.y} j` } },
+    legend: {
+      display: true,
+      position: 'bottom' as const,
+      labels: {
+        boxWidth: 12,
+        boxHeight: 12,
+        font: { size: 11 },
+        padding: 16,
+        color: 'rgb(107,114,128)',
+      },
+    },
+    tooltip: {
+      callbacks: {
+        label: (ctx: TooltipItem<'bar'>) => {
+          const v = formatCurrency(ctx.parsed.y! * 100)
+          return ` ${ctx.dataset.label} : ${v}`
+        },
+      },
+    },
   },
   scales: {
-    x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-    y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 11 }, stepSize: 5 } },
+    x: { stacked: true, grid: { display: false }, ticks: { font: { size: 11 } } },
+    y: {
+      stacked: true,
+      beginAtZero: true,
+      grid: { color: 'rgba(0,0,0,0.05)' },
+      ticks: {
+        font: { size: 11 },
+        callback: (v: number | string) => {
+          const n = Number(v)
+          return n === 0 ? '0' : n >= 1000 ? `${n / 1000}k€` : `${n}€`
+        },
+      },
+    },
   },
+}
+
+const progressBarClass = (percent: number) => {
+  if (percent >= 100) return 'bg-error'
+  if (percent >= 80) return 'bg-warning'
+  return 'bg-success'
+}
+
+const progressTextClass = (percent: number) => {
+  if (percent >= 100) return 'text-error font-semibold'
+  if (percent >= 80) return 'text-warning font-medium'
+  return 'text-muted'
 }
 </script>
 
 <template>
   <div class="flex min-h-screen flex-col bg-default">
     <main class="flex-1 px-6 py-8">
-      <div class="mx-auto max-w-5xl space-y-6">
-        <div>
-          <h1 class="text-lg font-semibold">Dashboard</h1>
-          <p class="text-sm text-muted">Overview of your activity</p>
+      <div class="mx-auto max-w-6xl space-y-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-lg font-semibold">Dashboard</h1>
+            <p class="text-sm text-muted">Overview of your activity</p>
+          </div>
+          <UButton :label="currentMonthLabel" :href="timesheet()" icon="i-lucide-calendar-days" />
         </div>
 
+        <!-- KPIs -->
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
                 <p class="text-sm font-semibold">Days this month</p>
-                <UIcon name="i-lucide-calendar" class="text-muted" />
+                <UIcon name="i-lucide-calendar-days" class="text-muted" />
               </div>
             </template>
-            <p class="text-2xl font-bold">{{ formatDays(monthDays) }}</p>
-            <p class="mt-1 text-xs text-muted">out of {{ workingDays }} working days</p>
-            <div class="mt-2 h-1.5 w-full rounded-full bg-muted">
+            <p class="text-2xl font-bold">{{ formatDays(kpis.monthDays) }}</p>
+            <p class="mt-1 text-xs text-muted">out of {{ kpis.workingDays }} working days</p>
+            <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-elevated">
               <div
                 class="h-1.5 rounded-full bg-primary transition-all"
-                :style="{ width: `${Math.min(fillRate, 100)}%` }"
+                :style="{ width: `${Math.min(kpis.fillRate, 100)}%` }"
               />
             </div>
-            <p class="mt-1 text-xs text-muted">{{ fillRate }}% filled</p>
+            <div class="mt-1 flex items-center justify-between">
+              <p class="text-xs text-muted">{{ kpis.fillRate }}% filled</p>
+              <span
+                class="flex items-center gap-0.5 text-xs"
+                :class="kpis.trendDays >= 0 ? 'text-success' : 'text-error'"
+              >
+                <UIcon :name="kpis.trendDays >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'" class="size-3" />
+                {{ kpis.trendDays >= 0 ? '+' : '' }}{{ kpis.trendDays }}%
+              </span>
+            </div>
           </UCard>
 
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
                 <p class="text-sm font-semibold">Revenue this month</p>
-                <UIcon name="i-lucide-trending-up" class="text-muted" />
+                <UIcon name="i-lucide-euro" class="text-muted" />
               </div>
             </template>
-            <p class="text-2xl font-bold">{{ formatCurrency(monthRevenue) }}</p>
-            <p class="mt-1 text-xs text-muted">{{ formatDays(monthDays) }} billed</p>
+            <p class="text-2xl font-bold">{{ formatCurrency(kpis.monthRevenue) }}</p>
+            <p class="mt-1 text-xs text-muted">
+              proj. <span class="font-medium text-primary">{{ formatCurrency(kpis.projectedRevenue) }}</span> end of month
+            </p>
+            <p
+              class="mt-1 flex items-center gap-0.5 text-xs"
+              :class="kpis.trendRevenue >= 0 ? 'text-success' : 'text-error'"
+            >
+              <UIcon :name="kpis.trendRevenue >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'" class="size-3" />
+              {{ kpis.trendRevenue >= 0 ? '+' : '' }}{{ kpis.trendRevenue }}% vs previous month
+            </p>
           </UCard>
 
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
-                <p class="text-sm font-semibold">Active clients</p>
-                <UIcon name="i-lucide-users" class="text-muted" />
+                <p class="text-sm font-semibold">Outstanding invoices</p>
+                <UIcon name="i-lucide-clock" class="text-muted" />
               </div>
             </template>
-            <p class="text-2xl font-bold">{{ activeClients.length }}</p>
-            <p class="mt-1 text-xs text-muted">{{ clients.length }} total clients</p>
+            <p class="text-2xl font-bold">{{ formatCurrency(kpis.outstandingAmount) }}</p>
+            <p class="mt-1 text-xs text-muted">
+              {{ kpis.outstandingCount }} unpaid invoice{{ kpis.outstandingCount > 1 ? 's' : '' }}
+            </p>
+            <p v-if="kpis.overdueCount > 0" class="mt-1 flex items-center gap-1 text-xs text-error">
+              <UIcon name="i-lucide-alert-circle" class="size-3" />
+              {{ kpis.overdueCount }} overdue
+            </p>
+            <p v-else class="mt-1 flex items-center gap-1 text-xs text-success">
+              <UIcon name="i-lucide-check-circle" class="size-3" />
+              No overdue
+            </p>
           </UCard>
 
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
-                <p class="text-sm font-semibold">Revenue {{ currentYear }}</p>
-                <UIcon name="i-lucide-folder-kanban" class="text-muted" />
+                <p class="text-sm font-semibold">Last 12 months</p>
+                <UIcon name="i-lucide-bar-chart-2" class="text-muted" />
               </div>
             </template>
-            <p class="text-2xl font-bold">{{ formatCurrency(yearRevenue) }}</p>
-            <p class="mt-1 text-xs text-muted">{{ formatDays(sumDays(yearEntries)) }} billed</p>
+            <p class="text-2xl font-bold">{{ formatCurrency(kpis.yearRevenue) }}</p>
+            <p class="mt-1 text-xs text-muted">
+              Avg. rate <span class="font-medium">{{ formatCurrency(kpis.weightedRate) }}/d</span>
+            </p>
+            <p
+              class="mt-1 flex items-center gap-0.5 text-xs"
+              :class="kpis.trendYear >= 0 ? 'text-success' : 'text-error'"
+            >
+              <UIcon :name="kpis.trendYear >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'" class="size-3" />
+              {{ kpis.trendYear >= 0 ? '+' : '' }}{{ kpis.trendYear }}% vs previous 12 months
+            </p>
           </UCard>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <UCard class="lg:col-span-2">
-            <template #header>
-              <p class="text-sm font-semibold">Activity over 12 months</p>
-            </template>
-            <div class="h-52">
-              <Bar :data="barChartData" :options="barChartOptions" />
-            </div>
-          </UCard>
+        <!-- Chart -->
+        <UCard>
+          <template #header>
+            <p class="text-sm font-semibold">Activity over 12 months</p>
+          </template>
+          <div class="h-72">
+            <Bar :data="barChartData" :options="barChartOptions" />
+          </div>
+        </UCard>
 
-          <UCard>
-            <template #header>
-              <p class="text-sm font-semibold">Recent entries</p>
-            </template>
-            <ul class="space-y-2">
-              <li
-                v-for="entry in recentEntries" :key="entry.id"
-                class="flex items-center justify-between text-sm"
-              >
-                <div class="flex min-w-0 items-center gap-2">
+        <!-- Projects -->
+        <UCard>
+          <template #header>
+            <p class="text-sm font-semibold">Active projects</p>
+          </template>
+
+          <div class="grid grid-cols-[16rem_1fr_2fr_5rem_5rem] items-center gap-x-7 border-b border-default pb-2 text-xs text-muted">
+            <span>Project</span>
+            <span>Rate <span class="opacity-60">(daily rate · time)</span></span>
+            <span>Budget <span class="opacity-60">(total · this month)</span></span>
+            <span class="">Last activity</span>
+            <span class="text-center">To bill</span>
+          </div>
+
+          <div class="divide-y divide-default">
+            <div
+              v-for="p in projectsWithStats"
+              :key="p.id"
+              class="grid grid-cols-[16rem_1fr_2fr_4rem_6rem] items-center gap-x-7 py-3.5"
+            >
+              <div>
+                <p class="truncate text-sm font-medium">{{ p.name }}</p>
+                <p class="text-xs text-muted">{{ p.clientName }}</p>
+              </div>
+
+              <div class="grid gap-1.5">
+                <div class="flex items-center justify-between text-xs">
+                  <div class="flex items-baseline gap-1 ">
+                    <span class="text-muted">{{ formatCurrency(p.dailyRate) }}/d ×</span>
+                    <span class="font-semibold">{{ p.daysWorked }}d </span>
+                  </div>
+                  <span>=</span>
+                </div>
+                <div class="h-1.5 w-full overflow-hidden rounded-full bg-elevated">
                   <div
-                    class="h-2 w-2 shrink-0 rounded-full"
-                    :style="{ backgroundColor: dotColor(entry.client?.name ?? '') }"
+                    class="h-1.5 rounded-full bg-primary transition-all duration-500"
+                    :style="{ width: `${p.timeShare}%` }"
                   />
-                  <span class="truncate">{{ entry.project?.name ?? '—' }}</span>
                 </div>
-                <div class="ml-2 flex shrink-0 items-center gap-2">
-                  <span class="text-xs text-muted">{{ formatDate(entry.date) }}</span>
-                  <UBadge color="neutral" variant="subtle">{{ formatDays(entry.value) }}</UBadge>
+                <div class="text-xs text-muted">
+                  {{ p.timeShare }}% of worked time
                 </div>
-              </li>
-              <li v-if="recentEntries.length === 0" class="text-sm text-muted">
-                No entries
-              </li>
-            </ul>
-          </UCard>
-        </div>
+              </div>
 
-        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <UCard>
-            <template #header>
-              <p class="text-sm font-semibold">Active clients</p>
-            </template>
-            <ul class="space-y-3">
-              <li
-                v-for="client in activeClients" :key="client.id"
-                class="flex items-center gap-3"
-              >
+              <div class="grid gap-1.5">
+                <div class="flex justify-between text-xs">
+                  <span class="flex items-baseline gap-1">
+                    <span class="font-semibold">
+                      {{ formatCurrency(p.cumulativeWorked) }}
+                    </span>
+                    <span class="text-muted">worked</span>
+                  </span>
+                  <span v-if="p.cumulativePercent" :class="progressTextClass(p.cumulativePercent)">
+                    {{ p.cumulativePercent }}% of {{ formatCurrency(p.theoreticalBudget) }}
+                  </span>
+                </div>
                 <div
-                  class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-medium"
-                  :class="avatarColor(client.name)"
+                  v-if="p.cumulativePercent"
+                  class="h-2 w-full overflow-hidden rounded-full bg-elevated"
                 >
-                  {{ initials(client.name) }}
+                  <div
+                    class="h-full rounded-full transition-all duration-500"
+                    :class="progressBarClass(p.cumulativePercent)"
+                    :style="{ width: `${Math.min(p.cumulativePercent, 100)}%` }"
+                  />
                 </div>
-                <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm font-medium">{{ client.name }}</p>
-                  <p class="text-xs text-muted">{{ client.daily_rate }} €/j</p>
+                <div
+                  class="flex items-center gap-1 text-xs"
+                  :class="p.isMonthOverrun ? 'text-error' : p.isMonthWarning ? 'text-warning' : 'text-muted'"
+                >
+                  <UIcon
+                    v-if="p.isMonthOverrun || p.isMonthWarning"
+                    name="i-lucide-triangle-alert"
+                    class="size-3 shrink-0"
+                  />
+                  <span>
+                    <span class="font-semibold" :class="!p.isMonthOverrun && !p.isMonthWarning ? 'text-default' : '' ">{{ formatCurrency(p.thisMonthWorked) }}</span> this month
+                    <span v-if="p.isMonthOverrun || p.isMonthWarning">({{ p.monthlyPercent }}%)</span>
+                  </span>
                 </div>
-              </li>
-              <li v-if="activeClients.length === 0" class="text-sm text-muted">
-                No active clients
-              </li>
-            </ul>
-          </UCard>
+              </div>
 
-          <UCard>
-            <template #header>
-              <p class="text-sm font-semibold">Active projects</p>
-            </template>
-            <ul class="space-y-3">
-              <li
-                v-for="project in activeProjects" :key="project.id"
-                class="flex items-center justify-between gap-2"
+              <div
+                class="text-xs"
+                :class="p.daysSince && p.daysSince > 7 ? 'text-warning' : 'text-muted'"
               >
-                <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm font-medium">{{ project.name }}</p>
-                  <p class="text-xs text-muted">{{ project.client?.name ?? '—' }}</p>
-                </div>
-                <div class="flex shrink-0 items-center gap-1">
-                  <UBadge color="neutral" variant="subtle">Active</UBadge>
-                </div>
-              </li>
-              <li v-if="activeProjects.length === 0" class="text-sm text-muted">
-                No active projects
-              </li>
-            </ul>
-          </UCard>
-        </div>
+                <template v-if="p.daysSince === null">—</template>
+                <template v-else-if="p.daysSince === 0">today</template>
+                <template v-else>{{ p.daysSince }}d ago</template>
+              </div>
+
+              <div class="flex items-center gap-2 justify-end">
+                <UBadge v-if="p.unbilled > 0" :color="p.unbilled > 10_000_00 ? 'error' : 'warning'" variant="subtle" size="sm">
+                  {{ formatCurrency(p.unbilled) }}
+                </UBadge>
+                <UButton :href="showBilling(p)" icon="i-lucide-receipt-text" color="neutral" variant="ghost" size="xs" />
+              </div>
+            </div>
+          </div>
+        </UCard>
       </div>
     </main>
   </div>
