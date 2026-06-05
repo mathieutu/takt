@@ -2,12 +2,12 @@
 import type { NavigationMenuItem } from '@nuxt/ui/components/NavigationMenu.vue.d.ts'
 import type { AuthUser } from '@/types'
 import { usePage } from '@inertiajs/vue3'
-import { watch } from 'vue'
-import { dashboard, logout, profile, timesheet } from '@/wayfinder/routes'
+import { computed, watch } from 'vue'
+import { dashboard, login, logout, profile, timesheet } from '@/wayfinder/routes'
 import exports from '@/wayfinder/routes/exports'
 import projects from '@/wayfinder/routes/projects'
 
-defineProps<{
+const { user } = defineProps<{
   user: AuthUser | null,
   open: boolean,
 }>()
@@ -25,10 +25,12 @@ const navItems = [
   { label: 'Export', icon: 'i-lucide-download', to: exports.index() },
 ] satisfies NavigationMenuItem[]
 
-const settingsItems = [
+const settingsItems = computed(() => [
   { label: 'Paramètres', icon: 'i-lucide-settings', to: profile() },
-  { label: 'Log out', icon: 'i-lucide-log-out', to: logout() },
-] satisfies NavigationMenuItem[]
+  user
+    ? { label: 'Log out', icon: 'i-lucide-log-out', to: logout() }
+    : { label: 'Login', icon: 'i-lucide-log-in', to: login() },
+] satisfies NavigationMenuItem[])
 
 watch(() => page.url, () => emit('update:open', false))
 </script>

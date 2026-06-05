@@ -25,9 +25,10 @@ const greeting = computed(() => {
       <span class="text-sm font-semibold">AssoFlow</span>
     </div>
 
-    <div class="hidden md:flex items-center gap-1 text-sm">
-      <span class="text-muted">Bonjour,</span>
-      <span class="font-medium">{{ greeting }}</span>
+    <div class="hidden md:block text-sm">
+      <span class="text-muted">Hi</span>
+      <span v-if="user" class="font-medium pl-1">{{ user.name }}</span>
+      <span>!</span>
     </div>
 
     <UButton
