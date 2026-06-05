@@ -4,8 +4,81 @@
 import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOptions } from "./../../../index";
 
 /**
- * @see \App\Http\Controllers\TrackingController::storeBilling
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:71
+ * @see \App\Http\Controllers\BillingController::show
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:18
+ * @route "/projects/{project}/billing"
+ */
+export const show = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+    url: show.url(args, options),
+    method: "get",
+})
+
+show.definition = {
+    methods: ["get","head"],
+    url: "/projects/{project}/billing",
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+ * @see \App\Http\Controllers\BillingController::show
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:18
+ * @route "/projects/{project}/billing"
+ */
+show.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
+    if (typeof args === "string" || typeof args === "number") {
+        args = { project: args }
+    }
+    
+    if (typeof args === "object" && !Array.isArray(args) && "id" in args) {
+        args = { project: args.id }
+    }
+    
+    if (Array.isArray(args)) {
+        args = {
+        project: args[0],
+    }
+    }
+    
+    args = applyUrlDefaults(args)
+    
+    const parsedArgs = {
+        project: typeof args.project === "object" ? args.project.id : args.project,
+    }
+    
+    return show.definition.url
+        .replace("{project}", parsedArgs.project.toString())
+        .replace(/\/+$/, "") + queryParams(options)
+}
+
+/**
+ * @see \App\Http\Controllers\BillingController::show
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:18
+ * @route "/projects/{project}/billing"
+ */
+show.get = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+    url: show.url(args, options),
+    method: "get",
+})
+
+/**
+ * @see \App\Http\Controllers\BillingController::show
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:18
+ * @route "/projects/{project}/billing"
+ */
+show.head = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"head"> => ({
+    url: show.url(args, options),
+    method: "head",
+})
+
+
+
+
+
+
+
+
+/**
+ * @see \App\Http\Controllers\BillingController::store
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:46
  * @route "/projects/{project}/billing"
  */
 export const store = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -19,8 +92,8 @@ store.definition = {
 } satisfies RouteDefinition<["post"]>
 
 /**
- * @see \App\Http\Controllers\TrackingController::storeBilling
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:71
+ * @see \App\Http\Controllers\BillingController::store
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:46
  * @route "/projects/{project}/billing"
  */
 store.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -50,8 +123,8 @@ store.url = (args: { project: string | { id: string } } | [ project: string | { 
 }
 
 /**
- * @see \App\Http\Controllers\TrackingController::storeBilling
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:71
+ * @see \App\Http\Controllers\BillingController::store
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:46
  * @route "/projects/{project}/billing"
  */
 store.post = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -68,6 +141,7 @@ store.post = (args: { project: string | { id: string } } | [ project: string | {
 
 
 const billing = {
+    show,
     store,
 }
 

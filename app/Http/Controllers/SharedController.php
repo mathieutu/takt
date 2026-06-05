@@ -2,100 +2,65 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Concerns\BuildsProjectBillingEntry;
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\Share;
-use App\Models\TimesheetEntry;
-use App\Services\HolidayService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class SharedController
 {
-    public function __construct(private readonly HolidayService $holidays) {}
+    use BuildsProjectBillingEntry;
 
     public function __invoke(Share $share, Request $request): Response
     {
-        $date = $request->date('month', 'Y-m') ?? now()->startOfMonth();
-
-        [$sharedBy, $projects] = match ($share->shareable_type) {
-            'projects' => $this->projectData($share, $date, $request),
-            'clients' => $this->clientData($share, $date, $request),
+        [$sharedBy, $projectData] = match ($share->shareable_type) {
+            'projects' => $this->projectData($share, $request),
+            'clients' => $this->clientData($share, $request),
             default => abort(404),
         };
 
-        return Inertia::render('TimesheetPage', [
+        return Inertia::render('ProjectBillingPage', [
             'shared_by' => $sharedBy,
-            'current' => ['year' => $date->year, 'month' => $date->month],
-            'urls' => [
-                'prevMonth' => route('shares.show', ['share' => $share, 'month' => $date->subMonthNoOverflow()->format('Y-m')], false),
-                'nextMonth' => route('shares.show', ['share' => $share, 'month' => $date->addMonthNoOverflow()->format('Y-m')], false),
-            ],
-            'projects' => $projects,
-            'holidays' => $this->holidays->forMonth($date),
+            'is_shared' => true,
+            ...$projectData,
         ]);
     }
 
     /** @return array{string, array} */
-    private function projectData(Share $share, Carbon $date, Request $request): array
+    private function projectData(Share $share, Request $request): array
     {
         /** @var Project $project */
-        $project = Project::with('client.user')->findOrFail($share->shareable_id);
+        $project = Project::with(['client.user', 'timesheetEntries', 'invoices'])->findOrFail($share->shareable_id);
 
         $this->recordReceivedShare($share, $project->client->user_id, $request);
 
         return [
             $project->client->user->name,
-            [[
-                'id' => $project->id,
-                'name' => $project->name,
-                'client' => ['name' => $project->client->name],
-                'daily_rate' => $project->daily_rate,
-                'entries' => $this->mapEntries(
-                    TimesheetEntry::where('project_id', $project->id)->inMonth($date)->get()
-                ),
-            ]],
+            ['projects' => [$this->buildProjectBillingEntry($project)]],
         ];
     }
 
-    /** @return array{string, Collection} */
-    private function clientData(Share $share, Carbon $date, Request $request): array
+    /** @return array{string, array} */
+    private function clientData(Share $share, Request $request): array
     {
         /** @var Client $client */
         $client = Client::with('user')->findOrFail($share->shareable_id);
 
         $this->recordReceivedShare($share, $client->user_id, $request);
 
-        $projects = $client->projects()->orderBy('created_at', 'desc')->get();
-        $entries = TimesheetEntry::whereIn('project_id', $projects->pluck('id'))
-            ->inMonth($date)
-            ->get()
-            ->groupBy('project_id');
+        $projects = $client->projects()->orderBy('created_at')->get();
+
+        abort_if($projects->isEmpty(), 404);
+
+        $projects->load(['timesheetEntries', 'invoices']);
 
         return [
             $client->user->name,
-            $projects->map(fn (Project $p) => [
-                'id' => $p->id,
-                'name' => $p->name,
-                'client' => ['name' => $client->name],
-                'daily_rate' => $p->daily_rate,
-                'entries' => $this->mapEntries($entries[$p->id] ?? collect()),
-            ]),
+            ['projects' => $projects->map(fn (Project $p) => $this->buildProjectBillingEntry($p, $client->name))->values()],
         ];
-    }
-
-    private function mapEntries(Collection $entries): Collection
-    {
-        return $entries
-            ->keyBy(fn (TimesheetEntry $e) => $e->date->toDateString())
-            ->map(fn (TimesheetEntry $e) => [
-                'coverage' => $e->coverage,
-                'title' => $e->title ?? '',
-                'description' => $e->description ?? '',
-            ]);
     }
 
     private function recordReceivedShare(Share $share, string $ownerId, Request $request): void

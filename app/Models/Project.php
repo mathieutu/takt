@@ -8,18 +8,19 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Znck\Eloquent\Relations\BelongsToThrough;
 
 /**
  * @property string $id
  * @property string $name
  * @property string $client_id
  * @property int $daily_rate
- * @property numeric|null $max_budget
+ * @property int|null $max_month_budget
  * @property string|null $description
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
- * @property-read Collection<int, BillingEntry> $billingEntries
- * @property-read int|null $billing_entries_count
+ * @property-read Collection<int, Invoice> $invoices
+ * @property-read int|null $invoices_count
  * @property-read Client $client
  * @property-read Share|null $sharer
  * @property-read bool $sharer_exists
@@ -34,7 +35,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereDailyRate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereMaxBudget($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereMaxMonthBudget($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereUpdatedAt($value)
  *
@@ -50,8 +51,13 @@ class Project extends Model
     {
         return [
             'daily_rate' => 'integer',
-            'max_budget' => 'decimal:2',
+            'max_month_budget' => 'integer',
         ];
+    }
+
+    public function user(): BelongsToThrough
+    {
+        return $this->belongsToThrough(User::class, Client::class);
     }
 
     public function client(): BelongsTo
@@ -64,8 +70,8 @@ class Project extends Model
         return $this->hasMany(TimesheetEntry::class);
     }
 
-    public function billingEntries(): HasMany
+    public function invoices(): HasMany
     {
-        return $this->hasMany(BillingEntry::class);
+        return $this->hasMany(Invoice::class);
     }
 }

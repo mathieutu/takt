@@ -484,69 +484,6 @@ duplicate.post = (args: { project: string | { id: string } } | [ project: string
 
 
 
-/**
- * @see \App\Http\Controllers\TrackingController::updateBudget
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:119
- * @route "/projects/{project}/budget"
- */
-export const budget = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
-    url: budget.url(args, options),
-    method: "put",
-})
-
-budget.definition = {
-    methods: ["put"],
-    url: "/projects/{project}/budget",
-} satisfies RouteDefinition<["put"]>
-
-/**
- * @see \App\Http\Controllers\TrackingController::updateBudget
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:119
- * @route "/projects/{project}/budget"
- */
-budget.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
-    if (typeof args === "string" || typeof args === "number") {
-        args = { project: args }
-    }
-    
-    if (typeof args === "object" && !Array.isArray(args) && "id" in args) {
-        args = { project: args.id }
-    }
-    
-    if (Array.isArray(args)) {
-        args = {
-        project: args[0],
-    }
-    }
-    
-    args = applyUrlDefaults(args)
-    
-    const parsedArgs = {
-        project: typeof args.project === "object" ? args.project.id : args.project,
-    }
-    
-    return budget.definition.url
-        .replace("{project}", parsedArgs.project.toString())
-        .replace(/\/+$/, "") + queryParams(options)
-}
-
-/**
- * @see \App\Http\Controllers\TrackingController::updateBudget
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php:119
- * @route "/projects/{project}/budget"
- */
-budget.put = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
-    url: budget.url(args, options),
-    method: "put",
-})
-
-
-
-
-
-
-
-
 
 const projects = {
     index,
@@ -557,7 +494,6 @@ const projects = {
     destroy,
     restore,
     duplicate,
-    budget,
     share,
     billing,
     entries,

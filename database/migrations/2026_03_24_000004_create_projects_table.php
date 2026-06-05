@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('name');
             $table->foreignUuid('client_id')->constrained('clients')->restrictOnDelete()->cascadeOnUpdate();
             $table->unsignedInteger('daily_rate');
-            $table->unsignedInteger('max_budget')->nullable();
+            $table->unsignedInteger('max_month_budget')->nullable();
             $table->longText('description')->nullable();
             $table->softDeletes();
             $table->timestamps();

@@ -3,6 +3,7 @@
 
 import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOptions } from "./../../index";
 import share from "./share";
+import billing from "./billing";
 
 /**
  * @see \App\Http\Controllers\ClientController::edit
@@ -283,6 +284,7 @@ const clients = {
     destroy,
     restore,
     share,
+    billing,
 }
 
 export default clients

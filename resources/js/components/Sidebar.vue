@@ -6,7 +6,6 @@ import { watch } from 'vue'
 import { dashboard, logout, profile, timesheet } from '@/wayfinder/routes'
 import exports from '@/wayfinder/routes/exports'
 import projects from '@/wayfinder/routes/projects'
-import tracking from '@/wayfinder/routes/tracking'
 
 defineProps<{
   user: AuthUser | null,
@@ -23,7 +22,6 @@ const navItems = [
   { label: 'Tableau de bord', icon: 'i-lucide-layout-dashboard', to: dashboard(), exact: true },
   { label: 'Saisie CRA', icon: 'i-lucide-calendar-days', to: timesheet() },
   { label: 'Projets', icon: 'i-lucide-folder-kanban', to: projects.index() },
-  { label: 'Suivi facturation', icon: 'i-lucide-receipt-text', to: tracking.index() },
   { label: 'Export', icon: 'i-lucide-download', to: exports.index() },
 ] satisfies NavigationMenuItem[]
 

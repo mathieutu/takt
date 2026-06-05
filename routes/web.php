@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExportsController;
@@ -10,7 +11,6 @@ use App\Http\Controllers\ShareController;
 use App\Http\Controllers\SharedController;
 use App\Http\Controllers\SyncProjectEntriesHandler;
 use App\Http\Controllers\TimesheetHandler;
-use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\UserController;
 
 Route::middleware('guest')->group(function () {
@@ -45,22 +45,23 @@ Route::middleware('auth')->group(function () {
     Route::post('projects/{project}/duplicate', [ProjectController::class, 'duplicate'])->name('projects.duplicate')->withTrashed();
     Route::post('projects/{project}/share', [ShareController::class, 'storeProject'])->name('projects.share.store');
     Route::delete('projects/{project}/share', [ShareController::class, 'destroyProject'])->name('projects.share.destroy');
-    Route::post('projects/{project}/billing', [TrackingController::class, 'storeBilling'])->name('projects.billing.store');
-    Route::put('projects/{project}/budget', [TrackingController::class, 'updateBudget'])->name('projects.budget');
+    Route::get('clients/{client}/billing', [BillingController::class, 'showClient'])->name('clients.billing.show');
+    Route::get('projects/{project}/billing', [BillingController::class, 'show'])->name('projects.billing.show');
+    Route::post('projects/{project}/billing', [BillingController::class, 'store'])->name('projects.billing.store');
 
     // Timesheet entries
     Route::patch('projects/{project}/entries', SyncProjectEntriesHandler::class)
         ->name('projects.entries.sync');
 
-    // Billing
-    Route::put('billing/{entry}', [TrackingController::class, 'updateBilling'])->name('billing.update');
+    // Invoices
+    Route::put('invoices/{invoice}', [BillingController::class, 'update'])->name('invoices.update');
+    Route::delete('invoices/{invoice}', [BillingController::class, 'destroy'])->name('invoices.destroy');
 
     // Received shares
     Route::delete('received-shares/{receivedShare}', [ReceivedShareController::class, 'destroy'])->name('received-shares.destroy');
 
     // Pages
     Route::get('timesheet', TimesheetHandler::class)->name('timesheet');
-    Route::get('tracking', [TrackingController::class, 'index'])->name('tracking.index');
 
     Route::prefix('exports')->name('exports.')->group(function () {
         Route::get('/', [ExportsController::class, 'index'])->name('index');

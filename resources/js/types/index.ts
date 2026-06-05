@@ -44,24 +44,6 @@ export type Report = {
   description: string,
 }
 
-export type MonthRow = {
-  month: string,
-  days_worked: number,
-  billing_entry_id: number | null,
-  amount_billed: number,
-  payment_date: string | null,
-  notes: string | null,
-}
-
-export type ProjectData = {
-  id: number,
-  name: string,
-  daily_rate: number,
-  max_budget: number | null,
-  client_name: string,
-  months: MonthRow[],
-}
-
 // ── UI types ──────────────────────────────────────────────────────────────────
 
 export type NavItem = {

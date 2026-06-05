@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import type { Day } from '@/utils/date.ts'
+import { Link } from '@inertiajs/vue3'
 import { coverageLabel, formatDays, TODAY } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
-import type { Day } from '@/utils/date.ts'
+import { show as billingShow } from '@/wayfinder/routes/projects/billing'
 
 type EntryData = { coverage: number, title: string, description: string }
 
@@ -22,8 +24,8 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  cellClick: [projectId: string, date: string]
-  actionClick: [projectId: string, date: string]
+  cellClick: [projectId: string, date: string],
+  actionClick: [projectId: string, date: string],
 }>()
 </script>
 
@@ -66,7 +68,18 @@ const emit = defineEmits<{
       </tr>
       <tr v-for="project in projects" :key="project.id" class="group/row">
         <td class="sticky left-0 z-10 border-b border-r border-default bg-default px-3 py-2">
-          <div class="truncate text-sm font-medium text-default">{{ project.name }}</div>
+          <div class="flex items-center gap-1 min-w-0">
+            <div class="truncate text-sm font-medium text-default flex-1">{{ project.name }}</div>
+            <Link
+              v-if="!readonly"
+              :href="billingShow(project).url"
+              class="shrink-0 text-muted hover:text-default transition-colors"
+              title="Billing"
+              @click.stop
+            >
+              <UIcon name="i-lucide-receipt-text" class="w-3.5 h-3.5" />
+            </Link>
+          </div>
           <div class="truncate text-xs text-muted flex items-center gap-1">
             <span class="flex-1">{{ project.client.name }}</span>
             <span v-if="project.days !== undefined">

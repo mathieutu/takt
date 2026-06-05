@@ -32,7 +32,9 @@ class DatabaseSeeder extends Seeder
         $portail = $mairie->projects()->create([
             'name' => 'Refonte du portail citoyen',
             'daily_rate' => 65000,
+            'max_month_budget' => 200000,
             'description' => 'Refonte complète du site web municipal avec un espace citoyen sécurisé et des services en ligne.',
+            'created_at' => now()->subDays(87),
         ]);
         $portail->timesheetEntries()->createMany([
             ['title' => 'Cadrage et spécifications',   'date' => $d(28), 'coverage' => 50,  'description' => 'Atelier avec les équipes métier de la mairie.'],
@@ -40,6 +42,11 @@ class DatabaseSeeder extends Seeder
             ['title' => 'Développement frontend',      'date' => $d(14), 'coverage' => 100, 'description' => 'Intégration des maquettes validées.'],
             ['title' => 'Développement backend / API', 'date' => $d(7),  'coverage' => 100],
             ['title' => 'Tests et recette',            'date' => $d(2),  'coverage' => 50,  'description' => 'Recette client avec 3 cycles de corrections.'],
+        ]);
+
+        $portail->invoices()->createMany([
+            ['amount' => 130000, 'paid_at' => $d(14), 'notes' => 'Facture n°2024-01'],
+            ['amount' => 65000, 'paid_at' => null, 'notes' => 'Facture n°2024-02 — en attente'],
         ]);
 
         $portail->share();

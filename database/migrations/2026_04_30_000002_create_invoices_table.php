@@ -8,21 +8,18 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('billing_entries', function (Blueprint $table) {
+        Schema::create('invoices', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('project_id')->constrained('projects')->restrictOnDelete()->cascadeOnUpdate();
-            $table->date('month');
-            $table->decimal('amount_billed', 10, 2)->default(0);
-            $table->date('payment_date')->nullable();
+            $table->unsignedInteger('amount');
+            $table->date('paid_at')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
-
-            $table->unique(['project_id', 'month']);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('billing_entries');
+        Schema::dropIfExists('invoices');
     }
 };

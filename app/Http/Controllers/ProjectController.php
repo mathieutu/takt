@@ -53,8 +53,8 @@ class ProjectController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:255'],
-            'daily_rate' => ['nullable', 'numeric', 'min:0'],
-            'max_budget' => ['nullable', 'numeric', 'min:0'],
+            'daily_rate' => ['integer', 'min:1'],
+            'max_month_budget' => ['nullable', 'integer', 'min:1'],
             ...(! $isNewClient ? [
                 'client_id' => ['required', 'uuid', Rule::exists('clients', 'id')->where('user_id', $user->id)],
             ] : [
@@ -77,7 +77,7 @@ class ProjectController extends Controller
             'name' => $data['name'],
             'description' => $data['description'],
             'daily_rate' => $data['daily_rate'],
-            'max_budget' => $data['max_budget'],
+            'max_month_budget' => $data['max_month_budget'],
             'client_id' => $data['client_id'],
         ]);
 
@@ -107,7 +107,7 @@ class ProjectController extends Controller
                     'name',
                     'description',
                     'daily_rate',
-                    'max_budget',
+                    'max_month_budget',
                     'client_id',
                 ]),
                 'clients' => $request->user()->clients()->get()->map->export(['id', 'name', 'daily_rate']),
@@ -122,8 +122,8 @@ class ProjectController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:255'],
-            'daily_rate' => ['nullable', 'numeric', 'min:0'],
-            'max_budget' => ['nullable', 'numeric', 'min:0'],
+            'daily_rate' => ['integer', 'min:1'],
+            'max_month_budget' => ['nullable', 'integer', 'min:1'],
             'client_id' => ['required', Rule::exists('clients', 'id')->where('user_id', $request->user()->id)],
         ]);
 
@@ -139,7 +139,7 @@ class ProjectController extends Controller
         $this->authorize('delete', $project);
 
         if ($project->deleted_at) {
-            if ($project->timesheetEntries()->exists() || $project->billingEntries()->exists()) {
+            if ($project->timesheetEntries()->exists() || $project->invoices()->exists()) {
                 return redirect()
                     ->back()
                     ->with('error', 'Cannot permanently delete a project with existing entries.');

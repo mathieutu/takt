@@ -35,14 +35,16 @@ export namespace Inertia {
         export type ProjectForm = Inertia.SharedData & { page: [], modal: { project: unknown[] | null, clients: unknown } }
 
         /**
+         * @see [\App\Http\Controllers\BillingController::showClient](/Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php)
+         * @see [\App\Http\Controllers\BillingController::show](/Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php)
+         * @see [\App\Http\Controllers\SharedController::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/SharedController.php)
+         */
+        export type ProjectBillingPage = Inertia.SharedData & { projects?: [][], is_shared: false, shared_by?: unknown }
+
+        /**
          * @see [\App\Http\Controllers\TimesheetHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php)
          */
         export type TimesheetPage = Inertia.SharedData & { current: { year: number, month: number }, urls: { nextMonth: string, prevMonth: string }, holidays: [], projects: unknown }
-
-        /**
-         * @see [\App\Http\Controllers\TrackingController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php)
-         */
-        export type TrackingPage = Inertia.SharedData & { clients: unknown, selectedClientId: string | null | [] | null, projects: string[] }
 
         /**
          * @see [\App\Http\Controllers\ExportsController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php)
@@ -204,8 +206,8 @@ export namespace App {
                      */
                     export type Request = {    name: string;
                         description?: string | null;
-                        daily_rate?: number | null;
-                        max_budget?: number | null;}
+                        daily_rate?: number;
+                        max_month_budget?: number | null;}
                 }
 
                 export namespace Update {
@@ -214,8 +216,8 @@ export namespace App {
                      */
                     export type Request = {    name: string;
                         description?: string | null;
-                        daily_rate?: number | null;
-                        max_budget?: number | null;
+                        daily_rate?: number;
+                        max_month_budget?: number | null;
                         client_id: string;}
                 }
 
@@ -241,6 +243,57 @@ export namespace App {
                 }
             }
 
+            export namespace BillingController {
+                export namespace ShowClient {
+                    /**
+                     * @see [\App\Http\Controllers\BillingController::showClient](/Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php)
+                     */
+                    export type Response = Inertia.Pages.ProjectBillingPage
+
+                    /**
+                     * @see [\App\Http\Controllers\BillingController::showClient](/Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+
+                export namespace Show {
+                    /**
+                     * @see [\App\Http\Controllers\BillingController::show](/Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php)
+                     */
+                    export type Response = Inertia.Pages.ProjectBillingPage
+
+                    /**
+                     * @see [\App\Http\Controllers\BillingController::show](/Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+
+                export namespace Store {
+                    /**
+                     * @see [\App\Http\Controllers\BillingController::store](/Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php)
+                     */
+                    export type Request = {    amount: number;
+                        paid_at?: string | null;
+                        notes?: string | null;}
+                }
+
+                export namespace Update {
+                    /**
+                     * @see [\App\Http\Controllers\BillingController::update](/Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php)
+                     */
+                    export type Request = {    amount: number;
+                        paid_at?: string | null;
+                        notes?: string | null;}
+                }
+
+                export namespace Destroy {
+                    /**
+                     * @see [\App\Http\Controllers\BillingController::destroy](/Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+            }
+
             export namespace TimesheetHandler {
                 export namespace __invoke {
                     /**
@@ -252,46 +305,6 @@ export namespace App {
                      * @see [\App\Http\Controllers\TimesheetHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/TimesheetHandler.php)
                      */
                     export type Request = Record<string, unknown>
-                }
-            }
-
-            export namespace TrackingController {
-                export namespace Index {
-                    /**
-                     * @see [\App\Http\Controllers\TrackingController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php)
-                     */
-                    export type Response = Inertia.Pages.TrackingPage
-
-                    /**
-                     * @see [\App\Http\Controllers\TrackingController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php)
-                     */
-                    export type Request = Record<string, unknown>
-                }
-
-                export namespace StoreBilling {
-                    /**
-                     * @see [\App\Http\Controllers\TrackingController::storeBilling](/Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php)
-                     */
-                    export type Request = {    month: string;
-                        amount_billed: number;
-                        payment_date?: string | null;
-                        notes?: string | null;}
-                }
-
-                export namespace UpdateBudget {
-                    /**
-                     * @see [\App\Http\Controllers\TrackingController::updateBudget](/Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php)
-                     */
-                    export type Request = {    max_budget?: number | null;}
-                }
-
-                export namespace UpdateBilling {
-                    /**
-                     * @see [\App\Http\Controllers\TrackingController::updateBilling](/Users/mathieutu/Projects/cra/app/Http/Controllers/TrackingController.php)
-                     */
-                    export type Request = {    amount_billed: number;
-                        payment_date?: string | null;
-                        notes?: string | null;}
                 }
             }
 
@@ -318,6 +331,20 @@ export namespace App {
                 export namespace ExportXlsx {
                     /**
                      * @see [\App\Http\Controllers\ExportsController::exportXlsx](/Users/mathieutu/Projects/cra/app/Http/Controllers/ExportsController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+            }
+
+            export namespace SharedController {
+                export namespace __invoke {
+                    /**
+                     * @see [\App\Http\Controllers\SharedController::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/SharedController.php)
+                     */
+                    export type Response = Inertia.Pages.ProjectBillingPage
+
+                    /**
+                     * @see [\App\Http\Controllers\SharedController::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/SharedController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
@@ -368,15 +395,6 @@ export namespace App {
                 export namespace Destroy {
                     /**
                      * @see [\App\Http\Controllers\ReceivedShareController::destroy](/Users/mathieutu/Projects/cra/app/Http/Controllers/ReceivedShareController.php)
-                     */
-                    export type Request = Record<string, unknown>
-                }
-            }
-
-            export namespace SharedController {
-                export namespace __invoke {
-                    /**
-                     * @see [\App\Http\Controllers\SharedController::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/SharedController.php)
                      */
                     export type Request = Record<string, unknown>
                 }

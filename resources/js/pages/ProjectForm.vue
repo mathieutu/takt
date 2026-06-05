@@ -15,7 +15,7 @@ type ProjectFormData = {
   name: string,
   description: string,
   daily_rate: number | null,
-  max_budget: number | null,
+  max_month_budget: number | null,
   client_id: string,
 }
 
@@ -32,7 +32,7 @@ type BackgroundProject = {
   name: string,
   description: string,
   daily_rate: number,
-  max_budget: number | null,
+  max_month_budget: number | null,
   client: { id: string, name: string },
   created_at: string,
   deleted_at: string | null,
@@ -60,7 +60,7 @@ const form = useForm({
   name: modal.project?.name ?? '',
   description: modal.project?.description ?? '',
   daily_rate: modal.project?.daily_rate ?? null as unknown as number,
-  max_budget: modal.project?.max_budget ?? null as unknown as number,
+  max_month_budget: modal.project?.max_month_budget ?? null as unknown as number,
   client_id: modal.project?.client_id ?? modal.clients[0]?.id ?? null,
   client_name: '',
   client_rate: null as unknown as number,
@@ -155,15 +155,15 @@ const close = () => router.visit(index())
             />
           </UFormField>
 
-          <UFormField label="Budget maximum (€/mois)" :error="form.errors.max_budget">
+          <UFormField label="Budget maximum (€/mois)" :error="form.errors.max_month_budget">
             <UInput
               type="number"
               min="0"
               step="0.01"
               placeholder="Illimité"
-              :modelValue="form.max_budget && form.max_budget / 100"
+              :modelValue="form.max_month_budget && form.max_month_budget / 100"
               class="w-full"
-              @update:modelValue="(val: number) => form.max_budget = Math.round(val * 100)"
+              @update:modelValue="(val: number) => form.max_month_budget = Math.round(val * 100)"
             />
           </UFormField>
         </UForm>
