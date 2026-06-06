@@ -63,19 +63,19 @@ const { modal } = defineProps<{
 const form = useForm({
   name: modal.project?.name ?? '',
   description: modal.project?.description ?? '',
-  daily_rate: modal.project?.daily_rate ?? null as unknown as number,
-  max_month_budget: modal.project?.max_month_budget ?? null as unknown as number,
-  max_total_budget: modal.project?.max_total_budget ?? null as unknown as number,
+  daily_rate: modal.project?.daily_rate ?? null,
+  max_month_budget: modal.project?.max_month_budget ?? null,
+  max_total_budget: modal.project?.max_total_budget ?? null,
   client_id: modal.project?.client_id ?? modal.clients[0]?.id ?? null,
   client_name: '',
-  client_rate: null as unknown as number,
+  client_rate: null as number | null,
   created_at: modal.project?.created_at ?? '',
   deleted_at: modal.project?.deleted_at ?? '',
 })
 
 watch(() => form.client_id, clientId => {
   if (!clientId) {
-    return form.daily_rate = null as unknown as number
+    return form.daily_rate = null
   }
 
   const client = modal.clients.find(({ id }) => id === clientId)
@@ -133,7 +133,7 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
                   step="0.01"
                   class="w-full"
                   :modelValue="form.client_rate && form.client_rate / 100"
-                  @update:modelValue="(val: number) => form.client_rate = Math.round(val * 100)"
+                  @update:modelValue="(val: number | null) => form.client_rate = val ? Math.round(val * 100) : null"
                 />
               </UFormField>
             </div>
@@ -158,7 +158,7 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
               step="0.01"
               :modelValue="form.daily_rate && form.daily_rate / 100"
               class="w-full"
-              @update:modelValue="(val: number) => form.daily_rate = Math.round(val * 100)"
+              @update:modelValue="(val: number | null) => form.daily_rate = val ? Math.round(val * 100) : null"
             />
           </UFormField>
 
@@ -170,7 +170,7 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
               placeholder="Unlimited"
               :modelValue="form.max_month_budget && form.max_month_budget / 100"
               class="w-full"
-              @update:modelValue="(val: number) => form.max_month_budget = val ? Math.round(val * 100) : null"
+              @update:modelValue="(val: number | null) => form.max_month_budget = val ? Math.round(val * 100) : null"
             />
           </UFormField>
 
@@ -182,7 +182,7 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
               placeholder="No limit"
               :modelValue="form.max_total_budget && form.max_total_budget / 100"
               class="w-full"
-              @update:modelValue="(val: number) => form.max_total_budget = val ? Math.round(val * 100) : null"
+              @update:modelValue="(val: number | null) => form.max_total_budget = val ? Math.round(val * 100) : null"
             />
           </UFormField>
 

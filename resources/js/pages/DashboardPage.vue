@@ -186,13 +186,13 @@ const barChartOptions = {
     tooltip: {
       filter: (ctx: TooltipItem<'bar'>) => ctx.dataset.label === 'Billed'
         ? (props.chart.billed[ctx.dataIndex] ?? 0) > 0
-        : ctx.parsed.y > 0,
+        : (ctx.parsed.y ?? 0) > 0,
       callbacks: {
         label: (ctx: TooltipItem<'bar'>) => {
           if (ctx.dataset.label === 'Billed') {
             return ` Billed : ${formatCurrency(props.chart.billed[ctx.dataIndex]!)}`
           }
-          return ` ${ctx.dataset.label} : ${formatDays(ctx.parsed.y)}`
+          return ` ${ctx.dataset.label} : ${formatDays(ctx.parsed.y ?? 0)}`
         },
       },
     },

@@ -10,7 +10,8 @@
     "paths": {
       "@/*": ["resources/js/*"]
     },
-    "strict": true
+    "strict": true,
+    "erasableSyntaxOnly": true
   },
   "include": ["resources/js/**/*"]
 }

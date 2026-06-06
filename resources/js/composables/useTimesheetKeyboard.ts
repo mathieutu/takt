@@ -9,8 +9,8 @@ type Project = {
 }
 
 type EmitFn = {
-  (event: 'cellClick', projectId: string, date: string): void
-  (event: 'actionClick', projectId: string, date: string): void
+  (event: 'cellClick', projectId: string, date: string): void,
+  (event: 'actionClick', projectId: string, date: string): void,
 }
 
 export function useTimesheetKeyboard(

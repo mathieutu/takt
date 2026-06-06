@@ -17,6 +17,6 @@ declare module '@inertiajs/core' {
       updatedAt: string,
     },
     flashDataType: Flash,
-    errorValueType: string[],
+    errorValueType: string,
   }
 }
