@@ -19,6 +19,7 @@ import { Bar } from 'vue-chartjs'
 import { formatDays } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
 import { timesheet } from '@/wayfinder/routes'
+import { edit as editProject } from '@/wayfinder/routes/projects'
 import { show as showBilling } from '@/wayfinder/routes/projects/billing'
 
 const props = defineProps<DashboardProps>()
@@ -151,13 +152,17 @@ const barChartData = computed(() => ({
     {
       type: 'line',
       label: 'Billed',
-      data: props.chart.billed.map(v => v / 100),
+      data: props.chart.billed.reduce<number[]>((acc, v, i) => {
+        acc.push((acc[i - 1] ?? 0) + v / 100)
+        return acc
+      }, []),
       borderColor: getCssColor('--color-green-500'),
       backgroundColor: 'transparent',
-      tension: 0.4,
-      pointRadius: 3,
-      pointHoverRadius: 5,
+      cubicInterpolationMode: 'monotone' as const,
+      pointRadius: props.chart.billed.map(v => v > 0 ? 3 : 0),
+      pointHoverRadius: props.chart.billed.map(v => v > 0 ? 5 : 0),
       borderWidth: 2,
+      yAxisID: 'y1',
       order: 1,
     } satisfies ChartDataset<'line', number[]>,
   ],
@@ -182,8 +187,10 @@ const barChartOptions = {
     tooltip: {
       callbacks: {
         label: (ctx: TooltipItem<'bar'>) => {
-          const v = formatCurrency(ctx.parsed.y! * 100)
-          return ` ${ctx.dataset.label} : ${v}`
+          const rawValue = ctx.dataset.label === 'Billed (cumulative)'
+            ? props.chart.billed[ctx.dataIndex]!
+            : ctx.parsed.y! * 100
+          return ` ${ctx.dataset.label} : ${formatCurrency(rawValue)}`
         },
       },
     },
@@ -194,6 +201,18 @@ const barChartOptions = {
       stacked: true,
       beginAtZero: true,
       grid: { color: 'rgba(0,0,0,0.05)' },
+      ticks: {
+        font: { size: 11 },
+        callback: (v: number | string) => {
+          const n = Number(v)
+          return n === 0 ? '0' : n >= 1000 ? `${n / 1000}k€` : `${n}€`
+        },
+      },
+    },
+    y1: {
+      position: 'right' as const,
+      beginAtZero: true,
+      grid: { display: false },
       ticks: {
         font: { size: 11 },
         callback: (v: number | string) => {
@@ -334,7 +353,7 @@ const progressTextClass = (percent: number) => {
         <!-- Projects -->
         <UCard>
           <template #header>
-            <p class="text-sm font-semibold">Active projects</p>
+            <p class="text-sm font-semibold">Projects</p>
           </template>
 
           <div class="grid grid-cols-[16rem_1fr_2fr_5rem_5rem] items-center gap-x-7 border-b border-default pb-2 text-xs text-muted">
@@ -351,9 +370,12 @@ const progressTextClass = (percent: number) => {
               :key="p.id"
               class="grid grid-cols-[16rem_1fr_2fr_4rem_6rem] items-center gap-x-7 py-3.5"
             >
-              <div>
-                <p class="truncate text-sm font-medium">{{ p.name }}</p>
-                <p class="text-xs text-muted">{{ p.clientName }}</p>
+              <div class="flex justify-between items-start">
+                <div>
+                  <p class="truncate text-sm font-medium">{{ p.name }}</p>
+                  <p class="text-xs text-muted">{{ p.clientName }}</p>
+                </div>
+                <UButton :href="editProject(p)" icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" />
               </div>
 
               <div class="grid gap-1.5">
