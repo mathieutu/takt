@@ -1,3 +1,4 @@
+/* eslint-disable ts/consistent-type-definitions */
 // global.d.ts
 import '@inertiajs/core'
 
@@ -10,10 +11,10 @@ export type Flash = {
 }
 
 declare module '@inertiajs/core' {
-  export type InertiaConfig = {
+  export interface InertiaConfig {
     sharedPageProps: {
-      auth: { user: { id: number, name: string } | null },
-      appName: string,
+      auth: { user: { id: number, name: string, email: string, avatar: string } | null },
+      updatedAt: string,
     },
     flashDataType: Flash,
     errorValueType: string[],

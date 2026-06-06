@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
 import type { NavigationMenuItem } from '@nuxt/ui/components/NavigationMenu.vue.d.ts'
-import type { PageProps } from '../types'
 import { usePage } from '@inertiajs/vue3'
 import { computed } from 'vue'
 import TaktLogo from '@/components/TaktLogo.vue'
+import { formatDateTime } from '@/utils/date.ts'
 import { dashboard, login, logout, profile, timesheet } from '@/wayfinder/routes'
 import projects from '@/wayfinder/routes/projects'
 import { useFlash } from '../composables/useFlash'
 
-const page = usePage<PageProps>()
+const page = usePage()
 const user = computed(() => page.props.auth?.user)
+const updatedAt = computed(() => page.props.updatedAt)
 
 useFlash()
 
@@ -77,7 +78,7 @@ const mobileMenuItems = computed<NavigationMenuItem[]>(() => [
     </main>
     <UFooter>
       <template #left>
-        <p class="text-muted text-xs">© {{ new Date().getFullYear() }} AssoFlow</p>
+        <p class="text-muted text-xs">© {{ new Date().getFullYear() }} Takt · Last update {{ formatDateTime(updatedAt) }}</p>
       </template>
       <template #right>
         <UButton

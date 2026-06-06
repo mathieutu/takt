@@ -5,7 +5,7 @@ const DAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'] as const
 export const TODAY = new Date().toISOString().slice(0, 10)
 
 export const formatMonthName = (year: number, month: number): string => {
-  const name = new Intl.DateTimeFormat('en-US', { month: 'long' }).format(new Date(year, month - 1))
+  const name = new Intl.DateTimeFormat(undefined, { month: 'long' }).format(new Date(year, month - 1))
   return name.charAt(0).toUpperCase() + name.slice(1)
 }
 export const formatDays = (days: number): string => `${days % 1 === 0 ? days : days.toFixed(1)}d`
@@ -20,20 +20,21 @@ export const daysInMonth = ({ year, month }: { year: number, month: number }): D
   })
 }
 
-export const formatDate = (date: string): string => new Date(date).toLocaleDateString('en-US', {
+export const formatDate = (date: string): string => new Date(date).toLocaleDateString(undefined, {
   day: 'numeric',
   month: 'short',
+})
+
+export const formatDateTime = (dateTime: string) => new Date(dateTime).toLocaleDateString(undefined, {
+  day: 'numeric',
+  month: 'short',
+  hour: 'numeric',
+  minute: '2-digit',
 })
 
 export const parseMonth = (month: string): { year: number, month: number } => {
   const [year, m] = month.split('-').map(Number)
   return { year: year!, month: m! }
-}
-
-export const offsetMonth = (month: string, offset: number): string => {
-  const { year, month: m } = parseMonth(month)
-  const date = new Date(year, m - 1 + offset, 1)
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 }
 
 export const coverageLabel = (coverage: number): string => {

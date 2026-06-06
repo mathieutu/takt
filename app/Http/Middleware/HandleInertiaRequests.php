@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Date;
 use Inertia\Inertia;
 use Inertia\Middleware;
 
@@ -37,7 +38,13 @@ class HandleInertiaRequests extends Middleware
                     'avatar' => $user->avatar,
                 ] : null,
             ],
-            'csrfToken' => csrf_token(),
+            'updatedAt' => Inertia::once(function () {
+                $updatedAt = config('app.updated_at');
+
+                return (is_numeric($updatedAt)
+                     ? Date::createFromTimestamp($updatedAt, 'Europe/Paris')
+                     : Date::parse($updatedAt, 'Europe/Paris'))->toDatetimeString();
+            }),
         ];
     }
 }

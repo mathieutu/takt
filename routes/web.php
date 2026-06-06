@@ -54,3 +54,5 @@ Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
 });
 
 Route::get('shares/{token}', ShowSharedHandler::class)->name('shares.show');
+
+Route::get('up', fn () => response()->json(['updated_at' => config('app.updated_at')]))->name('up');

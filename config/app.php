@@ -17,6 +17,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Last update date
+    |--------------------------------------------------------------------------
+    |
+    | This value is the date of the last update of the application, which
+    | can be used to display the version or last update info in the UI.
+    | It is set in the Dockerfile during the build process.
+    |
+    */
+    'updated_at' => env('UPDATED_AT'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |
