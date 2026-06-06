@@ -39,6 +39,7 @@ trait BuildsProjectBillingEntry
                     'id' => $i->id,
                     'amount' => $i->amount,
                     'paid_at' => $i->paid_at->toDateString(),
+                    'created_at' => $i->created_at->toDateString(),
                     'notes' => $i->notes,
                 ])->values(),
             ];
@@ -50,6 +51,7 @@ trait BuildsProjectBillingEntry
                 'id' => $i->id,
                 'amount' => $i->amount,
                 'paid_at' => null,
+                'created_at' => $i->created_at->toDateString(),
                 'notes' => $i->notes,
             ])->values();
 

@@ -23,7 +23,17 @@ import { show as showBilling } from '@/wayfinder/routes/projects/billing'
 
 const props = defineProps<DashboardProps>()
 
-ChartJS.register(BarController, CategoryScale, LinearScale, BarElement, LineController, LineElement, PointElement, Tooltip, Filler)
+ChartJS.register(
+  BarController,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineController,
+  LineElement,
+  PointElement,
+  Tooltip,
+  Filler,
+)
 
 type DashboardProps = {
   kpis: {

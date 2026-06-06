@@ -12,6 +12,7 @@ type MonthInvoice = {
   id: string,
   amount: number,
   paid_at: string,
+  created_at: string,
   notes: string | null,
 }
 
@@ -19,6 +20,7 @@ type OutstandingInvoice = {
   id: string,
   amount: number,
   paid_at: null,
+  created_at: string,
   notes: string | null,
 }
 
@@ -109,12 +111,13 @@ const monthInvoiced = (m: MonthRow) => m.invoices.reduce((s, i) => s + i.amount,
 const invoiceOpen = ref(false)
 const editingInvoiceId = ref<string | null>(null)
 const invoiceProjectId = ref<string | null>(null)
-const form = useForm({ amount: '', paid_at: '', notes: '' })
+const form = useForm({ amount: '', paid_at: '', notes: '', created_at: '' })
 
 function openAddInvoice(project: ProjectWithBilling) {
   invoiceProjectId.value = project.id
   editingInvoiceId.value = null
   form.reset()
+  form.created_at = new Date().toISOString().slice(0, 10)
   form.clearErrors()
   invoiceOpen.value = true
 }
@@ -123,6 +126,7 @@ function openEditInvoice(inv: MonthInvoice | OutstandingInvoice) {
   editingInvoiceId.value = inv.id
   form.amount = String(inv.amount / 100)
   form.paid_at = inv.paid_at ?? ''
+  form.created_at = inv.created_at
   form.notes = inv.notes ?? ''
   form.clearErrors()
   invoiceOpen.value = true
@@ -137,6 +141,7 @@ function submitInvoice() {
     .transform(data => ({
       amount: Math.round(Number.parseFloat(data.amount) * 100) || 0,
       paid_at: data.paid_at || null,
+      created_at: data.created_at || null,
       notes: data.notes || null,
     }))
     .submit(route, {
@@ -410,6 +415,13 @@ const dayLabel = (date: string): string => {
               min="0"
               step="0.01"
               placeholder="0.00"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField label="Invoiced at" required :error="form.errors.created_at">
+            <UInput
+              v-model="form.created_at"
+              type="date"
               class="w-full"
             />
           </UFormField>
