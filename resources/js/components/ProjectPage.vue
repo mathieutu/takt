@@ -158,8 +158,8 @@ function revokeShare() {
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col bg-default">
-    <main class="flex-1 px-6 py-8">
+  <div class="flex flex-col bg-default">
+    <div class="flex-1 px-6 py-8">
       <div class="mx-auto max-w-5xl space-y-6">
         <div class="flex items-center justify-between">
           <div>
@@ -268,7 +268,6 @@ function revokeShare() {
               <div class="flex shrink-0 items-center gap-1">
                 <UTooltip text="Billing">
                   <UButton
-                    :as="Link"
                     :href="billingShow(project)"
                     icon="i-lucide-receipt-text"
                     color="neutral"
@@ -372,7 +371,7 @@ function revokeShare() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
 
     <slot />
 

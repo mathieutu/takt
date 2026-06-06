@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { Day } from '@/utils/date.ts'
-import { Link } from '@inertiajs/vue3'
 import { coverageLabel, formatDays, TODAY } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
 import { show as billingShow } from '@/wayfinder/routes/projects/billing'
@@ -112,20 +111,22 @@ function getCellClasses(project: GridProject, day: Day): string[] {
               <UIcon name="i-lucide-archive" class="w-3.5 h-3.5 shrink-0 text-muted" />
             </UTooltip>
             <div class="truncate text-sm font-medium flex-1" :class="project.deleted_at ? 'text-muted' : 'text-default'">{{ project.name }}</div>
-            <Link
-              :href="billingShow(project)"
-              class="shrink-0 text-muted hover:text-default transition-colors"
-              title="Billing"
-            >
-              <UIcon name="i-lucide-receipt-text" class="w-3.5 h-3.5" />
-            </Link>
           </div>
           <div class="truncate text-xs text-muted flex items-center gap-1">
             <span class="flex-1">{{ project.client.name }}</span>
-            <span v-if="project.days !== undefined">
+            <span v-if="project.days">
               {{ formatDays(project.days) }}
-              <template v-if="project.revenue !== undefined">({{ formatCurrency(project.revenue) }})</template>
+              <template v-if="project.revenue">({{ formatCurrency(project.revenue) }})</template>
             </span>
+            <UTooltip text="Billing">
+              <UButton
+                :href="billingShow(project)"
+                icon="i-lucide-receipt-text"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+              />
+            </UTooltip>
           </div>
         </td>
         <td

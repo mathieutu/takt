@@ -5,6 +5,7 @@ import type { Component } from 'vue'
 export type AuthUser = {
   name: string,
   email: string,
+  avatar: string | null,
 }
 
 export type PageProps = {

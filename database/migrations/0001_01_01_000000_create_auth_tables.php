@@ -13,6 +13,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->string('github_id')->nullable()->unique();
+            $table->string('avatar')->nullable();
             $table->char('remember_token', 100)->nullable();
             $table->timestamps();
         });

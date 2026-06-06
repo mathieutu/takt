@@ -34,6 +34,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user ? [
                     'name' => $user->name,
                     'email' => $user->email,
+                    'avatar' => $user->avatar,
                 ] : null,
             ],
             'csrfToken' => csrf_token(),

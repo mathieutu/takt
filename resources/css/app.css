@@ -2,7 +2,6 @@
 @import '@nuxt/ui';
 
 @layer base {
-  a:not(:disabled),
   button:not(:disabled),
   [role='button']:not(:disabled) {
     cursor: pointer;

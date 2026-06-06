@@ -33,12 +33,16 @@ class AuthController extends Controller
             ?? User::where('email', $githubUser->getEmail())->first();
 
         if ($user) {
-            $user->update(['github_id' => $githubUser->getId()]);
+            $user->update([
+                'github_id' => $githubUser->getId(),
+                'avatar' => $githubUser->getAvatar(),
+            ]);
         } else {
             $user = User::create([
                 'name' => $githubUser->getName() ?? $githubUser->getNickname(),
                 'email' => $githubUser->getEmail(),
                 'github_id' => $githubUser->getId(),
+                'avatar' => $githubUser->getAvatar(),
             ]);
         }
 

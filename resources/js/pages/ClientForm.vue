@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, router, useForm } from '@inertiajs/vue3'
+import { router, useForm } from '@inertiajs/vue3'
 import ProjectPage from '@/components/ProjectPage.vue'
 import { update } from '@/wayfinder/routes/clients'
 import { index } from '@/wayfinder/routes/projects'
@@ -84,7 +84,7 @@ const close = () => router.visit(index())
       </template>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <UButton :as="Link" :href="index()" label="Cancel" color="neutral" variant="outline" />
+          <UButton :href="index()" label="Cancel" color="neutral" variant="outline" />
           <UButton label="Save" :loading="form.processing" type="submit" form="client-form" />
         </div>
       </template>

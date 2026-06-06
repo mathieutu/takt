@@ -104,8 +104,8 @@ function entryDateLabel(date: string): string {
 </script>
 
 <template>
-  <div class="flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden bg-default">
-    <main class="flex flex-1 flex-col overflow-hidden px-3 py-4 md:px-6 md:py-6">
+  <div class="flex flex-col overflow-hidden bg-default">
+    <div class="flex flex-1 flex-col overflow-hidden px-3 py-4 md:px-6 md:py-6">
       <div class="mb-4 shrink-0 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <h2 class="text-sm font-semibold text-default">Activity report</h2>
@@ -126,7 +126,7 @@ function entryDateLabel(date: string): string {
         </div>
       </div>
 
-      <div class="flex-1 min-h-0">
+      <div class="min-h-0">
         <div ref="tableScrollRef" class="overflow-auto max-h-full">
           <TimesheetGrid
             :days="days"
@@ -138,7 +138,7 @@ function entryDateLabel(date: string): string {
         </div>
       </div>
 
-      <div class="mt-auto shrink-0">
+      <div class="">
         <div class="pt-3 hidden items-center gap-5 sm:flex">
           <div class="flex items-center gap-1.5">
             <span class="h-3 w-3 rounded-sm border border-default bg-elevated" />
@@ -150,7 +150,7 @@ function entryDateLabel(date: string): string {
           <span class="text-sm font-semibold text-default">{{ formatCurrency(totalRevenue) }}</span>
         </div>
       </div>
-    </main>
+    </div>
   </div>
 
   <UModal v-model:open="activeEntry" :title="activeEntry ? entryDateLabel(activeEntry.date) : ''">
