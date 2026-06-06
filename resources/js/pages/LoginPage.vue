@@ -2,6 +2,7 @@
 import { Link } from '@inertiajs/vue3'
 import { useFlash } from '@/composables/useFlash'
 import { disabled } from '@/wayfinder/routes/login'
+import TaktLogo from '@/components/TaktLogo.vue'
 
 defineOptions({ layout: () => false })
 
@@ -17,10 +18,8 @@ useFlash()
   <UApp>
     <div class="flex min-h-screen flex-col items-center justify-center bg-default px-4">
       <div class="mb-8 flex items-center gap-2">
-        <div class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg">
-          <img src="/public/images/logo.png" class="h-full w-full object-cover" />
-        </div>
-        <span class="text-xl font-semibold tracking-tight">AssoFlow</span>
+        <TaktLogo class="h-9 w-9" />
+        <span class="text-xl font-semibold tracking-tight">Takt</span>
       </div>
 
       <UCard class="w-full max-w-sm">

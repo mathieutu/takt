@@ -7,6 +7,7 @@ import { computed } from 'vue'
 import { dashboard, login, logout, profile, timesheet } from '@/wayfinder/routes'
 import projects from '@/wayfinder/routes/projects'
 import { useFlash } from '../composables/useFlash'
+import TaktLogo from '@/components/TaktLogo.vue'
 
 const page = usePage<PageProps>()
 const user = computed(() => page.props.auth?.user)
@@ -40,8 +41,8 @@ const mobileMenuItems = computed<NavigationMenuItem[]>(() => [
     <UHeader title="AssoFlow">
       <template #title>
         <div class="flex items-center gap-2">
-          <img alt="" src="/public/images/logo.png" class="h-7 w-7 rounded-md object-cover" />
-          <span class="text-sm font-semibold">AssoFlow</span>
+          <TaktLogo class="h-7 w-7" />
+          <span class="text-sm font-semibold">Takt</span>
         </div>
       </template>
 
