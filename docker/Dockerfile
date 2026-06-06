@@ -49,14 +49,11 @@ RUN npm -g install corepack --force && corepack enable
 
 # Install Node dependencies with cache mount
 COPY --link package.json .yarnrc.yml yarn.lock .yarn ./
-RUN --mount=type=cache,target=/root/.yarn yarn install --immutable
-
-# Copy necessary files for build
 COPY --link vite.config.ts tsconfig.json ./
-COPY --link --from=back-deps /app/resources resources
+COPY --link resources resources
 
-# Build front-end assets
-RUN --mount=type=cache,target=/root/.yarn yarn build
+# Install and build in a single RUN to share the Yarn cache mount
+RUN --mount=type=cache,target=/root/.yarn yarn install --immutable && yarn build
 
 # Final stage: Combine back-end and front-end
 FROM back-deps AS back
