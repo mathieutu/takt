@@ -97,7 +97,7 @@ class ShowDashboardHandler
             'name' => $p->name,
             'data' => $months->map(fn ($m) => $p->timesheetEntries
                 ->filter(fn ($e) => $e->date->year === $m->year && $e->date->month === $m->month)
-                ->sum(fn ($e) => (int) round($e->coverage / 100 * $p->daily_rate))
+                ->sum('coverage')
             )->values()->all(),
         ])->values()->all();
 

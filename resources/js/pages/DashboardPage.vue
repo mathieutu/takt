@@ -185,12 +185,15 @@ const barChartOptions = {
       },
     },
     tooltip: {
+      filter: (ctx: TooltipItem<'bar'>) => ctx.dataset.label === 'Billed'
+        ? (props.chart.billed[ctx.dataIndex] ?? 0) > 0
+        : ctx.parsed.y > 0,
       callbacks: {
         label: (ctx: TooltipItem<'bar'>) => {
-          const rawValue = ctx.dataset.label === 'Billed (cumulative)'
-            ? props.chart.billed[ctx.dataIndex]!
-            : ctx.parsed.y! * 100
-          return ` ${ctx.dataset.label} : ${formatCurrency(rawValue)}`
+          if (ctx.dataset.label === 'Billed') {
+            return ` Billed : ${formatCurrency(props.chart.billed[ctx.dataIndex]!)}`
+          }
+          return ` ${ctx.dataset.label} : ${formatDays(ctx.parsed.y)}`
         },
       },
     },
@@ -205,7 +208,7 @@ const barChartOptions = {
         font: { size: 11 },
         callback: (v: number | string) => {
           const n = Number(v)
-          return n === 0 ? '0' : n >= 1000 ? `${n / 1000}k€` : `${n}€`
+          return n === 0 ? '0' : `${n}d`
         },
       },
     },
