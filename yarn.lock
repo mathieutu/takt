@@ -6625,6 +6625,7 @@ __metadata:
     "@tailwindcss/vite": "npm:^4.3.0"
     "@vitejs/plugin-vue": "npm:^6.0.7"
     "@vue/tsconfig": "npm:^0.9.1"
+    "@vueuse/core": "npm:^14.3.0"
     axios: "npm:^1.17.0"
     chart.js: "npm:^4.5.1"
     concurrently: "npm:^10.0.3"
