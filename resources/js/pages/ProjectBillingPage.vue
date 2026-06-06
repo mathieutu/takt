@@ -37,6 +37,7 @@ type ProjectWithBilling = {
   deleted_at: string | null,
   client: { name: string },
   months: MonthRow[],
+  months_with_entries_count: number,
   outstanding: OutstandingInvoice[],
 }
 
@@ -88,7 +89,7 @@ function projectTotals(project: ProjectWithBilling) {
   }
 
   const totalBudgetAllocated = project.max_month_budget !== null
-    ? project.max_month_budget * project.months.length
+    ? project.max_month_budget * project.months_with_entries_count
     : null
 
   return {

@@ -4,7 +4,6 @@ namespace App\Http\Concerns;
 
 use App\Models\Invoice;
 use App\Models\Project;
-use Carbon\CarbonPeriod;
 
 trait BuildsProjectBillingEntry
 {
@@ -17,14 +16,7 @@ trait BuildsProjectBillingEntry
         $timesheetMonths = $project->timesheetEntries
             ->groupBy(fn ($e) => $e->date->format('Y-m'));
 
-        $period = CarbonPeriod::create(
-            $project->created_at->copy()->startOfMonth(),
-            '1 month',
-            now()->startOfMonth()
-        );
-
-        $allMonths = collect($period)
-            ->map(fn ($d) => $d->format('Y-m'))
+        $allMonths = $timesheetMonths->keys()
             ->merge($invoicesByMonth->keys())
             ->unique()
             ->sort()
@@ -69,6 +61,7 @@ trait BuildsProjectBillingEntry
             'deleted_at' => $project->deleted_at?->toDateTimeString(),
             'client' => ['name' => $clientNameOverride ?? $project->client->name],
             'months' => $months->values(),
+            'months_with_entries_count' => $timesheetMonths->count(),
             'outstanding' => $outstanding,
         ];
     }
