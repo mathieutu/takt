@@ -27,10 +27,13 @@ const { holidays, days, projects } = defineProps<{
 const emit = defineEmits<{
   cellClick: [projectId: string, date: string],
   actionClick: [projectId: string, date: string],
+  setCoverage: [projectId: string, date: string, coverage: number],
+  nextMonth: [],
+  prevMonth: [],
 }>()
 
 const tableRef = useTemplateRef<HTMLTableElement>('table-ref')
-const { handleCellKeydown } = useTimesheetKeyboard(tableRef, () => days, () => projects, emit)
+useTimesheetKeyboard(tableRef, () => days, () => projects, emit)
 
 function getCellClasses(project: GridProject, day: Day): string[] {
   const coverage = project.entries[day.date]?.coverage ?? 0
@@ -138,10 +141,14 @@ function getCellClasses(project: GridProject, day: Day): string[] {
           v-for="(day, index) in days"
           :key="day.date"
           tabindex="0"
+          :data-row="projectIndex"
+          :data-col="index"
+          :data-project-id="project.id"
+          :data-date="day.date"
+          :data-deleted="project.deleted_at ? true : undefined"
           class="group/cell h-13 relative border-b border-r border-default transition-colors select-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/50"
           :class="[getCellClasses(project, day), days[index + 1]?.date === TODAY ? 'border-r-primary/50' : '']"
           @click="!project.deleted_at ? emit('cellClick', project.id, day.date) : undefined"
-          @keydown="handleCellKeydown($event, project, day, projectIndex, index)"
         >
           <span
             v-if="project.entries[day.date]?.coverage"

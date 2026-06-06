@@ -48,5 +48,9 @@ export const coverageLabel = (coverage: number): string => {
   if (coverage >= 33) return '⅓'
   if (coverage >= 25) return '¼'
   if (coverage >= 20) return '⅕'
-  return '⅐'
+  if (coverage >= 17) return '⅙'
+  if (coverage >= 14) return '⅐'
+  if (coverage >= 13) return '⅛'
+  if (coverage >= 11) return '⅑'
+  return '⅑'
 }

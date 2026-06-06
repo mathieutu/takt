@@ -66,13 +66,12 @@ const projectsWithStats = computed(() =>
 const totalDays = computed(() => projectsWithStats.value.reduce((sum, { days }) => sum + days, 0))
 const totalRevenue = computed(() => projectsWithStats.value.reduce((sum, { revenue }) => sum + revenue, 0))
 
-const onCellClick = (projectId: string, date: string) => {
+const syncCoverage = (projectId: string, date: string, coverage: number) => {
   const project = props.projects.find(p => p.id === projectId)!
   const existing = project.entries[date] ?? null
-  const newCoverage = !existing || existing.coverage === 0 ? 100 : existing.coverage > 50 ? 50 : 0
 
   return router.visit(syncEntries({ project }), {
-    data: { [date]: { coverage: newCoverage } },
+    data: { [date]: { coverage } },
     only: ['projects'],
     preserveState: true,
     preserveScroll: true,
@@ -83,7 +82,7 @@ const onCellClick = (projectId: string, date: string) => {
         entries: {
           ...p.entries,
           [date]: {
-            coverage: newCoverage,
+            coverage,
             title: existing?.title ?? '',
             description: existing?.description ?? '',
           },
@@ -91,6 +90,13 @@ const onCellClick = (projectId: string, date: string) => {
       }),
     }),
   })
+}
+
+const onCellClick = (projectId: string, date: string) => {
+  const project = props.projects.find(p => p.id === projectId)!
+  const existing = project.entries[date] ?? null
+  const newCoverage = !existing || existing.coverage === 0 ? 100 : existing.coverage > 50 ? 50 : 0
+  return syncCoverage(projectId, date, newCoverage)
 }
 
 const openEntry = (projectId: string, date: string) => {
@@ -137,13 +143,13 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
           </span>
         </div>
         <div class="flex shrink-0 items-center gap-2">
-          <UTooltip text="Previous month">
+          <UTooltip text="Previous month" kbds="p">
             <UButton :to="urls.prevMonth" icon="i-lucide-chevron-left" color="neutral" variant="ghost" size="xs" />
           </UTooltip>
           <span class="min-w-35 text-center text-sm font-medium text-default">
             {{ formatMonthName(current.year, current.month) }} {{ current.year }}
           </span>
-          <UTooltip text="Next month">
+          <UTooltip text="Next month" kbds="n">
             <UButton :to="urls.nextMonth" icon="i-lucide-chevron-right" color="neutral" variant="ghost" size="xs" />
           </UTooltip>
         </div>
@@ -157,16 +163,39 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
             :projects="projectsWithStats"
             @cellClick="onCellClick"
             @actionClick="openEntry"
+            @setCoverage="syncCoverage"
+            @nextMonth="router.get(urls.nextMonth)"
+            @prevMonth="router.get(urls.prevMonth)"
           />
         </div>
       </div>
 
       <div class="">
-        <div class="pt-3 hidden items-center gap-5 sm:flex">
-          <div class="flex items-center gap-1.5">
-            <span class="h-3 w-3 rounded-sm border border-default bg-elevated" />
-            <span class="text-xs text-muted">Weekends and holidays</span>
+        <div class="pt-3 hidden items-center justify-between sm:flex">
+          <div class="flex items-center gap-5">
+            <div class="flex items-center gap-1.5">
+              <span class="h-3 w-3 rounded-sm border border-default bg-elevated" />
+              <span class="text-xs text-muted">Weekends and holidays</span>
+            </div>
           </div>
+          <UPopover :content="{ align: 'end' }">
+            <div class="flex items-center gap-1.5 text-xs text-muted cursor-pointer select-none">
+              <UButton icon="i-lucide-keyboard" label="Keyboard shortcuts" size="sm" variant="ghost" color="neutral" />
+            </div>
+            <template #content>
+              <div class="p-3 flex flex-col gap-2 text-xs min-w-56">
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Navigate</span><span class="flex gap-1"><UKbd>←</UKbd><UKbd>→</UKbd><UKbd>↑</UKbd><UKbd>↓</UKbd></span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Previous / next month</span><span class="flex gap-1"><UKbd>p</UKbd><UKbd>n</UKbd></span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Jump week</span><span class="flex gap-1"><UKbd>⌥</UKbd><UKbd>←</UKbd><UKbd>→</UKbd></span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Jump to edge</span><span class="flex gap-1"><UKbd>⌘</UKbd><UKbd>←</UKbd><UKbd>→</UKbd><UKbd>↑</UKbd><UKbd>↓</UKbd></span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Row start / end</span><span class="flex gap-1"><UKbd>Home</UKbd><UKbd>End</UKbd></span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Jump to corner</span><span class="flex gap-1 items-center"><UKbd>⌘</UKbd><UKbd>Home</UKbd><span class="text-muted">/</span><UKbd>⌘</UKbd><UKbd>End</UKbd></span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Toggle coverage</span><UKbd>Space</UKbd></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Set coverage (1/n)</span><span class="flex gap-1"><UKbd>0</UKbd><span class="text-muted">–</span><UKbd>9</UKbd></span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Edit entry</span><UKbd>⏎</UKbd></div>
+              </div>
+            </template>
+          </UPopover>
         </div>
         <div class="pt-2 flex items-center justify-between border-t border-default md:hidden">
           <span class="text-sm text-muted">{{ formatDays(totalDays) }} logged</span>

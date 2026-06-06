@@ -1,5 +1,5 @@
 import type { Day } from '@/utils/date.ts'
-import { onMounted, type TemplateRef } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref, type TemplateRef, watch } from 'vue'
 import { useGridNavigation } from '@/composables/useGridNavigation.ts'
 import { TODAY } from '@/utils/date.ts'
 
@@ -11,6 +11,9 @@ type Project = {
 type EmitFn = {
   (event: 'cellClick', projectId: string, date: string): void,
   (event: 'actionClick', projectId: string, date: string): void,
+  (event: 'setCoverage', projectId: string, date: string, coverage: number): void,
+  (event: 'nextMonth'): void,
+  (event: 'prevMonth'): void,
 }
 
 export function useTimesheetKeyboard(
@@ -20,15 +23,35 @@ export function useTimesheetKeyboard(
   emit: EmitFn,
 ) {
   const { resolveAction } = useGridNavigation()
+  const pendingFocus = ref<'first' | 'last' | null>(null)
 
   onMounted(() => {
     const todayIndex = getDays().findIndex(d => d.date === TODAY)
-    if (todayIndex === -1) return
+    if (todayIndex !== -1) {
+      const firstRow = tableRef.value?.querySelector('tbody tr')
+      const cell = firstRow?.querySelectorAll('td')[todayIndex + 1] as HTMLElement
+      cell?.focus()
+    }
 
-    const firstRow = tableRef.value?.querySelector('tbody tr')
-    const cell = firstRow?.querySelectorAll('td')[todayIndex + 1] as HTMLElement
-    cell?.focus()
+    window.addEventListener('keydown', handleWindowKeydown)
   })
+
+  onUnmounted(() => {
+    window.removeEventListener('keydown', handleWindowKeydown)
+  })
+
+  watch(() => getDays(), async () => {
+    if (!pendingFocus.value) return
+    await nextTick()
+    focusCell(0, pendingFocus.value === 'first' ? 0 : getDays().length - 1)
+    pendingFocus.value = null
+  })
+
+  function getActiveCell(): HTMLElement | null {
+    const el = document.activeElement as HTMLElement | null
+    if (el?.tagName === 'TD' && tableRef.value?.contains(el)) return el
+    return null
+  }
 
   function focusCell(rowIndex: number, colIndex: number) {
     const rows = tableRef.value?.querySelectorAll('tbody tr')
@@ -37,6 +60,12 @@ export function useTimesheetKeyboard(
     const cell = rows[rowIndex].querySelectorAll('td')[colIndex + 1] as HTMLElement
     cell?.focus()
     cell?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  }
+
+  function navigateMonth(direction: 'next' | 'prev') {
+    pendingFocus.value = direction === 'next' ? 'first' : 'last'
+    if (direction === 'next') emit('nextMonth')
+    else emit('prevMonth')
   }
 
   function resolveCoords(action: string, rowIndex: number, colIndex: number): [number, number] | null {
@@ -59,27 +88,82 @@ export function useTimesheetKeyboard(
     return null
   }
 
-  function handleCellKeydown(event: KeyboardEvent, project: Project, day: Day, rowIndex: number, colIndex: number) {
+  function handleWindowKeydown(event: KeyboardEvent) {
+    const target = event.target as HTMLElement
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable) return
+
+    const digit = Number.parseInt(event.key)
+    if (digit >= 0 && digit <= 9) {
+      const activeCell = getActiveCell()
+      if (!activeCell || activeCell.dataset.deleted) return
+      event.preventDefault()
+      emit('setCoverage', activeCell.dataset.projectId!, activeCell.dataset.date!, digit === 0 ? 0 : Math.round(100 / digit))
+      return
+    }
+
     const action = resolveAction(event)
     if (!action) return
 
-    event.preventDefault()
+    if (action === 'next') {
+      event.preventDefault()
+      navigateMonth('next')
+      return
+    }
+
+    if (action === 'prev') {
+      event.preventDefault()
+      navigateMonth('prev')
+      return
+    }
+
+    const activeCell = getActiveCell()
+    const rowIndex = Number.parseInt(activeCell?.dataset.row ?? '0')
+    const colIndex = Number.parseInt(activeCell?.dataset.col ?? '0')
 
     if (action === 'main') {
-      if (!project.deleted_at) emit('cellClick', project.id, day.date)
+      if (!activeCell || activeCell.dataset.deleted) return
+      event.preventDefault()
+      emit('cellClick', activeCell.dataset.projectId!, activeCell.dataset.date!)
       return
     }
 
     if (action === 'details') {
-      emit('actionClick', project.id, day.date)
+      if (!activeCell) return
+      event.preventDefault()
+      emit('actionClick', activeCell.dataset.projectId!, activeCell.dataset.date!)
       return
     }
 
+    // Arrow boundary → month navigation (only when a cell is focused)
+    if (action === 'move-right' && activeCell && colIndex === getDays().length - 1) {
+      event.preventDefault()
+      navigateMonth('next')
+      return
+    }
+
+    if (action === 'move-left' && activeCell && colIndex === 0) {
+      event.preventDefault()
+      navigateMonth('prev')
+      return
+    }
+
+    // Other navigation: if no cell focused, enter from the logical edge
+    if (!activeCell) {
+      event.preventDefault()
+      const lastCol = getDays().length - 1
+      const lastRow = getProjects().length - 1
+      const todayIndex = getDays().findIndex(d => d.date === TODAY)
+      const isLeftward = action === 'move-left' || action === 'step-left' || action === 'jump-left' || action === 'jump-top-left' || action === 'jump-bottom-right'
+      const isUpward = action === 'move-up' || action === 'jump-up'
+      focusCell(isUpward ? lastRow : 0, isLeftward ? lastCol : (todayIndex !== -1 ? todayIndex : 0))
+      return
+    }
+
+    event.preventDefault()
     const coords = resolveCoords(action, rowIndex, colIndex)
     if (!coords) return
-
     focusCell(...coords)
   }
 
-  return { tableRef, handleCellKeydown }
+  return { tableRef }
 }

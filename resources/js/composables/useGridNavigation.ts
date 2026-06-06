@@ -5,6 +5,7 @@ export type GridNavAction =
   | 'jump-up' | 'jump-down' | 'jump-left' | 'jump-right' // Ctrl/Cmd + Arrow
   | 'jump-top-left' | 'jump-bottom-right' // Ctrl/Cmd + Home / End
   | 'step-left' | 'step-right' // Alt + Arrow
+  | 'next' | 'prev' // n / p
 
 export function useGridNavigation() {
   function resolveAction(event: KeyboardEvent): GridNavAction | null {
@@ -13,6 +14,8 @@ export function useGridNavigation() {
 
     if (key === ' ') return 'main'
     if (key === 'Enter') return 'details'
+    if (key === 'n') return 'next'
+    if (key === 'p') return 'prev'
 
     if (key === 'Home') return jump ? 'jump-top-left' : 'jump-left'
     if (key === 'End') return jump ? 'jump-bottom-right' : 'jump-right'
