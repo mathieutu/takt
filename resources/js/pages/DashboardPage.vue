@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  BarController,
   BarElement,
   CategoryScale,
   type ChartData,
@@ -7,6 +8,7 @@ import {
   Chart as ChartJS,
   Filler,
   LinearScale,
+  LineController,
   LineElement,
   PointElement,
   Tooltip,
@@ -21,7 +23,7 @@ import { show as showBilling } from '@/wayfinder/routes/projects/billing'
 
 const props = defineProps<DashboardProps>()
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Tooltip, Filler)
+ChartJS.register(BarController, CategoryScale, LinearScale, BarElement, LineController, LineElement, PointElement, Tooltip, Filler)
 
 type DashboardProps = {
   kpis: {
