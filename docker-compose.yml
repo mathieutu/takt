@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:18
+    volumes:
+      - db_data:/var/lib/postgresql
+    ports:
+      - '${DB_PORT:-33740}:5432'
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-takt}
+      POSTGRES_DB: ${DB_DATABASE:-takt}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-}
+      POSTGRES_HOST_AUTH_METHOD: trust
+    configs:
+      - source: init_testing_db
+        target: /docker-entrypoint-initdb.d/init.sql
+
+configs:
+  init_testing_db:
+    content: CREATE DATABASE testing;
+
+volumes:
+  db_data:

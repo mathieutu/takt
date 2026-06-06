@@ -61,6 +61,7 @@
     ],
     "dev": [
       "Composer\\Config::disableProcessTimeout",
+      "docker compose -f docker-compose.yml up -d",
       "XDEBUG_MODE=debug php artisan serve --port 8084 --ansi"
     ],
     "test": [
