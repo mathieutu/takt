@@ -6,7 +6,8 @@
       "Bash(rtk read *)",
       "Bash(rtk grep *)",
       "Skill(inertia-vue-development)",
-      "Bash(rtk wc *)"
+      "Bash(rtk wc *)",
+      "Bash(vendor/bin/pint *)"
     ]
   },
   "enableAllProjectMcpServers": true,

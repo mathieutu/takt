@@ -66,8 +66,8 @@ type DashboardProps = {
     maxMonthBudget: number | null,
     maxTotalBudget: number | null,
     theoreticalBudget: number,
-    cumulativeWorked: number,
-    thisMonthWorked: number,
+    workedDaysCount: number,
+    monthDaysCount: number,
     deletedAt: string | null,
     lastActivity: string | null,
     unbilled: number,
@@ -97,33 +97,32 @@ const withAlpha = (color: string, alpha: number): string => color.replace(/\)$/,
 // ── Computed ──────────────────────────────────────────────────────────────────
 
 const projectsWithStats = computed(() => {
-  const totalDays = props.projects.reduce(
-    (sum, p) => sum + (p.dailyRate > 0 ? p.cumulativeWorked / p.dailyRate : 0),
-    0,
-  )
+  const totalDays = props.projects.reduce((sum, p) => sum + p.workedDaysCount, 0)
 
   return props.projects
     .map(p => {
+      const workedAmount = p.dailyRate * p.workedDaysCount
+      const monthAmount = p.dailyRate * p.monthDaysCount
       const cumulativePercent = p.theoreticalBudget
-        ? Math.round((p.cumulativeWorked / p.theoreticalBudget) * 100)
+        ? Math.round((workedAmount / p.theoreticalBudget) * 100)
         : 0
       const monthlyPercent = p.maxMonthBudget
-        ? Math.round((p.thisMonthWorked / p.maxMonthBudget) * 100)
+        ? Math.round((monthAmount / p.maxMonthBudget) * 100)
         : 0
       const isMonthOverrun = monthlyPercent > 100
       const isMonthWarning = !isMonthOverrun && monthlyPercent > props.monthAdvancement * 100 * 1.1
-      const daysWorked = p.dailyRate ? Math.round(p.cumulativeWorked / p.dailyRate) : 0
-      const timeShare = totalDays ? Math.round((daysWorked / totalDays) * 100) : 0
+      const timeShare = totalDays ? Math.round((p.workedDaysCount / totalDays) * 100) : 0
       const daysSince = p.lastActivity
         ? Math.floor((now.getTime() - new Date(p.lastActivity).getTime()) / 86_400_000)
         : null
       return {
         ...p,
+        workedAmount,
+        monthAmount,
         cumulativePercent,
         monthlyPercent,
         isMonthOverrun,
         isMonthWarning,
-        daysWorked,
         timeShare,
         daysSince,
       }
@@ -384,10 +383,12 @@ const progressTextClass = (percent: number) => {
               <div class="grid gap-1.5">
                 <div class="flex items-center justify-between text-xs">
                   <div class="flex items-baseline gap-1 ">
-                    <span class="text-muted">{{ formatCurrency(p.dailyRate) }}/d ×</span>
-                    <span class="font-semibold">{{ p.daysWorked }}d </span>
+                    <template v-if="p.dailyRate > 0">
+                      <span class="text-muted">{{ formatCurrency(p.dailyRate) }}/d ×</span>
+                    </template>
+                    <span class="font-semibold">{{ formatDays(p.workedDaysCount) }} </span>
                   </div>
-                  <span>=</span>
+                  <span v-if="p.dailyRate > 0">=</span>
                 </div>
                 <div class="h-1.5 w-full overflow-hidden rounded-full bg-elevated">
                   <div
@@ -402,9 +403,9 @@ const progressTextClass = (percent: number) => {
 
               <div class="grid gap-1.5">
                 <div class="flex justify-between text-xs">
-                  <span class="flex items-baseline gap-1">
+                  <span v-if="p.workedAmount > 0" class="flex items-baseline gap-1">
                     <span class="font-semibold">
-                      {{ formatCurrency(p.cumulativeWorked) }}
+                      {{ formatCurrency(p.workedAmount) }}
                     </span>
                     <span class="text-muted">worked</span>
                   </span>
@@ -423,6 +424,7 @@ const progressTextClass = (percent: number) => {
                   />
                 </div>
                 <div
+                  v-if="p.monthAmount > 0"
                   class="flex items-center gap-1 text-xs"
                   :class="p.isMonthOverrun ? 'text-error' : p.isMonthWarning ? 'text-warning' : 'text-muted'"
                 >
@@ -432,7 +434,7 @@ const progressTextClass = (percent: number) => {
                     class="size-3 shrink-0"
                   />
                   <span>
-                    <span class="font-semibold" :class="!p.isMonthOverrun && !p.isMonthWarning ? 'text-default' : '' ">{{ formatCurrency(p.thisMonthWorked) }}</span> this month
+                    <span class="font-semibold" :class="!p.isMonthOverrun && !p.isMonthWarning ? 'text-default' : '' ">{{ formatCurrency(p.monthAmount) }}</span> this month
                     <span v-if="p.isMonthOverrun || p.isMonthWarning">({{ p.monthlyPercent }}%)</span>
                   </span>
                 </div>

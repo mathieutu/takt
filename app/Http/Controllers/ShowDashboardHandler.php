@@ -107,10 +107,14 @@ class ShowDashboardHandler
         )->values()->all();
 
         $projectsData = $projects->map(function ($p) use ($now, $currentMonthStart) {
-            $cumulativeWorked = $p->timesheetEntries
-                ->sum(fn ($e) => (int) round($e->coverage / 100 * $p->daily_rate));
-            $thisMonthWorked = $p->timesheetEntries
-                ->filter(fn ($e) => $e->date->year === $now->year && $e->date->month === $now->month)
+            $workedDaysCount = round($p->timesheetEntries->sum('coverage') / 100, 2);
+            $monthDaysCount = round(
+                $p->timesheetEntries
+                    ->filter(fn ($e) => $e->date->year === $now->year && $e->date->month === $now->month)
+                    ->sum('coverage') / 100,
+                2
+            );
+            $workedAmount = $p->timesheetEntries
                 ->sum(fn ($e) => (int) round($e->coverage / 100 * $p->daily_rate));
             $firstEntry = $p->timesheetEntries->sortBy('date')->first();
             $projectStart = $firstEntry ? $firstEntry->date : $p->created_at;
@@ -130,11 +134,11 @@ class ShowDashboardHandler
                 'maxMonthBudget' => $p->max_month_budget,
                 'maxTotalBudget' => $p->max_total_budget,
                 'theoreticalBudget' => $theoreticalBudget,
-                'cumulativeWorked' => $cumulativeWorked,
-                'thisMonthWorked' => $thisMonthWorked,
+                'workedDaysCount' => $workedDaysCount,
+                'monthDaysCount' => $monthDaysCount,
                 'deletedAt' => $p->deleted_at?->toDateTimeString(),
                 'lastActivity' => $p->timesheetEntries->sortByDesc('date')->first()?->date->toDateString(),
-                'unbilled' => max(0, $cumulativeWorked - $p->invoices->sum('amount')),
+                'unbilled' => max(0, $workedAmount - $p->invoices->sum('amount')),
             ];
         })->values()->all();
 
