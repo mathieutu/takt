@@ -63,22 +63,21 @@ const deleteProject = (project: Project) => confirm({
   onConfirm: () => router.visit(projectsRoutes.destroy(project), { preserveScroll: true }),
 })
 
-const projectMenuItems = (project: Project): DropdownMenuItem[][] => {
-  if (project.deleted_at) {
-    return [
-      [{ label: 'Restore', icon: 'i-lucide-rotate-ccw', href: projectsRoutes.restore(project) }],
-      [{ label: 'Delete permanently', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => deleteProject(project) }],
-    ]
-  }
-
-  return [
-    [
-      { label: 'Edit', icon: 'i-lucide-pencil', href: projectsRoutes.edit(project), only: ['modal'] },
-      { label: 'Duplicate', icon: 'i-lucide-copy', href: projectsRoutes.duplicate(project) },
-    ],
-    [{ label: 'Archive', icon: 'i-lucide-archive', color: 'error' as const, onSelect: () => deleteProject(project) }],
-  ]
-}
+const projectMenuItems = (project: Project): DropdownMenuItem[][] => [
+  [
+    { label: 'Edit', icon: 'i-lucide-pencil', href: projectsRoutes.edit(project), only: ['modal'] },
+    { label: 'Duplicate', icon: 'i-lucide-copy', href: projectsRoutes.duplicate(project) },
+  ],
+  project.deleted_at ? [
+    { label: 'Restore', icon: 'i-lucide-rotate-ccw', href: projectsRoutes.restore(project) },
+    {
+      label: 'Delete permanently',
+      icon: 'i-lucide-trash-2',
+      color: 'error' as const,
+      onSelect: () => deleteProject(project),
+    },
+  ] : [{ label: 'Archive', icon: 'i-lucide-archive', color: 'error' as const, onSelect: () => deleteProject(project) }],
+]
 
 const deleteClient = (client: Client) => confirm({
   title: client.deleted_at ? `Delete "${client.name}"?` : `Archive "${client.name}"?`,

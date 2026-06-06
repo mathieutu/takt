@@ -109,6 +109,9 @@ class ProjectController
                     'daily_rate',
                     'max_month_budget',
                     'client_id',
+                ])->merge([
+                    'created_at' => $project->created_at?->toDateString(),
+                    'deleted_at' => $project->deleted_at?->toDateString(),
                 ]),
                 'clients' => $request->user()->clients()->get()->map->export(['id', 'name', 'daily_rate']),
             ],
@@ -123,6 +126,8 @@ class ProjectController
             'daily_rate' => ['integer', 'min:1'],
             'max_month_budget' => ['nullable', 'integer', 'min:1'],
             'client_id' => ['required', Rule::exists('clients', 'id')->where('user_id', $request->user()->id)],
+            'created_at' => ['required', 'date'],
+            'deleted_at' => ['nullable', 'date'],
         ]);
 
         $project->update($data);

@@ -17,6 +17,8 @@ type ProjectFormData = {
   daily_rate: number | null,
   max_month_budget: number | null,
   client_id: string,
+  created_at: string,
+  deleted_at: string | null,
 }
 
 type BackgroundClient = {
@@ -64,6 +66,8 @@ const form = useForm({
   client_id: modal.project?.client_id ?? modal.clients[0]?.id ?? null,
   client_name: '',
   client_rate: null as unknown as number,
+  created_at: modal.project?.created_at ?? '',
+  deleted_at: modal.project?.deleted_at ?? '',
 })
 
 watch(() => form.client_id, clientId => {
@@ -90,7 +94,7 @@ const clientSelectItems = computed(() => [
 ])
 
 const submit = () => form.submit(modal.project ? update(modal.project) : store())
-const close = () => router.visit(index())
+const close = () => router.visit(index(), { only: ['modal'] })
 </script>
 
 <template>
@@ -166,6 +170,16 @@ const close = () => router.visit(index())
               @update:modelValue="(val: number) => form.max_month_budget = Math.round(val * 100)"
             />
           </UFormField>
+
+          <template v-if="modal.project">
+            <UFormField label="Starts at" required :error="form.errors.created_at">
+              <UInput v-model="form.created_at" type="date" class="w-full" />
+            </UFormField>
+
+            <UFormField label="Ended at" :error="form.errors.deleted_at">
+              <UInput v-model="form.deleted_at" type="date" class="w-full" />
+            </UFormField>
+          </template>
         </UForm>
       </template>
       <template #footer>
