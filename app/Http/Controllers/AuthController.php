@@ -10,7 +10,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Socialite\Facades\Socialite;
 
-class AuthController extends Controller
+class AuthController
 {
     public function show(): Response
     {

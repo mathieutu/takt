@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Contracts\HasUser;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Znck\Eloquent\Relations\BelongsToThrough;
 
 /**
  * @property string $id
@@ -17,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property-read Project|null $project
+ * @property-read User|null $user
  *
  * @method static Builder<static>|TimesheetEntry inMonth(\Carbon\CarbonInterface $date)
  * @method static Builder<static>|TimesheetEntry newModelQuery()
@@ -33,7 +36,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @mixin \Eloquent
  */
-class TimesheetEntry extends Model
+class TimesheetEntry extends Model implements HasUser
 {
     protected function casts(): array
     {
@@ -41,6 +44,12 @@ class TimesheetEntry extends Model
             'date' => 'date:Y-m-d',
             'coverage' => 'integer',
         ];
+    }
+
+    public function user(): BelongsToThrough
+    {
+        return $this->belongsToThrough(User::class, [Project::class, Client::class])
+            ->withTrashed(['projects.deleted_at', 'clients.deleted_at']);
     }
 
     public function project(): BelongsTo

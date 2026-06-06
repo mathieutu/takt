@@ -5,7 +5,7 @@ import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOpt
 
 /**
  * @see \App\Http\Controllers\BillingController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:61
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:55
  * @route "/invoices/{invoice}"
  */
 export const update = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
@@ -20,7 +20,7 @@ update.definition = {
 
 /**
  * @see \App\Http\Controllers\BillingController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:61
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:55
  * @route "/invoices/{invoice}"
  */
 update.url = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -51,7 +51,7 @@ update.url = (args: { invoice: string | { id: string } } | [ invoice: string | {
 
 /**
  * @see \App\Http\Controllers\BillingController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:61
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:55
  * @route "/invoices/{invoice}"
  */
 update.put = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
@@ -68,7 +68,7 @@ update.put = (args: { invoice: string | { id: string } } | [ invoice: string | {
 
 /**
  * @see \App\Http\Controllers\BillingController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:76
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:68
  * @route "/invoices/{invoice}"
  */
 export const destroy = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
@@ -83,7 +83,7 @@ destroy.definition = {
 
 /**
  * @see \App\Http\Controllers\BillingController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:76
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:68
  * @route "/invoices/{invoice}"
  */
 destroy.url = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -114,7 +114,7 @@ destroy.url = (args: { invoice: string | { id: string } } | [ invoice: string | 
 
 /**
  * @see \App\Http\Controllers\BillingController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:76
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:68
  * @route "/invoices/{invoice}"
  */
 destroy.delete = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({

@@ -10,7 +10,7 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class ProjectController extends Controller
+class ProjectController
 {
     use BuildsProjectsPageProps;
 
@@ -97,8 +97,6 @@ class ProjectController extends Controller
 
     public function edit(Request $request, Project $project): Response
     {
-        $this->authorize('update', $project);
-
         return Inertia::render('ProjectForm', [
             'page' => $this->projectsPageProps($request),
             'modal' => [
@@ -117,8 +115,6 @@ class ProjectController extends Controller
 
     public function update(Request $request, Project $project): RedirectResponse
     {
-        $this->authorize('update', $project);
-
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:255'],
@@ -136,8 +132,6 @@ class ProjectController extends Controller
 
     public function destroy(Project $project, Request $request): RedirectResponse
     {
-        $this->authorize('delete', $project);
-
         if ($project->deleted_at) {
             if ($project->timesheetEntries()->exists() || $project->invoices()->exists()) {
                 return redirect()
@@ -161,8 +155,6 @@ class ProjectController extends Controller
 
     public function restore(Project $project): RedirectResponse
     {
-        $this->authorize('restore', $project);
-
         $project->restore();
         $project->client->restore();
 

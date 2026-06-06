@@ -8,11 +8,11 @@ use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class UserController extends Controller
+class UserController
 {
-    public function edit(): Response
+    public function edit(Request $request): Response
     {
-        $user = Auth::user();
+        $user = $request->user();
 
         return Inertia::render('ProfilePage', [
             'user' => [
@@ -30,7 +30,7 @@ class UserController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        Auth::user()->update($validated);
+        $request->user()->update($validated);
 
         return redirect()
             ->route('profile')
@@ -39,7 +39,7 @@ class UserController extends Controller
 
     public function destroy(Request $request): RedirectResponse
     {
-        Auth::user()->delete();
+        $request->user()->delete();
 
         Auth::logout();
         $request->session()->invalidate();

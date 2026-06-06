@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Contracts\HasUser;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Znck\Eloquent\Relations\BelongsToThrough;
 
 /**
  * @property string $id
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property-read Project|null $project
+ * @property-read User|null $user
  *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invoice newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invoice newQuery()
@@ -28,7 +31,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @mixin \Eloquent
  */
-class Invoice extends Model
+class Invoice extends Model implements HasUser
 {
     protected function casts(): array
     {
@@ -36,6 +39,12 @@ class Invoice extends Model
             'amount' => 'integer',
             'paid_at' => 'date',
         ];
+    }
+
+    public function user(): BelongsToThrough
+    {
+        return $this->belongsToThrough(User::class, [Project::class, Client::class])
+            ->withTrashed(['projects.deleted_at', 'clients.deleted_at']);
     }
 
     public function project(): BelongsTo

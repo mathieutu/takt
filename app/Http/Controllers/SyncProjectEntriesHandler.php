@@ -2,18 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\SyncTimesheetEntriesRequest;
 use App\Models\Project;
 use App\Models\TimesheetEntry;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class SyncProjectEntriesHandler
 {
-    public function __invoke(SyncTimesheetEntriesRequest $request, Project $project): RedirectResponse
+    public function __invoke(Request $request, Project $project): RedirectResponse
     {
-        abort_unless($request->user()->projects()->whereKey($project->id)->exists(), 403);
+        $entries = $request->validate([
+            '*.coverage' => ['required', 'integer', 'between:0,100'],
+            '*.title' => ['nullable', 'string'],
+            '*.description' => ['nullable', 'string'],
+        ]);
 
-        foreach ($request->validated() as $date => $data) {
+        foreach ($entries as $date => $data) {
             TimesheetEntry::updateOrCreate(
                 ['project_id' => $project->id, 'date' => $date],
                 $data,

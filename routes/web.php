@@ -10,6 +10,7 @@ use App\Http\Controllers\SharedController;
 use App\Http\Controllers\SyncProjectEntriesHandler;
 use App\Http\Controllers\TimesheetHandler;
 use App\Http\Controllers\UserController;
+use App\Http\Middleware\EnsureUserOwnsResource;
 
 Route::middleware('guest')->group(function () {
     Route::get('login', [AuthController::class, 'show'])->name('login');
@@ -22,7 +23,7 @@ Route::middleware('guest')->group(function () {
     }
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
     Route::get('logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::get('/', DashboardController::class)->name('dashboard');

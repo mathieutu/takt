@@ -3,21 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Http\Concerns\BuildsProjectsPageProps;
-use App\Http\Requests\UpdateClientRequest;
 use App\Models\Client;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class ClientController extends Controller
+class ClientController
 {
     use BuildsProjectsPageProps;
 
     public function edit(Request $request, Client $client): Response
     {
-        $this->authorize('update', $client);
-
         return Inertia::render('ClientForm', [
             'page' => $this->projectsPageProps($request),
             'modal' => [
@@ -30,19 +27,20 @@ class ClientController extends Controller
         ]);
     }
 
-    public function update(UpdateClientRequest $request, Client $client): RedirectResponse
+    public function update(Request $request, Client $client): RedirectResponse
     {
-        $this->authorize('update', $client);
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'daily_rate' => ['required', 'integer', 'min:0'],
+        ]);
 
-        $client->update($request->validated());
+        $client->update($data);
 
         return redirect()->route('projects.index')->with('success', 'Client successfully updated.');
     }
 
     public function restore(Client $client): RedirectResponse
     {
-        $this->authorize('restore', $client);
-
         $client->restore();
 
         return redirect()->back()->with('success', 'Client restored successfully.');
@@ -50,8 +48,6 @@ class ClientController extends Controller
 
     public function destroy(Client $client): RedirectResponse
     {
-        $this->authorize('delete', $client);
-
         if (! $client->deleted_at) {
             $client->projects()->delete();
             $client->delete();

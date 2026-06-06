@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Contracts\HasUser;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -44,7 +45,7 @@ use Znck\Eloquent\Relations\BelongsToThrough;
  *
  * @mixin \Eloquent
  */
-class Project extends Model
+class Project extends Model implements HasUser
 {
     use SoftDeletes;
 

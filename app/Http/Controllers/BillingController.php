@@ -11,14 +11,12 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class BillingController extends Controller
+class BillingController
 {
     use BuildsProjectBillingEntry;
 
     public function show(Request $request, Project $project): Response
     {
-        $this->authorize('update', $project);
-
         $project->load(['timesheetEntries', 'invoices']);
 
         return Inertia::render('ProjectBillingPage', [
@@ -29,8 +27,6 @@ class BillingController extends Controller
 
     public function showClient(Request $request, Client $client): Response
     {
-        $this->authorize('update', $client);
-
         $projects = $client->projects()->withTrashed()->orderBy('created_at')->get();
 
         abort_if($projects->isEmpty(), 404);
@@ -45,8 +41,6 @@ class BillingController extends Controller
 
     public function store(Request $request, Project $project): RedirectResponse
     {
-        $this->authorize('update', $project);
-
         $validated = $request->validate([
             'amount' => ['required', 'integer', 'min:1'],
             'paid_at' => ['nullable', 'date'],
@@ -60,8 +54,6 @@ class BillingController extends Controller
 
     public function update(Request $request, Invoice $invoice): RedirectResponse
     {
-        $this->authorize('update', $invoice->project);
-
         $validated = $request->validate([
             'amount' => ['required', 'integer', 'min:1'],
             'paid_at' => ['nullable', 'date'],
@@ -75,9 +67,6 @@ class BillingController extends Controller
 
     public function destroy(Invoice $invoice): RedirectResponse
     {
-
-        $this->authorize('update', $invoice->project);
-
         $invoice->delete();
 
         return redirect()->back();

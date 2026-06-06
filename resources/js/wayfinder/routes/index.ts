@@ -56,7 +56,7 @@ login.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\AuthController::logout
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:61
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:65
  * @route "/logout"
  */
 export const logout = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -71,7 +71,7 @@ logout.definition = {
 
 /**
  * @see \App\Http\Controllers\AuthController::logout
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:61
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:65
  * @route "/logout"
  */
 logout.url = (options?: RouteQueryOptions) => {
@@ -80,7 +80,7 @@ logout.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\AuthController::logout
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:61
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:65
  * @route "/logout"
  */
 logout.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -90,7 +90,7 @@ logout.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\AuthController::logout
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:61
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:65
  * @route "/logout"
  */
 logout.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -107,7 +107,7 @@ logout.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\DashboardController::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:12
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:16
  * @route "/"
  */
 export const dashboard = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -122,7 +122,7 @@ dashboard.definition = {
 
 /**
  * @see \App\Http\Controllers\DashboardController::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:12
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:16
  * @route "/"
  */
 dashboard.url = (options?: RouteQueryOptions) => {
@@ -131,7 +131,7 @@ dashboard.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\DashboardController::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:12
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:16
  * @route "/"
  */
 dashboard.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -141,7 +141,7 @@ dashboard.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\DashboardController::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:12
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/DashboardController.php:16
  * @route "/"
  */
 dashboard.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
