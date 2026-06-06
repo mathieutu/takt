@@ -132,6 +132,7 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
           :data-deleted="project.deleted_at ? true : undefined"
           class="group/cell h-13 relative border-b border-r border-default transition-colors select-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/50"
           :class="[getCellClasses(project, day), days[index + 1]?.date === TODAY ? 'border-r-primary/50' : '']"
+          @mouseenter="($event.target as HTMLElement).focus()"
           @click="!project.deleted_at ? emit('cellClick', project.id, day.date) : undefined"
         >
           <span
