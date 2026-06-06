@@ -57,6 +57,7 @@ class ProjectController
             'description' => ['nullable', 'string', 'max:255'],
             'daily_rate' => ['integer', 'min:1'],
             'max_month_budget' => ['nullable', 'integer', 'min:1'],
+            'max_total_budget' => ['nullable', 'integer', 'min:1'],
             ...(! $isNewClient ? [
                 'client_id' => ['required', 'uuid', Rule::exists('clients', 'id')->where('user_id', $user->id)],
             ] : [
@@ -80,6 +81,7 @@ class ProjectController
             'description' => $data['description'],
             'daily_rate' => $data['daily_rate'],
             'max_month_budget' => $data['max_month_budget'],
+            'max_total_budget' => $data['max_total_budget'],
             'client_id' => $data['client_id'],
         ]);
 
@@ -108,6 +110,7 @@ class ProjectController
                     'description',
                     'daily_rate',
                     'max_month_budget',
+                    'max_total_budget',
                     'client_id',
                 ])->merge([
                     'created_at' => $project->created_at?->toDateString(),
@@ -125,6 +128,7 @@ class ProjectController
             'description' => ['nullable', 'string', 'max:255'],
             'daily_rate' => ['integer', 'min:1'],
             'max_month_budget' => ['nullable', 'integer', 'min:1'],
+            'max_total_budget' => ['nullable', 'integer', 'min:1'],
             'client_id' => ['required', Rule::exists('clients', 'id')->where('user_id', $request->user()->id)],
             'created_at' => ['required', 'date'],
             'deleted_at' => ['nullable', 'date'],

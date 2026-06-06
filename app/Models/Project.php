@@ -16,6 +16,7 @@ use Znck\Eloquent\Relations\BelongsToThrough;
  * @property string $client_id
  * @property int $daily_rate
  * @property int|null $max_month_budget
+ * @property int|null $max_total_budget
  * @property string|null $description
  * @property CarbonImmutable|null $deleted_at
  * @property CarbonImmutable|null $created_at
@@ -56,6 +57,7 @@ class Project extends Model implements HasUser
         return [
             'daily_rate' => 'integer',
             'max_month_budget' => 'integer',
+            'max_total_budget' => 'integer',
         ];
     }
 

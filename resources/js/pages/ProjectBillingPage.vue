@@ -36,9 +36,11 @@ type ProjectWithBilling = {
   name: string,
   daily_rate: number,
   max_month_budget: number | null,
+  max_total_budget: number | null,
   deleted_at: string | null,
   client: { name: string },
   months: MonthRow[],
+  months_elapsed: number,
   months_with_entries_count: number,
   outstanding: OutstandingInvoice[],
 }
@@ -90,9 +92,11 @@ function projectTotals(project: ProjectWithBilling) {
     totalInvoiced += inv.amount
   }
 
-  const totalBudgetAllocated = project.max_month_budget !== null
-    ? project.max_month_budget * project.months_with_entries_count
-    : null
+  const totalBudgetAllocated = project.max_total_budget !== null
+    ? project.max_total_budget
+    : project.max_month_budget !== null
+      ? project.max_month_budget * project.months_elapsed
+      : null
 
   return {
     totalDays,
@@ -215,10 +219,13 @@ const dayLabel = (date: string): string => {
                 <template v-if="project.max_month_budget">
                   <span>•</span>
                   <span>
-                    max
-                    {{ formatCurrency(project.max_month_budget) }}/mo
+                    max {{ formatCurrency(project.max_month_budget) }}/mo
                     ({{ formatDays(project.max_month_budget / project.daily_rate) }})
                   </span>
+                </template>
+                <template v-if="project.max_total_budget">
+                  <span>•</span>
+                  <span>envelope {{ formatCurrency(project.max_total_budget) }}</span>
                 </template>
               </div>
               <UButton

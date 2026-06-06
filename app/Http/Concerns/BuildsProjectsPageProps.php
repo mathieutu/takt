@@ -58,6 +58,7 @@ trait BuildsProjectsPageProps
                     'description',
                     'daily_rate',
                     'max_month_budget',
+                    'max_total_budget',
                     'client' => ['id', 'name'],
                     'created_at',
                     'deleted_at',

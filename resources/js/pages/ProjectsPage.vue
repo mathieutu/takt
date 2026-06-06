@@ -16,6 +16,7 @@ type Project = {
   description: string,
   daily_rate: number,
   max_month_budget: number | null,
+  max_total_budget: number | null,
   client: { id: string, name: string },
   created_at: string,
   deleted_at: string | null,

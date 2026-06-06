@@ -240,7 +240,8 @@ export namespace App {
                     export type Request = {    name: string;
                         description?: string | null;
                         daily_rate?: number;
-                        max_month_budget?: number | null;}
+                        max_month_budget?: number | null;
+                        max_total_budget?: number | null;}
                 }
 
                 export namespace Update {
@@ -251,6 +252,7 @@ export namespace App {
                         description?: string | null;
                         daily_rate?: number;
                         max_month_budget?: number | null;
+                        max_total_budget?: number | null;
                         client_id: string;}
                 }
 

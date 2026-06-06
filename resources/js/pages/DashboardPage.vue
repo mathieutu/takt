@@ -63,9 +63,11 @@ type DashboardProps = {
     clientName: string,
     dailyRate: number,
     maxMonthBudget: number | null,
+    maxTotalBudget: number | null,
     theoreticalBudget: number,
     cumulativeWorked: number,
     thisMonthWorked: number,
+    deletedAt: string | null,
     lastActivity: string | null,
     unbilled: number,
   }>,
@@ -413,9 +415,9 @@ const progressTextClass = (percent: number) => {
 
               <div
                 class="text-xs"
-                :class="p.daysSince && p.daysSince > 7 ? 'text-warning' : 'text-muted'"
+                :class="!p.deletedAt && p.daysSince && p.daysSince > 10 ? 'text-warning' : 'text-muted'"
               >
-                <template v-if="p.daysSince === null">—</template>
+                <template v-if="p.deletedAt">Archived</template>
                 <template v-else-if="p.daysSince === 0">today</template>
                 <template v-else>{{ p.daysSince }}d ago</template>
               </div>

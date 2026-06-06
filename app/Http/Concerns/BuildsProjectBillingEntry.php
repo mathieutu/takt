@@ -4,6 +4,7 @@ namespace App\Http\Concerns;
 
 use App\Models\Invoice;
 use App\Models\Project;
+use Carbon\CarbonImmutable;
 
 trait BuildsProjectBillingEntry
 {
@@ -55,14 +56,21 @@ trait BuildsProjectBillingEntry
                 'notes' => $i->notes,
             ])->values();
 
+        $now = CarbonImmutable::now();
+        $firstEntry = $project->timesheetEntries->sortBy('date')->first();
+        $projectStart = $firstEntry ? $firstEntry->date : $project->created_at;
+        $monthsElapsed = max(1, $projectStart->startOfMonth()->diffInMonths($now->startOfMonth()) + 1);
+
         return [
             'id' => $project->id,
             'name' => $project->name,
             'daily_rate' => $project->daily_rate,
             'max_month_budget' => $project->max_month_budget,
+            'max_total_budget' => $project->max_total_budget,
             'deleted_at' => $project->deleted_at?->toDateTimeString(),
             'client' => ['name' => $clientNameOverride ?? $project->client->name],
             'months' => $months->values(),
+            'months_elapsed' => $monthsElapsed,
             'months_with_entries_count' => $timesheetMonths->count(),
             'outstanding' => $outstanding,
         ];

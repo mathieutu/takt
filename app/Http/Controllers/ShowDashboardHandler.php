@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Project;
 use App\Services\HolidayService;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonPeriod;
@@ -15,17 +16,29 @@ class ShowDashboardHandler
 {
     public function __invoke(Request $request): Response|RedirectResponse
     {
-        $projects = $request->user()->projects()
-            ->with(['client', 'timesheetEntries', 'invoices'])
+        $now = CarbonImmutable::now();
+        $rollingYearStart = $now->subMonths(12)->startOfMonth();
+
+        $userClientIds = $request->user()->clients()->withTrashed()->pluck('id');
+
+        $projects = Project::withTrashed()
+            ->whereIn('client_id', $userClientIds)
+            ->where(function ($q) use ($rollingYearStart) {
+                $q->whereNull('deleted_at')
+                    ->orWhereHas('timesheetEntries', fn ($q) => $q->where('date', '>=', $rollingYearStart));
+            })
+            ->with([
+                'client' => fn ($q) => $q->withTrashed(),
+                'timesheetEntries',
+                'invoices',
+            ])
             ->get();
 
         if ($projects->isEmpty()) {
             return redirect()->route('projects.index');
         }
 
-        $now = CarbonImmutable::now();
         $currentMonthStart = $now->startOfMonth();
-        $rollingYearStart = $now->subMonths(12)->startOfMonth();
         $prevYearStart = $now->subMonths(24)->startOfMonth();
         $prevMonthStart = $currentMonthStart->subMonth();
 
@@ -99,8 +112,14 @@ class ShowDashboardHandler
             $thisMonthWorked = $p->timesheetEntries
                 ->filter(fn ($e) => $e->date->year === $now->year && $e->date->month === $now->month)
                 ->sum(fn ($e) => (int) round($e->coverage / 100 * $p->daily_rate));
-            $monthsElapsed = max(1, $currentMonthStart->diffInMonths($p->created_at->startOfMonth()) + 1);
-            $theoreticalBudget = $p->max_month_budget !== null ? $p->max_month_budget * $monthsElapsed : 0;
+            $firstEntry = $p->timesheetEntries->sortBy('date')->first();
+            $projectStart = $firstEntry ? $firstEntry->date : $p->created_at;
+            $monthsElapsed = max(1, $projectStart->startOfMonth()->diffInMonths($currentMonthStart) + 1);
+            $theoreticalBudget = match (true) {
+                $p->max_total_budget !== null => $p->max_total_budget,
+                $p->max_month_budget !== null => $p->max_month_budget * $monthsElapsed,
+                default => 0,
+            };
 
             return [
                 'id' => $p->id,
@@ -109,9 +128,11 @@ class ShowDashboardHandler
                 'clientName' => $p->client->name,
                 'dailyRate' => $p->daily_rate,
                 'maxMonthBudget' => $p->max_month_budget,
+                'maxTotalBudget' => $p->max_total_budget,
                 'theoreticalBudget' => $theoreticalBudget,
                 'cumulativeWorked' => $cumulativeWorked,
                 'thisMonthWorked' => $thisMonthWorked,
+                'deletedAt' => $p->deleted_at?->toDateTimeString(),
                 'lastActivity' => $p->timesheetEntries->sortByDesc('date')->first()?->date->toDateString(),
                 'unbilled' => max(0, $cumulativeWorked - $p->invoices->sum('amount')),
             ];
