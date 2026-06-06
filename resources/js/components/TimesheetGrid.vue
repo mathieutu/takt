@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type { Day } from '@/utils/date.ts'
+import { useTemplateRef } from 'vue'
+import { useTimesheetKeyboard } from '@/composables/useTimesheetKeyboard.ts'
 import { coverageLabel, formatDays, TODAY } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
 import { show as billingShow } from '@/wayfinder/routes/clients/billing'
@@ -16,7 +18,7 @@ export type GridProject = {
   deleted_at?: string | null,
 }
 
-const { holidays } = defineProps<{
+const { holidays, days, projects } = defineProps<{
   days: Day[],
   holidays: Map<string, string>,
   projects: GridProject[],
@@ -26,6 +28,9 @@ const emit = defineEmits<{
   cellClick: [projectId: string, date: string],
   actionClick: [projectId: string, date: string],
 }>()
+
+const tableRef = useTemplateRef<HTMLTableElement>('table-ref')
+const { handleCellKeydown } = useTimesheetKeyboard(tableRef, () => days, () => projects, emit)
 
 function getCellClasses(project: GridProject, day: Day): string[] {
   const coverage = project.entries[day.date]?.coverage ?? 0
@@ -67,7 +72,7 @@ function getCellClasses(project: GridProject, day: Day): string[] {
 </script>
 
 <template>
-  <table class="border-separate border-spacing-0" style="table-layout: fixed; width: max-content; min-width: 100%;">
+  <table ref="table-ref" class="border-separate border-spacing-0" style="table-layout: fixed; width: max-content; min-width: 100%;">
     <colgroup>
       <col style="width: 220px; min-width: 220px;" />
       <col v-for="day in days" :key="day.n" style="width: 56px; min-width: 56px;" />
@@ -104,7 +109,7 @@ function getCellClasses(project: GridProject, day: Day): string[] {
           No projects available.
         </td>
       </tr>
-      <tr v-for="project in projects" :key="project.id" class="group/row">
+      <tr v-for="(project, projectIndex) in projects" :key="project.id" class="group/row">
         <td class="sticky left-0 z-10 border-b border-r border-l border-default bg-default px-3 py-2">
           <div class="flex items-center gap-1 min-w-0">
             <UTooltip v-if="project.deleted_at" text="Archived">
@@ -132,9 +137,11 @@ function getCellClasses(project: GridProject, day: Day): string[] {
         <td
           v-for="(day, index) in days"
           :key="day.date"
-          class="group/cell h-13 relative border-b border-r border-default transition-colors select-none overflow-hidden"
+          tabindex="0"
+          class="group/cell h-13 relative border-b border-r border-default transition-colors select-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/50"
           :class="[getCellClasses(project, day), days[index + 1]?.date === TODAY ? 'border-r-primary/50' : '']"
           @click="!project.deleted_at ? emit('cellClick', project.id, day.date) : undefined"
+          @keydown="handleCellKeydown($event, project, day, projectIndex, index)"
         >
           <span
             v-if="project.entries[day.date]?.coverage"
