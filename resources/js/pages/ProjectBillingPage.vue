@@ -207,204 +207,209 @@ const dayLabel = (date: string): string => {
         <template v-for="(project, index) in visibleProjects" :key="project.id">
           <div v-if="index > 0" class="border-t-2 border-default" />
 
-          <!-- Project header -->
-          <div class="flex items-start justify-between gap-4">
-            <div class="min-w-0">
-              <h2 class="text-base font-semibold truncate">{{ project.name }}</h2>
-              <p class="text-xs text-muted truncate">{{ project.client.name }}</p>
-            </div>
-            <div class="shrink-0 flex items-end flex-col gap-3">
-              <div class="flex items-center gap-1 text-sm text-muted">
-                <span>{{ formatCurrency(project.daily_rate) }}/day</span>
-                <template v-if="project.max_month_budget">
-                  <span>•</span>
-                  <span>
-                    max {{ formatCurrency(project.max_month_budget) }}/mo
-                    ({{ formatDays(project.max_month_budget / project.daily_rate) }})
-                  </span>
-                </template>
-                <template v-if="project.max_total_budget">
-                  <span>•</span>
-                  <span>envelope {{ formatCurrency(project.max_total_budget) }}</span>
-                </template>
+          <div class="space-y-6" :class="[project.deleted_at && ' rounded-xl bg-muted p-4']">
+            <!-- Project header -->
+            <div class="flex items-start justify-between gap-4">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <h2 class="text-base font-semibold truncate">{{ project.name }}</h2>
+                  <UBadge v-if="project.deleted_at" label="Archived" color="neutral" variant="subtle" size="sm" class="shrink-0" />
+                </div>
+                <p class="text-xs text-muted truncate">{{ project.client.name }}</p>
               </div>
-              <UButton
-                v-if="!is_shared"
-                label="Add invoice"
-                icon="i-lucide-plus"
-                size="sm"
-                @click="openAddInvoice(project)"
-              />
+              <div class="shrink-0 flex items-end flex-col gap-3">
+                <div class="flex items-center gap-1 text-sm text-muted">
+                  <span>{{ formatCurrency(project.daily_rate) }}/day</span>
+                  <template v-if="project.max_month_budget">
+                    <span>•</span>
+                    <span>
+                      max {{ formatCurrency(project.max_month_budget) }}/mo
+                      ({{ formatDays(project.max_month_budget / project.daily_rate) }})
+                    </span>
+                  </template>
+                  <template v-if="project.max_total_budget">
+                    <span>•</span>
+                    <span>envelope {{ formatCurrency(project.max_total_budget) }}</span>
+                  </template>
+                </div>
+                <UButton
+                  v-if="!is_shared"
+                  label="Add invoice"
+                  icon="i-lucide-plus"
+                  size="sm"
+                  @click="openAddInvoice(project)"
+                />
+              </div>
             </div>
-          </div>
 
-          <!-- Main table -->
-          <div class="rounded-lg border border-default overflow-hidden">
-            <table class="w-full text-sm">
-              <thead>
-                <tr class="border-b border-default bg-muted/40 text-xs text-muted">
-                  <th class="px-4 py-2.5 text-left font-medium">Month</th>
-                  <th class="px-4 py-2.5 text-right font-medium">Worked</th>
-                  <th class="px-4 py-2.5 text-right font-medium">Invoiced</th>
-                  <th class="px-4 py-2.5 text-right font-medium">Balance</th>
-                  <th v-if="!is_shared" class="w-8 px-2" />
-                </tr>
-              </thead>
-              <tbody>
-                <template v-for="m in project.months" :key="m.month">
-                  <tr
-                    class="border-b border-default hover:bg-muted/20 cursor-pointer transition-colors"
-                    :class="isExpanded(project.id, m.month) ? 'bg-muted/20' : ''"
-                    @click="toggleMonth(project.id, m.month)"
-                  >
-                    <td class="px-4 py-2.5 font-medium">
-                      <div class="flex items-center gap-1.5">
-                        <UIcon
-                          :name="isExpanded(project.id, m.month) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
-                          class="text-muted w-3.5 h-3.5 shrink-0"
-                        />
-                        {{ monthLabel(m.month) }}
-                      </div>
-                    </td>
-                    <td
-                      class="px-4 py-2.5 text-right tabular-nums"
-                      :class="monthWorked(m, project.daily_rate) > (project.max_month_budget ?? Infinity) ? 'text-error font-medium' : 'text-muted'"
-                    >
-                      {{ formatCurrency(monthWorked(m, project.daily_rate)) }} ({{ formatDays(m.days_worked) }})
-                    </td>
-                    <td class="px-4 py-2.5 text-right tabular-nums">
-                      <span :class="monthInvoiced(m) > 0 ? 'text-success font-medium' : 'text-muted'">
-                        {{ monthInvoiced(m) > 0 ? formatCurrency(monthInvoiced(m)) : '—' }}
-                      </span>
-                    </td>
-                    <td class="px-4 py-2.5 text-right tabular-nums">
-                      <span :class="monthInvoiced(m) >= monthWorked(m, project.daily_rate) ? 'text-success' : 'text-amber-500'">
-                        {{ formatCurrency(monthInvoiced(m) - monthWorked(m, project.daily_rate)) }}
-                      </span>
-                    </td>
-                    <td v-if="!is_shared" class="px-2" />
+            <!-- Main table -->
+            <div class="rounded-lg border border-default overflow-hidden">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-default bg-muted/40 text-xs text-muted">
+                    <th class="px-4 py-2.5 text-left font-medium">Month</th>
+                    <th class="px-4 py-2.5 text-right font-medium">Worked</th>
+                    <th class="px-4 py-2.5 text-right font-medium">Invoiced</th>
+                    <th class="px-4 py-2.5 text-right font-medium">Balance</th>
+                    <th v-if="!is_shared" class="w-8 px-2" />
                   </tr>
+                </thead>
+                <tbody>
+                  <template v-for="m in project.months" :key="m.month">
+                    <tr
+                      class="border-b border-default hover:bg-muted/20 cursor-pointer transition-colors"
+                      :class="isExpanded(project.id, m.month) ? 'bg-muted/20' : ''"
+                      @click="toggleMonth(project.id, m.month)"
+                    >
+                      <td class="px-4 py-2.5 font-medium">
+                        <div class="flex items-center gap-1.5">
+                          <UIcon
+                            :name="isExpanded(project.id, m.month) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+                            class="text-muted w-3.5 h-3.5 shrink-0"
+                          />
+                          {{ monthLabel(m.month) }}
+                        </div>
+                      </td>
+                      <td
+                        class="px-4 py-2.5 text-right tabular-nums"
+                        :class="monthWorked(m, project.daily_rate) > (project.max_month_budget ?? Infinity) ? 'text-error font-medium' : 'text-muted'"
+                      >
+                        {{ formatCurrency(monthWorked(m, project.daily_rate)) }} ({{ formatDays(m.days_worked) }})
+                      </td>
+                      <td class="px-4 py-2.5 text-right tabular-nums">
+                        <span :class="monthInvoiced(m) > 0 ? 'text-success font-medium' : 'text-muted'">
+                          {{ monthInvoiced(m) > 0 ? formatCurrency(monthInvoiced(m)) : '—' }}
+                        </span>
+                      </td>
+                      <td class="px-4 py-2.5 text-right tabular-nums">
+                        <span :class="monthInvoiced(m) >= monthWorked(m, project.daily_rate) ? 'text-success' : 'text-amber-500'">
+                          {{ formatCurrency(monthInvoiced(m) - monthWorked(m, project.daily_rate)) }}
+                        </span>
+                      </td>
+                      <td v-if="!is_shared" class="px-2" />
+                    </tr>
 
-                  <tr v-if="isExpanded(project.id, m.month)">
-                    <td :colspan="is_shared ? 4 : 5" class="px-0 py-0">
-                      <div class="border-b border-default bg-muted/10 px-6 py-3 space-y-3">
-                        <div v-if="Object.keys(m.entries).length > 0">
-                          <p class="text-xs font-medium text-muted mb-1.5 uppercase tracking-wide">Days worked</p>
-                          <div class="space-y-1">
-                            <div
-                              v-for="(entry, date) in m.entries"
-                              :key="date"
-                              class="flex items-center gap-3 text-xs"
-                            >
-                              <span class="w-32 shrink-0 text-muted">{{ dayLabel(date) }}</span>
-                              <span class="w-8 shrink-0 font-medium tabular-nums">{{ coverageLabel(entry.coverage) }}d</span>
-                              <span v-if="entry.title" class="text-muted truncate">{{ entry.title }}</span>
+                    <tr v-if="isExpanded(project.id, m.month)">
+                      <td :colspan="is_shared ? 4 : 5" class="px-0 py-0">
+                        <div class="border-b border-default bg-muted/10 px-6 py-3 space-y-3">
+                          <div v-if="Object.keys(m.entries).length > 0">
+                            <p class="text-xs font-medium text-muted mb-1.5 uppercase tracking-wide">Days worked</p>
+                            <div class="space-y-1">
+                              <div
+                                v-for="(entry, date) in m.entries"
+                                :key="date"
+                                class="flex items-center gap-3 text-xs"
+                              >
+                                <span class="w-32 shrink-0 text-muted">{{ dayLabel(date) }}</span>
+                                <span class="w-8 shrink-0 font-medium tabular-nums">{{ coverageLabel(entry.coverage) }}d</span>
+                                <span v-if="entry.title" class="text-muted truncate">{{ entry.title }}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <p v-else class="text-xs text-muted italic">No timesheet entries for this month.</p>
+                          <p v-else class="text-xs text-muted italic">No timesheet entries for this month.</p>
 
-                        <div v-if="m.invoices.length > 0">
-                          <p class="text-xs font-medium text-muted mb-1.5 uppercase tracking-wide">Invoices</p>
-                          <div class="space-y-1">
-                            <div
-                              v-for="inv in m.invoices"
-                              :key="inv.id"
-                              class="flex items-center gap-3 text-xs"
-                            >
-                              <span class="w-28 shrink-0 text-muted">{{ formatDate(inv.paid_at) }}</span>
-                              <span class="font-medium tabular-nums text-success">{{ formatCurrency(inv.amount) }}</span>
-                              <span v-if="inv.notes" class="text-muted truncate flex-1">{{ inv.notes }}</span>
-                              <div v-if="!is_shared" class="ml-auto flex items-center gap-1" @click.stop>
-                                <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="2xs" @click="openEditInvoice(inv)" />
-                                <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="2xs" :to="destroyInvoice(inv)" preserveScroll />
+                          <div v-if="m.invoices.length > 0">
+                            <p class="text-xs font-medium text-muted mb-1.5 uppercase tracking-wide">Invoices</p>
+                            <div class="space-y-1">
+                              <div
+                                v-for="inv in m.invoices"
+                                :key="inv.id"
+                                class="flex items-center gap-3 text-xs"
+                              >
+                                <span class="w-28 shrink-0 text-muted">{{ formatDate(inv.paid_at) }}</span>
+                                <span class="font-medium tabular-nums text-success">{{ formatCurrency(inv.amount) }}</span>
+                                <span v-if="inv.notes" class="text-muted truncate flex-1">{{ inv.notes }}</span>
+                                <div v-if="!is_shared" class="ml-auto flex items-center gap-1" @click.stop>
+                                  <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="2xs" @click="openEditInvoice(inv)" />
+                                  <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="2xs" :to="destroyInvoice(inv)" preserveScroll />
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
+                      </td>
+                    </tr>
+                  </template>
+
+                  <tr v-if="project.months.length === 0 && project.outstanding.length === 0">
+                    <td :colspan="is_shared ? 4 : 5" class="px-4 py-8 text-center text-sm text-muted">
+                      No activity recorded yet.
+                    </td>
+                  </tr>
+                </tbody>
+
+                <tbody v-if="project.outstanding.length > 0">
+                  <tr class="border-t-2 border-default">
+                    <td colspan="5" class="px-4 py-2 text-xs font-medium text-muted uppercase tracking-wide bg-muted/20">
+                      To be paid
+                    </td>
+                  </tr>
+                  <tr
+                    v-for="inv in project.outstanding"
+                    :key="inv.id"
+                    class="border-b border-default last:border-0 hover:bg-muted/20"
+                  >
+                    <td class="px-4 py-2.5 text-muted text-xs">—</td>
+                    <td class="px-4 py-2.5 text-right" />
+                    <td class="px-4 py-2.5 text-right">
+                      <span class="font-medium text-amber-500 tabular-nums">{{ formatCurrency(inv.amount) }}</span>
+                    </td>
+                    <td class="px-4 py-2.5 text-right">
+                      <span v-if="inv.notes" class="text-xs text-muted">{{ inv.notes }}</span>
+                    </td>
+                    <td v-if="!is_shared" class="px-2 py-2.5">
+                      <div class="flex items-center gap-1">
+                        <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="2xs" @click="openEditInvoice(inv)" />
+                        <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="2xs" :to="destroyInvoice(inv)" preserveScroll />
                       </div>
                     </td>
                   </tr>
-                </template>
+                </tbody>
 
-                <tr v-if="project.months.length === 0 && project.outstanding.length === 0">
-                  <td :colspan="is_shared ? 4 : 5" class="px-4 py-8 text-center text-sm text-muted">
-                    No activity recorded yet.
-                  </td>
-                </tr>
-              </tbody>
-
-              <tbody v-if="project.outstanding.length > 0">
-                <tr class="border-t-2 border-default">
-                  <td colspan="5" class="px-4 py-2 text-xs font-medium text-muted uppercase tracking-wide bg-muted/20">
-                    To be paid
-                  </td>
-                </tr>
-                <tr
-                  v-for="inv in project.outstanding"
-                  :key="inv.id"
-                  class="border-b border-default last:border-0 hover:bg-muted/20"
-                >
-                  <td class="px-4 py-2.5 text-muted text-xs">—</td>
-                  <td class="px-4 py-2.5 text-right" />
-                  <td class="px-4 py-2.5 text-right">
-                    <span class="font-medium text-amber-500 tabular-nums">{{ formatCurrency(inv.amount) }}</span>
-                  </td>
-                  <td class="px-4 py-2.5 text-right">
-                    <span v-if="inv.notes" class="text-xs text-muted">{{ inv.notes }}</span>
-                  </td>
-                  <td v-if="!is_shared" class="px-2 py-2.5">
-                    <div class="flex items-center gap-1">
-                      <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="2xs" @click="openEditInvoice(inv)" />
-                      <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="2xs" :to="destroyInvoice(inv)" preserveScroll />
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-
-              <tfoot>
-                <tr class="border-t-2 border-default bg-muted/30 text-sm font-semibold">
-                  <td class="px-4 py-3">Total</td>
-                  <td class="px-4 py-3 text-right tabular-nums text-muted">
-                    {{ formatCurrency(projectTotals(project).totalWorked) }}
-                    ({{ formatDays(projectTotals(project).totalDays) }})
-                  </td>
-                  <td class="px-4 py-3 text-right tabular-nums text-success">
-                    {{ formatCurrency(projectTotals(project).totalInvoiced) }}
-                  </td>
-                  <td
-                    class="px-4 py-3 text-right tabular-nums"
-                    :class="projectTotals(project).totalInvoiced >= projectTotals(project).totalWorked ? 'text-success' : 'text-amber-500'"
-                  >
-                    {{ formatCurrency(projectTotals(project).totalInvoiced - projectTotals(project).totalWorked) }}
-                  </td>
-                  <td v-if="!is_shared" class="px-2" />
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
-          <!-- Summary indicators -->
-          <div class="flex flex-wrap gap-3">
-            <div class="flex-1 min-w-48 rounded-lg border border-default px-4 py-3">
-              <p class="text-xs text-muted mb-0.5">To invoice</p>
-              <p
-                class="text-base font-semibold tabular-nums"
-                :class="projectTotals(project).toInvoice > 0 ? 'text-amber-500' : 'text-success'"
-              >
-                {{ formatCurrency(projectTotals(project).toInvoice) }}
-              </p>
-              <p class="text-xs text-muted mt-0.5">Worked − Invoiced</p>
+                <tfoot>
+                  <tr class="border-t-2 border-default bg-muted/30 text-sm font-semibold">
+                    <td class="px-4 py-3">Total</td>
+                    <td class="px-4 py-3 text-right tabular-nums text-muted">
+                      {{ formatCurrency(projectTotals(project).totalWorked) }}
+                      ({{ formatDays(projectTotals(project).totalDays) }})
+                    </td>
+                    <td class="px-4 py-3 text-right tabular-nums text-success">
+                      {{ formatCurrency(projectTotals(project).totalInvoiced) }}
+                    </td>
+                    <td
+                      class="px-4 py-3 text-right tabular-nums"
+                      :class="projectTotals(project).totalInvoiced >= projectTotals(project).totalWorked ? 'text-success' : 'text-amber-500'"
+                    >
+                      {{ formatCurrency(projectTotals(project).totalInvoiced - projectTotals(project).totalWorked) }}
+                    </td>
+                    <td v-if="!is_shared" class="px-2" />
+                  </tr>
+                </tfoot>
+              </table>
             </div>
-            <div v-if="projectTotals(project).remainingToConsume !== null" class="flex-1 min-w-48 rounded-lg border border-default px-4 py-3">
-              <p class="text-xs text-muted mb-0.5">Remaining to consume</p>
-              <p
-                class="text-base font-semibold tabular-nums"
-                :class="projectTotals(project).remainingToConsume! < 0 ? 'text-error' : 'text-default'"
-              >
-                {{ formatCurrency(projectTotals(project).remainingToConsume!) }}
-              </p>
-              <p class="text-xs text-muted mt-0.5">Budget allocated − Worked</p>
+
+            <!-- Summary indicators -->
+            <div class="flex flex-wrap gap-3">
+              <div class="flex-1 min-w-48 rounded-lg border border-default px-4 py-3">
+                <p class="text-xs text-muted mb-0.5">To invoice</p>
+                <p
+                  class="text-base font-semibold tabular-nums"
+                  :class="projectTotals(project).toInvoice > 0 ? 'text-amber-500' : 'text-success'"
+                >
+                  {{ formatCurrency(projectTotals(project).toInvoice) }}
+                </p>
+                <p class="text-xs text-muted mt-0.5">Worked − Invoiced</p>
+              </div>
+              <div v-if="projectTotals(project).remainingToConsume !== null" class="flex-1 min-w-48 rounded-lg border border-default px-4 py-3">
+                <p class="text-xs text-muted mb-0.5">Remaining to consume</p>
+                <p
+                  class="text-base font-semibold tabular-nums"
+                  :class="projectTotals(project).remainingToConsume! < 0 ? 'text-error' : 'text-default'"
+                >
+                  {{ formatCurrency(projectTotals(project).remainingToConsume!) }}
+                </p>
+                <p class="text-xs text-muted mt-0.5">Budget allocated − Worked</p>
+              </div>
             </div>
           </div>
         </template>

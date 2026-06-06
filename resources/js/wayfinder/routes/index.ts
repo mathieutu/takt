@@ -4,8 +4,55 @@
 import { queryParams, type RouteDefinition, type RouteQueryOptions } from "./../index";
 
 /**
+ * @see /Users/mathieutu/Projects/takt/routes/web.php:57
+ * @route "/up"
+ */
+export const up = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+    url: up.url(options),
+    method: "get",
+})
+
+up.definition = {
+    methods: ["get","head"],
+    url: "/up",
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+ * @see /Users/mathieutu/Projects/takt/routes/web.php:57
+ * @route "/up"
+ */
+up.url = (options?: RouteQueryOptions) => {
+    return up.definition.url + queryParams(options)
+}
+
+/**
+ * @see /Users/mathieutu/Projects/takt/routes/web.php:57
+ * @route "/up"
+ */
+up.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+    url: up.url(options),
+    method: "get",
+})
+
+/**
+ * @see /Users/mathieutu/Projects/takt/routes/web.php:57
+ * @route "/up"
+ */
+up.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
+    url: up.url(options),
+    method: "head",
+})
+
+
+
+
+
+
+
+
+/**
  * @see \App\Http\Controllers\AuthController::show
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:15
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:15
  * @route "/login"
  */
 export const login = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -20,7 +67,7 @@ login.definition = {
 
 /**
  * @see \App\Http\Controllers\AuthController::show
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:15
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:15
  * @route "/login"
  */
 login.url = (options?: RouteQueryOptions) => {
@@ -29,7 +76,7 @@ login.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\AuthController::show
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:15
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:15
  * @route "/login"
  */
 login.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -39,7 +86,7 @@ login.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\AuthController::show
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:15
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:15
  * @route "/login"
  */
 login.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -56,7 +103,7 @@ login.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\AuthController::logout
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:65
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:65
  * @route "/logout"
  */
 export const logout = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -71,7 +118,7 @@ logout.definition = {
 
 /**
  * @see \App\Http\Controllers\AuthController::logout
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:65
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:65
  * @route "/logout"
  */
 logout.url = (options?: RouteQueryOptions) => {
@@ -80,7 +127,7 @@ logout.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\AuthController::logout
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:65
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:65
  * @route "/logout"
  */
 logout.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -90,7 +137,7 @@ logout.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\AuthController::logout
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php:65
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:65
  * @route "/logout"
  */
 logout.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -107,7 +154,7 @@ logout.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\ShowDashboardHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShowDashboardHandler.php:16
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowDashboardHandler.php:17
  * @route "/"
  */
 export const dashboard = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -122,7 +169,7 @@ dashboard.definition = {
 
 /**
  * @see \App\Http\Controllers\ShowDashboardHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShowDashboardHandler.php:16
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowDashboardHandler.php:17
  * @route "/"
  */
 dashboard.url = (options?: RouteQueryOptions) => {
@@ -131,7 +178,7 @@ dashboard.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\ShowDashboardHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShowDashboardHandler.php:16
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowDashboardHandler.php:17
  * @route "/"
  */
 dashboard.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -141,7 +188,7 @@ dashboard.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\ShowDashboardHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShowDashboardHandler.php:16
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowDashboardHandler.php:17
  * @route "/"
  */
 dashboard.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -158,7 +205,7 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\UserController::edit
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/UserController.php:13
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:13
  * @route "/profile"
  */
 export const profile = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -173,7 +220,7 @@ profile.definition = {
 
 /**
  * @see \App\Http\Controllers\UserController::edit
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/UserController.php:13
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:13
  * @route "/profile"
  */
 profile.url = (options?: RouteQueryOptions) => {
@@ -182,7 +229,7 @@ profile.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\UserController::edit
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/UserController.php:13
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:13
  * @route "/profile"
  */
 profile.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -192,7 +239,7 @@ profile.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\UserController::edit
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/UserController.php:13
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:13
  * @route "/profile"
  */
 profile.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -209,7 +256,7 @@ profile.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\ShowTimesheetHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShowTimesheetHandler.php:15
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowTimesheetHandler.php:15
  * @route "/timesheet"
  */
 export const timesheet = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -224,7 +271,7 @@ timesheet.definition = {
 
 /**
  * @see \App\Http\Controllers\ShowTimesheetHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShowTimesheetHandler.php:15
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowTimesheetHandler.php:15
  * @route "/timesheet"
  */
 timesheet.url = (options?: RouteQueryOptions) => {
@@ -233,7 +280,7 @@ timesheet.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\ShowTimesheetHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShowTimesheetHandler.php:15
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowTimesheetHandler.php:15
  * @route "/timesheet"
  */
 timesheet.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -243,7 +290,7 @@ timesheet.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\ShowTimesheetHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShowTimesheetHandler.php:15
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowTimesheetHandler.php:15
  * @route "/timesheet"
  */
 timesheet.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -260,6 +307,7 @@ timesheet.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 
 const routes = {
+    up,
     login,
     logout,
     dashboard,

@@ -32,7 +32,7 @@ class ShowTimesheetHandler
             'projects' => $projects->map(fn (Project $p) => $p->export([
                 'id',
                 'name',
-                'client' => ['name'],
+                'client' => ['id', 'name'],
                 'daily_rate',
                 'deleted_at',
             ])->merge([

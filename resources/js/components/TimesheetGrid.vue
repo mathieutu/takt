@@ -2,14 +2,14 @@
 import type { Day } from '@/utils/date.ts'
 import { coverageLabel, formatDays, TODAY } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
-import { show as billingShow } from '@/wayfinder/routes/projects/billing'
+import { show as billingShow } from '@/wayfinder/routes/clients/billing'
 
 type EntryData = { coverage: number, title: string, description: string }
 
 export type GridProject = {
   id: string,
   name: string,
-  client: { name: string },
+  client: { id: string, name: string },
   entries: Record<string, EntryData>,
   days?: number,
   revenue?: number,
@@ -120,7 +120,7 @@ function getCellClasses(project: GridProject, day: Day): string[] {
             </span>
             <UTooltip text="Billing">
               <UButton
-                :href="billingShow(project)"
+                :href="billingShow(project.client)"
                 icon="i-lucide-receipt-text"
                 color="neutral"
                 variant="ghost"

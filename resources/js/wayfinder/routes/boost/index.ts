@@ -4,7 +4,7 @@
 import { queryParams, type RouteDefinition, type RouteQueryOptions } from "./../../index";
 
 /**
- * @see /Users/mathieutu/Projects/cra/vendor/laravel/boost/src/BoostServiceProvider.php:92
+ * @see /Users/mathieutu/Projects/takt/vendor/laravel/boost/src/BoostServiceProvider.php:92
  * @route "/_boost/browser-logs"
  */
 export const browserLogs = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -18,7 +18,7 @@ browserLogs.definition = {
 } satisfies RouteDefinition<["post"]>
 
 /**
- * @see /Users/mathieutu/Projects/cra/vendor/laravel/boost/src/BoostServiceProvider.php:92
+ * @see /Users/mathieutu/Projects/takt/vendor/laravel/boost/src/BoostServiceProvider.php:92
  * @route "/_boost/browser-logs"
  */
 browserLogs.url = (options?: RouteQueryOptions) => {
@@ -26,7 +26,7 @@ browserLogs.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see /Users/mathieutu/Projects/cra/vendor/laravel/boost/src/BoostServiceProvider.php:92
+ * @see /Users/mathieutu/Projects/takt/vendor/laravel/boost/src/BoostServiceProvider.php:92
  * @route "/_boost/browser-logs"
  */
 browserLogs.post = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({

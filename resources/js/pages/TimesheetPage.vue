@@ -16,7 +16,7 @@ type EntryData = { coverage: number, title: string, description: string }
 type Project = {
   id: string,
   name: string,
-  client: { name: string },
+  client: { id: string, name: string },
   daily_rate: number,
   entries: Record<string, EntryData>,
   deleted_at?: string | null,

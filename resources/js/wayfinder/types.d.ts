@@ -4,45 +4,44 @@
 export namespace Inertia {
     export namespace Pages {
         /**
-         * @see [\App\Http\Controllers\AuthController::show](/Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php)
+         * @see [\App\Http\Controllers\AuthController::show](/Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php)
          */
         export type LoginPage = Inertia.SharedData & { users: App.Models.User[] | [], redirectUrl: string | null }
 
         /**
-         * @see [\App\Http\Controllers\ShowDashboardHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShowDashboardHandler.php)
+         * @see [\App\Http\Controllers\ShowDashboardHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowDashboardHandler.php)
          */
         export type DashboardPage = Inertia.SharedData & { kpis: { monthDays: number, workingDays: number, fillRate: number, monthRevenue: number, projectedRevenue: number, yearRevenue: number, outstandingAmount: unknown, outstandingCount: unknown, overdueCount: unknown, weightedRate: number, trendDays: number, trendRevenue: number, trendYear: number }, chart: { labels: unknown, projects: unknown, billed: unknown }, projects: unknown, monthAdvancement: number }
 
         /**
-         * @see [\App\Http\Controllers\UserController::edit](/Users/mathieutu/Projects/cra/app/Http/Controllers/UserController.php)
+         * @see [\App\Http\Controllers\UserController::edit](/Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php)
          */
         export type ProfilePage = Inertia.SharedData & { user: { name: string, email: string, github_id: string | null } }
 
         /**
-         * @see [\App\Http\Controllers\ClientController::edit](/Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php)
+         * @see [\App\Http\Controllers\ClientController::edit](/Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php)
          */
         export type ClientForm = Inertia.SharedData & { page: [], modal: { client: unknown[] } }
 
         /**
-         * @see [\App\Http\Controllers\ClientController::showBilling](/Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php)
-         * @see [\App\Http\Controllers\ProjectController::showBilling](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
-         * @see [\App\Http\Controllers\ShowSharedHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShowSharedHandler.php)
+         * @see [\App\Http\Controllers\ClientController::showBilling](/Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php)
+         * @see [\App\Http\Controllers\ShowSharedHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowSharedHandler.php)
          */
-        export type ProjectBillingPage = Inertia.SharedData & { projects: [][], is_shared: false, shared_by?: unknown }
+        export type ProjectBillingPage = Inertia.SharedData & { projects: unknown, is_shared: false, shared_by?: unknown }
 
         /**
-         * @see [\App\Http\Controllers\ProjectController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
+         * @see [\App\Http\Controllers\ProjectController::index](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
          */
         export type ProjectsPage = Inertia.SharedData
 
         /**
-         * @see [\App\Http\Controllers\ProjectController::create](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
-         * @see [\App\Http\Controllers\ProjectController::edit](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
+         * @see [\App\Http\Controllers\ProjectController::create](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
+         * @see [\App\Http\Controllers\ProjectController::edit](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
          */
-        export type ProjectForm = Inertia.SharedData & { page: [], modal: { project: unknown[] | null, clients: unknown } }
+        export type ProjectForm = Inertia.SharedData & { page: [], modal: { project: string[] | null, clients: unknown } }
 
         /**
-         * @see [\App\Http\Controllers\ShowTimesheetHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShowTimesheetHandler.php)
+         * @see [\App\Http\Controllers\ShowTimesheetHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowTimesheetHandler.php)
          */
         export type TimesheetPage = Inertia.SharedData & { current: { year: number, month: number }, urls: { nextMonth: string, prevMonth: string }, holidays: [], projects: unknown }
     }
@@ -54,26 +53,26 @@ export namespace App {
             export namespace AuthController {
                 export namespace Show {
                     /**
-                     * @see [\App\Http\Controllers\AuthController::show](/Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php)
+                     * @see [\App\Http\Controllers\AuthController::show](/Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php)
                      */
                     export type Response = Inertia.Pages.LoginPage
 
                     /**
-                     * @see [\App\Http\Controllers\AuthController::show](/Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php)
+                     * @see [\App\Http\Controllers\AuthController::show](/Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
 
                 export namespace Disabled {
                     /**
-                     * @see [\App\Http\Controllers\AuthController::disabled](/Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php)
+                     * @see [\App\Http\Controllers\AuthController::disabled](/Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
 
                 export namespace Logout {
                     /**
-                     * @see [\App\Http\Controllers\AuthController::logout](/Users/mathieutu/Projects/cra/app/Http/Controllers/AuthController.php)
+                     * @see [\App\Http\Controllers\AuthController::logout](/Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
@@ -82,12 +81,12 @@ export namespace App {
             export namespace ShowDashboardHandler {
                 export namespace __invoke {
                     /**
-                     * @see [\App\Http\Controllers\ShowDashboardHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShowDashboardHandler.php)
+                     * @see [\App\Http\Controllers\ShowDashboardHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowDashboardHandler.php)
                      */
                     export type Response = Inertia.Pages.DashboardPage
 
                     /**
-                     * @see [\App\Http\Controllers\ShowDashboardHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShowDashboardHandler.php)
+                     * @see [\App\Http\Controllers\ShowDashboardHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowDashboardHandler.php)
                      */
                     export type Request = Record<string, unknown>
                 }
@@ -96,19 +95,19 @@ export namespace App {
             export namespace UserController {
                 export namespace Edit {
                     /**
-                     * @see [\App\Http\Controllers\UserController::edit](/Users/mathieutu/Projects/cra/app/Http/Controllers/UserController.php)
+                     * @see [\App\Http\Controllers\UserController::edit](/Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php)
                      */
                     export type Response = Inertia.Pages.ProfilePage
 
                     /**
-                     * @see [\App\Http\Controllers\UserController::edit](/Users/mathieutu/Projects/cra/app/Http/Controllers/UserController.php)
+                     * @see [\App\Http\Controllers\UserController::edit](/Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
 
                 export namespace Update {
                     /**
-                     * @see [\App\Http\Controllers\UserController::update](/Users/mathieutu/Projects/cra/app/Http/Controllers/UserController.php)
+                     * @see [\App\Http\Controllers\UserController::update](/Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php)
                      */
                     export type Request = {    name: string;
                         email: string;}
@@ -116,7 +115,7 @@ export namespace App {
 
                 export namespace Destroy {
                     /**
-                     * @see [\App\Http\Controllers\UserController::destroy](/Users/mathieutu/Projects/cra/app/Http/Controllers/UserController.php)
+                     * @see [\App\Http\Controllers\UserController::destroy](/Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
@@ -125,31 +124,31 @@ export namespace App {
             export namespace ClientController {
                 export namespace Edit {
                     /**
-                     * @see [\App\Http\Controllers\ClientController::edit](/Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php)
+                     * @see [\App\Http\Controllers\ClientController::edit](/Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php)
                      */
                     export type Response = Inertia.Pages.ClientForm
 
                     /**
-                     * @see [\App\Http\Controllers\ClientController::edit](/Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php)
+                     * @see [\App\Http\Controllers\ClientController::edit](/Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
 
                 export namespace ShowBilling {
                     /**
-                     * @see [\App\Http\Controllers\ClientController::showBilling](/Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php)
+                     * @see [\App\Http\Controllers\ClientController::showBilling](/Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php)
                      */
                     export type Response = Inertia.Pages.ProjectBillingPage
 
                     /**
-                     * @see [\App\Http\Controllers\ClientController::showBilling](/Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php)
+                     * @see [\App\Http\Controllers\ClientController::showBilling](/Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
 
                 export namespace Update {
                     /**
-                     * @see [\App\Http\Controllers\ClientController::update](/Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php)
+                     * @see [\App\Http\Controllers\ClientController::update](/Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php)
                      */
                     export type Request = {    name: string;
                         daily_rate: number;}
@@ -157,28 +156,28 @@ export namespace App {
 
                 export namespace Destroy {
                     /**
-                     * @see [\App\Http\Controllers\ClientController::destroy](/Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php)
+                     * @see [\App\Http\Controllers\ClientController::destroy](/Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
 
                 export namespace Restore {
                     /**
-                     * @see [\App\Http\Controllers\ClientController::restore](/Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php)
+                     * @see [\App\Http\Controllers\ClientController::restore](/Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
 
                 export namespace StoreShare {
                     /**
-                     * @see [\App\Http\Controllers\ClientController::storeShare](/Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php)
+                     * @see [\App\Http\Controllers\ClientController::storeShare](/Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
 
                 export namespace DestroyShare {
                     /**
-                     * @see [\App\Http\Controllers\ClientController::destroyShare](/Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php)
+                     * @see [\App\Http\Controllers\ClientController::destroyShare](/Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
@@ -187,55 +186,43 @@ export namespace App {
             export namespace ProjectController {
                 export namespace Index {
                     /**
-                     * @see [\App\Http\Controllers\ProjectController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
+                     * @see [\App\Http\Controllers\ProjectController::index](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
                      */
                     export type Response = Inertia.Pages.ProjectsPage
 
                     /**
-                     * @see [\App\Http\Controllers\ProjectController::index](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
+                     * @see [\App\Http\Controllers\ProjectController::index](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
 
                 export namespace Create {
                     /**
-                     * @see [\App\Http\Controllers\ProjectController::create](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
+                     * @see [\App\Http\Controllers\ProjectController::create](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
                      */
                     export type Response = Inertia.Pages.ProjectForm
 
                     /**
-                     * @see [\App\Http\Controllers\ProjectController::create](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
+                     * @see [\App\Http\Controllers\ProjectController::create](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
 
                 export namespace Edit {
                     /**
-                     * @see [\App\Http\Controllers\ProjectController::edit](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
+                     * @see [\App\Http\Controllers\ProjectController::edit](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
                      */
                     export type Response = Inertia.Pages.ProjectForm
 
                     /**
-                     * @see [\App\Http\Controllers\ProjectController::edit](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
-                     */
-                    export type Request = Record<string, unknown>
-                }
-
-                export namespace ShowBilling {
-                    /**
-                     * @see [\App\Http\Controllers\ProjectController::showBilling](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
-                     */
-                    export type Response = Inertia.Pages.ProjectBillingPage
-
-                    /**
-                     * @see [\App\Http\Controllers\ProjectController::showBilling](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
+                     * @see [\App\Http\Controllers\ProjectController::edit](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
 
                 export namespace Store {
                     /**
-                     * @see [\App\Http\Controllers\ProjectController::store](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
+                     * @see [\App\Http\Controllers\ProjectController::store](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
                      */
                     export type Request = {    name: string;
                         description?: string | null;
@@ -246,19 +233,21 @@ export namespace App {
 
                 export namespace Update {
                     /**
-                     * @see [\App\Http\Controllers\ProjectController::update](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
+                     * @see [\App\Http\Controllers\ProjectController::update](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
                      */
                     export type Request = {    name: string;
                         description?: string | null;
                         daily_rate?: number;
                         max_month_budget?: number | null;
                         max_total_budget?: number | null;
-                        client_id: string;}
+                        client_id: string;
+                        created_at: string;
+                        deleted_at?: string | null;}
                 }
 
                 export namespace SyncEntries {
                     /**
-                     * @see [\App\Http\Controllers\ProjectController::syncEntries](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
+                     * @see [\App\Http\Controllers\ProjectController::syncEntries](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
                      */
                     export type Request = {    "*.coverage": number;
                         "*.title"?: string | null;
@@ -267,21 +256,21 @@ export namespace App {
 
                 export namespace Destroy {
                     /**
-                     * @see [\App\Http\Controllers\ProjectController::destroy](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
+                     * @see [\App\Http\Controllers\ProjectController::destroy](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
 
                 export namespace Restore {
                     /**
-                     * @see [\App\Http\Controllers\ProjectController::restore](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
+                     * @see [\App\Http\Controllers\ProjectController::restore](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
 
                 export namespace Duplicate {
                     /**
-                     * @see [\App\Http\Controllers\ProjectController::duplicate](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php)
+                     * @see [\App\Http\Controllers\ProjectController::duplicate](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
@@ -290,12 +279,12 @@ export namespace App {
             export namespace ShowTimesheetHandler {
                 export namespace __invoke {
                     /**
-                     * @see [\App\Http\Controllers\ShowTimesheetHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShowTimesheetHandler.php)
+                     * @see [\App\Http\Controllers\ShowTimesheetHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowTimesheetHandler.php)
                      */
                     export type Response = Inertia.Pages.TimesheetPage
 
                     /**
-                     * @see [\App\Http\Controllers\ShowTimesheetHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShowTimesheetHandler.php)
+                     * @see [\App\Http\Controllers\ShowTimesheetHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowTimesheetHandler.php)
                      */
                     export type Request = Record<string, unknown>
                 }
@@ -304,12 +293,12 @@ export namespace App {
             export namespace ShowSharedHandler {
                 export namespace __invoke {
                     /**
-                     * @see [\App\Http\Controllers\ShowSharedHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShowSharedHandler.php)
+                     * @see [\App\Http\Controllers\ShowSharedHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowSharedHandler.php)
                      */
                     export type Response = Inertia.Pages.ProjectBillingPage
 
                     /**
-                     * @see [\App\Http\Controllers\ShowSharedHandler::__invoke](/Users/mathieutu/Projects/cra/app/Http/Controllers/ShowSharedHandler.php)
+                     * @see [\App\Http\Controllers\ShowSharedHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowSharedHandler.php)
                      */
                     export type Request = Record<string, unknown>
                 }
@@ -318,25 +307,27 @@ export namespace App {
             export namespace ProjectInvoiceController {
                 export namespace Store {
                     /**
-                     * @see [\App\Http\Controllers\ProjectInvoiceController::store](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php)
+                     * @see [\App\Http\Controllers\ProjectInvoiceController::store](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php)
                      */
                     export type Request = {    amount: number;
                         paid_at?: string | null;
-                        notes?: string | null;}
+                        notes?: string | null;
+                        created_at?: string | null;}
                 }
 
                 export namespace Update {
                     /**
-                     * @see [\App\Http\Controllers\ProjectInvoiceController::update](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php)
+                     * @see [\App\Http\Controllers\ProjectInvoiceController::update](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php)
                      */
                     export type Request = {    amount: number;
                         paid_at?: string | null;
-                        notes?: string | null;}
+                        notes?: string | null;
+                        created_at?: string | null;}
                 }
 
                 export namespace Destroy {
                     /**
-                     * @see [\App\Http\Controllers\ProjectInvoiceController::destroy](/Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php)
+                     * @see [\App\Http\Controllers\ProjectInvoiceController::destroy](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
@@ -348,7 +339,7 @@ export namespace App {
 export namespace Closure {
     export namespace __invoke {
         /**
-         * @see [\Closure::__invoke](/Users/mathieutu/Projects/cra/vendor/laravel/boost/src/BoostServiceProvider.php)
+         * @see [\Closure::__invoke](/Users/mathieutu/Projects/takt/vendor/laravel/boost/src/BoostServiceProvider.php)
          */
         export type Request = Record<string, unknown>
     }

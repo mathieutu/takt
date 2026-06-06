@@ -11,7 +11,6 @@ import clientRoutes from '@/wayfinder/routes/clients'
 import { show as clientBillingShow } from '@/wayfinder/routes/clients/billing'
 import { destroy as destroyClientShare, store as shareClientRoute } from '@/wayfinder/routes/clients/share'
 import projectsRoutes from '@/wayfinder/routes/projects'
-import { show as billingShow } from '@/wayfinder/routes/projects/billing'
 
 type Client = {
   id: string,
@@ -268,7 +267,7 @@ function revokeShare() {
               <div class="flex shrink-0 items-center gap-1">
                 <UTooltip text="Billing">
                   <UButton
-                    :href="billingShow(project)"
+                    :href="clientBillingShow(project.client)"
                     icon="i-lucide-receipt-text"
                     color="neutral"
                     variant="ghost"

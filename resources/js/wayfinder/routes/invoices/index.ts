@@ -5,10 +5,10 @@ import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOpt
 
 /**
  * @see \App\Http\Controllers\ProjectInvoiceController::store
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php:11
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:12
  * @route "/projects/{project}/invoices"
  */
-export const store = (args: { project: string | number } | [ project: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
+export const store = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
     url: store.url(args, options),
     method: "post",
 })
@@ -20,12 +20,16 @@ store.definition = {
 
 /**
  * @see \App\Http\Controllers\ProjectInvoiceController::store
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php:11
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:12
  * @route "/projects/{project}/invoices"
  */
-store.url = (args: { project: string | number } | [ project: string | number ] | string | number, options?: RouteQueryOptions) => {
+store.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
     if (typeof args === "string" || typeof args === "number") {
         args = { project: args }
+    }
+    
+    if (typeof args === "object" && !Array.isArray(args) && "id" in args) {
+        args = { project: args.id }
     }
     
     if (Array.isArray(args)) {
@@ -37,7 +41,7 @@ store.url = (args: { project: string | number } | [ project: string | number ] |
     args = applyUrlDefaults(args)
     
     const parsedArgs = {
-        project: args.project,
+        project: typeof args.project === "object" ? args.project.id : args.project,
     }
     
     return store.definition.url
@@ -47,10 +51,10 @@ store.url = (args: { project: string | number } | [ project: string | number ] |
 
 /**
  * @see \App\Http\Controllers\ProjectInvoiceController::store
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php:11
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:12
  * @route "/projects/{project}/invoices"
  */
-store.post = (args: { project: string | number } | [ project: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
+store.post = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
     url: store.url(args, options),
     method: "post",
 })
@@ -64,7 +68,7 @@ store.post = (args: { project: string | number } | [ project: string | number ] 
 
 /**
  * @see \App\Http\Controllers\ProjectInvoiceController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php:22
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:24
  * @route "/invoices/{invoice}"
  */
 export const update = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
@@ -79,7 +83,7 @@ update.definition = {
 
 /**
  * @see \App\Http\Controllers\ProjectInvoiceController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php:22
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:24
  * @route "/invoices/{invoice}"
  */
 update.url = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -110,7 +114,7 @@ update.url = (args: { invoice: string | { id: string } } | [ invoice: string | {
 
 /**
  * @see \App\Http\Controllers\ProjectInvoiceController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php:22
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:24
  * @route "/invoices/{invoice}"
  */
 update.put = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
@@ -127,7 +131,7 @@ update.put = (args: { invoice: string | { id: string } } | [ invoice: string | {
 
 /**
  * @see \App\Http\Controllers\ProjectInvoiceController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php:33
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:36
  * @route "/invoices/{invoice}"
  */
 export const destroy = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
@@ -142,7 +146,7 @@ destroy.definition = {
 
 /**
  * @see \App\Http\Controllers\ProjectInvoiceController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php:33
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:36
  * @route "/invoices/{invoice}"
  */
 destroy.url = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -173,7 +177,7 @@ destroy.url = (args: { invoice: string | { id: string } } | [ invoice: string | 
 
 /**
  * @see \App\Http\Controllers\ProjectInvoiceController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php:33
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:36
  * @route "/invoices/{invoice}"
  */
 destroy.delete = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({

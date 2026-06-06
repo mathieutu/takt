@@ -41,7 +41,6 @@ Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
     Route::resource('projects', ProjectController::class)->except(['show'])->withTrashed(['edit', 'update', 'destroy']);
     Route::post('projects/{project}/restore', [ProjectController::class, 'restore'])->name('projects.restore')->withTrashed();
     Route::post('projects/{project}/duplicate', [ProjectController::class, 'duplicate'])->name('projects.duplicate')->withTrashed();
-    Route::get('projects/{project}/billing', [ProjectController::class, 'showBilling'])->name('projects.billing.show')->withTrashed();
     Route::patch('projects/{project}/entries', [ProjectController::class, 'syncEntries'])->name('projects.entries.sync');
 
     // Project invoices

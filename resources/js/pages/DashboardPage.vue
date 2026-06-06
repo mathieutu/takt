@@ -19,8 +19,8 @@ import { Bar } from 'vue-chartjs'
 import { formatDays } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
 import { timesheet } from '@/wayfinder/routes'
+import { show as showBilling } from '@/wayfinder/routes/clients/billing'
 import { edit as editProject } from '@/wayfinder/routes/projects'
-import { show as showBilling } from '@/wayfinder/routes/projects/billing'
 
 const props = defineProps<DashboardProps>()
 
@@ -448,7 +448,7 @@ const progressTextClass = (percent: number) => {
                 <UBadge v-if="p.unbilled > 0" :color="p.unbilled > 10_000_00 ? 'error' : 'warning'" variant="subtle" size="sm">
                   {{ formatCurrency(p.unbilled) }}
                 </UBadge>
-                <UButton :href="showBilling(p)" icon="i-lucide-receipt-text" color="neutral" variant="ghost" size="xs" />
+                <UButton :href="showBilling({ id: p.clientId })" icon="i-lucide-receipt-text" color="neutral" variant="ghost" size="xs" />
               </div>
             </div>
           </div>

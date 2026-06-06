@@ -5,7 +5,7 @@ import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOpt
 
 /**
  * @see \App\Http\Controllers\ShowSharedHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShowSharedHandler.php:15
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowSharedHandler.php:15
  * @route "/shares/{token}"
  */
 export const show = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -20,7 +20,7 @@ show.definition = {
 
 /**
  * @see \App\Http\Controllers\ShowSharedHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShowSharedHandler.php:15
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowSharedHandler.php:15
  * @route "/shares/{token}"
  */
 show.url = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -47,7 +47,7 @@ show.url = (args: { token: string | number } | [ token: string | number ] | stri
 
 /**
  * @see \App\Http\Controllers\ShowSharedHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShowSharedHandler.php:15
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowSharedHandler.php:15
  * @route "/shares/{token}"
  */
 show.get = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -57,7 +57,7 @@ show.get = (args: { token: string | number } | [ token: string | number ] | stri
 
 /**
  * @see \App\Http\Controllers\ShowSharedHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShowSharedHandler.php:15
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowSharedHandler.php:15
  * @route "/shares/{token}"
  */
 show.head = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"head"> => ({
