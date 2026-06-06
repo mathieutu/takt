@@ -65,7 +65,7 @@ const deleteProject = (project: Project) => confirm({
 
 const projectMenuItems = (project: Project): DropdownMenuItem[][] => [
   [
-    { label: 'Edit', icon: 'i-lucide-pencil', href: projectsRoutes.edit(project), only: ['modal'] },
+    { label: 'Edit', icon: 'i-lucide-pencil', href: projectsRoutes.edit(project, { mergeQuery: {} }), only: ['modal'] },
     { label: 'Duplicate', icon: 'i-lucide-copy', href: projectsRoutes.duplicate(project) },
   ],
   project.deleted_at ? [
@@ -98,7 +98,7 @@ const clientMenuItems = (client: Client): DropdownMenuItem[][] => {
   return [
     [
       { label: 'Share', icon: 'i-lucide-share-2', onSelect: () => openShare(client) },
-      { label: 'Edit', icon: 'i-lucide-pencil', href: clientRoutes.edit(client) },
+      { label: 'Edit', icon: 'i-lucide-pencil', href: clientRoutes.edit(client, { mergeQuery: {} }) },
     ],
     [{ label: 'Archive', icon: 'i-lucide-archive', color: 'error' as const, onSelect: () => deleteClient(client) }],
   ]
@@ -179,7 +179,7 @@ function revokeShare() {
             </p>
           </div>
           <UButton
-            :href="projectsRoutes.create()"
+            :href="projectsRoutes.create({ mergeQuery: {} })"
             :only="['modal']"
             label="New project"
             icon="i-lucide-plus"

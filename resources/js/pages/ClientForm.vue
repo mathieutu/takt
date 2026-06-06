@@ -52,7 +52,7 @@ const form = useForm({
 })
 
 const submit = () => form.submit(update(modal.client))
-const close = () => router.visit(index())
+const close = () => router.visit(index({ mergeQuery: {} }))
 </script>
 
 <template>

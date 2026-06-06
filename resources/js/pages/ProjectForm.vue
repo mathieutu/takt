@@ -94,7 +94,7 @@ const clientSelectItems = computed(() => [
 ])
 
 const submit = () => form.submit(modal.project ? update(modal.project) : store())
-const close = () => router.visit(index(), { only: ['modal'] })
+const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
 </script>
 
 <template>
