@@ -5,7 +5,7 @@ const DAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'] as const
 export const TODAY = new Date().toISOString().slice(0, 10)
 
 export const formatMonthName = (year: number, month: number): string => {
-  const name = new Intl.DateTimeFormat(undefined, { month: 'long' }).format(new Date(year, month - 1))
+  const name = new Intl.DateTimeFormat('en-GB', { month: 'long' }).format(new Date(year, month - 1))
   return name.charAt(0).toUpperCase() + name.slice(1)
 }
 export const formatDays = (days: number): string => `${days % 1 === 0 ? days : days.toFixed(1)}d`
@@ -20,12 +20,12 @@ export const daysInMonth = ({ year, month }: { year: number, month: number }): D
   })
 }
 
-export const formatDate = (date: string): string => new Date(date).toLocaleDateString(undefined, {
+export const formatDate = (date: string): string => new Date(date).toLocaleDateString('en-GB', {
   day: 'numeric',
   month: 'short',
 })
 
-export const formatDateTime = (dateTime: string) => new Date(dateTime).toLocaleDateString(undefined, {
+export const formatDateTime = (dateTime: string) => new Date(dateTime).toLocaleDateString('en-GB', {
   day: 'numeric',
   month: 'short',
   hour: 'numeric',
