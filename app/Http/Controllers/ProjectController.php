@@ -126,7 +126,7 @@ class ProjectController
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:255'],
-            'daily_rate' => ['integer', 'min:1'],
+            'daily_rate' => ['integer', 'min:0'],
             'max_month_budget' => ['nullable', 'integer', 'min:1'],
             'max_total_budget' => ['nullable', 'integer', 'min:1'],
             'client_id' => ['required', Rule::exists('clients', 'id')->where('user_id', $request->user()->id)],
