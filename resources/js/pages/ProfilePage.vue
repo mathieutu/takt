@@ -84,7 +84,7 @@ const deleteUser = useConfirm({
             label="Delete"
             color="error"
             variant="outline"
-            @click="deleteUser"
+            @click="() => void deleteUser()"
           />
         </div>
       </UCard>

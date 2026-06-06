@@ -7,7 +7,7 @@ type Client = {
   daily_rate: number,
   deleted_at: string | null,
   created_at: string,
-  is_shared: boolean,
+  share_url: string | null,
 }
 
 type Project = {

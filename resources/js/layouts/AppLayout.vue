@@ -4,10 +4,10 @@ import type { NavigationMenuItem } from '@nuxt/ui/components/NavigationMenu.vue.
 import type { PageProps } from '../types'
 import { usePage } from '@inertiajs/vue3'
 import { computed } from 'vue'
+import TaktLogo from '@/components/TaktLogo.vue'
 import { dashboard, login, logout, profile, timesheet } from '@/wayfinder/routes'
 import projects from '@/wayfinder/routes/projects'
 import { useFlash } from '../composables/useFlash'
-import TaktLogo from '@/components/TaktLogo.vue'
 
 const page = usePage<PageProps>()
 const user = computed(() => page.props.auth?.user)

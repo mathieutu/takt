@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { ErrorBag, Errors, FormComponentOptimisticCallback, PageProps as InertiaPageProps } from '@inertiajs/core'
 import { Form, router } from '@inertiajs/vue3'
 import { computed, nextTick, ref, watch } from 'vue'
 import TimesheetGrid from '@/components/TimesheetGrid.vue'
@@ -101,6 +102,28 @@ function entryDateLabel(date: string): string {
   const d = new Date(`${date}T00:00:00`)
   return `${d.getDate()} ${formatMonthName(d.getFullYear(), d.getMonth() + 1)}`
 }
+
+type InertiaOptimisticPage = InertiaPageProps & {
+  errors: Errors & ErrorBag,
+  deferred?: Record<string, string[] | undefined>,
+}
+const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage> = (rawPage, rawData) => {
+  const page = rawPage as InertiaOptimisticPage & { projects: Project[] }
+  const data = rawData as Record<string, EntryData>
+  return {
+    projects: page.projects.map(p => p.id !== activeEntry.value?.projectId ? p : {
+      ...p,
+      entries: {
+        ...p.entries,
+        [activeEntry.value!.date]: {
+          coverage: Number(data[activeEntry.value!.date].coverage),
+          title: data[activeEntry.value!.date].title ?? '',
+          description: data[activeEntry.value!.date].description ?? '',
+        },
+      },
+    }),
+  }
+}
 </script>
 
 <template>
@@ -153,15 +176,15 @@ function entryDateLabel(date: string): string {
     </div>
   </div>
 
-  <UModal v-model:open="activeEntry" :title="activeEntry ? entryDateLabel(activeEntry.date) : ''">
+  <UModal :open="!!activeEntry" :title="activeEntry ? entryDateLabel(activeEntry.date) : ''" @update:open="(val: boolean) => val || (activeEntry = null)">
     <template #body>
       <template v-if="activeEntry?.isArchived">
         <div class="space-y-4">
-          <div v-if="activeEntry?.title" class="flex flex-col gap-1">
+          <div v-if="activeEntry.title" class="flex flex-col gap-1">
             <p class="text-xs font-medium text-muted">Title</p>
             <p class="text-sm">{{ activeEntry.title }}</p>
           </div>
-          <div v-if="activeEntry?.description" class="flex flex-col gap-1">
+          <div v-if="activeEntry.description" class="flex flex-col gap-1">
             <p class="text-xs font-medium text-muted">Description</p>
             <p class="text-sm whitespace-pre-wrap">{{ activeEntry.description }}</p>
           </div>
@@ -171,24 +194,12 @@ function entryDateLabel(date: string): string {
         v-else-if="activeEntry"
         id="entry-form"
         :key="`${activeEntry.projectId}:${activeEntry.date}`"
-        :action="syncEntries(activeEntry.projectId).url"
+        :action="syncEntries(activeEntry.projectId)"
         method="patch"
         :only="['projects']"
         :preserveState="true"
         :preserveScroll="true"
-        :optimistic="(page: { projects: Project[] }, data: Record<string, any>) => ({
-          projects: page.projects.map(p => p.id !== activeEntry!.projectId ? p : {
-            ...p,
-            entries: {
-              ...p.entries,
-              [activeEntry!.date]: {
-                coverage: Number(data[activeEntry!.date].coverage),
-                title: data[activeEntry!.date].title ?? '',
-                description: data[activeEntry!.date].description ?? '',
-              },
-            },
-          }),
-        })"
+        :optimistic="entryFormOptimistic"
         @success="activeEntry = null"
       >
         <div class="space-y-4">

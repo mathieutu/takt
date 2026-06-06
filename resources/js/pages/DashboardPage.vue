@@ -2,6 +2,7 @@
 import {
   BarElement,
   CategoryScale,
+  type ChartData,
   type ChartDataset,
   Chart as ChartJS,
   Filler,
@@ -11,7 +12,7 @@ import {
   Tooltip,
   type TooltipItem,
 } from 'chart.js'
-import { computed } from 'vue'
+import { computed, type ComputedRef } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { formatDays } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
@@ -146,7 +147,7 @@ const barChartData = computed(() => ({
       order: 1,
     } satisfies ChartDataset<'line', number[]>,
   ],
-}))
+})) as ComputedRef<ChartData<'bar', number[]>>
 
 const barChartOptions = {
   responsive: true,

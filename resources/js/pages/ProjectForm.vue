@@ -25,6 +25,7 @@ type BackgroundClient = {
   daily_rate: number,
   deleted_at: string | null,
   created_at: string,
+  share_url: string | null,
 }
 
 type BackgroundProject = {
@@ -44,8 +45,8 @@ const { modal } = defineProps<{
     clients: FormClient[],
   },
   page: {
-    projects?: BackgroundProject[],
-    clients?: BackgroundClient[],
+    projects: BackgroundProject[],
+    clients: BackgroundClient[],
     search?: string,
     client_id?: string,
     with_trashed?: boolean,

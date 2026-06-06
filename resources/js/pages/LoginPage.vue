@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
+import TaktLogo from '@/components/TaktLogo.vue'
 import { useFlash } from '@/composables/useFlash'
 import { disabled } from '@/wayfinder/routes/login'
-import TaktLogo from '@/components/TaktLogo.vue'
 
 defineOptions({ layout: () => false })
 
