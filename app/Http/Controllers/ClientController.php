@@ -2,16 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Concerns\BuildsProjectBillingEntry;
 use App\Http\Concerns\BuildsProjectsPageProps;
 use App\Models\Client;
+use App\Models\Project;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ClientController
 {
-    use BuildsProjectsPageProps;
+    use BuildsProjectBillingEntry, BuildsProjectsPageProps;
 
     public function edit(Request $request, Client $client): Response
     {
@@ -62,5 +65,35 @@ class ClientController
         $client->forceDelete();
 
         return redirect()->back()->with('success', 'Client successfully deleted.');
+    }
+
+    public function showBilling(Request $request, Client $client): Response
+    {
+        $projects = $client->projects()->withTrashed()->orderBy('created_at')->get();
+
+        abort_if($projects->isEmpty(), 404);
+
+        $projects->load(['timesheetEntries', 'invoices']);
+
+        return Inertia::render('ProjectBillingPage', [
+            'projects' => $projects->map(fn (Project $p) => $this->buildProjectBillingEntry($p, $client->name))->values(),
+            'is_shared' => false,
+        ]);
+    }
+
+    public function storeShare(Client $client): RedirectResponse
+    {
+        if (! $client->share_token) {
+            $client->update(['share_token' => (string) Str::uuid()]);
+        }
+
+        return back();
+    }
+
+    public function destroyShare(Client $client): RedirectResponse
+    {
+        $client->update(['share_token' => null]);
+
+        return back();
     }
 }

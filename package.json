@@ -8,7 +8,7 @@
     "dev": "vite",
     "lint": "eslint",
     "lint:fix": "yarn lint --fix",
-    "type-check": "vue-tsc --noEmit"
+    "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
     "@inertiajs/vue3": "^3.3.1",

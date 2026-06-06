@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Concerns\BuildsProjectBillingEntry;
 use App\Http\Concerns\BuildsProjectsPageProps;
 use App\Models\Project;
+use App\Models\TimesheetEntry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -12,7 +14,7 @@ use Inertia\Response;
 
 class ProjectController
 {
-    use BuildsProjectsPageProps;
+    use BuildsProjectBillingEntry, BuildsProjectsPageProps;
 
     public function index(Request $request): Response|RedirectResponse
     {
@@ -161,5 +163,33 @@ class ProjectController
         return redirect()
             ->back()
             ->with('success', 'Project restored successfully.');
+    }
+
+    public function showBilling(Request $request, Project $project): Response
+    {
+        $project->load(['timesheetEntries', 'invoices']);
+
+        return Inertia::render('ProjectBillingPage', [
+            'projects' => [$this->buildProjectBillingEntry($project)],
+            'is_shared' => false,
+        ]);
+    }
+
+    public function syncEntries(Request $request, Project $project): RedirectResponse
+    {
+        $entries = $request->validate([
+            '*.coverage' => ['required', 'integer', 'between:0,100'],
+            '*.title' => ['nullable', 'string'],
+            '*.description' => ['nullable', 'string'],
+        ]);
+
+        foreach ($entries as $date => $data) {
+            TimesheetEntry::updateOrCreate(
+                ['project_id' => $project->id, 'date' => $date],
+                $data,
+            );
+        }
+
+        return redirect()->back();
     }
 }

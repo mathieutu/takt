@@ -4,8 +4,8 @@
 import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOptions } from "./../../../index";
 
 /**
- * @see \App\Http\Controllers\SyncProjectEntriesHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SyncProjectEntriesHandler.php:12
+ * @see \App\Http\Controllers\ProjectController::syncEntries
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:178
  * @route "/projects/{project}/entries"
  */
 export const sync = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"patch"> => ({
@@ -19,8 +19,8 @@ sync.definition = {
 } satisfies RouteDefinition<["patch"]>
 
 /**
- * @see \App\Http\Controllers\SyncProjectEntriesHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SyncProjectEntriesHandler.php:12
+ * @see \App\Http\Controllers\ProjectController::syncEntries
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:178
  * @route "/projects/{project}/entries"
  */
 sync.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -50,8 +50,8 @@ sync.url = (args: { project: string | { id: string } } | [ project: string | { i
 }
 
 /**
- * @see \App\Http\Controllers\SyncProjectEntriesHandler::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SyncProjectEntriesHandler.php:12
+ * @see \App\Http\Controllers\ProjectController::syncEntries
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectController.php:178
  * @route "/projects/{project}/entries"
  */
 sync.patch = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"patch"> => ({

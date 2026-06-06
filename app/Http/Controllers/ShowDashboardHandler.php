@@ -11,7 +11,7 @@ use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class DashboardController
+class ShowDashboardHandler
 {
     public function __invoke(Request $request): Response|RedirectResponse
     {

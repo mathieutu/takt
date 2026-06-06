@@ -4,8 +4,67 @@
 import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOptions } from "./../../index";
 
 /**
- * @see \App\Http\Controllers\BillingController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:55
+ * @see \App\Http\Controllers\ProjectInvoiceController::store
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php:11
+ * @route "/projects/{project}/invoices"
+ */
+export const store = (args: { project: string | number } | [ project: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
+    url: store.url(args, options),
+    method: "post",
+})
+
+store.definition = {
+    methods: ["post"],
+    url: "/projects/{project}/invoices",
+} satisfies RouteDefinition<["post"]>
+
+/**
+ * @see \App\Http\Controllers\ProjectInvoiceController::store
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php:11
+ * @route "/projects/{project}/invoices"
+ */
+store.url = (args: { project: string | number } | [ project: string | number ] | string | number, options?: RouteQueryOptions) => {
+    if (typeof args === "string" || typeof args === "number") {
+        args = { project: args }
+    }
+    
+    if (Array.isArray(args)) {
+        args = {
+        project: args[0],
+    }
+    }
+    
+    args = applyUrlDefaults(args)
+    
+    const parsedArgs = {
+        project: args.project,
+    }
+    
+    return store.definition.url
+        .replace("{project}", parsedArgs.project.toString())
+        .replace(/\/+$/, "") + queryParams(options)
+}
+
+/**
+ * @see \App\Http\Controllers\ProjectInvoiceController::store
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php:11
+ * @route "/projects/{project}/invoices"
+ */
+store.post = (args: { project: string | number } | [ project: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
+    url: store.url(args, options),
+    method: "post",
+})
+
+
+
+
+
+
+
+
+/**
+ * @see \App\Http\Controllers\ProjectInvoiceController::update
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php:22
  * @route "/invoices/{invoice}"
  */
 export const update = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
@@ -19,8 +78,8 @@ update.definition = {
 } satisfies RouteDefinition<["put"]>
 
 /**
- * @see \App\Http\Controllers\BillingController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:55
+ * @see \App\Http\Controllers\ProjectInvoiceController::update
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php:22
  * @route "/invoices/{invoice}"
  */
 update.url = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -50,8 +109,8 @@ update.url = (args: { invoice: string | { id: string } } | [ invoice: string | {
 }
 
 /**
- * @see \App\Http\Controllers\BillingController::update
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:55
+ * @see \App\Http\Controllers\ProjectInvoiceController::update
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php:22
  * @route "/invoices/{invoice}"
  */
 update.put = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
@@ -67,8 +126,8 @@ update.put = (args: { invoice: string | { id: string } } | [ invoice: string | {
 
 
 /**
- * @see \App\Http\Controllers\BillingController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:68
+ * @see \App\Http\Controllers\ProjectInvoiceController::destroy
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php:33
  * @route "/invoices/{invoice}"
  */
 export const destroy = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
@@ -82,8 +141,8 @@ destroy.definition = {
 } satisfies RouteDefinition<["delete"]>
 
 /**
- * @see \App\Http\Controllers\BillingController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:68
+ * @see \App\Http\Controllers\ProjectInvoiceController::destroy
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php:33
  * @route "/invoices/{invoice}"
  */
 destroy.url = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -113,8 +172,8 @@ destroy.url = (args: { invoice: string | { id: string } } | [ invoice: string | 
 }
 
 /**
- * @see \App\Http\Controllers\BillingController::destroy
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:68
+ * @see \App\Http\Controllers\ProjectInvoiceController::destroy
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ProjectInvoiceController.php:33
  * @route "/invoices/{invoice}"
  */
 destroy.delete = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
@@ -131,6 +190,7 @@ destroy.delete = (args: { invoice: string | { id: string } } | [ invoice: string
 
 
 const invoices = {
+    store,
     update,
     destroy,
 }

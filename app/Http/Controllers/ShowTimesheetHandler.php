@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class TimesheetHandler
+class ShowTimesheetHandler
 {
     public function __invoke(Request $request, HolidayService $holidays): Response
     {

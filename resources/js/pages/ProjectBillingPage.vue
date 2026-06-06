@@ -3,9 +3,8 @@ import { useForm } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
 import { coverageLabel, formatDate, formatDays, formatMonthName, parseMonth } from '@/utils/date'
 import { formatCurrency } from '@/utils/number'
-import { destroy as destroyInvoice, update as updateInvoice } from '@/wayfinder/routes/invoices'
+import { destroy as destroyInvoice, store as storeInvoice, update as updateInvoice } from '@/wayfinder/routes/invoices'
 import { index as projectsIndex } from '@/wayfinder/routes/projects'
-import { store as storeInvoice } from '@/wayfinder/routes/projects/billing'
 
 type EntryData = { coverage: number, title: string, description: string }
 

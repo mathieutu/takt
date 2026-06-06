@@ -1,14 +1,12 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\BillingController;
 use App\Http\Controllers\ClientController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProjectController;
-use App\Http\Controllers\ShareController;
-use App\Http\Controllers\SharedController;
-use App\Http\Controllers\SyncProjectEntriesHandler;
-use App\Http\Controllers\TimesheetHandler;
+use App\Http\Controllers\ProjectInvoiceController;
+use App\Http\Controllers\ShowDashboardHandler;
+use App\Http\Controllers\ShowSharedHandler;
+use App\Http\Controllers\ShowTimesheetHandler;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureUserOwnsResource;
 
@@ -26,7 +24,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
     Route::get('logout', [AuthController::class, 'logout'])->name('logout');
 
-    Route::get('/', DashboardController::class)->name('dashboard');
+    Route::get('/', ShowDashboardHandler::class)->name('dashboard');
 
     Route::get('profile', [UserController::class, 'edit'])->name('profile');
     Route::put('profile', [UserController::class, 'update'])->name('profile.update');
@@ -35,27 +33,24 @@ Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
     // Clients
     Route::resource('clients', ClientController::class)->only(['edit', 'update', 'destroy'])->withTrashed(['destroy']);
     Route::post('clients/{client}/restore', [ClientController::class, 'restore'])->name('clients.restore')->withTrashed();
-    Route::post('clients/{client}/share', [ShareController::class, 'storeClient'])->name('clients.share.store');
-    Route::delete('clients/{client}/share', [ShareController::class, 'destroyClient'])->name('clients.share.destroy');
-    Route::get('clients/{client}/billing', [BillingController::class, 'showClient'])->name('clients.billing.show')->withTrashed();
+    Route::post('clients/{client}/share', [ClientController::class, 'storeShare'])->name('clients.share.store');
+    Route::delete('clients/{client}/share', [ClientController::class, 'destroyShare'])->name('clients.share.destroy');
+    Route::get('clients/{client}/billing', [ClientController::class, 'showBilling'])->name('clients.billing.show')->withTrashed();
 
     // Projects
     Route::resource('projects', ProjectController::class)->except(['show'])->withTrashed(['destroy']);
     Route::post('projects/{project}/restore', [ProjectController::class, 'restore'])->name('projects.restore')->withTrashed();
     Route::post('projects/{project}/duplicate', [ProjectController::class, 'duplicate'])->name('projects.duplicate')->withTrashed();
-    Route::get('projects/{project}/billing', [BillingController::class, 'show'])->name('projects.billing.show')->withTrashed();
-    Route::post('projects/{project}/billing', [BillingController::class, 'store'])->name('projects.billing.store')->withTrashed();
+    Route::get('projects/{project}/billing', [ProjectController::class, 'showBilling'])->name('projects.billing.show')->withTrashed();
+    Route::patch('projects/{project}/entries', [ProjectController::class, 'syncEntries'])->name('projects.entries.sync');
 
-    // Timesheet entries
-    Route::patch('projects/{project}/entries', SyncProjectEntriesHandler::class)
-        ->name('projects.entries.sync');
-
-    // Invoices
-    Route::put('invoices/{invoice}', [BillingController::class, 'update'])->name('invoices.update');
-    Route::delete('invoices/{invoice}', [BillingController::class, 'destroy'])->name('invoices.destroy');
+    // Project invoices
+    Route::post('projects/{project}/invoices', [ProjectInvoiceController::class, 'store'])->name('invoices.store')->withTrashed();
+    Route::put('invoices/{invoice}', [ProjectInvoiceController::class, 'update'])->name('invoices.update');
+    Route::delete('invoices/{invoice}', [ProjectInvoiceController::class, 'destroy'])->name('invoices.destroy');
 
     // Pages
-    Route::get('timesheet', TimesheetHandler::class)->name('timesheet');
+    Route::get('timesheet', ShowTimesheetHandler::class)->name('timesheet');
 });
 
-Route::get('shares/{token}', SharedController::class)->name('shares.show');
+Route::get('shares/{token}', ShowSharedHandler::class)->name('shares.show');

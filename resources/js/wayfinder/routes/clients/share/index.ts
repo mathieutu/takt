@@ -4,8 +4,8 @@
 import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOptions } from "./../../../index";
 
 /**
- * @see \App\Http\Controllers\ShareController::storeClient
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:11
+ * @see \App\Http\Controllers\ClientController::storeShare
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:84
  * @route "/clients/{client}/share"
  */
 export const store = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -19,8 +19,8 @@ store.definition = {
 } satisfies RouteDefinition<["post"]>
 
 /**
- * @see \App\Http\Controllers\ShareController::storeClient
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:11
+ * @see \App\Http\Controllers\ClientController::storeShare
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:84
  * @route "/clients/{client}/share"
  */
 store.url = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -50,8 +50,8 @@ store.url = (args: { client: string | { id: string } } | [ client: string | { id
 }
 
 /**
- * @see \App\Http\Controllers\ShareController::storeClient
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:11
+ * @see \App\Http\Controllers\ClientController::storeShare
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:84
  * @route "/clients/{client}/share"
  */
 store.post = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -67,8 +67,8 @@ store.post = (args: { client: string | { id: string } } | [ client: string | { i
 
 
 /**
- * @see \App\Http\Controllers\ShareController::destroyClient
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:20
+ * @see \App\Http\Controllers\ClientController::destroyShare
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:93
  * @route "/clients/{client}/share"
  */
 export const destroy = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
@@ -82,8 +82,8 @@ destroy.definition = {
 } satisfies RouteDefinition<["delete"]>
 
 /**
- * @see \App\Http\Controllers\ShareController::destroyClient
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:20
+ * @see \App\Http\Controllers\ClientController::destroyShare
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:93
  * @route "/clients/{client}/share"
  */
 destroy.url = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -113,8 +113,8 @@ destroy.url = (args: { client: string | { id: string } } | [ client: string | { 
 }
 
 /**
- * @see \App\Http\Controllers\ShareController::destroyClient
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShareController.php:20
+ * @see \App\Http\Controllers\ClientController::destroyShare
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:93
  * @route "/clients/{client}/share"
  */
 destroy.delete = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({

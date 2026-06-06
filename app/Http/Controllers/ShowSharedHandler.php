@@ -8,7 +8,7 @@ use App\Models\Project;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class SharedController
+class ShowSharedHandler
 {
     use BuildsProjectBillingEntry;
 

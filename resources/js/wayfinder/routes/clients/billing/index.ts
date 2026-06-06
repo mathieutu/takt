@@ -4,8 +4,8 @@
 import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOptions } from "./../../../index";
 
 /**
- * @see \App\Http\Controllers\BillingController::showClient
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:28
+ * @see \App\Http\Controllers\ClientController::showBilling
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:70
  * @route "/clients/{client}/billing"
  */
 export const show = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -19,8 +19,8 @@ show.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see \App\Http\Controllers\BillingController::showClient
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:28
+ * @see \App\Http\Controllers\ClientController::showBilling
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:70
  * @route "/clients/{client}/billing"
  */
 show.url = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -50,8 +50,8 @@ show.url = (args: { client: string | { id: string } } | [ client: string | { id:
 }
 
 /**
- * @see \App\Http\Controllers\BillingController::showClient
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:28
+ * @see \App\Http\Controllers\ClientController::showBilling
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:70
  * @route "/clients/{client}/billing"
  */
 show.get = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -60,8 +60,8 @@ show.get = (args: { client: string | { id: string } } | [ client: string | { id:
 })
 
 /**
- * @see \App\Http\Controllers\BillingController::showClient
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/BillingController.php:28
+ * @see \App\Http\Controllers\ClientController::showBilling
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ClientController.php:70
  * @route "/clients/{client}/billing"
  */
 show.head = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"head"> => ({

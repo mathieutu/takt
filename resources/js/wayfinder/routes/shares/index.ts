@@ -4,8 +4,8 @@
 import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOptions } from "./../../index";
 
 /**
- * @see \App\Http\Controllers\SharedController::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SharedController.php:15
+ * @see \App\Http\Controllers\ShowSharedHandler::__invoke
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShowSharedHandler.php:15
  * @route "/shares/{token}"
  */
 export const show = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -19,8 +19,8 @@ show.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see \App\Http\Controllers\SharedController::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SharedController.php:15
+ * @see \App\Http\Controllers\ShowSharedHandler::__invoke
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShowSharedHandler.php:15
  * @route "/shares/{token}"
  */
 show.url = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -46,8 +46,8 @@ show.url = (args: { token: string | number } | [ token: string | number ] | stri
 }
 
 /**
- * @see \App\Http\Controllers\SharedController::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SharedController.php:15
+ * @see \App\Http\Controllers\ShowSharedHandler::__invoke
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShowSharedHandler.php:15
  * @route "/shares/{token}"
  */
 show.get = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -56,8 +56,8 @@ show.get = (args: { token: string | number } | [ token: string | number ] | stri
 })
 
 /**
- * @see \App\Http\Controllers\SharedController::__invoke
- * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/SharedController.php:15
+ * @see \App\Http\Controllers\ShowSharedHandler::__invoke
+ * @see /Users/mathieutu/Projects/cra/app/Http/Controllers/ShowSharedHandler.php:15
  * @route "/shares/{token}"
  */
 show.head = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"head"> => ({
