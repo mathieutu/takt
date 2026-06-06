@@ -1,105 +1,105 @@
 {
-  "$schema": "https://getcomposer.org/schema.json",
-  "name": "mathieutu/cra",
-  "type": "project",
-  "description": "Application de gestion de projets, clients et temps d'activit\u00e9.",
-  "keywords": [
-    "laravel",
-    "inertia",
-    "vue",
-    "time-tracking"
-  ],
-  "license": "proprietary",
-  "authors": [
-    {
-      "name": "Mathieu TUDISCO",
-      "email": "mathieu@tudisco.fr"
-    }
-  ],
-  "require": {
-    "php": "^8.3",
-    "inertiajs/inertia-laravel": "^3.1.0",
-    "laravel/framework": "^13.11.2",
-    "laravel/socialite": "^5.27.0",
-    "laravel/tinker": "^3.0.2",
-    "mathieutu/exporter": "^3.4.0",
-    "phpoffice/phpspreadsheet": "^5.6",
-    "staudenmeir/belongs-to-through": "^2.18"
-  },
-  "require-dev": {
-    "barryvdh/laravel-ide-helper": "^3.7.0",
-    "fakerphp/faker": "^1.24.1",
-    "laravel/boost": "^2.4.8",
-    "laravel/pail": "^1.2.6",
-    "laravel/pao": "^1.0.6",
-    "laravel/pint": "^1.29.1",
-    "laravel/wayfinder": "dev-next",
-    "mockery/mockery": "^1.6.12",
-    "nunomaduro/collision": "^8.9.4",
-    "pestphp/pest": "^4.7.0",
-    "pestphp/pest-plugin-laravel": "^4.1.0"
-  },
-  "autoload": {
-    "psr-4": {
-      "App\\": "app/",
-      "Database\\Factories\\": "database/factories/",
-      "Database\\Seeders\\": "database/seeders/"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "Tests\\": "tests/"
-    }
-  },
-  "scripts": {
-    "setup": [
-      "composer install",
-      "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
-      "@php artisan key:generate",
-      "@php artisan migrate --force",
-      "yarn install",
-      "yarn run build"
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "mathieutu/cra",
+    "type": "project",
+    "description": "Application de gestion de projets, clients et temps d'activit\u00e9.",
+    "keywords": [
+        "laravel",
+        "inertia",
+        "vue",
+        "time-tracking"
     ],
-    "dev": [
-      "Composer\\Config::disableProcessTimeout",
-      "XDEBUG_MODE=debug php artisan serve --port 8084 --ansi"
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Mathieu TUDISCO",
+            "email": "mathieu@tudisco.fr"
+        }
     ],
-    "test": [
-      "@php artisan config:clear --ansi",
-      "@php artisan test"
-    ],
-    "post-autoload-dump": [
-      "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-      "@php artisan package:discover --ansi"
-    ],
-    "post-update-cmd": [
-      "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
-    ],
-    "post-root-package-install": [
-      "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
-    ],
-    "post-create-project-cmd": [
-      "@php artisan key:generate --ansi",
-      "@php artisan migrate --graceful --ansi"
-    ],
-    "pre-package-uninstall": [
-      "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
-    ]
-  },
-  "extra": {
-    "laravel": {
-      "dont-discover": []
-    }
-  },
-  "config": {
-    "optimize-autoloader": true,
-    "preferred-install": "dist",
-    "sort-packages": true,
-    "allow-plugins": {
-      "pestphp/pest-plugin": true,
-      "php-http/discovery": true
-    }
-  },
-  "minimum-stability": "stable",
-  "prefer-stable": true
+    "require": {
+        "php": "^8.3",
+        "inertiajs/inertia-laravel": "^3.1.0",
+        "laravel/framework": "^13.14.0",
+        "laravel/socialite": "^5.27.0",
+        "laravel/tinker": "^3.0.2",
+        "mathieutu/exporter": "^3.4.0",
+        "phpoffice/phpspreadsheet": "^5.6",
+        "staudenmeir/belongs-to-through": "^2.18.0"
+    },
+    "require-dev": {
+        "barryvdh/laravel-ide-helper": "^3.7.0",
+        "fakerphp/faker": "^1.24.1",
+        "laravel/boost": "^2.4.9",
+        "laravel/pail": "^1.2.7",
+        "laravel/pao": "^1.1.0",
+        "laravel/pint": "^1.29.1",
+        "laravel/wayfinder": "dev-next",
+        "mockery/mockery": "^1.6.12",
+        "nunomaduro/collision": "^8.9.4",
+        "pestphp/pest": "^4.7.2",
+        "pestphp/pest-plugin-laravel": "^4.1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "setup": [
+            "composer install",
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+            "@php artisan key:generate",
+            "@php artisan migrate --force",
+            "yarn install",
+            "yarn run build"
+        ],
+        "dev": [
+            "Composer\\Config::disableProcessTimeout",
+            "XDEBUG_MODE=debug php artisan serve --port 8084 --ansi"
+        ],
+        "test": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test"
+        ],
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi"
+        ],
+        "post-update-cmd": [
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+        ],
+        "post-root-package-install": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+        ],
+        "post-create-project-cmd": [
+            "@php artisan key:generate --ansi",
+            "@php artisan migrate --graceful --ansi"
+        ],
+        "pre-package-uninstall": [
+            "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": []
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }
