@@ -127,7 +127,7 @@ const projectsWithStats = computed(() => {
         daysSince,
       }
     })
-    .sort((a, b) => b.dailyRate - a.dailyRate)
+    .toSorted((a, b) => b.dailyRate - a.dailyRate)
 })
 
 const barChartData = computed(() => ({
@@ -151,10 +151,7 @@ const barChartData = computed(() => ({
     {
       type: 'line',
       label: 'Billed',
-      data: props.chart.billed.reduce<number[]>((acc, v, i) => {
-        acc.push((acc[i - 1] ?? 0) + v / 100)
-        return acc
-      }, []),
+      data: props.chart.billed.reduce<number[]>((acc, v) => [...acc, (acc.at(-1) ?? 0) + v / 100], []),
       borderColor: getCssColor('--color-green-500'),
       backgroundColor: 'transparent',
       cubicInterpolationMode: 'monotone' as const,

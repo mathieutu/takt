@@ -35,42 +35,26 @@ const emit = defineEmits<{
 const tableRef = useTemplateRef<HTMLTableElement>('table-ref')
 useTimesheetKeyboard(tableRef, () => days, () => projects, emit)
 
-function getCellClasses(project: GridProject, day: Day): string[] {
+const getCellClasses = (project: GridProject, day: Day): Array<string | boolean> => {
   const coverage = project.entries[day.date]?.coverage ?? 0
   const isDeleted = !!project.deleted_at
   const isHolidayOrWeekend = holidays.has(day.date) || day.isWeekend
   const isToday = day.date === TODAY
-  const classes = []
 
-  // Cursor
-  classes.push(isDeleted ? 'cursor-disabled' : 'cursor-pointer')
+  const base = [
+    isDeleted ? 'cursor-disabled' : 'cursor-pointer',
+    isToday && 'border-primary/50',
+    isDeleted && 'pointer-events-none',
+  ]
 
-  if (isToday) {
-    classes.push('border-primary/50')
-  }
+  if (coverage >= 100) return [...base, 'bg-primary/25 hover:bg-primary/30']
+  if (coverage > 0) return [...base, 'bg-primary/10 hover:bg-primary/15']
 
-  if (isDeleted) {
-    classes.push('pointer-events-none')
-  }
-
-  // Background
-  if (coverage >= 100) {
-    return [...classes, 'bg-primary/25 hover:bg-primary/30']
-  }
-
-  if (coverage > 0 && coverage < 100) {
-    return [...classes, 'bg-primary/10 hover:bg-primary/15']
-  }
-
-  if (isHolidayOrWeekend) {
-    classes.push('bg-elevated')
-  }
-
-  if (coverage === 0) {
-    classes.push('hover:bg-elevated/60')
-  }
-
-  return classes
+  return [
+    ...base,
+    isHolidayOrWeekend && 'bg-elevated',
+    'hover:bg-elevated/60',
+  ]
 }
 </script>
 

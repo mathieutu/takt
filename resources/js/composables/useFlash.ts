@@ -11,7 +11,7 @@ const COLOR_MAP: Record<keyof Flash, 'success' | 'info' | 'warning' | 'error' | 
   message: 'neutral',
 }
 
-export function useFlash() {
+export const useFlash = () => {
   const toast = useToast()
   const page = usePage()
 
@@ -19,14 +19,12 @@ export function useFlash() {
     () => page.flash,
     flash => {
       if (!flash) return
-      for (const [type, message] of Object.entries(flash)) {
-        if (message) {
-          toast.add({
-            title: message as string,
-            color: COLOR_MAP[type as keyof Flash] ?? 'neutral',
-          })
-        }
-      }
+      Object.entries(flash)
+        .filter(([, message]) => message)
+        .forEach(([type, message]) => toast.add({
+          title: message as string,
+          color: COLOR_MAP[type as keyof Flash] ?? 'neutral',
+        }))
     },
     { immediate: true },
   )

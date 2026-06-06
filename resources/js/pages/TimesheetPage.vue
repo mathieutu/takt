@@ -41,9 +41,7 @@ const centerTodayColumn = (behavior: ScrollBehavior = 'auto') => {
     props.current.year === new Date().getFullYear()
     && props.current.month === new Date().getMonth() + 1
 
-  if (!isCurrentMonth || !tableScrollRef.value) {
-    return
-  }
+  if (!isCurrentMonth || !tableScrollRef.value) return
 
   tableScrollRef.value.querySelector<HTMLElement>(`#day-col-${TODAY}`)
     ?.scrollIntoView({ behavior, block: 'nearest', inline: 'center' })
@@ -104,7 +102,7 @@ const openEntry = (projectId: string, date: string) => {
   activeEntry.value = { projectId, date, isArchived: !!project.deleted_at, ...project.entries[date]! }
 }
 
-function entryDateLabel(date: string): string {
+const entryDateLabel = (date: string): string => {
   const d = new Date(`${date}T00:00:00`)
   return `${d.getDate()} ${formatMonthName(d.getFullYear(), d.getMonth() + 1)}`
 }
@@ -143,13 +141,13 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
           </span>
         </div>
         <div class="flex shrink-0 items-center gap-2">
-          <UTooltip text="Previous month" kbds="p">
+          <UTooltip text="Previous month" :kbds="['p']">
             <UButton :to="urls.prevMonth" icon="i-lucide-chevron-left" color="neutral" variant="ghost" size="xs" />
           </UTooltip>
           <span class="min-w-35 text-center text-sm font-medium text-default">
             {{ formatMonthName(current.year, current.month) }} {{ current.year }}
           </span>
-          <UTooltip text="Next month" kbds="n">
+          <UTooltip text="Next month" :kbds="['n']">
             <UButton :to="urls.nextMonth" icon="i-lucide-chevron-right" color="neutral" variant="ghost" size="xs" />
           </UTooltip>
         </div>

@@ -62,35 +62,24 @@ const visibleProjects = computed(() =>
 
 const expandedMonths = ref<Set<string>>(new Set())
 
-function toggleMonth(projectId: string, month: string) {
+const toggleMonth = (projectId: string, month: string) => {
   const key = `${projectId}:${month}`
   if (expandedMonths.value.has(key)) {
     expandedMonths.value.delete(key)
-  } else {
-    expandedMonths.value.add(key)
+    return
   }
+  expandedMonths.value.add(key)
 }
 
 const isExpanded = (projectId: string, month: string) => expandedMonths.value.has(`${projectId}:${month}`)
 
 // ── Totals ─────────────────────────────────────────────────────────────────────
 
-function projectTotals(project: ProjectWithBilling) {
-  let totalDays = 0
-  let totalWorked = 0
-  let totalInvoiced = 0
-
-  for (const m of project.months) {
-    totalDays += m.days_worked
-    totalWorked += m.days_worked * project.daily_rate
-    for (const inv of m.invoices) {
-      totalInvoiced += inv.amount
-    }
-  }
-
-  for (const inv of project.outstanding) {
-    totalInvoiced += inv.amount
-  }
+const projectTotals = (project: ProjectWithBilling) => {
+  const totalDays = project.months.reduce((sum, m) => sum + m.days_worked, 0)
+  const totalWorked = project.months.reduce((sum, m) => sum + m.days_worked * project.daily_rate, 0)
+  const totalInvoiced = project.months.reduce((sum, m) => sum + m.invoices.reduce((s, inv) => s + inv.amount, 0), 0)
+    + project.outstanding.reduce((sum, inv) => sum + inv.amount, 0)
 
   const totalBudgetAllocated = project.max_total_budget !== null
     ? project.max_total_budget
@@ -117,7 +106,7 @@ const editingInvoiceId = ref<string | null>(null)
 const invoiceProjectId = ref<string | null>(null)
 const form = useForm({ amount: '', paid_at: '', notes: '', created_at: '' })
 
-function openAddInvoice(project: ProjectWithBilling) {
+const openAddInvoice = (project: ProjectWithBilling) => {
   invoiceProjectId.value = project.id
   editingInvoiceId.value = null
   form.reset()
@@ -126,7 +115,7 @@ function openAddInvoice(project: ProjectWithBilling) {
   invoiceOpen.value = true
 }
 
-function openEditInvoice(inv: MonthInvoice | OutstandingInvoice) {
+const openEditInvoice = (inv: MonthInvoice | OutstandingInvoice) => {
   editingInvoiceId.value = inv.id
   form.amount = String(inv.amount / 100)
   form.paid_at = inv.paid_at ?? ''
@@ -136,7 +125,7 @@ function openEditInvoice(inv: MonthInvoice | OutstandingInvoice) {
   invoiceOpen.value = true
 }
 
-function submitInvoice() {
+const submitInvoice = () => {
   const route = editingInvoiceId.value
     ? updateInvoice(editingInvoiceId.value)
     : storeInvoice(invoiceProjectId.value!)

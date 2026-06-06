@@ -87,6 +87,51 @@ const deleteClient = (client: Client) => confirm({
   onConfirm: () => router.visit(clientRoutes.destroy(client), { preserveScroll: true }),
 })
 
+const openShare = (client: Client) => {
+  sharingItem.value = client
+  copied.value = false
+  shareOpen.value = true
+
+  if (!client.share_url) {
+    router.visit(shareClientRoute(client.id), {
+      preserveState: true,
+      preserveScroll: true,
+      only: ['clients'],
+      onSuccess: () => {
+        sharingItem.value = props.clients.find(c => c.id === client.id) ?? sharingItem.value
+      },
+    })
+  }
+}
+
+const copyShareUrl = () => {
+  if (!sharingItem.value?.share_url) return
+  navigator.clipboard.writeText(sharingItem.value.share_url)
+  copied.value = true
+  setTimeout(() => {
+    copied.value = false
+  }, 2000)
+}
+
+const revokeShare = () => {
+  if (!sharingItem.value) return
+
+  confirm({
+    title: `Revoke share link for "${sharingItem.value.name}"?`,
+    description: 'Anyone with the link will immediately lose access.',
+    onConfirm: () => {
+      router.visit(destroyClientShare(sharingItem.value!.id), {
+        preserveScroll: true,
+        only: ['clients'],
+        onSuccess: () => {
+          shareOpen.value = false
+          sharingItem.value = null
+        },
+      })
+    },
+  })
+}
+
 const clientMenuItems = (client: Client): DropdownMenuItem[][] => {
   if (client.deleted_at) {
     return [
@@ -107,53 +152,6 @@ const clientMenuItems = (client: Client): DropdownMenuItem[][] => {
 const onSearch = useDebounceFn((value: string) => {
   router.visit(projectsRoutes.index({ mergeQuery: { search: value || null } }), { preserveState: true, replace: true })
 }, 300)
-
-function openShare(client: Client) {
-  sharingItem.value = client
-  copied.value = false
-  shareOpen.value = true
-
-  if (!client.share_url) {
-    router.visit(shareClientRoute(client.id), {
-      preserveState: true,
-      preserveScroll: true,
-      only: ['clients'],
-      onSuccess: () => {
-        sharingItem.value = props.clients.find(c => c.id === client.id) ?? sharingItem.value
-      },
-    })
-  }
-}
-
-function copyShareUrl() {
-  if (!sharingItem.value?.share_url) return
-  navigator.clipboard.writeText(sharingItem.value.share_url)
-  copied.value = true
-  setTimeout(() => {
-    copied.value = false
-  }, 2000)
-}
-
-function revokeShare() {
-  if (!sharingItem.value) {
-    return
-  }
-
-  confirm({
-    title: `Revoke share link for "${sharingItem.value.name}"?`,
-    description: 'Anyone with the link will immediately lose access.',
-    onConfirm: () => {
-      router.visit(destroyClientShare(sharingItem.value!.id), {
-        preserveScroll: true,
-        only: ['clients'],
-        onSuccess: () => {
-          shareOpen.value = false
-          sharingItem.value = null
-        },
-      })
-    },
-  })
-}
 </script>
 
 <template>

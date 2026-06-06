@@ -7,8 +7,8 @@ export type GridNavAction =
   | 'step-left' | 'step-right' // Alt + Arrow
   | 'next' | 'prev' // n / p
 
-export function useGridNavigation() {
-  function resolveAction(event: KeyboardEvent): GridNavAction | null {
+export const useGridNavigation = () => {
+  const resolveAction = (event: KeyboardEvent): GridNavAction | null => {
     const { key, metaKey, ctrlKey, altKey } = event
     const jump = metaKey || ctrlKey
 

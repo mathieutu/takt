@@ -45,6 +45,8 @@ export default antfu(
       'style/brace-style': ['error', '1tbs'],
       'style/multiline-ternary': 'off',
       'style/arrow-parens': ['error', 'as-needed'],
+      'prefer-arrow-callback': 'error',
+      'func-style': ['error'],
       'style/type-generic-spacing': 'off', // Does not allow comment in generics.
       'style/member-delimiter-style': [
         'error',

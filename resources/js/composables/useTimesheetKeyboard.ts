@@ -16,44 +16,22 @@ type EmitFn = {
   (event: 'prevMonth'): void,
 }
 
-export function useTimesheetKeyboard(
+export const useTimesheetKeyboard = (
   tableRef: TemplateRef<HTMLTableElement>,
   getDays: () => Day[],
   getProjects: () => Project[],
   emit: EmitFn,
-) {
+) => {
   const { resolveAction } = useGridNavigation()
   const pendingFocus = ref<'first' | 'last' | null>(null)
 
-  onMounted(() => {
-    const todayIndex = getDays().findIndex(d => d.date === TODAY)
-    if (todayIndex !== -1) {
-      const firstRow = tableRef.value?.querySelector('tbody tr')
-      const cell = firstRow?.querySelectorAll('td')[todayIndex + 1] as HTMLElement
-      cell?.focus()
-    }
-
-    window.addEventListener('keydown', handleWindowKeydown)
-  })
-
-  onUnmounted(() => {
-    window.removeEventListener('keydown', handleWindowKeydown)
-  })
-
-  watch(() => getDays(), async () => {
-    if (!pendingFocus.value) return
-    await nextTick()
-    focusCell(0, pendingFocus.value === 'first' ? 0 : getDays().length - 1)
-    pendingFocus.value = null
-  })
-
-  function getActiveCell(): HTMLElement | null {
+  const getActiveCell = (): HTMLElement | null => {
     const el = document.activeElement as HTMLElement | null
     if (el?.tagName === 'TD' && tableRef.value?.contains(el)) return el
     return null
   }
 
-  function focusCell(rowIndex: number, colIndex: number) {
+  const focusCell = (rowIndex: number, colIndex: number) => {
     const rows = tableRef.value?.querySelectorAll('tbody tr')
     if (!rows?.[rowIndex]) return
 
@@ -62,13 +40,12 @@ export function useTimesheetKeyboard(
     cell?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
   }
 
-  function navigateMonth(direction: 'next' | 'prev') {
+  const navigateMonth = (direction: 'next' | 'prev') => {
     pendingFocus.value = direction === 'next' ? 'first' : 'last'
-    if (direction === 'next') emit('nextMonth')
-    else emit('prevMonth')
+    direction === 'next' ? emit('nextMonth') : emit('prevMonth')
   }
 
-  function resolveCoords(action: string, rowIndex: number, colIndex: number): [number, number] | null {
+  const resolveCoords = (action: string, rowIndex: number, colIndex: number): [number, number] | null => {
     const lastCol = getDays().length - 1
     const lastRow = getProjects().length - 1
 
@@ -88,7 +65,7 @@ export function useTimesheetKeyboard(
     return null
   }
 
-  function handleWindowKeydown(event: KeyboardEvent) {
+  const handleWindowKeydown = (event: KeyboardEvent) => {
     const target = event.target as HTMLElement
     if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable) return
 
@@ -164,6 +141,28 @@ export function useTimesheetKeyboard(
     if (!coords) return
     focusCell(...coords)
   }
+
+  onMounted(() => {
+    const todayIndex = getDays().findIndex(d => d.date === TODAY)
+    if (todayIndex !== -1) {
+      const firstRow = tableRef.value?.querySelector('tbody tr')
+      const cell = firstRow?.querySelectorAll('td')[todayIndex + 1] as HTMLElement
+      cell?.focus()
+    }
+
+    window.addEventListener('keydown', handleWindowKeydown)
+  })
+
+  onUnmounted(() => {
+    window.removeEventListener('keydown', handleWindowKeydown)
+  })
+
+  watch(() => getDays(), async () => {
+    if (!pendingFocus.value) return
+    await nextTick()
+    focusCell(0, pendingFocus.value === 'first' ? 0 : getDays().length - 1)
+    pendingFocus.value = null
+  })
 
   return { tableRef }
 }
