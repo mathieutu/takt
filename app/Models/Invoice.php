@@ -43,7 +43,7 @@ class Invoice extends Model implements HasUser
 
     public function user(): BelongsToThrough
     {
-        return $this->belongsToThrough(User::class, [Project::class, Client::class])
+        return $this->belongsToThrough(User::class, [Client::class, Project::class])
             ->withTrashed(['projects.deleted_at', 'clients.deleted_at']);
     }
 
