@@ -16,24 +16,24 @@ const updatedAt = computed(() => page.props.updatedAt)
 useFlash()
 
 const navItems: NavigationMenuItem[] = [
-  { label: 'Dashboard', icon: 'i-lucide-layout-dashboard', to: dashboard(), exact: true },
-  { label: 'Timesheet', icon: 'i-lucide-calendar-days', to: timesheet() },
-  { label: 'Projects', icon: 'i-lucide-folder-kanban', to: projects.index() },
+  { label: 'Tableau de bord', icon: 'i-lucide-layout-dashboard', to: dashboard(), exact: true },
+  { label: 'Activité', icon: 'i-lucide-calendar-days', to: timesheet() },
+  { label: 'Projets', icon: 'i-lucide-folder-kanban', to: projects.index() },
 ]
 
 const userMenuItems = computed<DropdownMenuItem[][]>(() => [[
-  { label: 'Settings', icon: 'i-lucide-settings', to: profile() },
+  { label: 'Paramètres', icon: 'i-lucide-settings', to: profile() },
   user.value
-    ? { label: 'Log out', icon: 'i-lucide-log-out', to: logout() }
-    : { label: 'Login', icon: 'i-lucide-log-in', to: login() },
+    ? { label: 'Se déconnecter', icon: 'i-lucide-log-out', to: logout() }
+    : { label: 'Connexion', icon: 'i-lucide-log-in', to: login() },
 ]])
 
 const mobileMenuItems = computed<NavigationMenuItem[]>(() => [
   ...navItems,
-  { label: 'Settings', icon: 'i-lucide-settings', to: profile() },
+  { label: 'Paramètres', icon: 'i-lucide-settings', to: profile() },
   user.value
-    ? { label: 'Log out', icon: 'i-lucide-log-out', to: logout() }
-    : { label: 'Login', icon: 'i-lucide-log-in', to: login() },
+    ? { label: 'Se déconnecter', icon: 'i-lucide-log-out', to: logout() }
+    : { label: 'Connexion', icon: 'i-lucide-log-in', to: login() },
 ])
 </script>
 
@@ -65,7 +65,7 @@ const mobileMenuItems = computed<NavigationMenuItem[]>(() => [
             </div>
           </UDropdownMenu>
         </template>
-        <UButton v-else :to="login()" label="Login" color="neutral" variant="ghost" />
+        <UButton v-else :to="login()" label="Connexion" color="neutral" variant="ghost" />
       </template>
 
       <template #body>
@@ -78,7 +78,7 @@ const mobileMenuItems = computed<NavigationMenuItem[]>(() => [
     </main>
     <UFooter>
       <template #left>
-        <p class="text-muted text-xs">© {{ new Date().getFullYear() }} Takt · Last update {{ formatDateTime(updatedAt) }}</p>
+        <p class="text-muted text-xs">© {{ new Date().getFullYear() }} Takt · Dernière mise à jour {{ formatDateTime(updatedAt) }}</p>
       </template>
       <template #right>
         <UButton

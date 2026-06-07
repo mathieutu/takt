@@ -39,14 +39,14 @@ class ClientController
 
         $client->update($data);
 
-        return redirect()->route('projects.index')->with('success', 'Client successfully updated.');
+        return redirect()->route('projects.index')->with('success', 'Client mis à jour avec succès.');
     }
 
     public function restore(Client $client): RedirectResponse
     {
         $client->restore();
 
-        return redirect()->back()->with('success', 'Client restored successfully.');
+        return redirect()->back()->with('success', 'Client restauré avec succès.');
     }
 
     public function destroy(Client $client): RedirectResponse
@@ -55,16 +55,16 @@ class ClientController
             $client->projects()->delete();
             $client->delete();
 
-            return redirect()->back()->with('success', 'Client and its projects successfully archived.');
+            return redirect()->back()->with('success', 'Client et ses projets archivés avec succès.');
         }
 
         if ($client->projects()->withTrashed()->exists()) {
-            return redirect()->back()->with('error', 'Cannot delete a client with existing projects.');
+            return redirect()->back()->with('error', 'Impossible de supprimer un client ayant des projets.');
         }
 
         $client->forceDelete();
 
-        return redirect()->back()->with('success', 'Client successfully deleted.');
+        return redirect()->back()->with('success', 'Client supprimé avec succès.');
     }
 
     public function showBilling(Request $request, Client $client): Response

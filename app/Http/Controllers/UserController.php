@@ -34,7 +34,7 @@ class UserController
 
         return redirect()
             ->route('profile')
-            ->with('success', 'Your profile has been updated.');
+            ->with('success', 'Votre profil a été mis à jour.');
     }
 
     public function destroy(Request $request): RedirectResponse
@@ -47,6 +47,6 @@ class UserController
 
         return redirect()
             ->route('login')
-            ->with('success', 'Your account has been deleted.');
+            ->with('success', 'Votre compte a été supprimé.');
     }
 }

@@ -2,8 +2,8 @@
   "extends": "@vue/tsconfig/tsconfig.dom.json",
   "compilerOptions": {
     "target": "ES2020",
-    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "jsx": "preserve",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "module": "ESNext",

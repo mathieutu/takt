@@ -67,7 +67,7 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
     <thead>
       <tr>
         <th class="sticky left-0 top-0 z-30 border border-default bg-default px-3 py-2 text-left text-xs font-medium text-muted">
-          Project
+          Projet
         </th>
         <th
           v-for="(day, index) in days"
@@ -93,13 +93,13 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
     <tbody>
       <tr v-if="!projects.length">
         <td :colspan="days.length + 1" class="px-4 py-8 text-center text-sm text-muted">
-          No projects available.
+          Aucun projet disponible.
         </td>
       </tr>
       <tr v-for="(project, projectIndex) in projects" :key="project.id" class="group/row">
         <td class="sticky left-0 z-10 border-b border-r border-l border-default bg-default px-3 py-2">
           <div class="flex items-center gap-1 min-w-0">
-            <UTooltip v-if="project.deleted_at" text="Archived">
+            <UTooltip v-if="project.deleted_at" text="Archivé">
               <UIcon name="i-lucide-archive" class="w-3.5 h-3.5 shrink-0 text-muted" />
             </UTooltip>
             <div class="truncate text-sm font-medium flex-1" :class="project.deleted_at ? 'text-muted' : 'text-default'">{{ project.name }}</div>
@@ -110,7 +110,7 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
               {{ formatDays(project.days) }}
               <template v-if="project.revenue">({{ formatCurrency(project.revenue) }})</template>
             </span>
-            <UTooltip text="Billing">
+            <UTooltip text="Facturation">
               <UButton
                 :href="billingShow(project.client)"
                 icon="i-lucide-receipt-text"
@@ -147,7 +147,7 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
           />
           <UTooltip
             v-if="!project.deleted_at || (project.entries[day.date]?.title || project.entries[day.date]?.description)"
-            :text="project.deleted_at ? 'View details' : 'Edit entry'"
+            :text="project.deleted_at ? 'Voir les détails' : 'Modifier l\'entrée'"
           >
             <button
               type="button"

@@ -15,8 +15,8 @@ const props = defineProps<{
 const values = ref(props.user)
 
 const deleteUser = useConfirm({
-  title: 'Permanently delete your account?',
-  description: 'This action is irreversible. All your data will be lost.',
+  title: 'Supprimer définitivement votre compte ?',
+  description: 'Cette action est irréversible. Toutes vos données seront perdues.',
   onConfirm: () => router.visit(destroy()),
 })
 </script>
@@ -25,17 +25,17 @@ const deleteUser = useConfirm({
   <main class="flex-1 px-6 py-8">
     <div class="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 class="text-lg font-semibold">Profile</h1>
-        <p class="text-sm text-muted">Manage your profile and information</p>
+        <h1 class="text-lg font-semibold">Profil</h1>
+        <p class="text-sm text-muted">Gérez votre profil et vos informations</p>
       </div>
 
       <UCard>
         <template #header>
-          <h2 class="text-sm font-semibold">Information</h2>
+          <h2 class="text-sm font-semibold">Informations</h2>
         </template>
         <Form v-slot="{ errors, processing }" class="space-y-6" :action="update()" novalidate>
           <div class="space-y-4">
-            <UFormField label="Name" required :error="errors.name">
+            <UFormField label="Nom" required :error="errors.name">
               <UInput
                 v-model="values.name"
                 type="text"
@@ -45,7 +45,7 @@ const deleteUser = useConfirm({
               />
             </UFormField>
 
-            <UFormField label="Email address" required :error="errors.email">
+            <UFormField label="Adresse e-mail" required :error="errors.email">
               <UInput
                 v-model="values.email"
                 name="email"
@@ -59,29 +59,29 @@ const deleteUser = useConfirm({
               <span class="text-sm font-medium">GitHub</span>
               <div class="flex items-center gap-2 text-sm text-muted">
                 <UIcon name="i-simple-icons-github" class="size-4 shrink-0" />
-                Connected via GitHub
+                Connecté via GitHub
               </div>
             </div>
           </div>
           <div class="flex justify-end">
-            <UButton type="submit" :loading="processing" label="Save" />
+            <UButton type="submit" :loading="processing" label="Enregistrer" />
           </div>
         </Form>
       </UCard>
 
       <UCard>
         <template #header>
-          <h2 class="text-sm font-semibold">Danger zone</h2>
+          <h2 class="text-sm font-semibold">Zone de danger</h2>
         </template>
 
         <div class="flex items-center justify-between gap-4">
           <div>
-            <p class="text-sm font-medium">Delete my account</p>
-            <p class="text-xs text-muted">This action is irreversible.</p>
+            <p class="text-sm font-medium">Supprimer mon compte</p>
+            <p class="text-xs text-muted">Cette action est irréversible.</p>
           </div>
           <UButton
             type="button"
-            label="Delete"
+            label="Supprimer"
             color="error"
             variant="outline"
             @click="() => void deleteUser()"

@@ -76,7 +76,7 @@ type DashboardProps = {
 }
 
 const now = new Date()
-const currentMonthLabel = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+const currentMonthLabel = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
 
 // ── Chart colors ──────────────────────────────────────────────────────────────
 
@@ -150,7 +150,7 @@ const barChartData = computed(() => ({
     }),
     {
       type: 'line',
-      label: 'Billed',
+      label: 'Facturé',
       data: props.chart.billed.reduce<number[]>((acc, v) => [...acc, (acc.at(-1) ?? 0) + v / 100], []),
       borderColor: getCssColor('--color-green-500'),
       backgroundColor: 'transparent',
@@ -181,13 +181,13 @@ const barChartOptions = {
       },
     },
     tooltip: {
-      filter: (ctx: TooltipItem<'bar'>) => ctx.dataset.label === 'Billed'
+      filter: (ctx: TooltipItem<'bar'>) => ctx.dataset.label === 'Facturé'
         ? (props.chart.billed[ctx.dataIndex] ?? 0) > 0
         : (ctx.parsed.y ?? 0) > 0,
       callbacks: {
         label: (ctx: TooltipItem<'bar'>) => {
-          if (ctx.dataset.label === 'Billed') {
-            return ` Billed : ${formatCurrency(props.chart.billed[ctx.dataIndex]!)}`
+          if (ctx.dataset.label === 'Facturé') {
+            return ` Facturé : ${formatCurrency(props.chart.billed[ctx.dataIndex]!)}`
           }
           return ` ${ctx.dataset.label} : ${formatDays(ctx.parsed.y ?? 0)}`
         },
@@ -242,8 +242,8 @@ const progressTextClass = (percent: number) => {
       <div class="mx-auto max-w-6xl space-y-6">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-lg font-semibold">Dashboard</h1>
-            <p class="text-sm text-muted">Overview of your activity</p>
+            <h1 class="text-lg font-semibold">Tableau de bord</h1>
+            <p class="text-sm text-muted">Aperçu de votre activité</p>
           </div>
           <UButton :label="currentMonthLabel" :href="timesheet()" icon="i-lucide-calendar-days" />
         </div>
@@ -253,12 +253,12 @@ const progressTextClass = (percent: number) => {
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
-                <p class="text-sm font-semibold">Days this month</p>
+                <p class="text-sm font-semibold">Jours ce mois</p>
                 <UIcon name="i-lucide-calendar-days" class="text-muted" />
               </div>
             </template>
             <p class="text-2xl font-bold">{{ formatDays(kpis.monthDays) }}</p>
-            <p class="mt-1 text-xs text-muted">out of {{ kpis.workingDays }} working days</p>
+            <p class="mt-1 text-xs text-muted">sur {{ kpis.workingDays }} jours ouvrés</p>
             <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-elevated">
               <div
                 class="h-1.5 rounded-full bg-primary transition-all"
@@ -266,7 +266,7 @@ const progressTextClass = (percent: number) => {
               />
             </div>
             <div class="mt-1 flex items-center justify-between">
-              <p class="text-xs text-muted">{{ kpis.fillRate }}% filled</p>
+              <p class="text-xs text-muted">{{ kpis.fillRate }}% remplis</p>
               <span
                 class="flex items-center gap-0.5 text-xs"
                 :class="kpis.trendDays >= 0 ? 'text-success' : 'text-error'"
@@ -280,61 +280,61 @@ const progressTextClass = (percent: number) => {
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
-                <p class="text-sm font-semibold">Revenue this month</p>
+                <p class="text-sm font-semibold">Revenus ce mois</p>
                 <UIcon name="i-lucide-euro" class="text-muted" />
               </div>
             </template>
             <p class="text-2xl font-bold">{{ formatCurrency(kpis.monthRevenue) }}</p>
             <p class="mt-1 text-xs text-muted">
-              proj. <span class="font-medium text-primary">{{ formatCurrency(kpis.projectedRevenue) }}</span> end of month
+              proj. <span class="font-medium text-primary">{{ formatCurrency(kpis.projectedRevenue) }}</span> fin de mois
             </p>
             <p
               class="mt-1 flex items-center gap-0.5 text-xs"
               :class="kpis.trendRevenue >= 0 ? 'text-success' : 'text-error'"
             >
               <UIcon :name="kpis.trendRevenue >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'" class="size-3" />
-              {{ kpis.trendRevenue >= 0 ? '+' : '' }}{{ kpis.trendRevenue }}% vs previous month
+              {{ kpis.trendRevenue >= 0 ? '+' : '' }}{{ kpis.trendRevenue }}% vs mois précédent
             </p>
           </UCard>
 
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
-                <p class="text-sm font-semibold">Outstanding invoices</p>
+                <p class="text-sm font-semibold">Factures impayées</p>
                 <UIcon name="i-lucide-clock" class="text-muted" />
               </div>
             </template>
             <p class="text-2xl font-bold">{{ formatCurrency(kpis.outstandingAmount) }}</p>
             <p class="mt-1 text-xs text-muted">
-              {{ kpis.outstandingCount }} unpaid invoice{{ kpis.outstandingCount > 1 ? 's' : '' }}
+              {{ kpis.outstandingCount }} facture{{ kpis.outstandingCount > 1 ? 's' : '' }} impayée{{ kpis.outstandingCount > 1 ? 's' : '' }}
             </p>
             <p v-if="kpis.overdueCount > 0" class="mt-1 flex items-center gap-1 text-xs text-error">
               <UIcon name="i-lucide-alert-circle" class="size-3" />
-              {{ kpis.overdueCount }} overdue
+              {{ kpis.overdueCount }} en retard
             </p>
             <p v-else class="mt-1 flex items-center gap-1 text-xs text-success">
               <UIcon name="i-lucide-check-circle" class="size-3" />
-              No overdue
+              Aucun retard
             </p>
           </UCard>
 
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
-                <p class="text-sm font-semibold">Last 12 months</p>
+                <p class="text-sm font-semibold">12 derniers mois</p>
                 <UIcon name="i-lucide-bar-chart-2" class="text-muted" />
               </div>
             </template>
             <p class="text-2xl font-bold">{{ formatCurrency(kpis.yearRevenue) }}</p>
             <p class="mt-1 text-xs text-muted">
-              Avg. rate <span class="font-medium">{{ formatCurrency(kpis.weightedRate) }}/d</span>
+              Taux moyen <span class="font-medium">{{ formatCurrency(kpis.weightedRate) }}/j</span>
             </p>
             <p
               class="mt-1 flex items-center gap-0.5 text-xs"
               :class="kpis.trendYear >= 0 ? 'text-success' : 'text-error'"
             >
               <UIcon :name="kpis.trendYear >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'" class="size-3" />
-              {{ kpis.trendYear >= 0 ? '+' : '' }}{{ kpis.trendYear }}% vs previous 12 months
+              {{ kpis.trendYear >= 0 ? '+' : '' }}{{ kpis.trendYear }}% vs 12 mois précédents
             </p>
           </UCard>
         </div>
@@ -342,7 +342,7 @@ const progressTextClass = (percent: number) => {
         <!-- Chart -->
         <UCard>
           <template #header>
-            <p class="text-sm font-semibold">Activity over 12 months</p>
+            <p class="text-sm font-semibold">Activité sur 12 mois</p>
           </template>
           <div class="h-72">
             <Bar :data="barChartData" :options="barChartOptions" />
@@ -352,15 +352,15 @@ const progressTextClass = (percent: number) => {
         <!-- Projects -->
         <UCard>
           <template #header>
-            <p class="text-sm font-semibold">Projects</p>
+            <p class="text-sm font-semibold">Projets</p>
           </template>
 
           <div class="grid grid-cols-[16rem_1fr_2fr_5rem_5rem] items-center gap-x-7 border-b border-default pb-2 text-xs text-muted">
-            <span>Project</span>
-            <span>Rate <span class="opacity-60">(daily rate · time)</span></span>
-            <span>Budget <span class="opacity-60">(total · this month)</span></span>
-            <span class="">Last activity</span>
-            <span class="text-center">To bill</span>
+            <span>Projet</span>
+            <span>Taux <span class="opacity-60">(taux jour. · temps)</span></span>
+            <span>Budget <span class="opacity-60">(total · ce mois)</span></span>
+            <span class="">Dernière activité</span>
+            <span class="text-center">À facturer</span>
           </div>
 
           <div class="divide-y divide-default">
@@ -394,7 +394,7 @@ const progressTextClass = (percent: number) => {
                   />
                 </div>
                 <div class="text-xs text-muted">
-                  {{ p.timeShare }}% of worked time
+                  {{ p.timeShare }}% du temps travaillé
                 </div>
               </div>
 
@@ -404,7 +404,7 @@ const progressTextClass = (percent: number) => {
                     <span class="font-semibold">
                       {{ formatCurrency(p.workedAmount) }}
                     </span>
-                    <span class="text-muted">worked</span>
+                    <span class="text-muted">travaillé</span>
                   </span>
                   <span v-if="p.cumulativePercent" :class="progressTextClass(p.cumulativePercent)">
                     {{ p.cumulativePercent }}% of {{ formatCurrency(p.theoreticalBudget) }}
@@ -431,7 +431,7 @@ const progressTextClass = (percent: number) => {
                     class="size-3 shrink-0"
                   />
                   <span>
-                    <span class="font-semibold" :class="!p.isMonthOverrun && !p.isMonthWarning ? 'text-default' : '' ">{{ formatCurrency(p.monthAmount) }}</span> this month
+                    <span class="font-semibold" :class="!p.isMonthOverrun && !p.isMonthWarning ? 'text-default' : '' ">{{ formatCurrency(p.monthAmount) }}</span> ce mois
                     <span v-if="p.isMonthOverrun || p.isMonthWarning">({{ p.monthlyPercent }}%)</span>
                   </span>
                 </div>
@@ -441,9 +441,9 @@ const progressTextClass = (percent: number) => {
                 class="text-xs"
                 :class="!p.deletedAt && p.daysSince && p.daysSince > 10 ? 'text-warning' : 'text-muted'"
               >
-                <template v-if="p.deletedAt">Archived</template>
-                <template v-else-if="p.daysSince === 0">today</template>
-                <template v-else>{{ p.daysSince }}d ago</template>
+                <template v-if="p.deletedAt">Archivé</template>
+                <template v-else-if="p.daysSince === 0">aujourd'hui</template>
+                <template v-else>{{ p.daysSince }}j.</template>
               </div>
 
               <div class="flex items-center gap-2 justify-end">

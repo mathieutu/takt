@@ -1,11 +1,11 @@
 export type Day = { n: number, date: string, isWeekend: boolean, letter: string }
 
-const DAY_LETTERS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'] as const
+const DAY_LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'] as const
 
 export const TODAY = new Date().toISOString().slice(0, 10)
 
 export const formatMonthName = (year: number, month: number): string => {
-  const name = new Intl.DateTimeFormat('en-GB', { month: 'long' }).format(new Date(year, month - 1))
+  const name = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date(year, month - 1))
   return name.charAt(0).toUpperCase() + name.slice(1)
 }
 export const formatDays = (days: number): string => `${days % 1 === 0 ? days : days.toFixed(1)}d`
@@ -20,12 +20,12 @@ export const daysInMonth = ({ year, month }: { year: number, month: number }): D
   })
 }
 
-export const formatDate = (date: string): string => new Date(date).toLocaleDateString('en-GB', {
+export const formatDate = (date: string): string => new Date(date).toLocaleDateString('fr-FR', {
   day: 'numeric',
   month: 'short',
 })
 
-export const formatDateTime = (dateTime: string) => new Date(dateTime).toLocaleDateString('en-GB', {
+export const formatDateTime = (dateTime: string) => new Date(dateTime).toLocaleDateString('fr-FR', {
   day: 'numeric',
   month: 'short',
   hour: 'numeric',

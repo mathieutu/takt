@@ -92,7 +92,7 @@ watch(() => form.client_rate, clientRate => {
 })
 
 const clientSelectItems = computed(() => [
-  ...(!modal.project ? [{ value: null, label: '+ New client' }, { type: 'separator' as const }, { type: 'label' as const, label: 'Existing clients' }] : []),
+  ...(!modal.project ? [{ value: null, label: '+ Nouveau client' }, { type: 'separator' as const }, { type: 'label' as const, label: 'Clients existants' }] : []),
   ...modal.clients.map(c => ({ value: c.id, label: c.name })),
 ])
 
@@ -104,7 +104,7 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
   <ProjectPage v-bind="page">
     <UModal
       :open="true"
-      :title="modal.project ? 'Edit Project' : 'New Project'"
+      :title="modal.project ? 'Modifier le projet' : 'Nouveau projet'"
       @update:open="(v: boolean) => !v && close()"
     >
       <template #body>
@@ -119,14 +119,14 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
 
           <template v-if="!form.client_id && !modal.project">
             <div class="rounded-md border border-default bg-muted/40 p-3 space-y-3">
-              <UFormField label="Client Name" required :error="form.errors.client_name">
+              <UFormField label="Nom du client" required :error="form.errors.client_name">
                 <UInput
                   v-model="form.client_name"
                   type="text"
                   class="w-full"
                 />
               </UFormField>
-              <UFormField label="Client Daily Rate (€/day)" required :error="form.errors.client_rate">
+              <UFormField label="Tarif journalier client (€/j)" required :error="form.errors.client_rate">
                 <UInput
                   type="number"
                   min="0"
@@ -139,7 +139,7 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
             </div>
           </template>
 
-          <UFormField label="Project Name" required :error="form.errors.name">
+          <UFormField label="Nom du projet" required :error="form.errors.name">
             <UInput
               v-model="form.name"
               type="text"
@@ -151,7 +151,7 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
             <UInput v-model="form.description" type="text" class="w-full" />
           </UFormField>
 
-          <UFormField label="Project Daily Rate (€/day)" required :error="form.errors.daily_rate">
+          <UFormField label="Tarif journalier projet (€/j)" required :error="form.errors.daily_rate">
             <UInput
               type="number"
               min="0"
@@ -162,24 +162,24 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
             />
           </UFormField>
 
-          <UFormField label="Monthly Budget Cap (€/month)" :error="form.errors.max_month_budget">
+          <UFormField label="Plafond mensuel (€/mois)" :error="form.errors.max_month_budget">
             <UInput
               type="number"
               min="0"
               step="0.01"
-              placeholder="Unlimited"
+              placeholder="Illimité"
               :modelValue="form.max_month_budget && form.max_month_budget / 100"
               class="w-full"
               @update:modelValue="(val: number | null) => form.max_month_budget = val ? Math.round(val * 100) : null"
             />
           </UFormField>
 
-          <UFormField label="Total Budget Envelope (€)" :error="form.errors.max_total_budget">
+          <UFormField label="Enveloppe budgétaire totale (€)" :error="form.errors.max_total_budget">
             <UInput
               type="number"
               min="0"
               step="0.01"
-              placeholder="No limit"
+              placeholder="Sans limite"
               :modelValue="form.max_total_budget && form.max_total_budget / 100"
               class="w-full"
               @update:modelValue="(val: number | null) => form.max_total_budget = val ? Math.round(val * 100) : null"
@@ -187,11 +187,11 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
           </UFormField>
 
           <template v-if="modal.project">
-            <UFormField label="Starts at" required :error="form.errors.created_at">
+            <UFormField label="Début le" required :error="form.errors.created_at">
               <UInput v-model="form.created_at" type="date" class="w-full" />
             </UFormField>
 
-            <UFormField label="Ended at" :error="form.errors.deleted_at">
+            <UFormField label="Fin le" :error="form.errors.deleted_at">
               <UInput v-model="form.deleted_at" type="date" class="w-full" />
             </UFormField>
           </template>
@@ -199,11 +199,11 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
       </template>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <UButton :href="index()" label="Cancel" color="neutral" variant="outline" />
+          <UButton :href="index()" label="Annuler" color="neutral" variant="outline" />
           <UButton
             type="submit"
             form="project-form"
-            :label="modal.project ? 'Save' : 'Create'"
+            :label="modal.project ? 'Enregistrer' : 'Créer'"
             :loading="form.processing"
             @click="submit"
           />

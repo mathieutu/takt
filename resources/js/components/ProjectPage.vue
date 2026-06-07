@@ -45,10 +45,10 @@ const props = withDefaults(defineProps<{
 }>(), {})
 
 const sortOptions = [
-  { label: 'Date (newest)', value: 'date_desc' },
-  { label: 'Date (oldest)', value: 'date_asc' },
-  { label: 'Rate (high)', value: 'rate_desc' },
-  { label: 'Rate (low)', value: 'rate_asc' },
+  { label: 'Date ↓', value: 'date_desc' },
+  { label: 'Date ↑', value: 'date_asc' },
+  { label: 'Tarif ↓', value: 'rate_desc' },
+  { label: 'Tarif ↑', value: 'rate_asc' },
 ]
 
 const shareOpen = ref(false)
@@ -58,32 +58,32 @@ const copied = ref(false)
 const confirm = useConfirm()
 
 const deleteProject = (project: Project) => confirm({
-  title: project.deleted_at ? `Delete "${project.name}"?` : `Archive "${project.name}"?`,
-  description: project.deleted_at ? 'All data will be lost permanently.' : 'You will be able to restore it later',
+  title: project.deleted_at ? `Supprimer "${project.name}" ?` : `Archiver "${project.name}" ?`,
+  description: project.deleted_at ? 'Toutes les données seront perdues définitivement.' : 'Vous pourrez le restaurer ultérieurement.',
   onConfirm: () => router.visit(projectsRoutes.destroy(project), { preserveScroll: true }),
 })
 
 const projectMenuItems = (project: Project): DropdownMenuItem[][] => [
   [
-    { label: 'Edit', icon: 'i-lucide-pencil', href: projectsRoutes.edit(project, { mergeQuery: {} }), only: ['modal'] },
-    { label: 'Duplicate', icon: 'i-lucide-copy', href: projectsRoutes.duplicate(project) },
+    { label: 'Modifier', icon: 'i-lucide-pencil', href: projectsRoutes.edit(project, { mergeQuery: {} }), only: ['modal'] },
+    { label: 'Dupliquer', icon: 'i-lucide-copy', href: projectsRoutes.duplicate(project) },
   ],
   project.deleted_at ? [
-    { label: 'Restore', icon: 'i-lucide-rotate-ccw', href: projectsRoutes.restore(project) },
+    { label: 'Restaurer', icon: 'i-lucide-rotate-ccw', href: projectsRoutes.restore(project) },
     {
-      label: 'Delete permanently',
+      label: 'Supprimer définitivement',
       icon: 'i-lucide-trash-2',
       color: 'error' as const,
       onSelect: () => deleteProject(project),
     },
-  ] : [{ label: 'Archive', icon: 'i-lucide-archive', color: 'error' as const, onSelect: () => deleteProject(project) }],
+  ] : [{ label: 'Archiver', icon: 'i-lucide-archive', color: 'error' as const, onSelect: () => deleteProject(project) }],
 ]
 
 const deleteClient = (client: Client) => confirm({
-  title: client.deleted_at ? `Delete "${client.name}"?` : `Archive "${client.name}"?`,
+  title: client.deleted_at ? `Supprimer "${client.name}" ?` : `Archiver "${client.name}" ?`,
   description: client.deleted_at
-    ? 'All data will be lost permanently.'
-    : 'This will also archive all its projects. You will be able to restore them later.',
+    ? 'Toutes les données seront perdues définitivement.'
+    : 'Cela archivera également tous ses projets. Vous pourrez les restaurer ultérieurement.',
   onConfirm: () => router.visit(clientRoutes.destroy(client), { preserveScroll: true }),
 })
 
@@ -117,8 +117,8 @@ const revokeShare = () => {
   if (!sharingItem.value) return
 
   confirm({
-    title: `Revoke share link for "${sharingItem.value.name}"?`,
-    description: 'Anyone with the link will immediately lose access.',
+    title: `Révoquer le lien de partage pour "${sharingItem.value.name}" ?`,
+    description: 'Quiconque dispose du lien perdra immédiatement l\'accès.',
     onConfirm: () => {
       router.visit(destroyClientShare(sharingItem.value!.id), {
         preserveScroll: true,
@@ -135,17 +135,17 @@ const revokeShare = () => {
 const clientMenuItems = (client: Client): DropdownMenuItem[][] => {
   if (client.deleted_at) {
     return [
-      [{ label: 'Restore', icon: 'i-lucide-rotate-ccw', onSelect: () => router.visit(clientRoutes.restore(client)) }],
-      [{ label: 'Delete permanently', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => deleteClient(client) }],
+      [{ label: 'Restaurer', icon: 'i-lucide-rotate-ccw', onSelect: () => router.visit(clientRoutes.restore(client)) }],
+      [{ label: 'Supprimer définitivement', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => deleteClient(client) }],
     ]
   }
 
   return [
     [
-      { label: 'Share', icon: 'i-lucide-share-2', onSelect: () => openShare(client) },
-      { label: 'Edit', icon: 'i-lucide-pencil', href: clientRoutes.edit(client, { mergeQuery: {} }) },
+      { label: 'Partager', icon: 'i-lucide-share-2', onSelect: () => openShare(client) },
+      { label: 'Modifier', icon: 'i-lucide-pencil', href: clientRoutes.edit(client, { mergeQuery: {} }) },
     ],
-    [{ label: 'Archive', icon: 'i-lucide-archive', color: 'error' as const, onSelect: () => deleteClient(client) }],
+    [{ label: 'Archiver', icon: 'i-lucide-archive', color: 'error' as const, onSelect: () => deleteClient(client) }],
   ]
 }
 
@@ -160,9 +160,9 @@ const onSearch = useDebounceFn((value: string) => {
       <div class="mx-auto max-w-5xl space-y-6">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-lg font-semibold">Projects</h1>
+            <h1 class="text-lg font-semibold">Projets</h1>
             <p class="text-sm text-muted">
-              {{ projects.length }} project{{ projects.length !== 1 ? 's' : '' }} in
+              {{ projects.length }} projet{{ projects.length !== 1 ? 's' : '' }} dans
               <Link
                 v-if="client_id"
                 class="text-primary hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary rounded"
@@ -172,14 +172,14 @@ const onSearch = useDebounceFn((value: string) => {
                 ×
               </Link>
               <template v-else>
-                {{ clients.length }} client{{ clients.length !== 1 ? 's' : '' }}
+                {{ clients.length }} client{{ clients.length !== 1 ? 's' : '' }} au total
               </template>
             </p>
           </div>
           <UButton
             :href="projectsRoutes.create({ mergeQuery: {} })"
             :only="['modal']"
-            label="New project"
+            label="Nouveau projet"
             icon="i-lucide-plus"
           />
         </div>
@@ -188,7 +188,7 @@ const onSearch = useDebounceFn((value: string) => {
           <UInput
             :modelValue="search"
             type="text"
-            placeholder="Search for a project or client..."
+            placeholder="Rechercher un projet ou un client..."
             icon="i-lucide-search"
             class="w-72"
             :ui="{ trailing: 'pe-1' }"
@@ -219,7 +219,7 @@ const onSearch = useDebounceFn((value: string) => {
           <template v-if="has_trashed">
             <UButton
               v-if="!with_trashed"
-              label="Show archived"
+              label="Afficher les archivés"
               icon="i-lucide-archive"
               color="neutral"
               variant="outline"
@@ -228,7 +228,7 @@ const onSearch = useDebounceFn((value: string) => {
             />
             <UButton
               v-else-if="has_active"
-              label="Hide archived"
+              label="Masquer les archivés"
               icon="i-lucide-eye-off"
               color="error"
               variant="outline"
@@ -239,8 +239,8 @@ const onSearch = useDebounceFn((value: string) => {
         </div>
 
         <p v-if="projects.length === 0" class="text-sm text-muted">
-          <template v-if="search || client_id || with_trashed">No projects match your filters.</template>
-          <template v-else>No projects yet.</template>
+          <template v-if="search || client_id || with_trashed">Aucun projet ne correspond aux filtres.</template>
+          <template v-else>Aucun projet pour l'instant.</template>
         </p>
 
         <div v-if="projects.length > 0" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -263,7 +263,7 @@ const onSearch = useDebounceFn((value: string) => {
                 </Link>
               </div>
               <div class="flex shrink-0 items-center gap-1">
-                <UTooltip text="Billing">
+                <UTooltip text="Facturation">
                   <UButton
                     :href="clientBillingShow(project.client)"
                     icon="i-lucide-receipt-text"
@@ -291,13 +291,13 @@ const onSearch = useDebounceFn((value: string) => {
 
             <div class="mt-3 flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <span v-if="project.daily_rate" class="text-xs font-medium">{{ formatCurrency(project.daily_rate) }}/day</span>
+                <span v-if="project.daily_rate" class="text-xs font-medium">{{ formatCurrency(project.daily_rate) }}/j.</span>
                 <span
                   v-if="project.deleted_at"
                   class="inline-flex items-center gap-1 rounded-full bg-error/10 px-2 py-0.5 text-xs text-error"
                 >
                   <UIcon name="i-lucide-archive" class="h-3 w-3" />
-                  Archived
+                  Archivé
                 </span>
               </div>
               <span v-if="project.created_at" class="text-xs text-muted">{{ formatDate(project.created_at) }}</span>
@@ -321,24 +321,24 @@ const onSearch = useDebounceFn((value: string) => {
                 class="text-sm"
                 :class="{ 'text-primary font-medium': client_id === client.id }"
               >{{ client.name }}</span>
-              <span class="text-xs text-muted">{{ formatCurrency(client.daily_rate) }}/day</span>
+              <span class="text-xs text-muted">{{ formatCurrency(client.daily_rate) }}/j.</span>
               <span
                 v-if="client.deleted_at"
                 class="inline-flex items-center gap-1 rounded-full bg-error/10 px-2 py-0.5 text-xs text-error"
               >
                 <UIcon name="i-lucide-archive" class="h-3 w-3" />
-                Archived
+                Archivé
               </span>
               <span
                 v-else-if="client.share_url"
                 class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted"
-                title="Shared with others"
+                title="Partagé"
               >
                 <UIcon name="i-lucide-users" class="h-3 w-3" />
-                Shared
+                Partagé
               </span>
             </div>
-            <UTooltip text="Filter projects">
+            <UTooltip text="Filtrer les projets">
               <UButton
                 icon="i-lucide-filter"
                 color="neutral"
@@ -348,7 +348,7 @@ const onSearch = useDebounceFn((value: string) => {
                 :class="client_id === client.id ? 'text-primary' : ''"
               />
             </UTooltip>
-            <UTooltip text="Billing">
+            <UTooltip text="Facturation">
               <UButton
                 :href="clientBillingShow(client)"
                 icon="i-lucide-receipt-text"
@@ -372,23 +372,23 @@ const onSearch = useDebounceFn((value: string) => {
 
     <slot />
 
-    <UModal v-model:open="shareOpen" title="Share client">
+    <UModal v-model:open="shareOpen" title="Partager le client">
       <template #body>
         <div class="space-y-3">
           <p class="text-sm text-muted">
-            Copy this link and send it to the person you want to share
-            <span class="font-medium text-default">{{ sharingItem?.name }}</span> with.
+            Copiez ce lien et envoyez-le à la personne avec qui vous souhaitez partager
+            <span class="font-medium text-default">{{ sharingItem?.name }}</span>.
           </p>
           <div class="flex gap-2">
             <UInput
-              :modelValue="sharingItem?.share_url ?? 'Generating…'"
+              :modelValue="sharingItem?.share_url ?? 'Génération…'"
               readonly
               class="min-w-0 flex-1"
             />
           </div>
           <div v-if="sharingItem?.share_url" class="flex justify-end items-center border-t border-default pt-3">
             <UButton
-              label="Revoke"
+              label="Révoquer"
               icon="i-lucide-link-2-off"
               color="error"
               variant="ghost"
@@ -396,7 +396,7 @@ const onSearch = useDebounceFn((value: string) => {
               @click="revokeShare"
             />
             <UButton
-              :label="copied ? 'Copied!' : 'Copy'"
+              :label="copied ? 'Copié !' : 'Copier'"
               icon="i-lucide-copy"
               :disabled="!sharingItem?.share_url"
               variant="ghost"

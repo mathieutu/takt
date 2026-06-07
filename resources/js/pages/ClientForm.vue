@@ -60,19 +60,19 @@ const close = () => router.visit(index({ mergeQuery: {} }))
   <ProjectPage v-bind="page">
     <UModal
       :open="true"
-      title="Edit Client"
+      title="Modifier le client"
       @update:open="(v: boolean) => !v && close()"
     >
       <template #body>
         <UForm id="client-form" class="space-y-4" @submit.prevent="submit">
-          <UFormField label="Name" required :error="form.errors.name">
+          <UFormField label="Nom" required :error="form.errors.name">
             <UInput
               v-model="form.name"
               type="text"
               class="w-full"
             />
           </UFormField>
-          <UFormField label="Daily Rate (€/day)" required :error="form.errors.daily_rate">
+          <UFormField label="Tarif journalier (€/j)" required :error="form.errors.daily_rate">
             <UInput
               :modelValue="form.daily_rate / 100"
               type="number"
@@ -86,8 +86,8 @@ const close = () => router.visit(index({ mergeQuery: {} }))
       </template>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <UButton :href="index()" label="Cancel" color="neutral" variant="outline" />
-          <UButton label="Save" :loading="form.processing" type="submit" form="client-form" />
+          <UButton :href="index()" label="Annuler" color="neutral" variant="outline" />
+          <UButton label="Enregistrer" :loading="form.processing" type="submit" form="client-form" />
         </div>
       </template>
     </UModal>

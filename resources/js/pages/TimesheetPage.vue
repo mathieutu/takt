@@ -135,19 +135,19 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
     <div class="flex flex-1 flex-col overflow-hidden px-3 py-4 md:px-6 md:py-6">
       <div class="mb-4 shrink-0 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <h2 class="text-sm font-semibold text-default">Activity report</h2>
+          <h2 class="text-sm font-semibold text-default">Rapport d'activité</h2>
           <span class="text-xs text-muted">
             {{ formatDays(totalDays) }} ({{ formatCurrency(totalRevenue) }})
           </span>
         </div>
         <div class="flex shrink-0 items-center gap-2">
-          <UTooltip text="Previous month" :kbds="['p']">
+          <UTooltip text="Mois précédent" :kbds="['p']">
             <UButton :to="urls.prevMonth" icon="i-lucide-chevron-left" color="neutral" variant="ghost" size="xs" />
           </UTooltip>
           <span class="min-w-35 text-center text-sm font-medium text-default">
             {{ formatMonthName(current.year, current.month) }} {{ current.year }}
           </span>
-          <UTooltip text="Next month" :kbds="['n']">
+          <UTooltip text="Mois suivant" :kbds="['n']">
             <UButton :to="urls.nextMonth" icon="i-lucide-chevron-right" color="neutral" variant="ghost" size="xs" />
           </UTooltip>
         </div>
@@ -173,30 +173,30 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
           <div class="flex items-center gap-5">
             <div class="flex items-center gap-1.5">
               <span class="h-3 w-3 rounded-sm border border-default bg-elevated" />
-              <span class="text-xs text-muted">Weekends and holidays</span>
+              <span class="text-xs text-muted">Week-ends et jours fériés</span>
             </div>
           </div>
           <UPopover :content="{ align: 'end' }">
             <div class="flex items-center gap-1.5 text-xs text-muted cursor-pointer select-none">
-              <UButton icon="i-lucide-keyboard" label="Keyboard shortcuts" size="sm" variant="ghost" color="neutral" />
+              <UButton icon="i-lucide-keyboard" label="Raccourcis clavier" size="sm" variant="ghost" color="neutral" />
             </div>
             <template #content>
               <div class="p-3 flex flex-col gap-2 text-xs min-w-56">
-                <div class="flex items-center justify-between gap-6"><span class="text-muted">Navigate</span><span class="flex gap-1 items-center"><UKbd value="←" />|<UKbd value="→" />|<UKbd value="↑" />|<UKbd value="↓" /></span></div>
-                <div class="flex items-center justify-between gap-6"><span class="text-muted">Previous / next month</span><span class="flex gap-1 items-center"><UKbd value="p" />|<UKbd value="n" /></span></div>
-                <div class="flex items-center justify-between gap-6"><span class="text-muted">Jump week</span><span class="flex gap-1 items-center"><UKbd value="⌥" />+ [<UKbd value="←" />|<UKbd value="→" />]</span></div>
-                <div class="flex items-center justify-between gap-6"><span class="text-muted">Jump to edge</span><span class="flex gap-1 items-center"><UKbd value="meta" />+[<UKbd value="←" />|<UKbd value="→" />|<UKbd value="↑" />|<UKbd value="↓" />]</span></div>
-                <div class="flex items-center justify-between gap-6"><span class="text-muted">Row start / end</span><span class="flex gap-1 items-center"><UKbd value="Home" />|<UKbd value="End" /></span></div>
-                <div class="flex items-center justify-between gap-6"><span class="text-muted">Jump to corner</span><span class="flex gap-1 items-center"><UKbd value="meta" />+[<UKbd value="Home" />|<UKbd value="End" />]</span></div>
-                <div class="flex items-center justify-between gap-6"><span class="text-muted">Toggle coverage</span><UKbd value="Space" /></div>
-                <div class="flex items-center justify-between gap-6"><span class="text-muted">Set coverage (1/n)</span><span class="flex gap-1 items-center"><UKbd>0</UKbd><span class="text-muted">–</span><UKbd>9</UKbd></span></div>
-                <div class="flex items-center justify-between gap-6"><span class="text-muted">Edit entry</span><UKbd>⏎</UKbd></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Naviguer</span><span class="flex gap-1 items-center"><UKbd value="←" />|<UKbd value="→" />|<UKbd value="↑" />|<UKbd value="↓" /></span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Mois précédent / suivant</span><span class="flex gap-1 items-center"><UKbd value="p" />|<UKbd value="n" /></span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Semaine préc. / suiv.</span><span class="flex gap-1 items-center"><UKbd value="⌥" />+ [<UKbd value="←" />|<UKbd value="→" />]</span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Aller au bord</span><span class="flex gap-1 items-center"><UKbd value="meta" />+[<UKbd value="←" />|<UKbd value="→" />|<UKbd value="↑" />|<UKbd value="↓" />]</span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Début / fin de ligne</span><span class="flex gap-1 items-center"><UKbd value="Home" />|<UKbd value="End" /></span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Aller au coin</span><span class="flex gap-1 items-center"><UKbd value="meta" />+[<UKbd value="Home" />|<UKbd value="End" />]</span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Basculer la couverture</span><UKbd value="Space" /></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Définir la couverture (1/n)</span><span class="flex gap-1 items-center"><UKbd>0</UKbd><span class="text-muted">–</span><UKbd>9</UKbd></span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Modifier l'entrée</span><UKbd>⏎</UKbd></div>
               </div>
             </template>
           </UPopover>
         </div>
         <div class="pt-2 flex items-center justify-between border-t border-default md:hidden">
-          <span class="text-sm text-muted">{{ formatDays(totalDays) }} logged</span>
+          <span class="text-sm text-muted">{{ formatDays(totalDays) }} enregistré</span>
           <span class="text-sm font-semibold text-default">{{ formatCurrency(totalRevenue) }}</span>
         </div>
       </div>
@@ -208,7 +208,7 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
       <template v-if="activeEntry?.isArchived">
         <div class="space-y-4">
           <div v-if="activeEntry.title" class="flex flex-col gap-1">
-            <p class="text-xs font-medium text-muted">Title</p>
+            <p class="text-xs font-medium text-muted">Titre</p>
             <p class="text-sm">{{ activeEntry.title }}</p>
           </div>
           <div v-if="activeEntry.description" class="flex flex-col gap-1">
@@ -230,7 +230,7 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
         @success="activeEntry = null"
       >
         <div class="space-y-4">
-          <UFormField label="Coverage (%)">
+          <UFormField label="Couverture (%)">
             <UInput
               :name="`${activeEntry.date}[coverage]`"
               type="number" min="0" max="100"
@@ -238,10 +238,10 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
               class="w-full"
             />
           </UFormField>
-          <UFormField label="Title">
+          <UFormField label="Titre">
             <UInput
               :name="`${activeEntry.date}[title]`"
-              type="text" placeholder="E.g. Feature X development"
+              type="text" placeholder="Ex. Développement de la feature X"
               :defaultValue="activeEntry.title"
               class="w-full"
             />
@@ -249,7 +249,7 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
           <UFormField label="Description">
             <UTextarea
               :name="`${activeEntry.date}[description]`"
-              :rows="3" placeholder="Activity details..."
+              :rows="3" placeholder="Détails de l'activité..."
               :defaultValue="activeEntry.description"
               class="w-full"
             />
@@ -259,10 +259,10 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
     </template>
     <template #footer="{ close }">
       <div class="flex justify-end gap-2">
-        <UButton v-if="activeEntry?.isArchived" label="Close" color="neutral" variant="outline" @click="close" />
+        <UButton v-if="activeEntry?.isArchived" label="Fermer" color="neutral" variant="outline" @click="close" />
         <template v-else>
-          <UButton label="Cancel" color="neutral" variant="outline" @click="close" />
-          <UButton type="submit" form="entry-form" label="Save" />
+          <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
+          <UButton type="submit" form="entry-form" label="Enregistrer" />
         </template>
       </div>
     </template>

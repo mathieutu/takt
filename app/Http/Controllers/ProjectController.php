@@ -86,7 +86,7 @@ class ProjectController
 
         return redirect()
             ->route('projects.index')
-            ->with('success', 'Project created successfully.');
+            ->with('success', 'Projet créé avec succès.');
     }
 
     public function duplicate(Project $project): RedirectResponse
@@ -95,7 +95,7 @@ class ProjectController
 
         return redirect()
             ->route('projects.edit', ['project' => $newProject])
-            ->with('success', 'Project duplicated successfully.');
+            ->with('success', 'Projet dupliqué avec succès.');
     }
 
     public function edit(Request $request, Project $project): Response
@@ -137,7 +137,7 @@ class ProjectController
 
         return redirect()
             ->route('projects.index')
-            ->with('success', 'Project updated successfully.');
+            ->with('success', 'Projet mis à jour avec succès.');
     }
 
     public function destroy(Project $project, Request $request): RedirectResponse
@@ -146,21 +146,21 @@ class ProjectController
             if ($project->timesheetEntries()->exists() || $project->invoices()->exists()) {
                 return redirect()
                     ->back()
-                    ->with('error', 'Cannot permanently delete a project with existing entries.');
+                    ->with('error', 'Impossible de supprimer définitivement un projet ayant des entrées.');
             }
 
             $project->forceDelete();
 
             return redirect()
                 ->back()
-                ->with('success', 'Project permanently deleted successfully.');
+                ->with('success', 'Projet supprimé définitivement.');
         }
 
         $project->delete();
 
         return redirect()
             ->back()
-            ->with('success', 'Project archived successfully.');
+            ->with('success', 'Projet archivé avec succès.');
     }
 
     public function restore(Project $project): RedirectResponse
@@ -170,7 +170,7 @@ class ProjectController
 
         return redirect()
             ->back()
-            ->with('success', 'Project restored successfully.');
+            ->with('success', 'Projet restauré avec succès.');
     }
 
     public function syncEntries(Request $request, Project $project): RedirectResponse

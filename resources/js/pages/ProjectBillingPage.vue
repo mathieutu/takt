@@ -177,7 +177,7 @@ const monthLabel = (ym: string): string => {
 
 const dayLabel = (date: string): string => {
   const d = new Date(`${date}T00:00:00`)
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
   return `${days[d.getDay()]} ${d.getDate()} ${formatMonthName(d.getFullYear(), d.getMonth() + 1)}`
 }
 </script>
@@ -189,14 +189,14 @@ const dayLabel = (date: string): string => {
       class="shrink-0 flex items-center justify-between gap-4 border-b border-primary/20 bg-primary/5 px-4 py-2.5"
     >
       <p class="text-sm text-muted">
-        Shared by <span class="font-medium text-default">{{ shared_by }}</span>
+        Partagé par <span class="font-medium text-default">{{ shared_by }}</span>
       </p>
     </div>
 
     <main class="flex-1 px-4 py-6 md:px-8 md:py-8">
       <div class="mx-auto max-w-5xl space-y-6">
         <div class="flex items-center justify-between">
-          <UTooltip v-if="!is_shared" text="Back to projects">
+          <UTooltip v-if="!is_shared" text="Retour aux projets">
             <UButton
               :href="projectsIndex()"
               icon="i-lucide-arrow-left"
@@ -207,7 +207,7 @@ const dayLabel = (date: string): string => {
           </UTooltip>
           <UButton
             v-if="archivedProjects.length !== projects.length"
-            :label="showArchived ? 'Hide archived' : 'Show archived projects'"
+            :label="showArchived ? 'Masquer les archivés' : 'Afficher les projets archivés'"
             :icon="showArchived ? 'i-lucide-eye-off' : 'i-lucide-archive'"
             color="neutral"
             variant="outline"
@@ -225,28 +225,28 @@ const dayLabel = (date: string): string => {
               <div class="min-w-0">
                 <div class="flex items-center gap-2">
                   <h2 class="text-base font-semibold truncate">{{ project.name }}</h2>
-                  <UBadge v-if="project.deleted_at" label="Archived" color="neutral" variant="subtle" size="sm" class="shrink-0" />
+                  <UBadge v-if="project.deleted_at" label="Archivé" color="neutral" variant="subtle" size="sm" class="shrink-0" />
                 </div>
                 <p class="text-xs text-muted truncate">{{ project.client.name }}</p>
               </div>
               <div class="shrink-0 flex items-end flex-col gap-3">
                 <div class="flex items-center gap-1 text-sm text-muted">
-                  <span>{{ formatCurrency(project.daily_rate) }}/day</span>
+                  <span>{{ formatCurrency(project.daily_rate) }}/j.</span>
                   <template v-if="project.max_month_budget">
                     <span>•</span>
                     <span>
-                      max {{ formatCurrency(project.max_month_budget) }}/mo
+                      max {{ formatCurrency(project.max_month_budget) }}/mois
                       ({{ formatDays(project.max_month_budget / project.daily_rate) }})
                     </span>
                   </template>
                   <template v-if="project.max_total_budget">
                     <span>•</span>
-                    <span>envelope {{ formatCurrency(project.max_total_budget) }}</span>
+                    <span>enveloppe {{ formatCurrency(project.max_total_budget) }}</span>
                   </template>
                 </div>
                 <UButton
                   v-if="!is_shared"
-                  label="Add invoice"
+                  label="Ajouter une facture"
                   icon="i-lucide-plus"
                   size="sm"
                   @click="openAddInvoice(project)"
@@ -259,10 +259,10 @@ const dayLabel = (date: string): string => {
               <table class="w-full text-sm">
                 <thead>
                   <tr class="border-b border-default bg-muted/40 text-xs text-muted">
-                    <th class="px-4 py-2.5 text-left font-medium">Month</th>
-                    <th class="px-4 py-2.5 text-right font-medium">Worked</th>
-                    <th class="px-4 py-2.5 text-right font-medium">Invoiced</th>
-                    <th class="px-4 py-2.5 text-right font-medium">Balance</th>
+                    <th class="px-4 py-2.5 text-left font-medium">Mois</th>
+                    <th class="px-4 py-2.5 text-right font-medium">Travaillé</th>
+                    <th class="px-4 py-2.5 text-right font-medium">Facturé</th>
+                    <th class="px-4 py-2.5 text-right font-medium">Solde</th>
                     <th v-if="!is_shared" class="w-8 px-2" />
                   </tr>
                 </thead>
@@ -305,7 +305,7 @@ const dayLabel = (date: string): string => {
                       <td :colspan="is_shared ? 4 : 5" class="px-0 py-0">
                         <div class="border-b border-default bg-muted/10 px-6 py-3 space-y-3">
                           <div v-if="Object.keys(m.entries).length > 0">
-                            <p class="text-xs font-medium text-muted mb-1.5 uppercase tracking-wide">Days worked</p>
+                            <p class="text-xs font-medium text-muted mb-1.5 uppercase tracking-wide">Jours travaillés</p>
                             <div class="space-y-1">
                               <div
                                 v-for="(entry, date) in m.entries"
@@ -318,10 +318,10 @@ const dayLabel = (date: string): string => {
                               </div>
                             </div>
                           </div>
-                          <p v-else class="text-xs text-muted italic">No timesheet entries for this month.</p>
+                          <p v-else class="text-xs text-muted italic">Aucune entrée pour ce mois.</p>
 
                           <div v-if="m.invoices.length > 0">
-                            <p class="text-xs font-medium text-muted mb-1.5 uppercase tracking-wide">Invoices</p>
+                            <p class="text-xs font-medium text-muted mb-1.5 uppercase tracking-wide">Factures</p>
                             <div class="space-y-1">
                               <div
                                 v-for="inv in m.invoices"
@@ -345,7 +345,7 @@ const dayLabel = (date: string): string => {
 
                   <tr v-if="project.months.length === 0 && project.outstanding.length === 0">
                     <td :colspan="is_shared ? 4 : 5" class="px-4 py-8 text-center text-sm text-muted">
-                      No activity recorded yet.
+                      Aucune activité enregistrée.
                     </td>
                   </tr>
                 </tbody>
@@ -353,7 +353,7 @@ const dayLabel = (date: string): string => {
                 <tbody v-if="project.outstanding.length > 0">
                   <tr class="border-t-2 border-default">
                     <td colspan="5" class="px-4 py-2 text-xs font-medium text-muted uppercase tracking-wide bg-muted/20">
-                      To be paid
+                      À payer
                     </td>
                   </tr>
                   <tr
@@ -403,24 +403,24 @@ const dayLabel = (date: string): string => {
             <!-- Summary indicators -->
             <div class="flex flex-wrap gap-3">
               <div class="flex-1 min-w-48 rounded-lg border border-default px-4 py-3">
-                <p class="text-xs text-muted mb-0.5">To invoice</p>
+                <p class="text-xs text-muted mb-0.5">À facturer</p>
                 <p
                   class="text-base font-semibold tabular-nums"
                   :class="projectTotals(project).toInvoice > 0 ? 'text-amber-500' : 'text-success'"
                 >
                   {{ formatCurrency(projectTotals(project).toInvoice) }}
                 </p>
-                <p class="text-xs text-muted mt-0.5">Worked − Invoiced</p>
+                <p class="text-xs text-muted mt-0.5">Travaillé − Facturé</p>
               </div>
               <div v-if="projectTotals(project).remainingToConsume !== null" class="flex-1 min-w-48 rounded-lg border border-default px-4 py-3">
-                <p class="text-xs text-muted mb-0.5">Remaining to consume</p>
+                <p class="text-xs text-muted mb-0.5">Reste à consommer</p>
                 <p
                   class="text-base font-semibold tabular-nums"
                   :class="projectTotals(project).remainingToConsume! < 0 ? 'text-error' : 'text-default'"
                 >
                   {{ formatCurrency(projectTotals(project).remainingToConsume!) }}
                 </p>
-                <p class="text-xs text-muted mt-0.5">Budget allocated − Worked</p>
+                <p class="text-xs text-muted mt-0.5">Budget alloué − Travaillé</p>
               </div>
             </div>
           </div>
@@ -429,10 +429,10 @@ const dayLabel = (date: string): string => {
     </main>
 
     <!-- Invoice modal -->
-    <UModal v-model:open="invoiceOpen" :title="editingInvoiceId ? 'Edit invoice' : 'Add invoice'">
+    <UModal v-model:open="invoiceOpen" :title="editingInvoiceId ? 'Modifier la facture' : 'Ajouter une facture'">
       <template #body>
         <form id="invoice-form" class="space-y-4" @submit.prevent="submitInvoice">
-          <UFormField label="Amount (€)" required :error="form.errors.amount">
+          <UFormField label="Montant (€)" required :error="form.errors.amount">
             <UInput
               v-model="form.amount"
               type="number"
@@ -442,14 +442,14 @@ const dayLabel = (date: string): string => {
               class="w-full"
             />
           </UFormField>
-          <UFormField label="Invoiced at" required :error="form.errors.created_at">
+          <UFormField label="Facturé le" required :error="form.errors.created_at">
             <UInput
               v-model="form.created_at"
               type="date"
               class="w-full"
             />
           </UFormField>
-          <UFormField label="Payment date" :error="form.errors.paid_at">
+          <UFormField label="Date de paiement" :error="form.errors.paid_at">
             <UInput
               v-model="form.paid_at"
               type="date"
@@ -467,8 +467,8 @@ const dayLabel = (date: string): string => {
       </template>
       <template #footer="{ close }">
         <div class="flex justify-end gap-2">
-          <UButton label="Cancel" color="neutral" variant="outline" @click="close" />
-          <UButton label="Save" type="submit" form="invoice-form" :loading="form.processing" />
+          <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
+          <UButton label="Enregistrer" type="submit" form="invoice-form" :loading="form.processing" />
         </div>
       </template>
     </UModal>
