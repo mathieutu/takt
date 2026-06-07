@@ -182,14 +182,14 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
             </div>
             <template #content>
               <div class="p-3 flex flex-col gap-2 text-xs min-w-56">
-                <div class="flex items-center justify-between gap-6"><span class="text-muted">Navigate</span><span class="flex gap-1"><UKbd>←</UKbd><UKbd>→</UKbd><UKbd>↑</UKbd><UKbd>↓</UKbd></span></div>
-                <div class="flex items-center justify-between gap-6"><span class="text-muted">Previous / next month</span><span class="flex gap-1"><UKbd>p</UKbd><UKbd>n</UKbd></span></div>
-                <div class="flex items-center justify-between gap-6"><span class="text-muted">Jump week</span><span class="flex gap-1"><UKbd>⌥</UKbd><UKbd>←</UKbd><UKbd>→</UKbd></span></div>
-                <div class="flex items-center justify-between gap-6"><span class="text-muted">Jump to edge</span><span class="flex gap-1"><UKbd>⌘</UKbd><UKbd>←</UKbd><UKbd>→</UKbd><UKbd>↑</UKbd><UKbd>↓</UKbd></span></div>
-                <div class="flex items-center justify-between gap-6"><span class="text-muted">Row start / end</span><span class="flex gap-1"><UKbd>Home</UKbd><UKbd>End</UKbd></span></div>
-                <div class="flex items-center justify-between gap-6"><span class="text-muted">Jump to corner</span><span class="flex gap-1 items-center"><UKbd>⌘</UKbd><UKbd>Home</UKbd><span class="text-muted">/</span><UKbd>⌘</UKbd><UKbd>End</UKbd></span></div>
-                <div class="flex items-center justify-between gap-6"><span class="text-muted">Toggle coverage</span><UKbd>Space</UKbd></div>
-                <div class="flex items-center justify-between gap-6"><span class="text-muted">Set coverage (1/n)</span><span class="flex gap-1"><UKbd>0</UKbd><span class="text-muted">–</span><UKbd>9</UKbd></span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Navigate</span><span class="flex gap-1 items-center"><UKbd value="←" />|<UKbd value="→" />|<UKbd value="↑" />|<UKbd value="↓" /></span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Previous / next month</span><span class="flex gap-1 items-center"><UKbd value="p" />|<UKbd value="n" /></span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Jump week</span><span class="flex gap-1 items-center"><UKbd value="⌥" />+ [<UKbd value="←" />|<UKbd value="→" />]</span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Jump to edge</span><span class="flex gap-1 items-center"><UKbd value="meta" />+[<UKbd value="←" />|<UKbd value="→" />|<UKbd value="↑" />|<UKbd value="↓" />]</span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Row start / end</span><span class="flex gap-1 items-center"><UKbd value="Home" />|<UKbd value="End" /></span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Jump to corner</span><span class="flex gap-1 items-center"><UKbd value="meta" />+[<UKbd value="Home" />|<UKbd value="End" />]</span></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Toggle coverage</span><UKbd value="Space" /></div>
+                <div class="flex items-center justify-between gap-6"><span class="text-muted">Set coverage (1/n)</span><span class="flex gap-1 items-center"><UKbd>0</UKbd><span class="text-muted">–</span><UKbd>9</UKbd></span></div>
                 <div class="flex items-center justify-between gap-6"><span class="text-muted">Edit entry</span><UKbd>⏎</UKbd></div>
               </div>
             </template>

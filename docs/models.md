@@ -1,176 +1,111 @@
-# Modèles
-
----
-
-## Account
-
-**Rôle :** Entité d'authentification centrale. Représente un compte avec email et mot de passe. Étend `Authenticatable`. Utilise des UUIDs.
-
-Un `Account` est toujours accompagné d'un `User` ou d'une `Organization` (même UUID), selon le type d'inscription.
-
-| Attribut | Type | Description |
-|----------|------|-------------|
-| `type` | `AccountType` (enum) | `user` ou `organization` |
-| `email` | string | Adresse email unique |
-| `password` | string (hashed) | Mot de passe hashé |
-
-**Relations :**
-- `hasOne(User)` — profil individuel (prénom/nom)
-- `hasOne(Organization)` — profil organisation (nom)
-- `hasMany(SharedProject)` — projets partagés accessibles par ce compte
+# Data Models
 
 ---
 
 ## User
 
-**Rôle :** Profil d'un compte de type individuel. Partage le même UUID que son `Account`.
+The authenticated account. Linked to GitHub via OAuth or created locally.
 
-| Attribut | Type | Description |
-|----------|------|-------------|
-| `first_name` | string | Prénom |
-| `last_name` | string | Nom de famille |
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `name` | string | Display name |
+| `email` | string | Unique email address |
+| `github_id` | string\|null | GitHub user ID |
+| `avatar` | string\|null | GitHub avatar URL |
 
-**Relations :**
-- `belongsTo(Account)` — compte parent
-- `hasMany(Client)` — clients créés par cet utilisateur
-- `hasManyThrough(Project, Client)` — projets via ses clients
-
----
-
-## Organization
-
-**Rôle :** Profil d'un compte de type organisation. Partage le même UUID que son `Account`.
-
-| Attribut | Type | Description |
-|----------|------|-------------|
-| `name` | string | Nom de l'organisation |
-
-**Relations :**
-- `belongsTo(Account)` — compte parent
+**Relations:**
+- `hasMany(Client)` — clients owned by this user
+- `hasManyThrough(Project, Client)` — all projects via owned clients
+- `hasManyThrough(TimesheetEntry, Project, Client)` — all time entries
 
 ---
 
 ## Client
 
-**Rôle :** Représente un client pour lequel des projets sont réalisés. Appartient à un utilisateur.
+A client for whom projects are carried out. Holds a default daily rate applied to new projects.
 
-| Attribut | Type | Description |
-|----------|------|-------------|
-| `name` | string | Nom du client |
-| `daily_rate` | integer | TJM par défaut (en euros), répercuté sur les nouveaux projets |
-| `user_id` | UUID | Propriétaire (`User`) |
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `name` | string | Client name |
+| `daily_rate` | integer\|null | Default TJM in euros |
+| `user_id` | id | Owner (`User`) |
+| `share_token` | string\|null | UUID token for public billing share link |
+| `deleted_at` | timestamp\|null | Soft delete |
 
-**Relations :**
-- `belongsTo(User)` — utilisateur propriétaire
-- `hasMany(Project)` — projets de ce client
+**Relations:**
+- `belongsTo(User)`
+- `hasMany(Project)`
 
 ---
 
 ## Project
 
-**Rôle :** Un projet facturé, lié à un client. Peut avoir son propre TJM (différent du client), une description et un budget maximum. Peut être partagé.
+A billable project linked to a client. Supports its own daily rate and budget caps.
 
-| Attribut | Type | Description |
-|----------|------|-------------|
-| `name` | string | Nom du projet |
-| `client_id` | UUID | Client associé |
-| `daily_rate` | integer | TJM du projet (peut différer du client) |
-| `description` | string\|null | Description libre |
-| `max_budget` | decimal(2)\|null | Budget maximum en euros |
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `name` | string | Project name |
+| `client_id` | id | Associated client |
+| `daily_rate` | integer\|null | Project-level TJM (overrides client default) |
+| `description` | string\|null | Free-form description |
+| `max_month_budget` | decimal\|null | Monthly budget cap in euros |
+| `max_total_budget` | decimal\|null | Total cumulative budget cap in euros |
+| `deleted_at` | timestamp\|null | Soft delete |
 
-**Relations :**
-- `belongsTo(Client)` — client associé
-- `hasMany(ActivityTime)` — saisies de temps de travail
-- `hasMany(BillingEntry)` — entrées de facturation
-- `hasMany(SharedProject)` — partages associés
-- `hasManyThrough(Account, SharedProject)` — comptes ayant accès au projet
-- `morphOne(Share, 'sharing')` — lien de partage public (polymorphe)
+**Relations:**
+- `belongsTo(Client)`
+- `belongsToThrough(User, Client)` — owner via client
+- `hasMany(TimesheetEntry)`
+- `hasMany(Invoice)`
 
 ---
 
-## ActivityTime
+## TimesheetEntry
 
-**Rôle :** Représente une saisie de temps de travail sur un projet à une date donnée. La couverture est exprimée en pourcentage de journée (0–100), permettant les demi-journées ou fractions.
+A time entry on a project for a given date. Coverage is expressed as a percentage of a workday (0–100), enabling half-days or any fraction.
 
-| Attribut | Type | Description |
-|----------|------|-------------|
-| `project_id` | UUID | Projet concerné |
-| `label` | string | Libellé de la saisie |
-| `start_date` | date | Date de la saisie |
-| `day_coverage` | integer | Fraction de journée en % (ex: 50 = demi-journée) |
-| `comments` | string\|null | Commentaires libres |
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `project_id` | id | Associated project |
+| `date` | date | Entry date |
+| `coverage` | integer | Fraction of a day in % (e.g. 50 = half-day) |
+| `title` | string\|null | Short label |
+| `description` | string\|null | Free-form notes |
+| `deleted_at` | timestamp\|null | Soft delete |
 
-**Relations :**
+**Relations:**
 - `belongsTo(Project)`
 
 ---
 
-## BillingEntry
+## Invoice
 
-**Rôle :** Représente une entrée de facturation mensuelle pour un projet : montant facturé, date de paiement et notes. Permet de suivre l'encaissement par rapport aux jours travaillés.
+A billing record for a project: amount invoiced, payment date, and notes.
 
-| Attribut | Type | Description |
-|----------|------|-------------|
-| `project_id` | UUID | Projet concerné |
-| `month` | date | Mois de référence (ex: `2024-03-01`) |
-| `amount_billed` | decimal(2) | Montant facturé en euros |
-| `payment_date` | date\|null | Date de paiement reçu |
-| `notes` | string\|null | Notes libres |
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `project_id` | id | Associated project |
+| `amount` | decimal | Amount invoiced in euros |
+| `paid_at` | date\|null | Payment date |
+| `notes` | string\|null | Free-form notes |
+| `created_at` | timestamp | Invoice creation date (editable) |
 
-**Relations :**
-- `belongsTo(Project)`
-
----
-
-## Share
-
-**Rôle :** Lien de partage public unique (UUID) associé à n'importe quelle entité partageable (actuellement : `Project`). Utilise une relation polymorphe. Fournit une méthode `url()` pour générer le lien public.
-
-| Attribut | Type | Description |
-|----------|------|-------------|
-| `share_type` | string | Classe du modèle partagé (ex: `App\Models\Project`) |
-| `share_id` | UUID | ID du modèle partagé |
-
-**Relations :**
-- `morphTo()` — entité partagée (polymorphe)
-
----
-
-## SharedProject
-
-**Rôle :** Table de liaison entre un `Account` et un `Project` partagé. Permet à un compte tiers d'accéder en lecture au rapport d'activité d'un projet dont il n'est pas propriétaire.
-
-| Attribut | Type | Description |
-|----------|------|-------------|
-| `account_id` | UUID | Compte ayant accès |
-| `project_id` | UUID | Projet partagé |
-
-**Relations :**
-- `belongsTo(Account)`
+**Relations:**
 - `belongsTo(Project)`
 
 ---
 
 ## View
 
-**Rôle :** Représente une vue filtrée (plage de dates + commentaires) sur un projet. Permet de sauvegarder des "vues" personnalisées d'un rapport d'activité.
+A saved filtered view over a project (date range). Currently unused in the UI.
 
-| Attribut | Type | Description |
-|----------|------|-------------|
-| `title` | string | Titre de la vue |
-| `project_id` | UUID | Projet concerné |
-| `start_date` | date | Date de début |
-| `end_date` | date | Date de fin |
-| `comments` | string\|null | Commentaires |
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `title` | string | View title |
+| `project_id` | id | Associated project |
+| `start_date` | date | Start of range |
+| `end_date` | date | End of range |
+| `comments` | string\|null | Notes |
 
-**Relations :**
+**Relations:**
 - `belongsTo(Project)`
-
----
-
-## Enum : AccountType
-
-| Valeur | Description |
-|--------|-------------|
-| `user` | Compte individuel (prénom/nom) |
-| `organization` | Compte organisation (nom) |

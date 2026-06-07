@@ -1,136 +1,118 @@
 # Features & Routes
 
-**AssoFlow** est une application de gestion d'activité et de facturation pour indépendants et associations. Elle permet de suivre le temps de travail par projet/client, gérer la facturation, partager des rapports et exporter les données.
-
 ---
 
-## Authentification
+## Authentication
 
-Gestion des comptes : inscription (utilisateur individuel ou organisation), connexion, déconnexion et suppression de compte.
+GitHub OAuth login (configurable) with a local dev fallback.
 
-| Méthode | URI | Controller | Action |
-|---------|-----|------------|--------|
-| GET | `/login` | `AuthController` | `showLogin` |
-| POST | `/login` | `AuthController` | `login` |
-| GET | `/register` | `AuthController` | `showRegister` |
-| POST | `/register` | `AuthController` | `register` |
-| POST | `/me/logout` | `AuthController` | `logout` |
-| DELETE | `/me` | `AccountController` | `delete` |
-
-**Page Vue :** `LoginPage.vue`, `RegisterPage.vue`
-
-L'inscription crée un `Account` (email/password) puis, selon le type choisi, un `User` (prénom/nom) ou une `Organization` (nom), partageant le même UUID.
+| Method | URI | Handler | Description |
+|--------|-----|---------|-------------|
+| GET | `/login` | `AuthController@show` | Login page |
+| GET | `/login/redirect` | `AuthController@redirect` | GitHub OAuth redirect (when `AUTH_ENABLED=true`) |
+| GET | `/login/callback` | `AuthController@callback` | GitHub OAuth callback |
+| POST | `/login/disabled` | `AuthController@disabled` | Direct login by email (when `AUTH_ENABLED=false`) |
+| GET | `/logout` | `AuthController@logout` | Logout |
 
 ---
 
 ## Dashboard
 
-Vue d'ensemble de l'activité : KPIs du mois/année, graphique des 12 derniers mois, dernières saisies, clients et projets actifs.
+Overview of activity: monthly KPIs, 12-month revenue chart, outstanding invoices, and per-project summaries.
 
-| Méthode | URI | Controller | Action |
-|---------|-----|------------|--------|
-| GET | `/` | — | Redirige vers `/dashboard` |
-| GET | `/dashboard` | `DashboardController` | `index` |
+| Method | URI | Handler |
+|--------|-----|---------|
+| GET | `/` | `ShowDashboardHandler` |
 
-**Page Vue :** `DashboardPage.vue`
-
-Données exposées : jours et CA du mois courant, CA annuel, nombre de clients actifs (90 derniers jours), graphique mensuel sur 12 mois, 7 dernières saisies d'activité.
-
----
-
-## Rapports d'activité
-
-Calendrier mensuel de saisie du temps de travail par projet. Chaque saisie (`ActivityTime`) représente une portion de journée (0–100%) sur un projet donné.
-
-| Méthode | URI | Controller | Action |
-|---------|-----|------------|--------|
-| GET | `/dashboard/reports` | `ActivitiesController` | `index` |
-| POST | `/dashboard/reports` | `ActivitiesController` | `store` |
-| GET | `/dashboard/reports/{report}` | `ActivitiesController` | `get` |
-| PUT | `/dashboard/reports/{report}` | `ActivitiesController` | `update` |
-| DELETE | `/dashboard/reports/{report}` | `ActivitiesController` | `destroy` |
-
-**Page Vue :** `ActivityReportPage.vue`
-
-La vue calendrier affiche les jours du mois en colonnes (avec détection des week-ends et jours fériés via l'API gouvernementale). Les projets propres et partagés sont listés en lignes. Les stats mensuelles (jours/CA par projet) sont calculées côté client.
+**Data exposed:**
+- Days worked and revenue for the current month (with projection based on month progress)
+- 12-month stacked bar chart of revenue by project
+- Year-over-year comparison (days, revenue)
+- Outstanding invoices (total amount, count, overdue count)
+- Weighted daily rate across active projects
 
 ---
 
-## Partage de rapports
+## Timesheet
 
-Génération d'un lien public unique pour partager le rapport d'activité d'un projet avec un tiers (lecture seule).
+Monthly calendar grid for entering time per project. Each entry (`TimesheetEntry`) represents a fraction of a workday (0–100%).
 
-| Méthode | URI | Controller | Action |
-|---------|-----|------------|--------|
-| POST | `/dashboard/projects/{project}/share` | `ShareController` | `generate` |
-| DELETE | `/dashboard/projects/{project}/share` | `ShareController` | `revoke` |
-| GET | `/share/{share}` | `ShareController` | `apply` |
+| Method | URI | Handler |
+|--------|-----|---------|
+| GET | `/timesheet` | `ShowTimesheetHandler` |
+| PATCH | `/projects/{project}/entries` | `ProjectController@syncEntries` |
 
-**Pages Vue :** bouton dans `DashboardPage.vue` / `ProjectsPage.vue`, vue publique `SharedActivityReportPage.vue`
+The calendar highlights weekends and French public holidays (fetched from the government API and cached annually). Time entries support an optional title and description. Updates are applied optimistically on the client side.
 
-Le partage utilise un modèle polymorphe `Share`. La route `/share/{share}` est publique (sans authentification).
+---
+
+## Projects
+
+Full CRUD for projects, with soft delete, restore, and duplication.
+
+| Method | URI | Handler |
+|--------|-----|---------|
+| GET | `/projects` | `ProjectController@index` |
+| GET | `/projects/create` | `ProjectController@create` |
+| POST | `/projects` | `ProjectController@store` |
+| GET | `/projects/{project}/edit` | `ProjectController@edit` |
+| PUT | `/projects/{project}` | `ProjectController@update` |
+| DELETE | `/projects/{project}` | `ProjectController@destroy` |
+| POST | `/projects/{project}/restore` | `ProjectController@restore` |
+| POST | `/projects/{project}/duplicate` | `ProjectController@duplicate` |
+
+Each project belongs to a client and can carry its own daily rate (TJM) overriding the client default. Projects support a monthly budget cap and a total budget cap. The creation form allows inline client creation.
 
 ---
 
 ## Clients
 
-Gestion des clients (création, édition, suppression). Les clients sont affichés dans la sidebar et dans le dashboard.
+Manage clients with their default daily rate.
 
-| Méthode | URI | Controller | Action |
-|---------|-----|------------|--------|
-| POST | `/dashboard/clients` | `ClientController` | `store` |
-| PUT | `/dashboard/clients/{client}` | `ClientController` | `update` |
-| DELETE | `/dashboard/clients/{client}` | `ClientController` | `destroy` |
-
-**Composant :** dialogs intégrés dans `DashboardPage.vue`
-
-Chaque client appartient à un `User` et possède un TJM (`daily_rate`) par défaut, répercuté sur les nouveaux projets.
+| Method | URI | Handler |
+|--------|-----|---------|
+| GET | `/clients/{client}/edit` | `ClientController@edit` |
+| PUT | `/clients/{client}` | `ClientController@update` |
+| DELETE | `/clients/{client}` | `ClientController@destroy` |
+| POST | `/clients/{client}/restore` | `ClientController@restore` |
 
 ---
 
-## Projets
+## Billing
 
-Gestion des projets liés à un client. Un projet peut avoir un TJM propre (différent du client), une description et un budget maximum.
+Track invoices per project: amounts, payment dates, and notes. Monitor monthly and cumulative budget consumption.
 
-| Méthode | URI | Controller | Action |
-|---------|-----|------------|--------|
-| GET | `/dashboard/projects` | `ProjectController` | `index` |
-| POST | `/dashboard/projects` | `ProjectController` | `store` |
-| PUT | `/dashboard/projects/{project}` | `ProjectController` | `update` |
-| DELETE | `/dashboard/projects/{project}` | `ProjectController` | `destroy` |
+| Method | URI | Handler |
+|--------|-----|---------|
+| GET | `/clients/{client}/billing` | `ClientController@showBilling` |
+| POST | `/projects/{project}/invoices` | `ProjectInvoiceController@store` |
+| PUT | `/invoices/{invoice}` | `ProjectInvoiceController@update` |
+| DELETE | `/invoices/{invoice}` | `ProjectInvoiceController@destroy` |
 
-**Page Vue :** `ProjectsPage.vue`
-
-La création d'un projet permet de créer un nouveau client à la volée. La liste inclut les projets partagés avec le compte authentifié.
+The billing view shows a monthly breakdown per project: days worked (sum of `coverage / 100`), invoiced amount, and budget warnings.
 
 ---
 
-## Suivi de facturation (Tracking)
+## Sharing
 
-Vue de suivi financier par client et par projet : jours travaillés par mois, montants facturés, dates de paiement et budget max.
+Generate a public read-only link to share a client's billing report with a third party.
 
-| Méthode | URI | Controller | Action |
-|---------|-----|------------|--------|
-| GET | `/dashboard/tracking` | `TrackingController` | `index` |
-| POST | `/dashboard/tracking/billing` | `TrackingController` | `storeBilling` |
-| PUT | `/dashboard/tracking/billing/{entry}` | `TrackingController` | `updateBilling` |
-| PUT | `/dashboard/tracking/projects/{project}/max-budget` | `TrackingController` | `updateProjectBudget` |
+| Method | URI | Handler |
+|--------|-----|---------|
+| POST | `/clients/{client}/share` | `ClientController@storeShare` |
+| DELETE | `/clients/{client}/share` | `ClientController@destroyShare` |
+| GET | `/shares/{token}` | `ShowSharedHandler` |
 
-**Page Vue :** `TrackingPage.vue`
-
-Filtrage par client (`?client_id=X`). Pour chaque projet, un tableau croise les mois et les `BillingEntry` associées. Les jours travaillés sont calculés depuis les `ActivityTime` (somme des `day_coverage / 100`).
+The public route `/shares/{token}` is unauthenticated. It renders the same billing page in read-only mode, attributed to the user who shared it.
 
 ---
 
-## Paramètres du compte
+## Profile
 
-Édition du profil : email, nom/prénom (ou nom d'organisation), et changement de mot de passe optionnel.
+Edit profile and optionally change password. Account deletion clears the session.
 
-| Méthode | URI | Controller | Action |
-|---------|-----|------------|--------|
-| GET | `/dashboard/settings` | `SettingsController` | `edit` |
-| PUT | `/dashboard/settings` | `SettingsController` | `update` |
-
-**Page Vue :** `SettingsPage.vue`
-
-Les champs affichés s'adaptent au type de compte (`User` vs `Organization`). Un message flash confirme la sauvegarde.
+| Method | URI | Handler |
+|--------|-----|---------|
+| GET | `/profile` | `UserController@edit` |
+| PUT | `/profile` | `UserController@update` |
+| DELETE | `/profile` | `UserController@destroy` |
