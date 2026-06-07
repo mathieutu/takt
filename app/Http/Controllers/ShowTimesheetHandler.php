@@ -19,7 +19,7 @@ class ShowTimesheetHandler
             ->withTrashed()
             ->where('projects.created_at', '<=', $date->endOfMonth())
             ->where(fn ($q) => $q->whereNull('projects.deleted_at')->orWhere('projects.deleted_at', '>=', $date->startOfMonth()))
-            ->with(['timesheetEntries' => fn (HasMany $query) => $query->whereMonth('date', $date)])
+            ->with(['timesheetEntries' => fn (HasMany $query) => $query->whereBetween('date', [$date->startOfMonth(), $date->endOfMonth()])])
             ->get();
 
         return Inertia::render('TimesheetPage', [
