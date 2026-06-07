@@ -99,6 +99,29 @@ const projectTotals = (project: ProjectWithBilling) => {
 const monthWorked = (m: MonthRow, dailyRate: number) => m.days_worked * dailyRate
 const monthInvoiced = (m: MonthRow) => m.invoices.reduce((s, i) => s + i.amount, 0)
 
+const calendarMonthsBetween = (from: string, to: string): number => {
+  const [fromYear, fromMonth] = from.split('-').map(Number)
+  const [toYear, toMonth] = to.split('-').map(Number)
+  return (toYear! - fromYear!) * 12 + (toMonth! - fromMonth!) + 1
+}
+
+const isCumulativeOverBudget = (project: ProjectWithBilling, monthIndex: number): boolean => {
+  const cumulativeWorked = project.months
+    .slice(0, monthIndex + 1)
+    .reduce((sum, m) => sum + m.days_worked * project.daily_rate, 0)
+
+  if (project.max_total_budget !== null) {
+    return cumulativeWorked > project.max_total_budget
+  }
+
+  if (project.max_month_budget !== null) {
+    const elapsed = calendarMonthsBetween(project.months[0]!.month, project.months[monthIndex]!.month)
+    return cumulativeWorked > project.max_month_budget * elapsed
+  }
+
+  return false
+}
+
 // ── Invoice form ───────────────────────────────────────────────────────────────
 
 const invoiceOpen = ref(false)
@@ -244,7 +267,7 @@ const dayLabel = (date: string): string => {
                   </tr>
                 </thead>
                 <tbody>
-                  <template v-for="m in project.months" :key="m.month">
+                  <template v-for="(m, monthIndex) in project.months" :key="m.month">
                     <tr
                       class="border-b border-default hover:bg-muted/20 cursor-pointer transition-colors"
                       :class="isExpanded(project.id, m.month) ? 'bg-muted/20' : ''"
@@ -261,7 +284,7 @@ const dayLabel = (date: string): string => {
                       </td>
                       <td
                         class="px-4 py-2.5 text-right tabular-nums"
-                        :class="monthWorked(m, project.daily_rate) > (project.max_month_budget ?? Infinity) ? 'text-error font-medium' : 'text-muted'"
+                        :class="isCumulativeOverBudget(project, monthIndex) ? 'text-error font-medium' : 'text-muted'"
                       >
                         {{ formatCurrency(monthWorked(m, project.daily_rate)) }} ({{ formatDays(m.days_worked) }})
                       </td>
