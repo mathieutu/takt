@@ -1,0 +1,46 @@
+name: Database Backup
+
+on:
+  schedule:
+    - cron: '0 1 * * *' # Runs daily at 01:00
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - run: ssh-keyscan -H vps.mathieutu.dev >> ~/.ssh/known_hosts
+      - name: SSH port forwarding
+        run: ssh -v -f -N -L 8041:localhost:8041 root@vps.mathieutu.dev
+
+      - name: Postgres Dump Backup
+        uses: tj-actions/pg-dump@v3
+        with:
+          database_url: 'postgres://takt@localhost:8041/takt'
+          path: backups/backup.dump
+          postgresql_version: 15
+          options: '--format c --data-only --verbose --no-owner --table=public.* --exclude-table=action_events --exclude-table=migrations --exclude-table=failed_jobs --exclude-table=*_tokens --exclude-table=nova_* --exclude-table=telescope_* --exclude-table=pulse_*'
+        env:
+          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
+
+      - name: Get current date
+        id: date
+        run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Setup rclone
+        uses: AnimMouse/setup-rclone@v1
+
+      - name: Upload backup to Google Drive
+        env:
+          RCLONE_CONFIG_DRIVE_TYPE: drive
+          RCLONE_CONFIG_DRIVE_SCOPE: drive
+          RCLONE_CONFIG_DRIVE_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.GOOGLE_DRIVE_CREDENTIALS }}
+          RCLONE_CONFIG_DRIVE_IMPERSONATE: admin@mathieutu.dev
+          RCLONE_CONFIG_DRIVE_ROOT_FOLDER_ID: 1gUWVssa-ionSzFto8h5mrJA_f4wkTaJa
+        run: rclone copyto backups/backup.dump "drive:backup_${{ steps.date.outputs.CURRENT_DATE }}.dump" --progress
