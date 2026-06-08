@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/vue3'
 import TaktLogo from '@/components/TaktLogo.vue'
 import { useFlash } from '@/composables/useFlash'
 import { disabled, redirect } from '@/wayfinder/routes/login'
+import { demo } from '@/wayfinder/routes'
 
 defineOptions({ layout: () => false })
 
@@ -125,6 +126,15 @@ useFlash()
                 block
                 size="xl"
               />
+
+              <div class="mt-4 text-center">
+                <Link
+                  :href="demo()"
+                  class="text-xs text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+                >
+                  Essayer avec le compte de démonstration
+                </Link>
+              </div>
             </div>
           </div>
         </div>

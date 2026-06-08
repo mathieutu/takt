@@ -77,7 +77,7 @@ class ShowHomeHandler
             : 0;
 
         $trendDays = $prevMonthDays > 0 ? (int) round(($monthDays - $prevMonthDays) / $prevMonthDays * 100) : 0;
-        $trendRevenue = $prevMonthRevenue > 0 ? (int) round(($monthRevenue - $prevMonthRevenue) / $prevMonthRevenue * 100) : 0;
+        $trendRevenue = $prevMonthRevenue > 0 ? (int) round(($projectedRevenue - $prevMonthRevenue) / $prevMonthRevenue * 100) : 0;
         $trendYear = $prevYearRevenue > 0 ? (int) round(($yearRevenue - $prevYearRevenue) / $prevYearRevenue * 100) : 0;
 
         $outstanding = $allInvoices->whereNull('paid_at');

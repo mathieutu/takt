@@ -13,7 +13,7 @@ export type Flash = {
 declare module '@inertiajs/core' {
   export interface InertiaConfig {
     sharedPageProps: {
-      auth: { user: { id: number, name: string, email: string, avatar: string } | null },
+      auth: { user: { id: number, name: string, email: string, avatar: string } | null, isDemo: boolean },
       updatedAt: string,
     },
     flashDataType: Flash,

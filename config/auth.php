@@ -6,6 +6,8 @@ return [
 
     'enabled' => env('AUTH_ENABLED', true),
 
+    'demo_email' => env('DEMO_EMAIL', 'contact+takt@mathieutu.dev'),
+
     /*
     |--------------------------------------------------------------------------
     | Authentication Defaults

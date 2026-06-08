@@ -37,6 +37,7 @@ class HandleInertiaRequests extends Middleware
                     'email' => $user->email,
                     'avatar' => $user->avatar,
                 ] : null,
+                'isDemo' => $user?->email === config('auth.demo_email'),
             ],
             'updatedAt' => Inertia::once(function () {
                 $updatedAt = config('app.updated_at');

@@ -252,12 +252,13 @@ const onSearch = useDebounceFn((value: string) => {
           >
             <div class="flex items-start justify-between gap-2">
               <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-semibold">
+                <p class="truncate text-sm font-semibold" :title="project.name">
                   {{ project.name }}
                 </p>
                 <Link
                   class="truncate text-xs text-muted hover:text-primary transition-colors"
                   :href="projectsRoutes.index({ mergeQuery: { client_id: project.client.id } })"
+                  :title="project.client.name"
                 >
                   {{ project.client.name }}
                 </Link>
@@ -318,8 +319,9 @@ const onSearch = useDebounceFn((value: string) => {
           >
             <div class="flex flex-1 min-w-0 items-center gap-2 px-1">
               <span
-                class="text-sm"
+                class="truncate text-sm"
                 :class="{ 'text-primary font-medium': client_id === client.id }"
+                :title="client.name"
               >{{ client.name }}</span>
               <span class="text-xs text-muted">{{ formatCurrency(client.daily_rate) }}/j.</span>
               <span

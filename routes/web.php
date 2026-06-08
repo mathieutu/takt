@@ -12,7 +12,7 @@ use App\Http\Middleware\EnsureUserOwnsResource;
 
 Route::get('/', ShowHomeHandler::class)->name('dashboard');
 
-Route::get('demo', function () {})->name('demo');
+Route::get('demo', [AuthController::class, 'demo'])->name('demo');
 
 Route::middleware('guest')->group(function () {
     Route::get('login', [AuthController::class, 'show'])->name('login');

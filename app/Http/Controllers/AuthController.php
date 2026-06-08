@@ -61,6 +61,15 @@ class AuthController
         return redirect()->intended('/');
     }
 
+    public function demo(): RedirectResponse
+    {
+        $user = User::where('email', config('auth.demo_email'))->firstOrFail();
+
+        Auth::login($user);
+
+        return redirect()->route('dashboard');
+    }
+
     public function logout(Request $request): RedirectResponse
     {
         Auth::logout();

@@ -73,6 +73,10 @@ const mobileMenuItems = computed<NavigationMenuItem[]>(() => [
       </template>
     </UHeader>
 
+    <div v-if="page.props.auth?.isDemo" class="bg-primary-200 text-primary-800 px-4 py-4 text-center text-base">
+      Compte de démonstration · Vous pouvez modifier les données, mais elles sont réinitialisée régulièrement.
+    </div>
+
     <main class="min-h-[calc(100vh-var(--ui-header-height)-4rem)]">
       <slot />
     </main>

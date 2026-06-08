@@ -1,21 +1,25 @@
 <script setup lang="ts">
 import {
+  type ActiveElement,
   BarController,
   BarElement,
   CategoryScale,
   type ChartData,
   type ChartDataset,
+  type ChartEvent,
   Chart as ChartJS,
   Filler,
   LinearScale,
   LineController,
   LineElement,
   PointElement,
+  type ScriptableContext,
   Tooltip,
   type TooltipItem,
 } from 'chart.js'
 import { computed, type ComputedRef } from 'vue'
 import { Bar } from 'vue-chartjs'
+import { router } from '@inertiajs/vue3'
 import { formatDays } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
 import { timesheet } from '@/wayfinder/routes'
@@ -143,7 +147,12 @@ const barChartData = computed(() => ({
           mi === props.chart.labels.length - 1 ? color : withAlpha(color, 0.45),
         ),
         stack: 'worked',
-        borderRadius: pi === props.chart.projects.length - 1 ? { topLeft: 4, topRight: 4 } : 0,
+        borderRadius: (ctx: ScriptableContext<'bar'>) => {
+          const di = ctx.dataIndex
+          if (!project.data[di]) return 0
+          const isTop = props.chart.projects.slice(pi + 1).every(p => !(p.data[di] ?? 0))
+          return isTop ? { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 } : 0
+        },
         borderSkipped: false,
         order: 2,
       } satisfies ChartDataset<'bar', number[]>
@@ -168,6 +177,15 @@ const barChartOptions = {
   responsive: true,
   maintainAspectRatio: false,
   interaction: { mode: 'index' as const, intersect: false },
+  onClick: (_event: ChartEvent, elements: ActiveElement[]) => {
+    if (!elements.length) return
+    const offset = props.chart.labels.length - 1 - elements[0]!.index
+    const d = new Date(now)
+    d.setDate(1)
+    d.setMonth(d.getMonth() - offset)
+    const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    router.visit(timesheet({ query: { month } }))
+  },
   plugins: {
     legend: {
       display: true,
@@ -344,7 +362,7 @@ const progressTextClass = (percent: number) => {
           <template #header>
             <p class="text-sm font-semibold">Activité sur 12 mois</p>
           </template>
-          <div class="h-72">
+          <div class="h-72 cursor-pointer">
             <Bar :data="barChartData" :options="barChartOptions" />
           </div>
         </UCard>
@@ -370,9 +388,9 @@ const progressTextClass = (percent: number) => {
               class="grid grid-cols-[16rem_1fr_2fr_4rem_6rem] items-center gap-x-7 py-3.5"
             >
               <div class="flex justify-between items-start">
-                <div>
-                  <p class="truncate text-sm font-medium">{{ p.name }}</p>
-                  <p class="text-xs text-muted">{{ p.clientName }}</p>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-medium" :title="p.name">{{ p.name }}</p>
+                  <p class="truncate text-xs text-muted" :title="p.clientName">{{ p.clientName }}</p>
                 </div>
                 <UButton :href="editProject(p)" icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" />
               </div>
