@@ -12,7 +12,8 @@
       "@/*": ["resources/js/*"]
     },
     "strict": true,
-    "erasableSyntaxOnly": true
+    "erasableSyntaxOnly": true,
+    "types": ["node"]
   },
   "include": ["resources/js/**/*"]
 }

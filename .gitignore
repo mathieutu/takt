@@ -12,8 +12,10 @@
 /.vscode
 /.zed
 /auth.json
+/bootstrap/ssr
 /node_modules
 /public/build
+/public/fonts-manifest.dev.json
 /public/hot
 /public/storage
 /storage/*.key
@@ -21,4 +23,6 @@
 /vendor
 Homestead.json
 Homestead.yaml
+npm-debug.log
 Thumbs.db
+yarn-error.log

@@ -4,19 +4,18 @@ namespace App\Providers;
 
 use App\Models\Client;
 use App\Models\Project;
-use App\Policies\ClientPolicy;
-use App\Policies\ProjectPolicy;
+use App\Ssr\SSGGateway;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Sleep;
+use Inertia\Ssr\Gateway;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(Gateway::class, SSGGateway::class);
     }
 
     /**
@@ -53,8 +52,5 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
             DB::prohibitDestructiveCommands();
         }
-
-        Gate::policy(Client::class, ClientPolicy::class);
-        Gate::policy(Project::class, ProjectPolicy::class);
     }
 }

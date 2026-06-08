@@ -4,8 +4,9 @@ import ui from '@nuxt/ui/vue-plugin'
 import AppLayout from './layouts/AppLayout.vue'
 import '../css/app.css'
 
-const appTitle = document.title
-export default createInertiaApp({
+const appTitle = typeof document !== 'undefined' ? document.title : 'Takt'
+
+createInertiaApp({
   title: title => [title, appTitle].filter(Boolean).join(' - '),
   layout: () => AppLayout,
   withApp(app) {
