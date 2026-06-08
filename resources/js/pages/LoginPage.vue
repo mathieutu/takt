@@ -99,7 +99,7 @@ useFlash()
             <div class="px-8 py-6">
               <template v-if="users.length > 0">
                 <p class="mb-3 text-xs font-medium uppercase tracking-wide text-slate-400">
-                  Connexion rapide (local)
+                  Connexion rapide (dev)
                 </p>
                 <div class="flex flex-col gap-2">
                   <Link
@@ -109,7 +109,7 @@ useFlash()
                     :data="{ user_id: user.id }"
                     class="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm transition-colors hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800"
                   >
-                    <span class="flex flex-col">
+                    <span class="flex flex-col items-start">
                       <span class="font-medium">{{ user.name }}</span>
                       <span class="text-xs text-slate-400">{{ user.email }}</span>
                     </span>

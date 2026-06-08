@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\CreateDemoData;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -61,9 +62,13 @@ class AuthController
         return redirect()->intended('/');
     }
 
-    public function demo(): RedirectResponse
+    public function demo(CreateDemoData $createDemoAccount): RedirectResponse
     {
-        $user = User::where('email', config('auth.demo_email'))->firstOrFail();
+        $user = User::where('email', config('auth.demo_email'))->first();
+
+        if (! $user) {
+            $user = $createDemoAccount();
+        }
 
         Auth::login($user);
 

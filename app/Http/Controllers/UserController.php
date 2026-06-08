@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
+use App\Models\Invoice;
+use App\Models\Project;
+use App\Models\TimesheetEntry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,14 +43,23 @@ class UserController
 
     public function destroy(Request $request): RedirectResponse
     {
-        $request->user()->delete();
+        $user = $request->user();
+
+        $clientIds = Client::withTrashed()->where('user_id', $user->id)->pluck('id');
+        $projectIds = Project::withTrashed()->whereIn('client_id', $clientIds)->pluck('id');
+
+        TimesheetEntry::whereIn('project_id', $projectIds)->forceDelete();
+        Invoice::whereIn('project_id', $projectIds)->forceDelete();
+        Project::withTrashed()->whereIn('id', $projectIds)->forceDelete();
+        Client::withTrashed()->whereIn('id', $clientIds)->forceDelete();
+
+        $user->delete();
 
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()
-            ->route('login')
+        return redirect('/')
             ->with('success', 'Votre compte a été supprimé.');
     }
 }
