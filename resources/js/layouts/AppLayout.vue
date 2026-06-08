@@ -52,17 +52,16 @@ const mobileMenuItems = computed<NavigationMenuItem[]>(() => [
       <template #right>
         <template v-if="user">
           <UDropdownMenu :items="userMenuItems">
-            <div class="flex items-center gap-2">
-              <UAvatar
-                :src="user.avatar ?? undefined"
-                alt=""
-                size="sm"
-                class="cursor-pointer"
-              />
-              <span class="text-sm font-semibold">
-                {{ user.name }}
-              </span>
-            </div>
+            <UButton
+              class="flex items-center gap-2" :avatar="user.avatar ? {
+                src: user.avatar,
+                alt: '',
+                class: 'rounded-none squircle',
+              } : undefined"
+              :label="user.name"
+              color="neutral"
+              variant="ghost"
+            />
           </UDropdownMenu>
         </template>
         <UButton v-else :to="login()" label="Connexion" color="neutral" variant="ghost" />
@@ -102,3 +101,12 @@ const mobileMenuItems = computed<NavigationMenuItem[]>(() => [
     </UFooter>
   </UApp>
 </template>
+
+<style>
+.squircle {
+  mask-image: url("data:image/svg+xml,%3csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M100 0C20 0 0 20 0 100s20 100 100 100 100-20 100-100S180 0 100 0Z'/%3e%3c/svg%3e");
+  mask-size: contain;
+  mask-position: center;
+  mask-repeat: no-repeat;
+}
+</style>
