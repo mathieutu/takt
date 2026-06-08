@@ -15,22 +15,22 @@ const updatedAt = computed(() => page.props.updatedAt)
 
 useFlash()
 
-const navItems: NavigationMenuItem[] = [
-  { label: 'Tableau de bord', icon: 'i-lucide-layout-dashboard', to: dashboard(), exact: true },
-  { label: 'Activité', icon: 'i-lucide-calendar-days', to: timesheet() },
-  { label: 'Projets', icon: 'i-lucide-folder-kanban', to: projects.index() },
-]
+const navItems = computed<NavigationMenuItem[]>(() => [
+  { label: 'Tableau de bord', icon: 'i-lucide-layout-dashboard', to: dashboard(), exact: true, active: page.url === dashboard().url, prefetch: true },
+  { label: 'Activité', icon: 'i-lucide-calendar-days', to: timesheet(), active: page.url.startsWith(timesheet().url), prefetch: true },
+  { label: 'Projets', icon: 'i-lucide-folder-kanban', to: projects.index(), active: page.url.startsWith(projects.index().url), prefetch: true },
+])
 
 const userMenuItems = computed<DropdownMenuItem[][]>(() => [[
-  { label: 'Paramètres', icon: 'i-lucide-settings', to: profile() },
+  { label: 'Paramètres', icon: 'i-lucide-settings', to: profile(), active: page.url.startsWith(profile().url), prefetch: true },
   user.value
     ? { label: 'Se déconnecter', icon: 'i-lucide-log-out', to: logout() }
     : { label: 'Connexion', icon: 'i-lucide-log-in', to: login() },
 ]])
 
 const mobileMenuItems = computed<NavigationMenuItem[]>(() => [
-  ...navItems,
-  { label: 'Paramètres', icon: 'i-lucide-settings', to: profile() },
+  ...navItems.value,
+  { label: 'Paramètres', icon: 'i-lucide-settings', to: profile(), active: page.url.startsWith(profile().url), prefetch: true },
   user.value
     ? { label: 'Se déconnecter', icon: 'i-lucide-log-out', to: logout() }
     : { label: 'Connexion', icon: 'i-lucide-log-in', to: login() },
