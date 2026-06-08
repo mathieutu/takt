@@ -36,9 +36,9 @@ const features: Feature[] = [
     description: 'TJM par projet, budgets mensuels et totaux, duplication, corbeille et restauration.',
   },
   {
-    icon: 'i-lucide-receipt',
+    icon: 'i-lucide-euro',
     title: 'Suivi de la facturation',
-    description: 'Suivi des factures par projet avec alertes de dépassement de budget mensuel ou cumulé. Pas d\'édition de devis ou de facturation (à faire avec logiciel agréé facturation electronique)',
+    description: 'Suivi des factures par projet avec alertes de dépassement de budget mensuel ou cumulé.',
   },
   {
     icon: 'i-lucide-share-2',
@@ -46,9 +46,9 @@ const features: Feature[] = [
     description: 'Lien public en lecture seule pour partager un bilan de facturation sans compte requis.',
   },
   {
-    icon: 'i-simple-icons:github',
-    title: 'Authentification GitHub',
-    description: 'Connexion OAuth sécurisée via GitHub. Mode local disponible pour le développement.',
+    icon: 'i-lucide-receipt',
+    title: 'Pas d\'édition de factures',
+    description: 'Délègue l\'édition de devis ou de factures à votre Plateforme Agréée de facturation electronique (PA/PDP).',
   },
 ]
 
