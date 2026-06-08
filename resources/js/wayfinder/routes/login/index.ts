@@ -4,8 +4,110 @@
 import { queryParams, type RouteDefinition, type RouteQueryOptions } from "./../../index";
 
 /**
+ * @see \App\Http\Controllers\AuthController::redirect
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:22
+ * @route "/login/redirect"
+ */
+export const redirect = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+    url: redirect.url(options),
+    method: "get",
+})
+
+redirect.definition = {
+    methods: ["get","head"],
+    url: "/login/redirect",
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+ * @see \App\Http\Controllers\AuthController::redirect
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:22
+ * @route "/login/redirect"
+ */
+redirect.url = (options?: RouteQueryOptions) => {
+    return redirect.definition.url + queryParams(options)
+}
+
+/**
+ * @see \App\Http\Controllers\AuthController::redirect
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:22
+ * @route "/login/redirect"
+ */
+redirect.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+    url: redirect.url(options),
+    method: "get",
+})
+
+/**
+ * @see \App\Http\Controllers\AuthController::redirect
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:22
+ * @route "/login/redirect"
+ */
+redirect.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
+    url: redirect.url(options),
+    method: "head",
+})
+
+
+
+
+
+
+
+
+/**
+ * @see \App\Http\Controllers\AuthController::callback
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:27
+ * @route "/login/callback"
+ */
+export const callback = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+    url: callback.url(options),
+    method: "get",
+})
+
+callback.definition = {
+    methods: ["get","head"],
+    url: "/login/callback",
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+ * @see \App\Http\Controllers\AuthController::callback
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:27
+ * @route "/login/callback"
+ */
+callback.url = (options?: RouteQueryOptions) => {
+    return callback.definition.url + queryParams(options)
+}
+
+/**
+ * @see \App\Http\Controllers\AuthController::callback
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:27
+ * @route "/login/callback"
+ */
+callback.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+    url: callback.url(options),
+    method: "get",
+})
+
+/**
+ * @see \App\Http\Controllers\AuthController::callback
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:27
+ * @route "/login/callback"
+ */
+callback.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
+    url: callback.url(options),
+    method: "head",
+})
+
+
+
+
+
+
+
+
+/**
  * @see \App\Http\Controllers\AuthController::disabled
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:54
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:53
  * @route "/login/disabled"
  */
 export const disabled = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -20,7 +122,7 @@ disabled.definition = {
 
 /**
  * @see \App\Http\Controllers\AuthController::disabled
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:54
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:53
  * @route "/login/disabled"
  */
 disabled.url = (options?: RouteQueryOptions) => {
@@ -29,7 +131,7 @@ disabled.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\AuthController::disabled
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:54
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:53
  * @route "/login/disabled"
  */
 disabled.post = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -46,6 +148,8 @@ disabled.post = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
 
 
 const login = {
+    redirect,
+    callback,
     disabled,
 }
 

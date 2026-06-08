@@ -104,7 +104,7 @@ const openEntry = (projectId: string, date: string) => {
 
 const entryDateLabel = (date: string): string => {
   const d = new Date(`${date}T00:00:00`)
-  return `${d.getDate()} ${formatMonthName(d.getFullYear(), d.getMonth() + 1)}`
+  return `${d.getDate()} ${formatMonthName(d.getMonth() + 1)}`
 }
 
 type InertiaOptimisticPage = InertiaPageProps & {
@@ -145,7 +145,7 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
             <UButton :to="urls.prevMonth" icon="i-lucide-chevron-left" color="neutral" variant="ghost" size="xs" />
           </UTooltip>
           <span class="min-w-35 text-center text-sm font-medium text-default">
-            {{ formatMonthName(current.year, current.month) }} {{ current.year }}
+            {{ formatMonthName(current.month) }} {{ current.year }}
           </span>
           <UTooltip text="Mois suivant" :kbds="['n']">
             <UButton :to="urls.nextMonth" icon="i-lucide-chevron-right" color="neutral" variant="ghost" size="xs" />

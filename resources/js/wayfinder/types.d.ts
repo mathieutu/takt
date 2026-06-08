@@ -4,14 +4,19 @@
 export namespace Inertia {
     export namespace Pages {
         /**
-         * @see [\App\Http\Controllers\AuthController::show](/Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php)
+         * @see [\App\Http\Controllers\ShowHomeHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowHomeHandler.php)
          */
-        export type LoginPage = Inertia.SharedData & { users: App.Models.User[] | [], redirectUrl: string | null }
+        export type LandingPage = Inertia.SharedData
 
         /**
-         * @see [\App\Http\Controllers\ShowDashboardHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowDashboardHandler.php)
+         * @see [\App\Http\Controllers\ShowHomeHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowHomeHandler.php)
          */
         export type DashboardPage = Inertia.SharedData & { kpis: { monthDays: number, workingDays: number, fillRate: number, monthRevenue: number, projectedRevenue: number, yearRevenue: number, outstandingAmount: unknown, outstandingCount: unknown, overdueCount: unknown, weightedRate: number, trendDays: number, trendRevenue: number, trendYear: number }, chart: { labels: unknown, projects: unknown, billed: unknown }, projects: unknown, monthAdvancement: number }
+
+        /**
+         * @see [\App\Http\Controllers\AuthController::show](/Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php)
+         */
+        export type LoginPage = Inertia.SharedData & { users: App.Models.User[] | [] }
 
         /**
          * @see [\App\Http\Controllers\UserController::edit](/Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php)
@@ -50,6 +55,20 @@ export namespace Inertia {
 export namespace App {
     export namespace Http {
         export namespace Controllers {
+            export namespace ShowHomeHandler {
+                export namespace __invoke {
+                    /**
+                     * @see [\App\Http\Controllers\ShowHomeHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowHomeHandler.php)
+                     */
+                    export type Response = Inertia.Pages.LandingPage | Inertia.Pages.DashboardPage
+
+                    /**
+                     * @see [\App\Http\Controllers\ShowHomeHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowHomeHandler.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+            }
+
             export namespace AuthController {
                 export namespace Show {
                     /**
@@ -59,6 +78,20 @@ export namespace App {
 
                     /**
                      * @see [\App\Http\Controllers\AuthController::show](/Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+
+                export namespace Redirect {
+                    /**
+                     * @see [\App\Http\Controllers\AuthController::redirect](/Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+
+                export namespace Callback {
+                    /**
+                     * @see [\App\Http\Controllers\AuthController::callback](/Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
@@ -73,20 +106,6 @@ export namespace App {
                 export namespace Logout {
                     /**
                      * @see [\App\Http\Controllers\AuthController::logout](/Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php)
-                     */
-                    export type Request = Record<string, unknown>
-                }
-            }
-
-            export namespace ShowDashboardHandler {
-                export namespace __invoke {
-                    /**
-                     * @see [\App\Http\Controllers\ShowDashboardHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowDashboardHandler.php)
-                     */
-                    export type Response = Inertia.Pages.DashboardPage
-
-                    /**
-                     * @see [\App\Http\Controllers\ShowDashboardHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowDashboardHandler.php)
                      */
                     export type Request = Record<string, unknown>
                 }

@@ -16,7 +16,6 @@ class AuthController
     {
         return Inertia::render('LoginPage', [
             'users' => ! config('auth.enabled') ? User::all(['id', 'name', 'email']) : [],
-            'redirectUrl' => config('auth.enabled') ? route('login.redirect') : null,
         ]);
     }
 
@@ -69,6 +68,6 @@ class AuthController
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return to_route('login');
+        return redirect('/');
     }
 }

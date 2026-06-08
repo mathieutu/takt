@@ -172,13 +172,13 @@ const submitInvoice = () => {
 
 const monthLabel = (ym: string): string => {
   const { year, month } = parseMonth(ym)
-  return `${formatMonthName(year, month)} ${year}`
+  return `${formatMonthName(month)} ${year}`
 }
 
 const dayLabel = (date: string): string => {
   const d = new Date(`${date}T00:00:00`)
   const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
-  return `${days[d.getDay()]} ${d.getDate()} ${formatMonthName(d.getFullYear(), d.getMonth() + 1)}`
+  return `${days[d.getDay()]} ${d.getDate()} ${formatMonthName(d.getMonth() + 1)}`
 }
 </script>
 

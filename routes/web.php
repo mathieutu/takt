@@ -4,27 +4,29 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectInvoiceController;
-use App\Http\Controllers\ShowDashboardHandler;
+use App\Http\Controllers\ShowHomeHandler;
 use App\Http\Controllers\ShowSharedHandler;
 use App\Http\Controllers\ShowTimesheetHandler;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureUserOwnsResource;
 
+Route::get('/', ShowHomeHandler::class)->name('dashboard');
+
+Route::get('demo', function () {})->name('demo');
+
 Route::middleware('guest')->group(function () {
     Route::get('login', [AuthController::class, 'show'])->name('login');
 
-    if (config('auth.enabled')) {
-        Route::get('login/redirect', [AuthController::class, 'redirect'])->name('login.redirect');
-        Route::get('login/callback', [AuthController::class, 'callback'])->name('login.callback');
-    } else {
+    Route::get('login/redirect', [AuthController::class, 'redirect'])->name('login.redirect');
+    Route::get('login/callback', [AuthController::class, 'callback'])->name('login.callback');
+
+    if (! config('auth.enabled')) {
         Route::post('login/disabled', [AuthController::class, 'disabled'])->name('login.disabled');
     }
 });
 
 Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
     Route::get('logout', [AuthController::class, 'logout'])->name('logout');
-
-    Route::get('/', ShowDashboardHandler::class)->name('dashboard');
 
     Route::get('profile', [UserController::class, 'edit'])->name('profile');
     Route::put('profile', [UserController::class, 'update'])->name('profile.update');

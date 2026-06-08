@@ -12,10 +12,14 @@ use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class ShowDashboardHandler
+class ShowHomeHandler
 {
     public function __invoke(Request $request): Response|RedirectResponse
     {
+        if (! auth()->check()) {
+            return Inertia::render('LandingPage');
+        }
+
         $now = CarbonImmutable::now();
         $rollingYearStart = $now->subMonths(12)->startOfMonth();
 
