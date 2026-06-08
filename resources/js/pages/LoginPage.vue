@@ -2,8 +2,8 @@
 import { Link } from '@inertiajs/vue3'
 import TaktLogo from '@/components/TaktLogo.vue'
 import { useFlash } from '@/composables/useFlash'
-import { disabled, redirect } from '@/wayfinder/routes/login'
 import { demo } from '@/wayfinder/routes'
+import { disabled, redirect } from '@/wayfinder/routes/login'
 
 defineOptions({ layout: () => false })
 

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { router } from '@inertiajs/vue3'
 import {
   type ActiveElement,
   BarController,
@@ -19,7 +20,6 @@ import {
 } from 'chart.js'
 import { computed, type ComputedRef } from 'vue'
 import { Bar } from 'vue-chartjs'
-import { router } from '@inertiajs/vue3'
 import { formatDays } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
 import { timesheet } from '@/wayfinder/routes'
