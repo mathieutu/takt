@@ -11,9 +11,9 @@
     "paths": {
       "@/*": ["resources/js/*"]
     },
+    "types": ["node"],
     "strict": true,
-    "erasableSyntaxOnly": true,
-    "types": ["node"]
+    "erasableSyntaxOnly": true
   },
   "include": ["resources/js/**/*"]
 }

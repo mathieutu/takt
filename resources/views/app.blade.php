@@ -9,6 +9,14 @@
     <x-inertia::head>
         <title>{{ config('app.name') }}</title>
     </x-inertia::head>
+    <script>
+        const theme = localStorage.getItem('vueuse-color-scheme') || 'auto'
+        if (theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark')
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
+    </script>
 </head>
 <body>
 <div class="isolate">
