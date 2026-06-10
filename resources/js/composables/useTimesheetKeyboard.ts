@@ -1,7 +1,7 @@
 import type { Day } from '@/utils/date.ts'
 import { nextTick, onMounted, onUnmounted, ref, type TemplateRef, watch } from 'vue'
 import { useGridNavigation } from '@/composables/useGridNavigation.ts'
-import { TODAY } from '@/utils/date.ts'
+import { isToday } from '@/utils/date.ts'
 
 type Project = {
   id: string,
@@ -129,7 +129,7 @@ export const useTimesheetKeyboard = (
       event.preventDefault()
       const lastCol = getDays().length - 1
       const lastRow = getProjects().length - 1
-      const todayIndex = getDays().findIndex(d => d.date === TODAY)
+      const todayIndex = getDays().findIndex(d => isToday(d.date))
       const isLeftward = action === 'move-left' || action === 'step-left' || action === 'jump-left' || action === 'jump-top-left' || action === 'jump-bottom-right'
       const isUpward = action === 'move-up' || action === 'jump-up'
       focusCell(isUpward ? lastRow : 0, isLeftward ? lastCol : (todayIndex !== -1 ? todayIndex : 0))
@@ -143,7 +143,7 @@ export const useTimesheetKeyboard = (
   }
 
   onMounted(() => {
-    const todayIndex = getDays().findIndex(d => d.date === TODAY)
+    const todayIndex = getDays().findIndex(d => isToday(d.date))
     if (todayIndex !== -1) {
       const firstRow = tableRef.value?.querySelector('tbody tr')
       const cell = firstRow?.querySelectorAll('td')[todayIndex + 1] as HTMLElement

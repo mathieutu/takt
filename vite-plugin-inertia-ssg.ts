@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
 import type { OutputChunk } from 'rolldown'
 import type { Plugin, ResolvedConfig } from 'vite'
-import { createHash } from 'node:crypto'
 import { execSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { cwd } from 'node:process'

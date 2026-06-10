@@ -2,7 +2,7 @@
 import type { Day } from '@/utils/date.ts'
 import { useTemplateRef } from 'vue'
 import { useTimesheetKeyboard } from '@/composables/useTimesheetKeyboard.ts'
-import { coverageLabel, formatDays, TODAY } from '@/utils/date.ts'
+import { coverageLabel, formatDays, isToday } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
 import { show as billingShow } from '@/wayfinder/routes/clients/billing'
 
@@ -39,11 +39,11 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
   const coverage = project.entries[day.date]?.coverage ?? 0
   const isDeleted = !!project.deleted_at
   const isHolidayOrWeekend = holidays.has(day.date) || day.isWeekend
-  const isToday = day.date === TODAY
+  const isTodayDay = isToday(day.date)
 
   const base = [
     isDeleted ? 'cursor-disabled' : 'cursor-pointer',
-    isToday && 'border-primary/50',
+    isTodayDay && 'border-primary/50',
     isDeleted && 'pointer-events-none',
   ]
 
@@ -76,15 +76,15 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
           class="sticky top-0 z-10 border-b border-r border-t border-default px-0 py-1.5 text-center"
           :class="[
             holidays.has(day.date) || day.isWeekend ? 'bg-elevated' : 'bg-default',
-            day.date === TODAY ? 'border-primary/50' : '',
-            days[index + 1]?.date === TODAY ? 'border-r-primary/50' : '',
+            isToday(day.date) ? 'border-primary/50' : '',
+            isToday(days[index + 1]?.date) ? 'border-r-primary/50' : '',
           ]"
           :title="holidays.get(day.date)"
         >
-          <div class="text-xs font-semibold leading-none" :class="day.date === TODAY ? 'text-primary' : 'text-default'">
+          <div class="text-xs font-semibold leading-none" :class="isToday(day.date) ? 'text-primary' : 'text-default'">
             {{ day.n }}
           </div>
-          <div class="mt-0.5 text-[10px] leading-none" :class="day.date === TODAY ? 'text-primary' : 'text-muted'">
+          <div class="mt-0.5 text-[10px] leading-none" :class="isToday(day.date) ? 'text-primary' : 'text-muted'">
             {{ day.letter }}
           </div>
         </th>
@@ -131,7 +131,7 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
           :data-date="day.date"
           :data-deleted="project.deleted_at ? true : undefined"
           class="group/cell h-13 relative border-b border-r border-default transition-colors select-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/50"
-          :class="[getCellClasses(project, day), days[index + 1]?.date === TODAY ? 'border-r-primary/50' : '']"
+          :class="[getCellClasses(project, day), isToday(days[index + 1]?.date) ? 'border-r-primary/50' : '']"
           @mouseenter="($event.target as HTMLElement).focus()"
           @click="!project.deleted_at ? emit('cellClick', project.id, day.date) : undefined"
         >

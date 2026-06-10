@@ -2,7 +2,9 @@ export type Day = { n: number, date: string, isWeekend: boolean, letter: string 
 
 const DAY_LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S'] as const
 
-export const TODAY = new Date().toISOString().slice(0, 10)
+const _today = new Date()
+export const TODAY = `${_today.getFullYear()}-${String(_today.getMonth() + 1).padStart(2, '0')}-${String(_today.getDate()).padStart(2, '0')}`
+export const isToday = (date: string | undefined): boolean => date === TODAY
 
 export const formatMonthName = (month: number): string => {
   const name = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(new Date().setMonth(month - 1))
