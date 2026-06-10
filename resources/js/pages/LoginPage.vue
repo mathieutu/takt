@@ -119,8 +119,8 @@ useFlash()
 
               <UButton
                 v-else
-                as="a"
-                :href="redirect()"
+                :href="redirect().url"
+                external
                 label="Se connecter avec GitHub"
                 icon="i-simple-icons:github"
                 block
