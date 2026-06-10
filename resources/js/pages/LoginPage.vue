@@ -39,7 +39,7 @@ useFlash()
         />
 
         <!-- Glow rose (plus discret en light) -->
-        <div class="pointer-events-none absolute left-1/3 top-1/2 size-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-500/8 blur-3xl dark:bg-primary-500/12" />
+        <div class="pointer-events-none absolute left-1/3 top-1/2 size-125 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-500/8 blur-3xl dark:bg-primary-500/12" />
 
         <!-- Contenu éditorial -->
         <div class="absolute inset-0 flex flex-col justify-center px-12 xl:px-16">
@@ -53,7 +53,7 @@ useFlash()
             <span class="text-primary-500 dark:text-primary-400">Suivez vos revenus.</span>
           </h2>
 
-          <p class="max-w-[260px] text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+          <p class="max-w-65 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
             Suivi du temps, projets, clients et facturation — tout ce dont un freelance a besoin, sans le superflu.
           </p>
 

@@ -22,9 +22,10 @@ export const daysInMonth = ({ year, month }: { year: number, month: number }): D
   })
 }
 
-export const formatDate = (date: string): string => new Date(date).toLocaleDateString('fr-FR', {
+export const formatDate = (date: string, withYear = false): string => new Date(date).toLocaleDateString('fr-FR', {
   day: 'numeric',
   month: 'short',
+  ...(withYear ? { year: 'numeric' } : {}),
 })
 
 export const formatDateTime = (dateTime: string) => new Date(dateTime).toLocaleDateString('fr-FR', {

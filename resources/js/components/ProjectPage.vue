@@ -292,7 +292,7 @@ const onSearch = useDebounceFn((value: string) => {
 
             <div class="mt-3 flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <span v-if="project.daily_rate" class="text-xs font-medium">{{ formatCurrency(project.daily_rate) }}/j.</span>
+                <span v-if="project.daily_rate != null" class="text-xs font-medium">{{ formatCurrency(project.daily_rate) }}/j.</span>
                 <span
                   v-if="project.deleted_at"
                   class="inline-flex items-center gap-1 rounded-full bg-error/10 px-2 py-0.5 text-xs text-error"
@@ -301,7 +301,7 @@ const onSearch = useDebounceFn((value: string) => {
                   Archivé
                 </span>
               </div>
-              <span v-if="project.created_at" class="text-xs text-muted">{{ formatDate(project.created_at) }}</span>
+              <span v-if="project.created_at" class="text-xs text-muted">{{ formatDate(project.created_at, true) }}</span>
             </div>
           </div>
         </div>

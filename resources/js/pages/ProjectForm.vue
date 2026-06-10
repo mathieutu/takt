@@ -156,9 +156,9 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
               type="number"
               min="0"
               step="0.01"
-              :modelValue="form.daily_rate && form.daily_rate / 100"
+              :modelValue="form.daily_rate != null ? form.daily_rate / 100 : null"
               class="w-full"
-              @update:modelValue="(val: number | null) => form.daily_rate = val ? Math.round(val * 100) : null"
+              @update:modelValue="(val: number | null) => form.daily_rate = val != null ? Math.round(val * 100) : null"
             />
           </UFormField>
 
