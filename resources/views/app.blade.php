@@ -17,6 +17,14 @@
             document.documentElement.classList.remove('dark')
         }
     </script>
+    @if(app()->isProduction())
+    <!-- Privacy-friendly analytics by Plausible -->
+    <script async src="https://e.mathieutu.dev/js/pa-R65tyUjkaNzke-vlTzJNJ.js"></script>
+    <script>
+        window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+        plausible.init()
+    </script>
+    @endif
 </head>
 <body>
 <div class="isolate">
