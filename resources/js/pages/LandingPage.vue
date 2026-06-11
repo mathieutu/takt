@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
+import AppHeader from '@/components/AppHeader.vue'
 import TaktLogo from '@/components/TaktLogo.vue'
 import { formatMonthName } from '@/utils/date.ts'
 import { demo, login } from '@/wayfinder/routes'
@@ -66,25 +67,7 @@ const stack: StackItem[] = [
 <template>
   <UApp data-allow-mismatch>
     <div class="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <!-- Header -->
-      <header class="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-md dark:border-slate-800/60 dark:bg-slate-950/80">
-        <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div class="flex items-center gap-2">
-            <TaktLogo class="h-7 w-7" />
-            <span class="text-sm font-semibold tracking-tight">Takt</span>
-          </div>
-          <div class="flex items-center gap-3">
-            <UButton
-              :href="login()"
-              variant="outline"
-              color="neutral"
-              icon="i-lucide-log-in"
-              label="Connexion"
-              size="sm"
-            />
-          </div>
-        </div>
-      </header>
+      <AppHeader />
 
       <!-- ═══════════════════════════════════════════
            HERO — fond blanc avec glows et points
@@ -97,16 +80,19 @@ const stack: StackItem[] = [
                  background-size: 28px 28px;"
         />
         <!-- Glow rose haut-gauche -->
-        <div class="pointer-events-none absolute -left-32 -top-32 size-[500px] rounded-full bg-primary-400/15 blur-3xl dark:bg-primary-500/10" />
+        <div class="pointer-events-none absolute -left-32 -top-32 size-125 rounded-full bg-primary-400/15 blur-3xl dark:bg-primary-500/10" />
         <!-- Glow indigo bas-droite -->
-        <div class="pointer-events-none absolute -bottom-24 right-0 size-[400px] rounded-full bg-indigo-400/10 blur-3xl dark:bg-indigo-500/8" />
+        <div class="pointer-events-none absolute -bottom-24 right-0 size-100 rounded-full bg-indigo-400/10 blur-3xl dark:bg-indigo-500/8" />
 
         <div class="relative mx-auto max-w-7xl">
           <div class="grid items-center gap-12 lg:grid-cols-5">
             <div class="lg:col-span-3">
               <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-medium text-primary-600 dark:border-primary-500/20 dark:bg-primary-500/5 dark:text-primary-400">
-                <UIcon name="i-lucide-calendar-days" class="size-3" />
-                Outil pour freelance et intermittent · Gratuit et open source
+                <UIcon name="i-lucide-calendar-days" class="size-3 max-sm:mb-4" />
+                <span class="flex flex-col sm:flex-row gap-x-1">
+                  Outil pour freelance et intermittent <span class="hidden sm:inline">·</span>
+                  <span>Gratuit et open source</span>
+                </span>
               </div>
 
               <h1 class="mb-5 text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
@@ -222,7 +208,7 @@ const stack: StackItem[] = [
               class="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:bg-slate-800/50"
             >
               <!-- Accent coloré en haut -->
-              <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary-400/0 via-primary-400/60 to-primary-400/0 opacity-0 transition-opacity group-hover:opacity-100" />
+              <div class="absolute inset-x-0 top-0 h-0.5 bg-linear-to-r from-primary-400/0 via-primary-400/60 to-primary-400/0 opacity-0 transition-opacity group-hover:opacity-100" />
               <div class="mb-3 inline-flex size-9 items-center justify-center rounded-lg bg-primary-50 dark:bg-primary-500/10">
                 <UIcon :name="feature.icon" class="size-4 text-primary-500 dark:text-primary-400" />
               </div>
@@ -483,7 +469,7 @@ const stack: StackItem[] = [
 
           <div class="grid gap-6 lg:grid-cols-2">
             <!-- Utiliser en ligne -->
-            <div class="relative overflow-hidden rounded-2xl border border-primary-200 bg-gradient-to-br from-primary-50 to-rose-50/50 p-8 dark:border-primary-500/20 dark:from-primary-500/8 dark:to-rose-500/5">
+            <div class="relative overflow-hidden rounded-2xl border border-primary-200 bg-linear-to-br from-primary-50 to-rose-50/50 p-8 dark:border-primary-500/20 dark:from-primary-500/8 dark:to-rose-500/5">
               <div class="pointer-events-none absolute -right-12 -top-12 size-56 rounded-full bg-primary-300/20 blur-3xl dark:bg-primary-500/10" />
               <div class="pointer-events-none absolute -bottom-8 left-8 size-32 rounded-full bg-rose-300/15 blur-2xl dark:bg-rose-500/8" />
 
@@ -566,32 +552,68 @@ const stack: StackItem[] = [
            AUTEUR — bandeau teinté
       ═══════════════════════════════════════════ -->
       <section class="relative overflow-hidden border-t border-slate-100 px-6 py-16 dark:border-slate-800">
-        <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-950" />
-        <div class="pointer-events-none absolute left-0 top-0 h-px w-64 bg-gradient-to-r from-transparent via-primary-400/30 to-transparent" />
+        <div class="pointer-events-none absolute inset-0 bg-linear-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-950" />
+        <div class="pointer-events-none absolute left-0 top-0 h-px w-64 bg-linear-to-r from-transparent via-primary-400/30 to-transparent" />
 
         <div class="relative mx-auto max-w-7xl">
           <div class="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
-            <div class="flex size-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-100 to-rose-100 text-base font-bold tracking-tight text-primary-500 dark:from-primary-500/15 dark:to-rose-500/10 dark:text-primary-400">
-              MT
-            </div>
+            <img
+              src="https://github.com/mathieutu.png"
+              alt="Mathieu TUDISCO"
+              class="size-32 sm:size-48 shrink-0 squircle ring-2 ring-primary-200 dark:ring-primary-500/20"
+            />
             <div>
-              <div class="mb-1 flex flex-wrap items-center gap-3">
+              <div class="flex flex-wrap items-center gap-x-3">
                 <h3 class="text-base font-semibold">Mathieu TUDISCO</h3>
-                <a
-                  href="https://github.com/mathieutu"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1.5 text-xs text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
-                >
-                  <UIcon name="i-simple-icons:github" class="size-3" />
-                  @mathieutu
-                </a>
+                <div class="flex gap-3 flex-wrap">
+                  <a
+                    href="https://github.com/mathieutu"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1 text-xs text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+                  >
+                    <UIcon name="i-simple-icons:github" class="size-3" />
+                    @mathieutu
+                  </a>
+                  <a
+                    href="https://bsky.app/profile/mathieutu.dev"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1 text-xs text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+                  >
+                    <UIcon name="i-simple-icons:bluesky" class="size-3" />
+                    @mathieutu.dev
+                  </a>
+                  <a
+                    href="https://mathieutu.dev"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1 text-xs text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+                  >
+                    <UIcon name="i-lucide-globe" class="size-3" />
+                    mathieutu.dev
+                  </a>
+                </div>
               </div>
-              <p class="max-w-2xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-                Takt est un projet personnel open source, né d'un besoin quotidien de suivi du temps et de facturation
-                en freelance. Développé avec des outils modernes, il reste volontairement simple, sans bloatware,
-                et entièrement auto-hébergeable.
+              <p class="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                Formateur et Lead Developer FullStack pragmatique, actuellement ouvert à
+                des missions freelance courtes (<a href="mailto:jobs@mathieutu.dev" class="transition-colors hover:text-slate-600 dark:hover:text-slate-300">discutons en !</a>). Passionné de PHP et TypeScript, contributeur Open Source régulier.
+                Quand je ne suis pas devant mon écran, vous pouvez généralement me trouver sur mon vélo à Lyon,
+                ou dans les montagnes où je passe pas mal de temps sous terre et dans des cascades...
               </p>
+              <p class="mt-3 max-w-2xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                Takt est un projet personnel open source, né d'un besoin quotidien de suivi du temps et de facturation
+                en freelance. Il trouve son origine dans un projet étudiant.
+              </p>
+              <a
+                href="https://github.com/mathieutu/takt/graphs/contributors"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="mt-1 inline-flex items-center gap-1 text-xs text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300"
+              >
+                <UIcon name="i-lucide-users" class="size-3" />
+                Voir les contributeurs
+              </a>
             </div>
           </div>
         </div>
@@ -599,7 +621,7 @@ const stack: StackItem[] = [
 
       <!-- Footer -->
       <footer class="border-t border-slate-100 bg-slate-50 px-6 py-6 dark:border-slate-800 dark:bg-slate-900">
-        <div class="mx-auto flex max-w-7xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex max-w-7xl flex-col gap-4 sm:flex-row items-center sm:justify-between">
           <div class="flex items-center gap-2">
             <TaktLogo class="h-5 w-5" />
             <span class="text-xs text-slate-400">© 2025 Mathieu TUDISCO</span>
