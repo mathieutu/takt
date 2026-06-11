@@ -206,7 +206,7 @@ const dayLabel = (date: string): string => {
             />
           </UTooltip>
           <UButton
-            v-if="archivedProjects.length !== projects.length"
+            v-if="archivedProjects.length > 0 && archivedProjects.length < projects.length"
             :label="showArchived ? 'Masquer les archivés' : 'Afficher les projets archivés'"
             :icon="showArchived ? 'i-lucide-eye-off' : 'i-lucide-archive'"
             color="neutral"

@@ -158,8 +158,8 @@ const onSearch = useDebounceFn((value: string) => {
   <div class="flex flex-col bg-default">
     <div class="flex-1 px-6 py-8">
       <div class="mx-auto max-w-5xl space-y-6">
-        <div class="flex items-center justify-between">
-          <div>
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
             <h1 class="text-lg font-semibold">Projets</h1>
             <p class="text-sm text-muted">
               {{ projects.length }} projet{{ projects.length !== 1 ? 's' : '' }} dans
@@ -181,6 +181,7 @@ const onSearch = useDebounceFn((value: string) => {
             :only="['modal']"
             label="Nouveau projet"
             icon="i-lucide-plus"
+            class="shrink-0"
           />
         </div>
 

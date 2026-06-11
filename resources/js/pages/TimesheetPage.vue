@@ -136,7 +136,7 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
       <div class="mb-4 shrink-0 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <h2 class="text-sm font-semibold text-default">Rapport d'activité</h2>
-          <span class="text-xs text-muted">
+          <span class="hidden md:inline text-xs text-muted">
             {{ formatDays(totalDays) }} ({{ formatCurrency(totalRevenue) }})
           </span>
         </div>
@@ -144,7 +144,7 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
           <UTooltip text="Mois précédent" :kbds="['p']">
             <UButton :to="urls.prevMonth" icon="i-lucide-chevron-left" color="neutral" variant="ghost" size="xs" />
           </UTooltip>
-          <span class="min-w-35 text-center text-sm font-medium text-default">
+          <span class="sm:min-w-35 text-center text-sm font-medium text-default">
             {{ formatMonthName(current.month) }} {{ current.year }}
           </span>
           <UTooltip text="Mois suivant" :kbds="['n']">

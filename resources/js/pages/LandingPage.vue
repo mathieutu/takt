@@ -64,7 +64,7 @@ const stack: StackItem[] = [
 </script>
 
 <template>
-  <UApp>
+  <UApp data-allow-mismatch>
     <div class="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <!-- Header -->
       <header class="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-md dark:border-slate-800/60 dark:bg-slate-950/80">

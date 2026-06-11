@@ -47,7 +47,7 @@ return [
         |
         */
 
-        'throw_on_error' => (bool) env('INERTIA_SSR_THROW_ON_ERROR', true),
+        'throw_on_error' => (bool) env('INERTIA_SSR_THROW_ON_ERROR', env('APP_ENV') === 'production'),
 
     ],
 

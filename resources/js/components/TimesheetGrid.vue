@@ -61,12 +61,12 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
 <template>
   <table ref="table-ref" class="border-separate border-spacing-0" style="table-layout: fixed; width: max-content; min-width: 100%;">
     <colgroup>
-      <col style="width: 220px; min-width: 220px;" />
+      <col style="width: 160px; min-width: 160px;" />
       <col v-for="day in days" :key="day.n" style="width: 56px; min-width: 56px;" />
     </colgroup>
     <thead>
       <tr>
-        <th class="sticky left-0 top-0 z-30 border border-default bg-default px-3 py-2 text-left text-xs font-medium text-muted">
+        <th class="sticky top-0 z-10 sm:left-0 sm:z-30 border border-default bg-default px-3 py-2 text-left text-xs font-medium text-muted">
           Projet
         </th>
         <th
@@ -97,20 +97,20 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
         </td>
       </tr>
       <tr v-for="(project, projectIndex) in projects" :key="project.id" class="group/row">
-        <td class="sticky left-0 z-10 border-b border-r border-l border-default bg-default px-3 py-2">
+        <td class="sm:sticky sm:left-0 sm:z-10 overflow-hidden border-b border-r border-l border-default bg-default px-3 py-2">
           <div class="flex items-center gap-1 min-w-0">
             <UTooltip v-if="project.deleted_at" text="Archivé">
               <UIcon name="i-lucide-archive" class="w-3.5 h-3.5 shrink-0 text-muted" />
             </UTooltip>
             <div class="truncate text-sm font-medium flex-1" :class="project.deleted_at ? 'text-muted' : 'text-default'">{{ project.name }}</div>
           </div>
-          <div class="truncate text-xs text-muted flex items-center gap-1">
-            <span class="flex-1">{{ project.client.name }}</span>
-            <span v-if="project.days">
+          <div class="flex items-center gap-1 min-w-0 text-xs text-muted">
+            <span class="truncate flex-1 min-w-0">{{ project.client.name }}</span>
+            <span v-if="project.days" class="hidden sm:inline shrink-0">
               {{ formatDays(project.days) }}
               <template v-if="project.revenue">({{ formatCurrency(project.revenue) }})</template>
             </span>
-            <UTooltip text="Facturation">
+            <UTooltip text="Facturation" class="shrink-0">
               <UButton
                 :href="billingShow(project.client)"
                 icon="i-lucide-receipt-text"

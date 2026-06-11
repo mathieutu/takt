@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
 import type { NavigationMenuItem } from '@nuxt/ui/components/NavigationMenu.vue.d.ts'
-import { usePage } from '@inertiajs/vue3'
-import { computed } from 'vue'
+import { router, usePage } from '@inertiajs/vue3'
+import { computed, onUnmounted, ref } from 'vue'
 import TaktLogo from '@/components/TaktLogo.vue'
 import { formatDateTime } from '@/utils/date.ts'
 import { dashboard, login, logout, profile, timesheet } from '@/wayfinder/routes'
@@ -14,6 +14,12 @@ const user = computed(() => page.props.auth?.user)
 const updatedAt = computed(() => page.props.updatedAt)
 
 useFlash()
+
+const mobileMenuOpen = ref(false)
+const unsubscribe = router.on('navigate', () => {
+  mobileMenuOpen.value = false
+})
+onUnmounted(unsubscribe)
 
 const navItems = computed<NavigationMenuItem[]>(() => [
   { label: 'Tableau de bord', icon: 'i-lucide-layout-dashboard', to: dashboard(), exact: true, active: page.url === dashboard().url, prefetch: true },
@@ -39,7 +45,7 @@ const mobileMenuItems = computed<NavigationMenuItem[]>(() => [
 
 <template>
   <UApp>
-    <UHeader title="AssoFlow">
+    <UHeader v-model:open="mobileMenuOpen" :ui="{ toggle: 'hidden' }">
       <template #title>
         <div class="flex items-center gap-2">
           <TaktLogo class="h-7 w-7" />
@@ -51,18 +57,25 @@ const mobileMenuItems = computed<NavigationMenuItem[]>(() => [
 
       <template #right>
         <template v-if="user">
-          <UDropdownMenu :items="userMenuItems">
-            <UButton
-              class="flex items-center gap-2" :avatar="user.avatar ? {
-                src: user.avatar,
-                alt: '',
-                class: 'rounded-none squircle',
-              } : undefined"
-              :label="user.name"
-              color="neutral"
-              variant="ghost"
-            />
-          </UDropdownMenu>
+          <UButton
+            class="lg:hidden"
+            :avatar="user.avatar ? { src: user.avatar, alt: '', class: 'rounded-none squircle' } : undefined"
+            :label="user.name"
+            color="neutral"
+            variant="ghost"
+            @click="mobileMenuOpen = !mobileMenuOpen"
+          />
+          <div class="hidden lg:flex">
+            <UDropdownMenu :items="userMenuItems">
+              <UButton
+                class="flex items-center gap-2"
+                :avatar="user.avatar ? { src: user.avatar, alt: '', class: 'rounded-none squircle' } : undefined"
+                :label="user.name"
+                color="neutral"
+                variant="ghost"
+              />
+            </UDropdownMenu>
+          </div>
         </template>
         <UButton v-else :to="login()" label="Connexion" color="neutral" variant="ghost" />
       </template>

@@ -373,102 +373,101 @@ const progressTextClass = (percent: number) => {
             <p class="text-sm font-semibold">Projets</p>
           </template>
 
-          <div class="grid grid-cols-[16rem_1fr_2fr_5rem_5rem] items-center gap-x-7 border-b border-default pb-2 text-xs text-muted">
-            <span>Projet</span>
-            <span>Taux <span class="opacity-60">(taux jour. · temps)</span></span>
-            <span>Budget <span class="opacity-60">(total · ce mois)</span></span>
-            <span class="">Dernière activité</span>
-            <span class="text-center">À facturer</span>
-          </div>
-
-          <div class="divide-y divide-default">
-            <div
-              v-for="p in projectsWithStats"
-              :key="p.id"
-              class="grid grid-cols-[16rem_1fr_2fr_4rem_6rem] items-center gap-x-7 py-3.5"
-            >
-              <div class="flex justify-between items-start">
-                <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm font-medium" :title="p.name">{{ p.name }}</p>
-                  <p class="truncate text-xs text-muted" :title="p.clientName">{{ p.clientName }}</p>
-                </div>
-                <UButton :href="editProject(p)" icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" />
-              </div>
-
-              <div class="grid gap-1.5">
-                <div class="flex items-center justify-between text-xs">
-                  <div class="flex items-baseline gap-1 ">
-                    <template v-if="p.dailyRate > 0">
-                      <span class="text-muted">{{ formatCurrency(p.dailyRate) }}/d ×</span>
-                    </template>
-                    <span class="font-semibold">{{ formatDays(p.workedDaysCount) }} </span>
-                  </div>
-                  <span v-if="p.dailyRate > 0">=</span>
-                </div>
-                <div class="h-1.5 w-full overflow-hidden rounded-full bg-elevated">
-                  <div
-                    class="h-1.5 rounded-full bg-primary transition-all duration-500"
-                    :style="{ width: `${p.timeShare}%` }"
-                  />
-                </div>
-                <div class="text-xs text-muted">
-                  {{ p.timeShare }}% du temps travaillé
-                </div>
-              </div>
-
-              <div class="grid gap-1.5">
-                <div class="flex justify-between text-xs">
-                  <span v-if="p.workedAmount > 0" class="flex items-baseline gap-1">
-                    <span class="font-semibold">
-                      {{ formatCurrency(p.workedAmount) }}
-                    </span>
-                    <span class="text-muted">travaillé</span>
-                  </span>
-                  <span v-if="p.cumulativePercent" :class="progressTextClass(p.cumulativePercent)">
-                    {{ p.cumulativePercent }}% of {{ formatCurrency(p.theoreticalBudget) }}
-                  </span>
-                </div>
-                <div
-                  v-if="p.cumulativePercent"
-                  class="h-2 w-full overflow-hidden rounded-full bg-elevated"
-                >
-                  <div
-                    class="h-full rounded-full transition-all duration-500"
-                    :class="progressBarClass(p.cumulativePercent)"
-                    :style="{ width: `${Math.min(p.cumulativePercent, 100)}%` }"
-                  />
-                </div>
-                <div
-                  v-if="p.monthAmount > 0"
-                  class="flex items-center gap-1 text-xs"
-                  :class="p.isMonthOverrun ? 'text-error' : p.isMonthWarning ? 'text-warning' : 'text-muted'"
-                >
-                  <UIcon
-                    v-if="p.isMonthOverrun || p.isMonthWarning"
-                    name="i-lucide-triangle-alert"
-                    class="size-3 shrink-0"
-                  />
-                  <span>
-                    <span class="font-semibold" :class="!p.isMonthOverrun && !p.isMonthWarning ? 'text-default' : '' ">{{ formatCurrency(p.monthAmount) }}</span> ce mois
-                    <span v-if="p.isMonthOverrun || p.isMonthWarning">({{ p.monthlyPercent }}%)</span>
-                  </span>
-                </div>
-              </div>
+          <div class="overflow-x-auto">
+            <div class="min-w-240 grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,3fr)_auto_auto] gap-x-4 lg:gap-x-6">
+              <span class="pb-2 text-xs text-muted">Projet</span>
+              <span class="pb-2 text-xs text-muted">Taux <span class="opacity-60">(taux jour. · temps)</span></span>
+              <span class="pb-2 text-xs text-muted">Budget <span class="opacity-60">(total · ce mois)</span></span>
+              <span class="pb-2 text-xs text-muted">Dern. activité</span>
+              <span class="pb-2 text-center text-xs text-muted">À facturer</span>
 
               <div
-                class="text-xs"
-                :class="!p.deletedAt && p.daysSince && p.daysSince > 10 ? 'text-warning' : 'text-muted'"
+                v-for="p in projectsWithStats"
+                :key="p.id"
+                class="col-span-full grid grid-cols-subgrid items-center border-t border-default py-3.5"
               >
-                <template v-if="p.deletedAt">Archivé</template>
-                <template v-else-if="p.daysSince === 0">aujourd'hui</template>
-                <template v-else>{{ p.daysSince }}j.</template>
-              </div>
+                <div class="flex justify-between items-start">
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-medium">{{ p.name }}</p>
+                    <p class="text-xs text-muted">{{ p.clientName }}</p>
+                  </div>
+                  <UButton :href="editProject(p)" icon="i-lucide-pencil" color="neutral" variant="ghost" size="xs" />
+                </div>
 
-              <div class="flex items-center gap-2 justify-end">
-                <UBadge v-if="p.unbilled > 0" :color="p.unbilled > 10_000_00 ? 'error' : 'warning'" variant="subtle" size="sm">
-                  {{ formatCurrency(p.unbilled) }}
-                </UBadge>
-                <UButton :href="showBilling({ id: p.clientId })" icon="i-lucide-receipt-text" color="neutral" variant="ghost" size="xs" />
+                <div class="grid gap-1.5">
+                  <div class="flex items-center justify-between text-xs">
+                    <div class="flex items-baseline gap-1">
+                      <template v-if="p.dailyRate > 0">
+                        <span class="text-muted">{{ formatCurrency(p.dailyRate) }}/j ×</span>
+                      </template>
+                      <span class="font-semibold">{{ formatDays(p.workedDaysCount) }}</span>
+                    </div>
+                    <span v-if="p.dailyRate > 0">=</span>
+                  </div>
+                  <div class="h-1.5 w-full overflow-hidden rounded-full bg-elevated">
+                    <div
+                      class="h-1.5 rounded-full bg-primary transition-all duration-500"
+                      :style="{ width: `${p.timeShare}%` }"
+                    />
+                  </div>
+                  <div class="text-xs text-muted">
+                    {{ p.timeShare }}% du temps travaillé
+                  </div>
+                </div>
+
+                <div class="grid gap-1.5">
+                  <div class="flex justify-between text-xs">
+                    <span v-if="p.workedAmount > 0" class="flex items-baseline gap-1">
+                      <span class="font-semibold">{{ formatCurrency(p.workedAmount) }}</span>
+                      <span class="text-muted">travaillé</span>
+                    </span>
+                    <span v-if="p.cumulativePercent" :class="progressTextClass(p.cumulativePercent)">
+                      {{ p.cumulativePercent }}% of {{ formatCurrency(p.theoreticalBudget) }}
+                    </span>
+                  </div>
+                  <div
+                    v-if="p.cumulativePercent"
+                    class="h-2 w-full overflow-hidden rounded-full bg-elevated"
+                  >
+                    <div
+                      class="h-full rounded-full transition-all duration-500"
+                      :class="progressBarClass(p.cumulativePercent)"
+                      :style="{ width: `${Math.min(p.cumulativePercent, 100)}%` }"
+                    />
+                  </div>
+                  <div
+                    v-if="p.monthAmount > 0"
+                    class="flex items-center gap-1 text-xs"
+                    :class="p.isMonthOverrun ? 'text-error' : p.isMonthWarning ? 'text-warning' : 'text-muted'"
+                  >
+                    <UIcon
+                      v-if="p.isMonthOverrun || p.isMonthWarning"
+                      name="i-lucide-triangle-alert"
+                      class="size-3 shrink-0"
+                    />
+                    <span>
+                      <span class="font-semibold" :class="!p.isMonthOverrun && !p.isMonthWarning ? 'text-default' : ''">{{ formatCurrency(p.monthAmount) }}</span> ce mois
+                      <span v-if="p.isMonthOverrun || p.isMonthWarning">({{ p.monthlyPercent }}%)</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  class="text-xs"
+                  :class="!p.deletedAt && p.daysSince && p.daysSince > 10 ? 'text-warning' : 'text-muted'"
+                >
+                  <template v-if="p.deletedAt">Archivé</template>
+                  <template v-else-if="p.daysSince === 0">aujourd'hui</template>
+                  <template v-else-if="!p.daysSince">jamais</template>
+                  <template v-else>{{ formatDays(p.daysSince) }}</template>
+                </div>
+
+                <div class="flex items-center gap-2 justify-end">
+                  <UBadge v-if="p.unbilled > 0" :color="p.unbilled > 10_000_00 ? 'error' : 'warning'" variant="subtle" size="sm">
+                    {{ formatCurrency(p.unbilled) }}
+                  </UBadge>
+                  <UButton :href="showBilling({ id: p.clientId })" icon="i-lucide-receipt-text" color="neutral" variant="ghost" size="xs" />
+                </div>
               </div>
             </div>
           </div>
