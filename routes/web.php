@@ -9,6 +9,7 @@ use App\Http\Controllers\ShowSharedHandler;
 use App\Http\Controllers\ShowTimesheetHandler;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureUserOwnsResource;
+use Illuminate\Support\Facades\Date;
 
 Route::get('/', ShowHomeHandler::class)->name('dashboard');
 
@@ -56,4 +57,4 @@ Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
 
 Route::get('shares/{token}', ShowSharedHandler::class)->name('shares.show');
 
-Route::get('up', fn () => response()->json(['updated_at' => config('app.updated_at')]))->name('up');
+Route::get('up', fn () => response()->json(['updated_at' => Date::parse(config('app.updated_at'))->toIso8601String()]))->name('up');
