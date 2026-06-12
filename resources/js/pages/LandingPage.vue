@@ -556,7 +556,7 @@ const stack: StackItem[] = [
         <div class="pointer-events-none absolute left-0 top-0 h-px w-64 bg-linear-to-r from-transparent via-primary-400/30 to-transparent" />
 
         <div class="relative mx-auto max-w-7xl">
-          <div class="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
+          <div class="flex flex-col max-w-3xl mx-auto gap-6 sm:flex-row sm:items-start sm:gap-8">
             <img
               src="https://github.com/mathieutu.png"
               alt="Mathieu TUDISCO"
@@ -595,13 +595,16 @@ const stack: StackItem[] = [
                   </a>
                 </div>
               </div>
-              <p class="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+              <p class="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                 Formateur et Lead Developer FullStack pragmatique, actuellement ouvert à
-                des missions freelance courtes (<a href="mailto:jobs@mathieutu.dev" class="transition-colors hover:text-slate-600 dark:hover:text-slate-300">discutons en !</a>). Passionné de PHP et TypeScript, contributeur Open Source régulier.
-                Quand je ne suis pas devant mon écran, vous pouvez généralement me trouver sur mon vélo à Lyon,
-                ou dans les montagnes où je passe pas mal de temps sous terre et dans des cascades...
+                des missions freelance courtes (<a href="mailto:jobs@mathieutu.dev" class="italic transition-colors hover:text-slate-600 dark:hover:text-slate-300">discutons en !</a>).<br />
+                Passionné de PHP et TypeScript, contributeur Open Source régulier.
               </p>
-              <p class="mt-3 max-w-2xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+              <p class="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                Quand je ne suis pas devant mon écran, vous pouvez généralement me trouver à vélo dans Lyon,
+                ou dans les montagnes autour où je passe pas mal de temps sous terre et dans des cascades...
+              </p>
+              <p class="mt-3 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                 Takt est un projet personnel open source, né d'un besoin quotidien de suivi du temps et de facturation
                 en freelance. Il trouve son origine dans un projet étudiant.
               </p>
@@ -621,10 +624,10 @@ const stack: StackItem[] = [
 
       <!-- Footer -->
       <footer class="border-t border-slate-100 bg-slate-50 px-6 py-6 dark:border-slate-800 dark:bg-slate-900">
-        <div class="flex max-w-7xl flex-col gap-4 sm:flex-row items-center sm:justify-between">
+        <div class="mx-auto flex max-w-7xl flex-col gap-4 sm:flex-row items-center sm:justify-between">
           <div class="flex items-center gap-2">
             <TaktLogo class="h-5 w-5" />
-            <span class="text-xs text-slate-400">© 2025 Mathieu TUDISCO</span>
+            <span class="text-xs text-slate-400">© {{ new Date().getFullYear() }} Mathieu TUDISCO</span>
           </div>
           <div class="flex items-center gap-5">
             <a
