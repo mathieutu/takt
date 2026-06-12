@@ -11,8 +11,7 @@ trait BuildsProjectBillingEntry
     protected function buildProjectBillingEntry(Project $project, ?string $clientNameOverride = null): array
     {
         $invoicesByMonth = $project->invoices
-            ->whereNotNull('paid_at')
-            ->groupBy(fn (Invoice $i) => $i->paid_at->format('Y-m'));
+            ->groupBy(fn (Invoice $i) => $i->created_at->format('Y-m'));
 
         $timesheetMonths = $project->timesheetEntries
             ->groupBy(fn ($e) => $e->date->format('Y-m'));
@@ -39,22 +38,12 @@ trait BuildsProjectBillingEntry
                 'invoices' => $invoicesByMonth->get($month, collect())->map(fn (Invoice $i) => [
                     'id' => $i->id,
                     'amount' => $i->amount,
-                    'paid_at' => $i->paid_at->toDateString(),
+                    'paid_at' => $i->paid_at?->toDateString(),
                     'created_at' => $i->created_at->toDateString(),
                     'notes' => $i->notes,
                 ])->values(),
             ];
         });
-
-        $outstanding = $project->invoices
-            ->whereNull('paid_at')
-            ->map(fn (Invoice $i) => [
-                'id' => $i->id,
-                'amount' => $i->amount,
-                'paid_at' => null,
-                'created_at' => $i->created_at->toDateString(),
-                'notes' => $i->notes,
-            ])->values();
 
         $now = CarbonImmutable::now();
         $firstEntry = $project->timesheetEntries->sortBy('date')->first();
@@ -72,7 +61,6 @@ trait BuildsProjectBillingEntry
             'months' => $months->values(),
             'months_elapsed' => $monthsElapsed,
             'months_with_entries_count' => $timesheetMonths->count(),
-            'outstanding' => $outstanding,
         ];
     }
 }
