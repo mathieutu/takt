@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" type="image/svg+xml" href="/logo.svg">
+    <meta name="description" content="Outil de gestion du temps et de la facturation pour freelances. Feuille de temps, suivi de facturation, partage client — hébergeable soi-même.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ config('app.name') }}">
+    <meta property="og:title" content="{{ config('app.name') }}">
+    <meta property="og:description" content="Outil de gestion du temps et de la facturation pour freelances. Feuille de temps, suivi de facturation, partage client — hébergeable soi-même.">
+    <meta property="og:url" content="{{ request()->url() }}">
+    <meta property="og:image" content="{{ asset('og-image.png') }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ config('app.name') }}">
+    <meta name="twitter:description" content="Outil de gestion du temps et de la facturation pour freelances. Feuille de temps, suivi de facturation, partage client — hébergeable soi-même.">
+    <meta name="twitter:image" content="{{ asset('og-image.png') }}">
     @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
     <x-inertia::head>
         <title>{{ config('app.name') }}</title>

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <pattern id="dots" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="rgba(148,163,184,0.2)"/>
+    </pattern>
+    <radialGradient id="glow-pink" cx="27%" cy="50%" r="38%">
+      <stop offset="0%" stop-color="#ec4899" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#ec4899" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow-blue" cx="85%" cy="60%" r="35%">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+    </radialGradient>
+    <!-- gradient à 50% : rose jusqu'au bord du K, blanc pour "akt" -->
+    <linearGradient id="progress-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="40%" stop-color="#ec4899"/>
+      <stop offset="90%" stop-color="#f1f5f9"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="#0f172a"/>
+  <rect width="1200" height="630" fill="url(#dots)"/>
+  <rect width="1200" height="630" fill="url(#glow-pink)"/>
+  <rect width="1200" height="630" fill="url(#glow-blue)"/>
+
+  <g transform="translate(75, 195) scale(2.4)">
+    <rect x="2.5"  y="2.5"  width="20" height="20" rx="4" fill="rgba(241,245,249,0.12)"/>
+    <rect x="27.5" y="2.5"  width="20" height="20" rx="4" fill="#ec4899"/>
+    <rect x="52.5" y="2.5"  width="20" height="20" rx="4" fill="#ec4899"/>
+    <rect x="77.5" y="2.5"  width="20" height="20" rx="4" fill="#ec4899"/>
+    <rect x="2.5"  y="27.5" width="20" height="20" rx="4" fill="#f1f5f9"/>
+    <rect x="27.5" y="27.5" width="20" height="20" rx="4" fill="#f1f5f9"/>
+    <rect x="52.5" y="27.5" width="20" height="20" rx="4" fill="#ec4899"/>
+    <rect x="77.5" y="27.5" width="20" height="20" rx="4" fill="#f1f5f9"/>
+    <rect x="2.5"  y="52.5" width="20" height="20" rx="4" fill="#f1f5f9"/>
+    <rect x="27.5" y="52.5" width="20" height="20" rx="4" fill="#f1f5f9"/>
+    <rect x="52.5" y="52.5" width="20" height="20" rx="4" fill="#ec4899"/>
+    <rect x="77.5" y="52.5" width="20" height="20" rx="4" fill="#f1f5f9"/>
+    <rect x="2.5"  y="77.5" width="20" height="20" rx="4" fill="#f1f5f9"/>
+    <rect x="27.5" y="77.5" width="20" height="20" rx="4" fill="#f1f5f9"/>
+    <rect x="52.5" y="77.5" width="20" height="20" rx="4" fill="rgba(241,245,249,0.12)"/>
+    <rect x="77.5" y="77.5" width="20" height="20" rx="4" fill="rgba(241,245,249,0.12)"/>
+  </g>
+
+  <line x1="385" y1="155" x2="385" y2="475" stroke="rgba(241,245,249,0.1)" stroke-width="1"/>
+
+  <!-- Titre avec hard stop : rose | blanc, coupure nette comme une progressbar -->
+  <text
+    x="425" y="322"
+    font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif"
+    font-size="108" font-weight="700" letter-spacing="-3" fill="url(#progress-grad)"
+  >Takt</text>
+
+  <text x="428" y="378" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="30" fill="#94a3b8">Suivi de temps et facturation</text>
+  <text x="428" y="420" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="30" fill="#94a3b8">pour freelances</text>
+</svg>
