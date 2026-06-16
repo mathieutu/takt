@@ -57,4 +57,10 @@ Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
 
 Route::get('shares/{token}', ShowSharedHandler::class)->name('shares.show');
 
-Route::get('up', fn () => response()->json(['updated_at' => Date::parse(config('app.updated_at'))->toIso8601String()]))->name('up');
+Route::get('up', function () {
+    $updatedAt = config('app.updated_at');
+
+    return ['updated_at' => (is_numeric($updatedAt)
+        ? Date::createFromTimestamp($updatedAt)
+        : Date::parse($updatedAt))->toIso8601String()];
+})->name('up');
