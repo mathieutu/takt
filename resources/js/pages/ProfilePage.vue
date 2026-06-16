@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, router } from '@inertiajs/vue3'
+import { Form, Head, router } from '@inertiajs/vue3'
 import { ref } from 'vue'
 import { useConfirm } from '@/composables/useConfirm.ts'
 import { destroy, update } from '@/wayfinder/routes/profile'
@@ -22,6 +22,7 @@ const deleteUser = useConfirm({
 </script>
 
 <template>
+  <Head title="Profil" />
   <main class="flex-1 px-6 py-8">
     <div class="mx-auto max-w-2xl space-y-6">
       <div>

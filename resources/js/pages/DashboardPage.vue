@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3'
+import { Head, router } from '@inertiajs/vue3'
 import {
   type ActiveElement,
   BarController,
@@ -255,6 +255,7 @@ const progressTextClass = (percent: number) => {
 </script>
 
 <template>
+  <Head title="Tableau de bord" />
   <div class="flex min-h-screen flex-col bg-default">
     <main class="flex-1 px-6 py-8">
       <div class="mx-auto max-w-6xl space-y-6">

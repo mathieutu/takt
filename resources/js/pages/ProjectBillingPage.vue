@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3'
+import { Head, useForm } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
 import { coverageLabel, formatDate, formatDays, formatMonthName, parseMonth } from '@/utils/date'
 import { formatCurrency } from '@/utils/number'
@@ -231,6 +231,7 @@ const dayLabel = (date: string): string => {
 </script>
 
 <template>
+  <Head title="Facturation" />
   <div class="flex min-h-screen flex-col bg-default">
     <div
       v-if="shared_by"

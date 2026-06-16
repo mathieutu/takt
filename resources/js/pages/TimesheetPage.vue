@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ErrorBag, Errors, FormComponentOptimisticCallback, PageProps as InertiaPageProps } from '@inertiajs/core'
-import { Form, router } from '@inertiajs/vue3'
+import { Form, Head, router } from '@inertiajs/vue3'
 import { computed, nextTick, ref, watch } from 'vue'
 import TimesheetGrid from '@/components/TimesheetGrid.vue'
 import {
@@ -131,6 +131,7 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
 </script>
 
 <template>
+  <Head :title="`${formatMonthName(current.month)} ${current.year}`" />
   <div class="flex flex-col overflow-hidden bg-default">
     <div class="flex flex-1 flex-col overflow-hidden px-3 py-4 md:px-6 md:py-6">
       <div class="mb-4 shrink-0 flex items-center justify-between">

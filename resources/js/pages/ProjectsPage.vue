@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Head } from '@inertiajs/vue3'
 import ProjectPage from '@/components/ProjectPage.vue'
 
 type Client = {
@@ -44,6 +45,7 @@ const props = withDefaults(defineProps<{
 </script>
 
 <template>
+  <Head title="Projets" />
   <ProjectPage v-bind="props">
     <slot />
   </ProjectPage>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3'
+import { Head, Link } from '@inertiajs/vue3'
 import TaktLogo from '@/components/TaktLogo.vue'
 import { useFlash } from '@/composables/useFlash'
 import { demo } from '@/wayfinder/routes'
@@ -15,6 +15,7 @@ useFlash()
 </script>
 
 <template>
+  <Head title="Connexion" />
   <UApp>
     <div class="relative h-screen overflow-hidden bg-slate-50 dark:bg-slate-950">
       <!-- Photo de fond (droite, desktop uniquement) -->

@@ -7,7 +7,7 @@ import '../css/app.css'
 const appTitle = typeof document !== 'undefined' ? document.title : 'Takt'
 
 createInertiaApp({
-  title: title => [title, appTitle].filter(Boolean).join(' - '),
+  title: title => (title && title !== appTitle) ? `${title} - ${appTitle}` : appTitle,
   layout: () => AppLayout,
   withApp(app) {
     app.use(ui)

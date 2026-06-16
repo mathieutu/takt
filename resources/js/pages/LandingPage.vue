@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3'
+import { Head, Link } from '@inertiajs/vue3'
 import AppHeader from '@/components/AppHeader.vue'
 import TaktLogo from '@/components/TaktLogo.vue'
 import { formatMonthName } from '@/utils/date.ts'
@@ -65,6 +65,7 @@ const stack: StackItem[] = [
 </script>
 
 <template>
+  <Head title="Takt" />
   <UApp data-allow-mismatch>
     <div class="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <AppHeader />

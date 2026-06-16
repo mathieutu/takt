@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { router, useForm } from '@inertiajs/vue3'
+import { Head, router, useForm } from '@inertiajs/vue3'
 import ProjectPage from '@/components/ProjectPage.vue'
 import { update } from '@/wayfinder/routes/clients'
 import { index } from '@/wayfinder/routes/projects'
@@ -57,6 +57,7 @@ const close = () => router.visit(index({ mergeQuery: {} }))
 </script>
 
 <template>
+  <Head :title="modal.client.name" />
   <ProjectPage v-bind="page">
     <UModal
       :open="true"
