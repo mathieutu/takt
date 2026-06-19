@@ -46,7 +46,7 @@ class AuthController
             ]);
         }
 
-        Auth::login($user);
+        Auth::login($user, true);
 
         return redirect()->intended('/');
     }
