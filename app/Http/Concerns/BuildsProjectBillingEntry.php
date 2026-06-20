@@ -57,7 +57,7 @@ trait BuildsProjectBillingEntry
             'max_month_budget' => $project->max_month_budget,
             'max_total_budget' => $project->max_total_budget,
             'deleted_at' => $project->deleted_at?->toDateTimeString(),
-            'client' => ['name' => $clientNameOverride ?? $project->client->name],
+            'client' => ['id' => $project->client_id, 'name' => $clientNameOverride ?? $project->client->name],
             'months' => $months->values(),
             'months_elapsed' => $monthsElapsed,
             'months_with_entries_count' => $timesheetMonths->count(),

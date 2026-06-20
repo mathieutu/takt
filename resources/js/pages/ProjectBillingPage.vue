@@ -3,8 +3,10 @@ import { Head, useForm } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
 import { coverageLabel, formatDate, formatDays, formatMonthName, parseMonth } from '@/utils/date'
 import { formatCurrency } from '@/utils/number'
+import { timesheet } from '@/wayfinder/routes'
+import { edit as editClient } from '@/wayfinder/routes/clients'
 import { destroy as destroyInvoice, store as storeInvoice, update as updateInvoice } from '@/wayfinder/routes/invoices'
-import { index as projectsIndex } from '@/wayfinder/routes/projects'
+import { edit as editProject, index as projectsIndex } from '@/wayfinder/routes/projects'
 
 type EntryData = { coverage: number, title: string, description: string }
 
@@ -30,7 +32,7 @@ type ProjectWithBilling = {
   max_month_budget: number | null,
   max_total_budget: number | null,
   deleted_at: string | null,
-  client: { name: string },
+  client: { id: string, name: string },
   months: MonthRow[],
   months_elapsed: number,
   months_with_entries_count: number,
@@ -99,11 +101,12 @@ const daysSince = (dateStr: string): number => {
   return Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
 }
 
-const oldestUnbilledDate = (project: ProjectWithBilling): string | null => {
-  const month = project.months.find(m => monthWorked(m, project.daily_rate) > monthInvoiced(m))
-  if (!month) return null
-  const dates = Object.keys(month.entries).toSorted()
-  return dates[0] ?? `${month.month}-01`
+const lastInvoiceDate = (project: ProjectWithBilling): string | null => {
+  const dates = project.months
+    .flatMap(m => m.invoices)
+    .map(inv => inv.created_at)
+    .toSorted()
+  return dates.at(-1) ?? null
 }
 
 const oldestUnpaidInvoiceDate = (project: ProjectWithBilling): string | null => {
@@ -170,6 +173,20 @@ const consumptionBarClass = (percent: number) => {
   return 'bg-success'
 }
 
+// ── Client totals ──────────────────────────────────────────────────────────────
+
+const clientTotals = computed(() => {
+  const totalDays = visibleProjects.value.reduce((sum, p) => sum + projectTotals(p).totalDays, 0)
+  const totalWorked = visibleProjects.value.reduce((sum, p) => sum + projectTotals(p).totalWorked, 0)
+  const averageDailyRate = totalDays > 0 ? Math.round(totalWorked / totalDays) : null
+  return { totalDays, totalWorked, averageDailyRate }
+})
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+const fmtDays = (amount: number, dailyRate: number): string | null =>
+  dailyRate > 0 ? formatDays(amount / dailyRate) : null
+
 // ── Invoice form ───────────────────────────────────────────────────────────────
 
 const invoiceOpen = ref(false)
@@ -212,6 +229,7 @@ const submitInvoice = () => {
       preserveScroll: true,
       onSuccess: () => {
         invoiceOpen.value = false
+        form.reset()
       },
     })
 }
@@ -265,6 +283,25 @@ const dayLabel = (date: string): string => {
           />
         </div>
 
+        <!-- Client totals -->
+        <div v-if="visibleProjects.length > 1" class="rounded-lg border border-default px-4 py-3">
+          <p class="text-xs font-medium text-muted mb-2 uppercase tracking-wide">Total {{ visibleProjects[0]?.client.name }}</p>
+          <div class="flex flex-wrap gap-6 text-sm">
+            <div>
+              <span class="text-muted">Jours travaillés</span>
+              <span class="ml-2 font-semibold tabular-nums">{{ formatDays(clientTotals.totalDays) }}</span>
+            </div>
+            <div>
+              <span class="text-muted">Rémunération</span>
+              <span class="ml-2 font-semibold tabular-nums">{{ formatCurrency(clientTotals.totalWorked) }}</span>
+            </div>
+            <div v-if="clientTotals.averageDailyRate !== null">
+              <span class="text-muted">TJ moyen</span>
+              <span class="ml-2 font-semibold tabular-nums">{{ formatCurrency(clientTotals.averageDailyRate) }}/j</span>
+            </div>
+          </div>
+        </div>
+
         <template v-for="(project, index) in visibleProjects" :key="project.id">
           <div v-if="index > 0" class="border-t-2 border-default" />
 
@@ -275,8 +312,16 @@ const dayLabel = (date: string): string => {
                 <div class="flex items-center gap-2">
                   <h2 class="text-base font-semibold truncate">{{ project.name }}</h2>
                   <UBadge v-if="project.deleted_at" label="Archivé" color="neutral" variant="subtle" size="sm" class="shrink-0" />
+                  <UTooltip v-if="!is_shared" text="Modifier le projet">
+                    <UButton :href="editProject(project)" icon="i-lucide-pencil" color="neutral" variant="ghost" size="2xs" class="shrink-0" />
+                  </UTooltip>
                 </div>
-                <p class="text-xs text-muted truncate">{{ project.client.name }}</p>
+                <div class="flex items-center gap-1">
+                  <p class="text-xs text-muted truncate">{{ project.client.name }}</p>
+                  <UTooltip v-if="!is_shared" text="Modifier le client">
+                    <UButton :href="editClient(project.client)" icon="i-lucide-pencil" color="neutral" variant="ghost" size="2xs" />
+                  </UTooltip>
+                </div>
               </div>
               <div class="shrink-0 flex items-end flex-col gap-3">
                 <div class="flex items-center gap-1 text-sm text-muted">
@@ -285,14 +330,18 @@ const dayLabel = (date: string): string => {
                     <span>•</span>
                     <span>
                       max {{ formatCurrency(project.max_month_budget) }}/mois
-                      ({{ formatDays(project.max_month_budget / project.daily_rate) }})
+                      <template v-if="fmtDays(project.max_month_budget, project.daily_rate)">
+                        ({{ fmtDays(project.max_month_budget, project.daily_rate) }})
+                      </template>
                     </span>
                   </template>
                   <template v-if="project.max_total_budget">
                     <span>•</span>
                     <span>
                       enveloppe {{ formatCurrency(project.max_total_budget) }}
-                      ({{ formatDays(project.max_total_budget / project.daily_rate) }})
+                      <template v-if="fmtDays(project.max_total_budget, project.daily_rate)">
+                        ({{ fmtDays(project.max_total_budget, project.daily_rate) }})
+                      </template>
                     </span>
                   </template>
                 </div>
@@ -342,8 +391,8 @@ const dayLabel = (date: string): string => {
                       </td>
                       <td class="px-4 py-2.5 text-right tabular-nums">
                         <template v-if="monthInvoiced(m) > 0">
-                          <span class="text-success font-medium">{{ formatCurrency(monthInvoiced(m)) }}</span>
-                          <span class="text-muted"> ({{ formatDays(monthInvoiced(m) / project.daily_rate) }})</span>
+                          <span class="font-medium" :class="m.invoices.some(inv => !inv.paid_at) ? 'text-amber-500' : 'text-success'">{{ formatCurrency(monthInvoiced(m)) }}</span>
+                          <span v-if="fmtDays(monthInvoiced(m), project.daily_rate)" class="text-muted"> ({{ fmtDays(monthInvoiced(m), project.daily_rate) }})</span>
                         </template>
                         <span v-else class="text-muted">—</span>
                       </td>
@@ -352,12 +401,22 @@ const dayLabel = (date: string): string => {
                           <span :class="cumulativeRemainingToConsume(project, monthIndex)! < 0 ? 'text-error' : 'text-default'">
                             {{ formatCurrency(cumulativeRemainingToConsume(project, monthIndex)!) }}
                           </span>
-                          <span class="text-muted"> ({{ formatDays(cumulativeRemainingToConsume(project, monthIndex)! / project.daily_rate) }})</span>
+                          <span v-if="fmtDays(cumulativeRemainingToConsume(project, monthIndex)!, project.daily_rate)" class="text-muted"> ({{ fmtDays(cumulativeRemainingToConsume(project, monthIndex)!, project.daily_rate) }})</span>
                           <span class="text-muted"> · {{ 100 - cumulativeConsumptionPercent(project, monthIndex)! }}%</span>
                         </template>
                         <span v-else class="text-muted">—</span>
                       </td>
-                      <td v-if="!is_shared" class="px-2" />
+                      <td v-if="!is_shared" class="px-2 text-right">
+                        <UTooltip text="CRA">
+                          <UButton
+                            :href="timesheet({ query: { month: m.month } })"
+                            icon="i-lucide-calendar"
+                            color="neutral"
+                            variant="ghost"
+                            size="2xs"
+                          />
+                        </UTooltip>
+                      </td>
                     </tr>
 
                     <tr v-if="isExpanded(project.id, m.month)">
@@ -372,7 +431,7 @@ const dayLabel = (date: string): string => {
                                 class="flex items-center gap-3 text-xs"
                               >
                                 <span class="w-32 shrink-0 text-muted">{{ dayLabel(date) }}</span>
-                                <span class="w-8 shrink-0 font-medium tabular-nums">{{ coverageLabel(entry.coverage) }}d</span>
+                                <span class="w-8 shrink-0 font-medium tabular-nums">{{ coverageLabel(entry.coverage) }}j</span>
                                 <span v-if="entry.title" class="text-muted truncate">{{ entry.title }}</span>
                               </div>
                             </div>
@@ -423,14 +482,14 @@ const dayLabel = (date: string): string => {
                     </td>
                     <td class="px-4 py-3 text-right tabular-nums text-success">
                       {{ formatCurrency(projectTotals(project).totalInvoiced) }}
-                      <span class="font-normal text-muted">({{ formatDays(projectTotals(project).totalInvoiced / project.daily_rate) }})</span>
+                      <span v-if="fmtDays(projectTotals(project).totalInvoiced, project.daily_rate)" class="font-normal text-muted">({{ fmtDays(projectTotals(project).totalInvoiced, project.daily_rate) }})</span>
                     </td>
                     <td class="px-4 py-3 text-right tabular-nums">
                       <template v-if="projectTotals(project).remainingToConsume !== null">
                         <span :class="projectTotals(project).remainingToConsume! < 0 ? 'text-error' : 'text-default'">
                           {{ formatCurrency(projectTotals(project).remainingToConsume!) }}
                         </span>
-                        <span class="font-normal text-muted"> ({{ formatDays(projectTotals(project).remainingToConsume! / project.daily_rate) }})</span>
+                        <span v-if="fmtDays(projectTotals(project).remainingToConsume!, project.daily_rate)" class="font-normal text-muted"> ({{ fmtDays(projectTotals(project).remainingToConsume!, project.daily_rate) }})</span>
                         <span class="font-normal text-muted"> · {{ 100 - totalConsumptionPercent(project)! }}%</span>
                       </template>
                       <span v-else class="font-normal text-muted">—</span>
@@ -452,17 +511,17 @@ const dayLabel = (date: string): string => {
                       :class="projectTotals(project).toInvoice > 0 ? 'text-amber-500' : 'text-success'"
                     >
                       {{ formatCurrency(projectTotals(project).toInvoice) }}
-                      <span class="text-sm font-normal text-muted">({{ formatDays(projectTotals(project).toInvoice / project.daily_rate) }})</span>
+                      <span v-if="fmtDays(projectTotals(project).toInvoice, project.daily_rate)" class="text-sm font-normal text-muted">({{ fmtDays(projectTotals(project).toInvoice, project.daily_rate) }})</span>
                     </p>
-                    <p v-if="oldestUnbilledDate(project)" class="text-xs mt-0.5" :class="daysSince(oldestUnbilledDate(project)!) > 30 ? 'text-error' : 'text-muted'">
-                      Depuis {{ daysSince(oldestUnbilledDate(project)!) }} jours
+                    <p v-if="projectTotals(project).toInvoice > 0 && lastInvoiceDate(project)" class="text-xs mt-0.5" :class="daysSince(lastInvoiceDate(project)!) > 30 ? 'text-error' : 'text-muted'">
+                      Depuis {{ daysSince(lastInvoiceDate(project)!) }} jours
                     </p>
                   </div>
                   <div v-if="projectTotals(project).toPay > 0" class="text-right">
                     <p class="text-xs text-muted mb-0.5">À payer</p>
                     <p class="text-base font-semibold tabular-nums text-amber-500">
                       {{ formatCurrency(projectTotals(project).toPay) }}
-                      <span class="text-sm font-normal text-muted">({{ formatDays(projectTotals(project).toPay / project.daily_rate) }})</span>
+                      <span v-if="fmtDays(projectTotals(project).toPay, project.daily_rate)" class="text-sm font-normal text-muted">({{ fmtDays(projectTotals(project).toPay, project.daily_rate) }})</span>
                     </p>
                     <p v-if="oldestUnpaidInvoiceDate(project)" class="text-xs mt-0.5" :class="daysSince(oldestUnpaidInvoiceDate(project)!) > 30 ? 'text-error' : 'text-muted'">
                       Depuis {{ daysSince(oldestUnpaidInvoiceDate(project)!) }} jours
@@ -488,7 +547,7 @@ const dayLabel = (date: string): string => {
                       :class="projectTotals(project).remainingToConsume! < 0 ? 'text-error' : 'text-default'"
                     >
                       {{ formatCurrency(projectTotals(project).remainingToConsume!) }}
-                      <span class="text-sm font-normal text-muted">({{ formatDays(projectTotals(project).remainingToConsume! / project.daily_rate) }})</span>
+                      <span v-if="fmtDays(projectTotals(project).remainingToConsume!, project.daily_rate)" class="text-sm font-normal text-muted">({{ fmtDays(projectTotals(project).remainingToConsume!, project.daily_rate) }})</span>
                     </p>
                   </div>
                 </div>
