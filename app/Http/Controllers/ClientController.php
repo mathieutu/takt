@@ -18,6 +18,8 @@ class ClientController
 
     public function edit(Request $request, Client $client): Response
     {
+        $request->session()->put("back_url_client_{$client->id}", $request->header('Referer'));
+
         return Inertia::render('ClientForm', [
             'page' => $this->projectsPageProps($request),
             'modal' => [
@@ -39,7 +41,9 @@ class ClientController
 
         $client->update($data);
 
-        return redirect()->route('projects.index')->with('success', 'Client mis à jour avec succès.');
+        $backUrl = $request->session()->pull('back_url_client_'.$client->id, route('projects.index'));
+
+        return redirect()->to($backUrl)->with('success', 'Client mis à jour avec succès.');
     }
 
     public function restore(Client $client): RedirectResponse

@@ -100,6 +100,8 @@ class ProjectController
 
     public function edit(Request $request, Project $project): Response
     {
+        $request->session()->put("back_url_project_{$project->id}", $request->header('Referer'));
+
         return Inertia::render('ProjectForm', [
             'page' => $this->projectsPageProps($request),
             'modal' => [
@@ -135,8 +137,10 @@ class ProjectController
 
         $project->update($data);
 
+        $backUrl = $request->session()->pull('back_url_project_'.$project->id, route('projects.index'));
+
         return redirect()
-            ->route('projects.index')
+            ->to($backUrl)
             ->with('success', 'Projet mis à jour avec succès.');
     }
 
