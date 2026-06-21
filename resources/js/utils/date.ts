@@ -40,6 +40,21 @@ export const parseMonth = (month: string): { year: number, month: number } => {
   return { year: year!, month: m! }
 }
 
+export const formatDuration = (days: number): string => {
+  const months = Math.floor(days / 30)
+  const weeks = Math.floor((days % 30) / 7)
+  const remainingDays = days % 30 % 7
+
+  const parts: string[] = []
+  if (months > 0) parts.push(`${months} mois`)
+  if (weeks > 0) parts.push(`${weeks} semaine${weeks > 1 ? 's' : ''}`)
+  if (remainingDays > 0) parts.push(`${remainingDays} jour${remainingDays > 1 ? 's' : ''}`)
+
+  if (parts.length === 0) return '0 jour'
+  if (parts.length === 1) return parts[0]!
+  return `${parts.slice(0, -1).join(', ')} et ${parts.at(-1)}`
+}
+
 export const coverageLabel = (coverage: number): string => {
   if (coverage >= 100) return '1'
   if (coverage >= 80) return '⅘'

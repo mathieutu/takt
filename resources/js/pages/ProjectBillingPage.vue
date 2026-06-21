@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
-import { coverageLabel, formatDate, formatDays, formatMonthName, parseMonth } from '@/utils/date'
+import { coverageLabel, formatDate, formatDays, formatDuration, formatMonthName, parseMonth } from '@/utils/date'
 import { formatCurrency } from '@/utils/number'
 import { timesheet } from '@/wayfinder/routes'
 import { edit as editClient } from '@/wayfinder/routes/clients'
@@ -514,7 +514,7 @@ const dayLabel = (date: string): string => {
                       <span v-if="fmtDays(projectTotals(project).toInvoice, project.daily_rate)" class="text-sm font-normal text-muted">({{ fmtDays(projectTotals(project).toInvoice, project.daily_rate) }})</span>
                     </p>
                     <p v-if="projectTotals(project).toInvoice > 0 && lastInvoiceDate(project)" class="text-xs mt-0.5" :class="daysSince(lastInvoiceDate(project)!) > 30 ? 'text-error' : 'text-muted'">
-                      Depuis {{ daysSince(lastInvoiceDate(project)!) }} jours
+                      Depuis {{ formatDuration(daysSince(lastInvoiceDate(project)!)) }}
                     </p>
                   </div>
                   <div v-if="projectTotals(project).toPay > 0" class="text-right">
@@ -524,7 +524,7 @@ const dayLabel = (date: string): string => {
                       <span v-if="fmtDays(projectTotals(project).toPay, project.daily_rate)" class="text-sm font-normal text-muted">({{ fmtDays(projectTotals(project).toPay, project.daily_rate) }})</span>
                     </p>
                     <p v-if="oldestUnpaidInvoiceDate(project)" class="text-xs mt-0.5" :class="daysSince(oldestUnpaidInvoiceDate(project)!) > 30 ? 'text-error' : 'text-muted'">
-                      Depuis {{ daysSince(oldestUnpaidInvoiceDate(project)!) }} jours
+                      Depuis {{ formatDuration(daysSince(oldestUnpaidInvoiceDate(project)!)) }}
                     </p>
                   </div>
                 </div>
