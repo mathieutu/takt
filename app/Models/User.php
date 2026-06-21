@@ -47,6 +47,11 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
 
     protected $hidden = ['remember_token'];
 
+    public function getAuthPassword(): string
+    {
+        return '';
+    }
+
     public function clients(): HasMany
     {
         return $this->hasMany(Client::class);
