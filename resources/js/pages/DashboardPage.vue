@@ -19,7 +19,7 @@ import {
   Tooltip,
   type TooltipItem,
 } from 'chart.js'
-import { computed, type ComputedRef, onMounted, ref } from 'vue'
+import { computed, type ComputedRef, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
 import { formatDays } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
@@ -76,6 +76,7 @@ type DashboardProps = {
     maxTotalBudget: number | null,
     theoreticalBudget: number,
     workedDaysCount: number,
+    periodDaysCount: number,
     monthDaysCount: number,
     deletedAt: string | null,
     lastActivity: string | null,
@@ -91,52 +92,60 @@ type DashboardProps = {
     clientName: string,
     revenue: number,
   }>,
+  firstEntryMonth: string | null,
 }
 
+const parseYearMonth = (yearMonth: string) => {
+  const [year, month] = yearMonth.split('-').map(Number)
+  return { year: year!, month: month! }
+}
+
+const toYearMonth = (date: CalendarDate) => date.toString().slice(0, 7)
+
 const endMonthDate = computed(() => {
-  const [y, m] = props.to.split('-').map(Number)
-  return new CalendarDate(y!, m!, 1)
+  const { year, month } = parseYearMonth(props.to)
+  return new CalendarDate(year, month, 1)
 })
 
 const periodLabel = computed(() => {
-  const fmt = (ym: string) => {
-    const [y, m] = ym.split('-').map(Number)
-    return new Date(y!, m! - 1).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
+  const formatShort = (yearMonth: string) => {
+    const { year, month } = parseYearMonth(yearMonth)
+    return new Date(year, month - 1).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
   }
-  return `${fmt(props.from)} – ${fmt(props.to)}`
+  return `${formatShort(props.from)} – ${formatShort(props.to)}`
 })
 
 const selectedMonthLabel = computed(() => {
-  const [y, m] = props.to.split('-').map(Number)
-  return new Date(y!, m! - 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+  const { year, month } = parseYearMonth(props.to)
+  return new Date(year, month - 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
 })
 
-const isCurrentPeriod = computed(() => {
-  const [y, m] = props.to.split('-').map(Number)
-  const now = new Date()
-  return y === now.getFullYear() && m === now.getMonth() + 1
+const periodMonths = computed(() => {
+  const { year: fromYear, month: fromMonth } = parseYearMonth(props.from)
+  const { year: toYear, month: toMonth } = parseYearMonth(props.to)
+  return (toYear - fromYear) * 12 + (toMonth - fromMonth) + 1
 })
 
 const calendarValue = computed(() => {
-  const [fy, fm] = props.from.split('-').map(Number)
-  return { start: new CalendarDate(fy!, fm!, 1), end: endMonthDate.value }
+  const { year: fromYear, month: fromMonth } = parseYearMonth(props.from)
+  return { start: new CalendarDate(fromYear, fromMonth, 1), end: endMonthDate.value }
 })
 
 const prevPeriod = computed(() => {
-  const [fy, fm] = props.from.split('-').map(Number)
-  const [ty, tm] = props.to.split('-').map(Number)
+  const { year: fromYear, month: fromMonth } = parseYearMonth(props.from)
+  const { year: toYear, month: toMonth } = parseYearMonth(props.to)
   return {
-    from: new CalendarDate(fy!, fm!, 1).subtract({ months: 1 }).toString().slice(0, 7),
-    to: new CalendarDate(ty!, tm!, 1).subtract({ months: 1 }).toString().slice(0, 7),
+    from: toYearMonth(new CalendarDate(fromYear, fromMonth, 1).subtract({ months: 1 })),
+    to: toYearMonth(new CalendarDate(toYear, toMonth, 1).subtract({ months: 1 })),
   }
 })
 
 const nextPeriod = computed(() => {
-  const [fy, fm] = props.from.split('-').map(Number)
-  const [ty, tm] = props.to.split('-').map(Number)
+  const { year: fromYear, month: fromMonth } = parseYearMonth(props.from)
+  const { year: toYear, month: toMonth } = parseYearMonth(props.to)
   return {
-    from: new CalendarDate(fy!, fm!, 1).add({ months: 1 }).toString().slice(0, 7),
-    to: new CalendarDate(ty!, tm!, 1).add({ months: 1 }).toString().slice(0, 7),
+    from: toYearMonth(new CalendarDate(fromYear, fromMonth, 1).add({ months: 1 })),
+    to: toYearMonth(new CalendarDate(toYear, toMonth, 1).add({ months: 1 })),
   }
 })
 
@@ -144,23 +153,24 @@ const pickerOpen = ref(false)
 
 const onRangeSelect = (value: { start: DateValue | undefined, end: DateValue | undefined } | null) => {
   if (!value?.start || !value?.end) return
-  const from = value.start.toString().slice(0, 7)
-  const to = value.end.toString().slice(0, 7)
-  localStorage.setItem('dashboard_period', JSON.stringify({ from, to }))
-  pickerOpen.value = false
-  router.visit(dashboard({ query: { from, to } }), { preserveScroll: true })
+  router.visit(
+    dashboard({ query: { from: value.start.toString().slice(0, 7), to: value.end.toString().slice(0, 7) } }),
+    { preserveScroll: true },
+  )
 }
 
-onMounted(() => {
-  const params = new URLSearchParams(window.location.search)
-  if (params.has('from') || params.has('to')) return
-  const stored = localStorage.getItem('dashboard_period')
-  if (!stored) return
-  const { from, to } = JSON.parse(stored) as { from: string, to: string }
-  if (from !== props.from || to !== props.to) {
-    router.visit(dashboard({ query: { from, to } }), { replace: true, preserveScroll: true })
-  }
-})
+const currentYear = new Date().getFullYear()
+const currentMonth = new Date().getMonth() + 1
+const quarterStartMonth = Math.floor((currentMonth - 1) / 3) * 3 + 1
+const schoolYearStartYear = currentMonth >= 9 ? currentYear : currentYear - 1
+
+const periodPresets = computed(() => [
+  { label: '12 derniers mois', from: undefined, to: undefined },
+  { label: 'Trimestre courant', from: toYearMonth(new CalendarDate(currentYear, quarterStartMonth, 1)), to: toYearMonth(new CalendarDate(currentYear, quarterStartMonth + 2, 1)) },
+  { label: 'Année civile courante', from: toYearMonth(new CalendarDate(currentYear, 1, 1)), to: toYearMonth(new CalendarDate(currentYear, 12, 1)) },
+  { label: 'Année scolaire courante', from: toYearMonth(new CalendarDate(schoolYearStartYear, 9, 1)), to: toYearMonth(new CalendarDate(schoolYearStartYear + 1, 8, 1)) },
+  ...(props.firstEntryMonth ? [{ label: 'Tout depuis le début !', from: props.firstEntryMonth, to: toYearMonth(new CalendarDate(currentYear, currentMonth, 1)) }] : []),
+])
 
 // ── Chart colors ──────────────────────────────────────────────────────────────
 
@@ -182,7 +192,7 @@ const withAlpha = (color: string, alpha: number): string => color.replace(/\)$/,
 
 const projectsWithStats = computed(() => {
   const now = new Date()
-  const totalDays = props.projects.reduce((sum, p) => sum + p.workedDaysCount, 0)
+  const totalDays = props.projects.reduce((sum, p) => sum + p.periodDaysCount, 0)
 
   return props.projects
     .map(p => {
@@ -196,7 +206,7 @@ const projectsWithStats = computed(() => {
         : 0
       const isMonthOverrun = monthlyPercent > 100
       const isMonthWarning = !isMonthOverrun && monthlyPercent > props.monthAdvancement * 100 * 1.1
-      const timeShare = totalDays ? Math.round((p.workedDaysCount / totalDays) * 100) : 0
+      const timeShare = totalDays ? Math.round((p.periodDaysCount / totalDays) * 100) : 0
       const daysSince = p.lastActivity
         ? Math.floor((now.getTime() - new Date(p.lastActivity).getTime()) / 86_400_000)
         : null
@@ -212,7 +222,13 @@ const projectsWithStats = computed(() => {
         daysSince,
       }
     })
-    .toSorted((a, b) => b.dailyRate - a.dailyRate)
+    .toSorted((a, b) => {
+      const aDate = a.lastActivity ?? ''
+      const bDate = b.lastActivity ?? ''
+      if (bDate !== aDate) return bDate < aDate ? -1 : 1
+      if (b.periodDaysCount !== a.periodDaysCount) return b.periodDaysCount - a.periodDaysCount
+      return b.dailyRate - a.dailyRate
+    })
 })
 
 const tooltipUi = {
@@ -390,14 +406,30 @@ const progressTextClass = (percent: number) => {
                 size="sm"
               />
               <template #content>
-                <UCalendar
-                  type="month"
-                  range
-                  locale="fr-FR"
-                  :modelValue="calendarValue"
-                  class="p-2"
-                  @update:modelValue="onRangeSelect"
-                />
+                <div class="flex items-center">
+                  <div class="flex flex-col gap-0.5 border-r border-default p-2">
+                    <UButton
+                      v-for="preset in periodPresets"
+                      :key="preset.label"
+                      :label="preset.label"
+                      :href="dashboard({ query: { from: preset.from, to: preset.to } })"
+                      color="neutral"
+                      :variant="preset.from === props.from && preset.to === props.to ? 'soft' : 'ghost'"
+                      size="sm"
+                      class="justify-start"
+                      preserveScroll
+                    />
+                  </div>
+                  <UCalendar
+                    type="month"
+                    range
+                    size="sm"
+                    locale="fr-FR"
+                    :modelValue="calendarValue"
+                    class="p-2"
+                    @update:modelValue="onRangeSelect"
+                  />
+                </div>
               </template>
             </UPopover>
             <UButton
@@ -417,7 +449,7 @@ const progressTextClass = (percent: number) => {
             <UCard>
               <template #header>
                 <div class="flex items-center justify-between">
-                  <p class="text-sm font-semibold">{{ isCurrentPeriod ? 'Jours ce mois' : `Jours en ${selectedMonthLabel}` }}</p>
+                  <p class="text-sm font-semibold">Jours en {{ selectedMonthLabel }}</p>
                   <UIcon name="i-lucide-calendar-days" class="text-muted" />
                 </div>
               </template>
@@ -454,7 +486,7 @@ const progressTextClass = (percent: number) => {
             <UCard>
               <template #header>
                 <div class="flex items-center justify-between">
-                  <p class="text-sm font-semibold">{{ isCurrentPeriod ? 'Revenus ce mois' : `Revenus en ${selectedMonthLabel}` }}</p>
+                  <p class="text-sm font-semibold">Revenus en {{ selectedMonthLabel }}</p>
                   <UIcon name="i-lucide-euro" class="text-muted" />
                 </div>
               </template>
@@ -522,20 +554,20 @@ const progressTextClass = (percent: number) => {
             <UCard>
               <template #header>
                 <div class="flex items-center justify-between">
-                  <p class="text-sm font-semibold">Sur la période</p>
+                  <p class="text-sm font-semibold">{{ periodMonths > 1 ? `Sur les ${periodMonths} mois` : 'Sur le mois' }}</p>
                   <UIcon name="i-lucide-bar-chart-2" class="text-muted" />
                 </div>
               </template>
               <p class="text-2xl font-bold">{{ formatCurrency(kpis.yearRevenue) }}</p>
               <p class="mt-1 text-xs text-muted">
-                <span class="font-medium">{{ formatCurrency(kpis.weightedRate) }}/j</span> · <span class="font-medium">{{ formatCurrency(Math.round(kpis.yearRevenue / 12)) }}/mois</span>
+                <span class="font-medium">{{ formatCurrency(kpis.weightedRate) }}/j</span> · <span class="font-medium">{{ formatCurrency(Math.round(kpis.yearRevenue / periodMonths)) }}/mois</span>
               </p>
               <p
                 class="mt-1 flex items-center gap-0.5 text-xs"
                 :class="kpis.trendYear >= 0 ? 'text-success' : 'text-error'"
               >
                 <UIcon :name="kpis.trendYear >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'" class="size-3 shrink-0" />
-                <span>{{ kpis.trendYear >= 0 ? '+' : '' }}{{ kpis.trendYear }}% vs 12 précédents ({{ formatCurrency(kpis.prevYearRevenue) }})</span>
+                <span>{{ kpis.trendYear >= 0 ? '+' : '' }}{{ kpis.trendYear }}% {{ periodMonths > 1 ? `vs les ${periodMonths} précédents` : 'vs le mois précédent' }} ({{ formatCurrency(kpis.prevYearRevenue) }})</span>
               </p>
             </UCard>
             <template #content>
@@ -603,7 +635,7 @@ const progressTextClass = (percent: number) => {
                     />
                   </div>
                   <div class="text-xs text-muted">
-                    {{ p.timeShare }}% du temps travaillé
+                    {{ p.timeShare }}% du temps travaillé sur la période
                   </div>
                 </div>
 
@@ -638,7 +670,7 @@ const progressTextClass = (percent: number) => {
                       class="size-3 shrink-0"
                     />
                     <span>
-                      <span class="font-semibold" :class="!p.isMonthOverrun && !p.isMonthWarning ? 'text-default' : ''">{{ formatCurrency(p.monthAmount) }}</span> ce mois
+                      <span class="font-semibold" :class="!p.isMonthOverrun && !p.isMonthWarning ? 'text-default' : ''">{{ formatCurrency(p.monthAmount) }}</span> en {{ selectedMonthLabel }}
                       <span v-if="p.isMonthOverrun || p.isMonthWarning">({{ p.monthlyPercent }}%)</span>
                     </span>
                   </div>

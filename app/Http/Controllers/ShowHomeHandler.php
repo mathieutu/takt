@@ -60,6 +60,7 @@ class ShowHomeHandler
 
         $allEntries = $projects->flatMap->timesheetEntries;
         $allInvoices = $projects->flatMap->invoices;
+        $firstEntryMonth = $allEntries->min('date')?->format('Y-m');
 
         $holidays = app(HolidayService::class)->forMonth($to);
         $workingDaysInMonth = $this->countWorkingDays($currentMonthStart, $to->endOfMonth(), $holidays);
@@ -144,45 +145,57 @@ class ShowHomeHandler
             ->sum('amount')
         )->values()->all();
 
-        $projectsData = $projects->map(function ($p) use ($to, $currentMonthStart) {
-            $workedDaysCount = round($p->timesheetEntries->sum('coverage') / 100, 2);
-            $monthDaysCount = round(
-                $p->timesheetEntries
-                    ->filter(fn ($e) => $e->date->year === $to->year && $e->date->month === $to->month)
-                    ->sum('coverage') / 100,
-                2
-            );
-            $workedAmount = $p->timesheetEntries
-                ->sum(fn ($e) => (int) round($e->coverage / 100 * $p->daily_rate));
-            $firstEntry = $p->timesheetEntries->sortBy('date')->first();
-            $projectStart = $firstEntry ? $firstEntry->date : $p->created_at;
-            $monthsElapsed = max(1, $projectStart->startOfMonth()->diffInMonths($currentMonthStart) + 1);
-            $theoreticalBudget = match (true) {
-                $p->max_total_budget !== null => $p->max_total_budget,
-                $p->max_month_budget !== null => $p->max_month_budget * $monthsElapsed,
-                default => 0,
-            };
+        $projectsData = $projects
+            ->filter(fn ($p) => $p->timesheetEntries
+                ->contains(fn ($e) => $e->date->gte($rollingYearStart) && $e->date->lte($windowEnd))
+            )
+            ->map(function ($p) use ($to, $currentMonthStart, $rollingYearStart, $windowEnd) {
+                $workedDaysCount = round($p->timesheetEntries->sum('coverage') / 100, 2);
+                $periodDaysCount = round(
+                    $p->timesheetEntries
+                        ->filter(fn ($e) => $e->date->gte($rollingYearStart) && $e->date->lte($windowEnd))
+                        ->sum('coverage') / 100,
+                    2
+                );
+                $monthDaysCount = round(
+                    $p->timesheetEntries
+                        ->filter(fn ($e) => $e->date->year === $to->year && $e->date->month === $to->month)
+                        ->sum('coverage') / 100,
+                    2
+                );
+                $totalWorkedAmount = $p->timesheetEntries
+                    ->sum(fn ($e) => (int) round($e->coverage / 100 * $p->daily_rate));
+                $firstEntry = $p->timesheetEntries->sortBy('date')->first();
+                $projectStart = $firstEntry ? $firstEntry->date : $p->created_at;
+                $monthsElapsed = max(1, $projectStart->startOfMonth()->diffInMonths($currentMonthStart) + 1);
+                $theoreticalBudget = match (true) {
+                    $p->max_total_budget !== null => $p->max_total_budget,
+                    $p->max_month_budget !== null => $p->max_month_budget * $monthsElapsed,
+                    default => 0,
+                };
 
-            return [
-                'id' => $p->id,
-                'clientId' => $p->client_id,
-                'name' => $p->name,
-                'clientName' => $p->client->name,
-                'dailyRate' => $p->daily_rate,
-                'maxMonthBudget' => $p->max_month_budget,
-                'maxTotalBudget' => $p->max_total_budget,
-                'theoreticalBudget' => $theoreticalBudget,
-                'workedDaysCount' => $workedDaysCount,
-                'monthDaysCount' => $monthDaysCount,
-                'deletedAt' => $p->deleted_at?->toDateTimeString(),
-                'lastActivity' => $p->timesheetEntries->sortByDesc('date')->first()?->date->toDateString(),
-                'unbilled' => max(0, $workedAmount - $p->invoices->sum('amount')),
-            ];
-        })->values()->all();
+                return [
+                    'id' => $p->id,
+                    'clientId' => $p->client_id,
+                    'name' => $p->name,
+                    'clientName' => $p->client->name,
+                    'dailyRate' => $p->daily_rate,
+                    'maxMonthBudget' => $p->max_month_budget,
+                    'maxTotalBudget' => $p->max_total_budget,
+                    'theoreticalBudget' => $theoreticalBudget,
+                    'workedDaysCount' => $workedDaysCount,
+                    'periodDaysCount' => $periodDaysCount,
+                    'monthDaysCount' => $monthDaysCount,
+                    'deletedAt' => $p->deleted_at?->toDateTimeString(),
+                    'lastActivity' => $p->timesheetEntries->sortByDesc('date')->first()?->date->toDateString(),
+                    'unbilled' => max(0, $totalWorkedAmount - $p->invoices->sum('amount')),
+                ];
+            })->values()->all();
 
         return Inertia::render('DashboardPage', [
             'from' => $from->format('Y-m'),
             'to' => $to->format('Y-m'),
+            'firstEntryMonth' => $firstEntryMonth,
             'kpis' => [
                 'monthDays' => $monthDays,
                 'workingDays' => $workingDaysInMonth,

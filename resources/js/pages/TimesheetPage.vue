@@ -89,10 +89,14 @@ const paidTotal = computed(() =>
   props.invoices.filter(i => inCurrentMonth(i.paid_at)).reduce((s, i) => s + i.amount, 0),
 )
 const billedDaysTotal = computed(() =>
-  props.invoices.filter(i => inCurrentMonth(i.created_at) && i.daily_rate > 0).reduce((s, i) => s + i.amount / i.daily_rate, 0),
+  props.invoices
+    .filter(i => inCurrentMonth(i.created_at) && i.daily_rate > 0)
+    .reduce((s, i) => s + i.amount / i.daily_rate, 0),
 )
 const paidDaysTotal = computed(() =>
-  props.invoices.filter(i => inCurrentMonth(i.paid_at) && i.daily_rate > 0).reduce((s, i) => s + i.amount / i.daily_rate, 0),
+  props.invoices
+    .filter(i => inCurrentMonth(i.paid_at) && i.daily_rate > 0)
+    .reduce((s, i) => s + i.amount / i.daily_rate, 0),
 )
 
 const syncCoverage = (projectId: string, date: string, coverage: number) => {
