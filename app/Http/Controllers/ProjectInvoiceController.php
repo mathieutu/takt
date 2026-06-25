@@ -15,7 +15,7 @@ class ProjectInvoiceController
             'amount' => ['required', 'integer', 'min:1'],
             'paid_at' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:1000'],
-            'created_at' => ['nullable', 'date'],
+            'created_at' => ['required', 'date'],
         ]));
 
         return redirect()->back();
@@ -27,7 +27,7 @@ class ProjectInvoiceController
             'amount' => ['required', 'integer', 'min:1'],
             'paid_at' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:1000'],
-            'created_at' => ['nullable', 'date'],
+            'created_at' => ['required', 'date'],
         ]));
 
         return redirect()->back();
