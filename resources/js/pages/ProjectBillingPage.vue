@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
+import DateInput from '@/components/DateInput.vue'
 import { coverageLabel, formatDate, formatDays, formatDuration, formatMonthName, parseMonth } from '@/utils/date'
 import { formatCurrency } from '@/utils/number'
 import { timesheet } from '@/wayfinder/routes'
@@ -580,18 +581,10 @@ const dayLabel = (date: string): string => {
             />
           </UFormField>
           <UFormField label="Facturé le" required :error="form.errors.created_at">
-            <UInput
-              v-model="form.created_at"
-              type="date"
-              class="w-full"
-            />
+            <DateInput v-model="form.created_at" />
           </UFormField>
           <UFormField label="Date de paiement" :error="form.errors.paid_at">
-            <UInput
-              v-model="form.paid_at"
-              type="date"
-              class="w-full"
-            />
+            <DateInput v-model="form.paid_at" />
           </UFormField>
           <UFormField label="Notes" :error="form.errors.notes">
             <UTextarea

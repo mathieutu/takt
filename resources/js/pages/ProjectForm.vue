@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, router, useForm } from '@inertiajs/vue3'
 import { computed, watch } from 'vue'
+import DateInput from '@/components/DateInput.vue'
 import ProjectPage from '@/components/ProjectPage.vue'
 import { index, store, update } from '@/wayfinder/routes/projects'
 
@@ -189,11 +190,11 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
 
           <template v-if="modal.project">
             <UFormField label="Début le" required :error="form.errors.created_at">
-              <UInput v-model="form.created_at" type="date" class="w-full" />
+              <DateInput v-model="form.created_at" />
             </UFormField>
 
             <UFormField label="Fin le" :error="form.errors.deleted_at">
-              <UInput v-model="form.deleted_at" type="date" class="w-full" />
+              <DateInput v-model="form.deleted_at" />
             </UFormField>
           </template>
         </UForm>
