@@ -85,6 +85,26 @@ class ShowHomeHandler
         $outstandingCount = $outstanding->count();
         $overdueCount = $outstanding->filter(fn ($i) => $i->created_at->lt($now->subDays(30)))->count();
 
+        $outstandingInvoices = $projects->flatMap(fn ($p) => $p->invoices
+            ->filter(fn ($i) => $i->paid_at === null)
+            ->map(fn ($i) => [
+                'clientName' => $p->client->name,
+                'amount' => $i->amount,
+                'daysWaiting' => (int) $i->created_at->diffInDays($now),
+            ])
+        )->sortByDesc('daysWaiting')->values()->all();
+
+        $yearRevenueByClient = $projects
+            ->groupBy(fn ($p) => $p->client->name)
+            ->map(fn ($clientProjects, $clientName) => [
+                'clientName' => $clientName,
+                'revenue' => $this->revenueInRange($clientProjects, $rollingYearStart, $now),
+            ])
+            ->filter(fn ($item) => $item['revenue'] > 0)
+            ->sortByDesc('revenue')
+            ->values()
+            ->all();
+
         [$totalDays12m, $weightedSum] = $projects->reduce(function ($carry, $p) use ($rollingYearStart) {
             $days = $p->timesheetEntries
                 ->filter(fn ($e) => $e->date->gte($rollingYearStart))
@@ -161,6 +181,8 @@ class ShowHomeHandler
                 'trendDays' => $trendDays,
                 'trendRevenue' => $trendRevenue,
                 'trendYear' => $trendYear,
+                'prevYearRevenue' => $prevYearRevenue,
+                'prevMonthRevenue' => $prevMonthRevenue,
             ],
             'chart' => [
                 'labels' => $chartLabels,
@@ -169,6 +191,8 @@ class ShowHomeHandler
             ],
             'projects' => $projectsData,
             'monthAdvancement' => $monthAdvancement,
+            'outstandingInvoices' => $outstandingInvoices,
+            'yearRevenueByClient' => $yearRevenueByClient,
         ]);
     }
 

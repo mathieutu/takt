@@ -55,6 +55,8 @@ type DashboardProps = {
     trendDays: number,
     trendRevenue: number,
     trendYear: number,
+    prevYearRevenue: number,
+    prevMonthRevenue: number,
   },
   chart: {
     labels: string[],
@@ -77,6 +79,15 @@ type DashboardProps = {
     unbilled: number,
   }>,
   monthAdvancement: number,
+  outstandingInvoices: Array<{
+    clientName: string,
+    amount: number,
+    daysWaiting: number,
+  }>,
+  yearRevenueByClient: Array<{
+    clientName: string,
+    revenue: number,
+  }>,
 }
 
 const now = new Date()
@@ -133,6 +144,36 @@ const projectsWithStats = computed(() => {
     })
     .toSorted((a, b) => b.dailyRate - a.dailyRate)
 })
+
+const tooltipUi = {
+  content: 'flex-col items-start h-auto py-2',
+}
+
+const monthRevenueBreakdown = computed(() =>
+  props.projects
+    .filter(p => p.monthDaysCount > 0 && p.dailyRate > 0)
+    .map(p => ({
+      label: `${p.clientName} / ${p.name}`,
+      revenue: Math.round(p.monthDaysCount * p.dailyRate),
+      pct: props.kpis.monthRevenue > 0
+        ? Math.round(p.monthDaysCount * p.dailyRate / props.kpis.monthRevenue * 100)
+        : 0,
+    }))
+    .sort((a, b) => b.revenue - a.revenue),
+)
+
+const monthProjectsBreakdown = computed(() =>
+  props.projects
+    .filter(p => p.monthDaysCount > 0)
+    .map(p => ({
+      label: `${p.clientName} / ${p.name}`,
+      days: p.monthDaysCount,
+      pct: props.kpis.monthDays > 0
+        ? Math.round(p.monthDaysCount / props.kpis.monthDays * 100)
+        : 0,
+    }))
+    .sort((a, b) => b.days - a.days),
+)
 
 const barChartData = computed(() => ({
   labels: props.chart.labels,
@@ -266,93 +307,140 @@ const progressTextClass = (percent: number) => {
 
         <!-- KPIs -->
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <UCard>
-            <template #header>
-              <div class="flex items-center justify-between">
-                <p class="text-sm font-semibold">Jours ce mois</p>
-                <UIcon name="i-lucide-calendar-days" class="text-muted" />
+          <UTooltip :disabled="monthProjectsBreakdown.length === 0" :delayDuration="300" :ui="tooltipUi">
+            <UCard>
+              <template #header>
+                <div class="flex items-center justify-between">
+                  <p class="text-sm font-semibold">Jours ce mois</p>
+                  <UIcon name="i-lucide-calendar-days" class="text-muted" />
+                </div>
+              </template>
+              <p class="text-2xl font-bold">{{ formatDays(kpis.monthDays) }}</p>
+              <p class="mt-1 text-xs text-muted">sur {{ kpis.workingDays }} jours ouvrés</p>
+              <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-elevated">
+                <div
+                  class="h-1.5 rounded-full bg-primary transition-all"
+                  :style="{ width: `${Math.min(kpis.fillRate, 100)}%` }"
+                />
+              </div>
+              <div class="mt-1 flex items-center justify-between">
+                <p class="text-xs text-muted">{{ kpis.fillRate }}% remplis</p>
+                <span
+                  class="flex items-center gap-0.5 text-xs"
+                  :class="kpis.trendDays >= 0 ? 'text-success' : 'text-error'"
+                >
+                  <UIcon :name="kpis.trendDays >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'" class="size-3" />
+                  {{ kpis.trendDays >= 0 ? '+' : '' }}{{ kpis.trendDays }}%
+                </span>
+              </div>
+            </UCard>
+            <template #content>
+              <div class="min-w-52 space-y-1 text-xs">
+                <div v-for="item in monthProjectsBreakdown" :key="item.label" class="flex justify-between gap-4">
+                  <span class="truncate text-muted">{{ item.label }}</span>
+                  <span class="shrink-0 font-medium">{{ formatDays(item.days) }} <span class="font-normal text-muted">({{ item.pct }}%)</span></span>
+                </div>
               </div>
             </template>
-            <p class="text-2xl font-bold">{{ formatDays(kpis.monthDays) }}</p>
-            <p class="mt-1 text-xs text-muted">sur {{ kpis.workingDays }} jours ouvrés</p>
-            <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-elevated">
-              <div
-                class="h-1.5 rounded-full bg-primary transition-all"
-                :style="{ width: `${Math.min(kpis.fillRate, 100)}%` }"
-              />
-            </div>
-            <div class="mt-1 flex items-center justify-between">
-              <p class="text-xs text-muted">{{ kpis.fillRate }}% remplis</p>
-              <span
-                class="flex items-center gap-0.5 text-xs"
-                :class="kpis.trendDays >= 0 ? 'text-success' : 'text-error'"
+          </UTooltip>
+
+          <UTooltip :disabled="monthRevenueBreakdown.length === 0" :delayDuration="300" :ui="tooltipUi">
+            <UCard>
+              <template #header>
+                <div class="flex items-center justify-between">
+                  <p class="text-sm font-semibold">Revenus ce mois</p>
+                  <UIcon name="i-lucide-euro" class="text-muted" />
+                </div>
+              </template>
+              <p class="text-2xl font-bold">{{ formatCurrency(kpis.monthRevenue) }}</p>
+              <p class="mt-1 text-xs text-muted">
+                proj. <span class="font-medium text-primary">{{ formatCurrency(kpis.projectedRevenue) }}</span> fin de mois
+              </p>
+              <p
+                class="mt-1 flex items-center gap-0.5 text-xs"
+                :class="kpis.trendRevenue >= 0 ? 'text-success' : 'text-error'"
               >
-                <UIcon :name="kpis.trendDays >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'" class="size-3" />
-                {{ kpis.trendDays >= 0 ? '+' : '' }}{{ kpis.trendDays }}%
-              </span>
-            </div>
-          </UCard>
-
-          <UCard>
-            <template #header>
-              <div class="flex items-center justify-between">
-                <p class="text-sm font-semibold">Revenus ce mois</p>
-                <UIcon name="i-lucide-euro" class="text-muted" />
+                <UIcon :name="kpis.trendRevenue >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'" class="size-3 shrink-0" />
+                <span>{{ kpis.trendRevenue >= 0 ? '+' : '' }}{{ kpis.trendRevenue }}% vs mois précédent ({{ formatCurrency(kpis.prevMonthRevenue) }})</span>
+              </p>
+            </UCard>
+            <template #content>
+              <div class="min-w-52 space-y-1.5 text-xs">
+                <div v-for="item in monthRevenueBreakdown" :key="item.label" class="flex justify-between gap-4">
+                  <span class="truncate text-muted">{{ item.label }}</span>
+                  <span class="shrink-0 font-medium">{{ formatCurrency(item.revenue) }} <span class="font-normal text-muted">({{ item.pct }}%)</span></span>
+                </div>
+                <div class="border-t border-default pt-1.5 text-muted">
+                  Projeté : {{ formatCurrency(kpis.projectedRevenue) }} —
+                  basé sur {{ Math.round(monthAdvancement * 100) }}% du mois écoulé
+                </div>
               </div>
             </template>
-            <p class="text-2xl font-bold">{{ formatCurrency(kpis.monthRevenue) }}</p>
-            <p class="mt-1 text-xs text-muted">
-              proj. <span class="font-medium text-primary">{{ formatCurrency(kpis.projectedRevenue) }}</span> fin de mois
-            </p>
-            <p
-              class="mt-1 flex items-center gap-0.5 text-xs"
-              :class="kpis.trendRevenue >= 0 ? 'text-success' : 'text-error'"
-            >
-              <UIcon :name="kpis.trendRevenue >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'" class="size-3" />
-              {{ kpis.trendRevenue >= 0 ? '+' : '' }}{{ kpis.trendRevenue }}% vs mois précédent
-            </p>
-          </UCard>
+          </UTooltip>
 
-          <UCard>
-            <template #header>
-              <div class="flex items-center justify-between">
-                <p class="text-sm font-semibold">Factures impayées</p>
-                <UIcon name="i-lucide-clock" class="text-muted" />
+          <UTooltip :disabled="outstandingInvoices.length === 0" :delayDuration="300" :ui="tooltipUi">
+            <UCard>
+              <template #header>
+                <div class="flex items-center justify-between">
+                  <p class="text-sm font-semibold">Factures impayées</p>
+                  <UIcon name="i-lucide-clock" class="text-muted" />
+                </div>
+              </template>
+              <p class="text-2xl font-bold">{{ formatCurrency(kpis.outstandingAmount) }}</p>
+              <p class="mt-1 text-xs text-muted">
+                {{ kpis.outstandingCount }} facture{{ kpis.outstandingCount > 1 ? 's' : '' }} impayée{{ kpis.outstandingCount > 1 ? 's' : '' }}
+              </p>
+              <p v-if="kpis.overdueCount > 0" class="mt-1 flex items-center gap-1 text-xs text-error">
+                <UIcon name="i-lucide-alert-circle" class="size-3" />
+                {{ kpis.overdueCount }} en retard
+              </p>
+              <p v-else class="mt-1 flex items-center gap-1 text-xs text-success">
+                <UIcon name="i-lucide-check-circle" class="size-3" />
+                Aucun retard
+              </p>
+            </UCard>
+            <template #content>
+              <div class="min-w-56 space-y-1 text-xs">
+                <div v-for="(inv, i) in outstandingInvoices" :key="i" class="flex justify-between gap-4">
+                  <span class="truncate" :class="inv.daysWaiting > 30 ? 'text-error' : 'text-muted'">{{ inv.clientName }}</span>
+                  <span class="shrink-0 font-medium" :class="inv.daysWaiting > 30 ? 'text-error' : ''">
+                    {{ formatCurrency(inv.amount) }}
+                    <span class="font-normal text-muted">— {{ inv.daysWaiting }} j</span>
+                  </span>
+                </div>
               </div>
             </template>
-            <p class="text-2xl font-bold">{{ formatCurrency(kpis.outstandingAmount) }}</p>
-            <p class="mt-1 text-xs text-muted">
-              {{ kpis.outstandingCount }} facture{{ kpis.outstandingCount > 1 ? 's' : '' }} impayée{{ kpis.outstandingCount > 1 ? 's' : '' }}
-            </p>
-            <p v-if="kpis.overdueCount > 0" class="mt-1 flex items-center gap-1 text-xs text-error">
-              <UIcon name="i-lucide-alert-circle" class="size-3" />
-              {{ kpis.overdueCount }} en retard
-            </p>
-            <p v-else class="mt-1 flex items-center gap-1 text-xs text-success">
-              <UIcon name="i-lucide-check-circle" class="size-3" />
-              Aucun retard
-            </p>
-          </UCard>
+          </UTooltip>
 
-          <UCard>
-            <template #header>
-              <div class="flex items-center justify-between">
-                <p class="text-sm font-semibold">12 derniers mois</p>
-                <UIcon name="i-lucide-bar-chart-2" class="text-muted" />
+          <UTooltip :disabled="yearRevenueByClient.length === 0" :delayDuration="300" :ui="tooltipUi">
+            <UCard>
+              <template #header>
+                <div class="flex items-center justify-between">
+                  <p class="text-sm font-semibold">12 derniers mois</p>
+                  <UIcon name="i-lucide-bar-chart-2" class="text-muted" />
+                </div>
+              </template>
+              <p class="text-2xl font-bold">{{ formatCurrency(kpis.yearRevenue) }}</p>
+              <p class="mt-1 text-xs text-muted">
+                <span class="font-medium">{{ formatCurrency(kpis.weightedRate) }}/j</span> · <span class="font-medium">{{ formatCurrency(Math.round(kpis.yearRevenue / 12)) }}/mois</span>
+              </p>
+              <p
+                class="mt-1 flex items-center gap-0.5 text-xs"
+                :class="kpis.trendYear >= 0 ? 'text-success' : 'text-error'"
+              >
+                <UIcon :name="kpis.trendYear >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'" class="size-3 shrink-0" />
+                <span>{{ kpis.trendYear >= 0 ? '+' : '' }}{{ kpis.trendYear }}% vs 12 précédents ({{ formatCurrency(kpis.prevYearRevenue) }})</span>
+              </p>
+            </UCard>
+            <template #content>
+              <div class="min-w-48 space-y-1 text-xs">
+                <div v-for="item in yearRevenueByClient" :key="item.clientName" class="flex justify-between gap-4">
+                  <span class="truncate text-muted">{{ item.clientName }}</span>
+                  <span class="shrink-0 font-medium">{{ formatCurrency(item.revenue) }}</span>
+                </div>
               </div>
             </template>
-            <p class="text-2xl font-bold">{{ formatCurrency(kpis.yearRevenue) }}</p>
-            <p class="mt-1 text-xs text-muted">
-              Taux moyen <span class="font-medium">{{ formatCurrency(kpis.weightedRate) }}/j</span>
-            </p>
-            <p
-              class="mt-1 flex items-center gap-0.5 text-xs"
-              :class="kpis.trendYear >= 0 ? 'text-success' : 'text-error'"
-            >
-              <UIcon :name="kpis.trendYear >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'" class="size-3" />
-              {{ kpis.trendYear >= 0 ? '+' : '' }}{{ kpis.trendYear }}% vs 12 mois précédents
-            </p>
-          </UCard>
+          </UTooltip>
         </div>
 
         <!-- Chart -->
