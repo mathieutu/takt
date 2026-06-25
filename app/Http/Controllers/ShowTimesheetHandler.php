@@ -6,9 +6,9 @@ use App\Models\Invoice;
 use App\Models\Project;
 use App\Models\TimesheetEntry;
 use App\Services\HolidayService;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -44,8 +44,8 @@ class ShowTimesheetHandler
             'invoices' => $monthInvoices->map(fn (Invoice $i) => [
                 'id' => $i->id,
                 'amount' => $i->amount,
-                'billed_this_month' => $i->created_at->between($date->startOfMonth(), $date->endOfMonth()),
-                'paid_this_month' => $i->paid_at !== null && $i->paid_at->between($date->startOfMonth(), $date->endOfMonth()),
+                'created_at' => $i->created_at->toDateString(),
+                'paid_at' => $i->paid_at?->toDateString(),
                 'notes' => $i->notes,
                 'project_name' => $i->project->name,
                 'client_name' => $i->project->client->name,

@@ -5,8 +5,10 @@ import { computed, nextTick, ref, watch } from 'vue'
 import TimesheetGrid from '@/components/TimesheetGrid.vue'
 import {
   daysInMonth,
+  formatDate,
   formatDays,
   formatMonthName,
+  isInMonth,
   today,
 } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
@@ -27,8 +29,8 @@ type ActiveEntry = { projectId: string, date: string, isArchived: boolean } & En
 type Invoice = {
   id: string,
   amount: number,
-  billed_this_month: boolean,
-  paid_this_month: boolean,
+  created_at: string,
+  paid_at: string | null,
   notes: string | null,
   project_name: string,
   client_name: string,
@@ -78,17 +80,19 @@ const projectsWithStats = computed(() =>
 const totalDays = computed(() => projectsWithStats.value.reduce((sum, { days }) => sum + days, 0))
 const totalRevenue = computed(() => projectsWithStats.value.reduce((sum, { revenue }) => sum + revenue, 0))
 
+const inCurrentMonth = (date: string | null | undefined) => isInMonth(date, props.current.year, props.current.month)
+
 const billedTotal = computed(() =>
-  props.invoices.filter(i => i.billed_this_month).reduce((s, i) => s + i.amount, 0),
+  props.invoices.filter(i => inCurrentMonth(i.created_at)).reduce((s, i) => s + i.amount, 0),
 )
 const paidTotal = computed(() =>
-  props.invoices.filter(i => i.paid_this_month).reduce((s, i) => s + i.amount, 0),
+  props.invoices.filter(i => inCurrentMonth(i.paid_at)).reduce((s, i) => s + i.amount, 0),
 )
 const billedDaysTotal = computed(() =>
-  props.invoices.filter(i => i.billed_this_month && i.daily_rate > 0).reduce((s, i) => s + i.amount / i.daily_rate, 0),
+  props.invoices.filter(i => inCurrentMonth(i.created_at) && i.daily_rate > 0).reduce((s, i) => s + i.amount / i.daily_rate, 0),
 )
 const paidDaysTotal = computed(() =>
-  props.invoices.filter(i => i.paid_this_month && i.daily_rate > 0).reduce((s, i) => s + i.amount / i.daily_rate, 0),
+  props.invoices.filter(i => inCurrentMonth(i.paid_at) && i.daily_rate > 0).reduce((s, i) => s + i.amount / i.daily_rate, 0),
 )
 
 const syncCoverage = (projectId: string, date: string, coverage: number) => {
@@ -255,17 +259,24 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
                   <p v-if="inv.notes" class="text-xs text-muted truncate">{{ inv.notes }}</p>
                 </td>
                 <td class="px-4 py-2.5 text-right tabular-nums">
-                  <template v-if="inv.billed_this_month">
-                    <span :class="inv.paid_this_month ? 'text-success' : 'text-amber-500'">{{ formatCurrency(inv.amount) }}</span>
-                    <span v-if="inv.daily_rate > 0" class="text-muted"> ({{ formatDays(inv.amount / inv.daily_rate) }})</span>
+                  <template v-if="inCurrentMonth(inv.created_at)">
+                    <div>
+                      <span :class="inv.paid_at ? 'text-success' : 'text-amber-500'">{{ formatCurrency(inv.amount) }}</span>
+                      <span v-if="inv.daily_rate > 0" class="text-muted"> ({{ formatDays(inv.amount / inv.daily_rate) }})</span>
+                    </div>
+                    <div class="text-xs text-muted">{{ formatDate(inv.created_at) }}</div>
                   </template>
-                  <span v-else class="text-muted">—</span>
+                  <span v-else class="text-xs text-muted">{{ formatDate(inv.created_at) }}</span>
                 </td>
                 <td class="px-4 py-2.5 text-right tabular-nums">
-                  <template v-if="inv.paid_this_month">
-                    <span class="text-success">{{ formatCurrency(inv.amount) }}</span>
-                    <span v-if="inv.daily_rate > 0" class="text-muted"> ({{ formatDays(inv.amount / inv.daily_rate) }})</span>
+                  <template v-if="inCurrentMonth(inv.paid_at)">
+                    <div>
+                      <span class="text-success">{{ formatCurrency(inv.amount) }}</span>
+                      <span v-if="inv.daily_rate > 0" class="text-muted"> ({{ formatDays(inv.amount / inv.daily_rate) }})</span>
+                    </div>
+                    <div class="text-xs text-muted">{{ formatDate(inv.paid_at!) }}</div>
                   </template>
+                  <span v-else-if="inv.paid_at" class="text-xs text-muted">{{ formatDate(inv.paid_at) }}</span>
                   <span v-else class="text-muted">—</span>
                 </td>
               </tr>

@@ -1,4 +1,4 @@
-import { getLocalTimeZone, today as getToday } from '@internationalized/date'
+import { CalendarDate, getLocalTimeZone, isSameMonth, parseDate, today as getToday } from '@internationalized/date'
 
 export type Day = { n: number, date: string, isWeekend: boolean, letter: string }
 
@@ -35,6 +35,9 @@ export const formatDateTime = (dateTime: string) => new Date(dateTime).toLocaleD
   hour: 'numeric',
   minute: '2-digit',
 })
+
+export const isInMonth = (date: string | null | undefined, year: number, month: number): boolean =>
+  date != null && isSameMonth(parseDate(date), new CalendarDate(year, month, 1))
 
 export const parseMonth = (month: string): { year: number, month: number } => {
   const [year, m] = month.split('-').map(Number)
