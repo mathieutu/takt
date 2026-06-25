@@ -10,6 +10,7 @@ import {
   TODAY,
 } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
+import { show as showBilling } from '@/wayfinder/routes/clients/billing'
 import { sync as syncEntries } from '@/wayfinder/routes/projects/entries'
 
 type EntryData = { coverage: number, title: string, description: string }
@@ -23,11 +24,24 @@ type Project = {
 }
 type ActiveEntry = { projectId: string, date: string, isArchived: boolean } & EntryData
 
+type Invoice = {
+  id: string,
+  amount: number,
+  billed_this_month: boolean,
+  paid_this_month: boolean,
+  notes: string | null,
+  project_name: string,
+  client_name: string,
+  client_id: string,
+  daily_rate: number,
+}
+
 type Props = {
   current: { year: number, month: number },
   urls: { nextMonth: string, prevMonth: string },
   projects: Project[],
   holidays: Record<string, string>,
+  invoices: Invoice[],
 }
 const props = defineProps<Props>()
 
@@ -63,6 +77,19 @@ const projectsWithStats = computed(() =>
 
 const totalDays = computed(() => projectsWithStats.value.reduce((sum, { days }) => sum + days, 0))
 const totalRevenue = computed(() => projectsWithStats.value.reduce((sum, { revenue }) => sum + revenue, 0))
+
+const billedTotal = computed(() =>
+  props.invoices.filter(i => i.billed_this_month).reduce((s, i) => s + i.amount, 0),
+)
+const paidTotal = computed(() =>
+  props.invoices.filter(i => i.paid_this_month).reduce((s, i) => s + i.amount, 0),
+)
+const billedDaysTotal = computed(() =>
+  props.invoices.filter(i => i.billed_this_month && i.daily_rate > 0).reduce((s, i) => s + i.amount / i.daily_rate, 0),
+)
+const paidDaysTotal = computed(() =>
+  props.invoices.filter(i => i.paid_this_month && i.daily_rate > 0).reduce((s, i) => s + i.amount / i.daily_rate, 0),
+)
 
 const syncCoverage = (projectId: string, date: string, coverage: number) => {
   const project = props.projects.find(p => p.id === projectId)!
@@ -199,6 +226,70 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
         <div class="pt-2 flex items-center justify-between border-t border-default md:hidden">
           <span class="text-sm text-muted">{{ formatDays(totalDays) }} enregistré</span>
           <span class="text-sm font-semibold text-default">{{ formatCurrency(totalRevenue) }}</span>
+        </div>
+      </div>
+
+      <div v-if="invoices.length > 0" class="mt-4 px-0">
+        <p class="mb-2 text-xs font-medium uppercase tracking-wide text-muted">Factures</p>
+        <div class="rounded-lg border border-default overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-default bg-muted/40 text-xs text-muted">
+                <th class="px-4 py-2.5 text-left font-medium">Client / Description</th>
+                <th class="px-4 py-2.5 text-right font-medium">Facturé</th>
+                <th class="px-4 py-2.5 text-right font-medium">Reçu</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="inv in invoices"
+                :key="inv.id"
+                class="border-b border-default last:border-0"
+              >
+                <td class="px-4 py-2.5">
+                  <div class="flex items-center gap-1">
+                    <span class="font-medium">{{ inv.project_name }}</span>
+                    <span class="text-muted">· {{ inv.client_name }}</span>
+                    <UButton :href="showBilling({ id: inv.client_id })" icon="i-lucide-receipt-text" color="neutral" variant="ghost" size="2xs" />
+                  </div>
+                  <p v-if="inv.notes" class="text-xs text-muted truncate">{{ inv.notes }}</p>
+                </td>
+                <td class="px-4 py-2.5 text-right tabular-nums">
+                  <template v-if="inv.billed_this_month">
+                    <span :class="inv.paid_this_month ? 'text-success' : 'text-amber-500'">{{ formatCurrency(inv.amount) }}</span>
+                    <span v-if="inv.daily_rate > 0" class="text-muted"> ({{ formatDays(inv.amount / inv.daily_rate) }})</span>
+                  </template>
+                  <span v-else class="text-muted">—</span>
+                </td>
+                <td class="px-4 py-2.5 text-right tabular-nums">
+                  <template v-if="inv.paid_this_month">
+                    <span class="text-success">{{ formatCurrency(inv.amount) }}</span>
+                    <span v-if="inv.daily_rate > 0" class="text-muted"> ({{ formatDays(inv.amount / inv.daily_rate) }})</span>
+                  </template>
+                  <span v-else class="text-muted">—</span>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="border-t-2 border-default bg-muted/30 text-sm font-semibold">
+                <td class="px-4 py-2.5">Total</td>
+                <td class="px-4 py-2.5 text-right tabular-nums">
+                  <template v-if="billedTotal > 0">
+                    <span>{{ formatCurrency(billedTotal) }}</span>
+                    <span v-if="billedDaysTotal > 0" class="font-normal text-muted"> ({{ formatDays(billedDaysTotal) }})</span>
+                  </template>
+                  <span v-else class="font-normal text-muted">—</span>
+                </td>
+                <td class="px-4 py-2.5 text-right tabular-nums text-success">
+                  <template v-if="paidTotal > 0">
+                    <span>{{ formatCurrency(paidTotal) }}</span>
+                    <span v-if="paidDaysTotal > 0" class="font-normal text-muted"> ({{ formatDays(paidDaysTotal) }})</span>
+                  </template>
+                  <span v-else class="font-normal text-muted">—</span>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
     </div>

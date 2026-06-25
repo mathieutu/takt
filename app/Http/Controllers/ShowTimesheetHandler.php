@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Invoice;
 use App\Models\Project;
 use App\Models\TimesheetEntry;
 use App\Services\HolidayService;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -23,6 +26,14 @@ class ShowTimesheetHandler
             ->orderBy('projects.name')
             ->get();
 
+        $monthInvoices = Invoice::whereRelation('user', 'users.id', $request->user()->id)
+            ->where(fn (Builder $q) => $q
+                ->whereBetween('created_at', [$date->startOfMonth(), $date->endOfMonth()])
+                ->orWhereBetween('paid_at', [$date->startOfMonth(), $date->endOfMonth()])
+            )
+            ->with(['project' => fn (BelongsTo $q) => $q->withTrashed()->with(['client' => fn (BelongsTo $q) => $q->withTrashed()])])
+            ->get();
+
         return Inertia::render('TimesheetPage', [
             'current' => ['year' => $date->year, 'month' => $date->month],
             'urls' => [
@@ -30,6 +41,17 @@ class ShowTimesheetHandler
                 'prevMonth' => action(self::class, ['month' => $date->subMonth()->format('Y-m')], false),
             ],
             'holidays' => $holidays->forMonth($date),
+            'invoices' => $monthInvoices->map(fn (Invoice $i) => [
+                'id' => $i->id,
+                'amount' => $i->amount,
+                'billed_this_month' => $i->created_at->between($date->startOfMonth(), $date->endOfMonth()),
+                'paid_this_month' => $i->paid_at !== null && $i->paid_at->between($date->startOfMonth(), $date->endOfMonth()),
+                'notes' => $i->notes,
+                'project_name' => $i->project->name,
+                'client_name' => $i->project->client->name,
+                'client_id' => $i->project->client_id,
+                'daily_rate' => $i->project->daily_rate,
+            ])->values()->all(),
             'projects' => $projects->map(fn (Project $p) => $p->export([
                 'id',
                 'name',

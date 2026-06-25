@@ -11,7 +11,7 @@ export default antfu(
       '**/storage/**',
       'resources/js/wayfinder/**',
       'public/**',
-      '.ai/guidelines/**',
+      '.ai/**',
       '.claude/**',
       '.github/**',
       'docs/**',
