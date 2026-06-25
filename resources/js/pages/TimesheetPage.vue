@@ -7,7 +7,7 @@ import {
   daysInMonth,
   formatDays,
   formatMonthName,
-  TODAY,
+  today,
 } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
 import { show as showBilling } from '@/wayfinder/routes/clients/billing'
@@ -52,12 +52,12 @@ const activeEntry = ref<ActiveEntry | null>(null)
 
 const centerTodayColumn = (behavior: ScrollBehavior = 'auto') => {
   const isCurrentMonth =
-    props.current.year === new Date().getFullYear()
-    && props.current.month === new Date().getMonth() + 1
+    props.current.year === today.year
+    && props.current.month === today.month
 
   if (!isCurrentMonth || !tableScrollRef.value) return
 
-  tableScrollRef.value.querySelector<HTMLElement>(`#day-col-${TODAY}`)
+  tableScrollRef.value.querySelector<HTMLElement>(`#day-col-${today.toString()}`)
     ?.scrollIntoView({ behavior, block: 'nearest', inline: 'center' })
 }
 

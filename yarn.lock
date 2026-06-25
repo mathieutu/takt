@@ -7081,6 +7081,7 @@ __metadata:
     "@antfu/eslint-config": "npm:^9.0.0"
     "@inertiajs/vite": "npm:^3.3.1"
     "@inertiajs/vue3": "npm:^3.3.1"
+    "@internationalized/date": "npm:^3.12.2"
     "@laravel/vite-plugin-wayfinder": "npm:^0.1.7"
     "@nuxt/ui": "npm:^4.8.2"
     "@tailwindcss/vite": "npm:^4.3.0"

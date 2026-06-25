@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { ComponentPublicInstance } from 'vue'
-import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
+import { CalendarDate } from '@internationalized/date'
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
+import { today } from '@/utils/date.ts'
 
 const props = defineProps<{
   modelValue?: string | null,
@@ -59,8 +60,7 @@ const tryAutoComplete = async () => {
 
   if (day === null && month === null && year === null) return
 
-  const t = today(getLocalTimeZone())
-  emit('update:modelValue', toDateString({ day: day ?? t.day, month: month ?? t.month, year: year ?? t.year }))
+  emit('update:modelValue', toDateString({ day: day ?? today.day, month: month ?? today.month, year: year ?? today.year }))
 }
 
 const onFocusin = (e: FocusEvent) => {

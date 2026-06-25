@@ -20,7 +20,7 @@ import {
 } from 'chart.js'
 import { computed, type ComputedRef } from 'vue'
 import { Bar } from 'vue-chartjs'
-import { formatDays } from '@/utils/date.ts'
+import { formatDays, today } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
 import { timesheet } from '@/wayfinder/routes'
 import { show as showBilling } from '@/wayfinder/routes/clients/billing'
@@ -180,10 +180,7 @@ const barChartOptions = {
   onClick: (_event: ChartEvent, elements: ActiveElement[]) => {
     if (!elements.length) return
     const offset = props.chart.labels.length - 1 - elements[0]!.index
-    const d = new Date(now)
-    d.setDate(1)
-    d.setMonth(d.getMonth() - offset)
-    const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    const month = today.subtract({ months: offset }).toString().slice(0, 7)
     router.visit(timesheet({ query: { month } }))
   },
   plugins: {

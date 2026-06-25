@@ -2,7 +2,7 @@
 import { Head, useForm } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
 import DateInput from '@/components/DateInput.vue'
-import { coverageLabel, formatDate, formatDays, formatDuration, formatMonthName, parseMonth } from '@/utils/date'
+import { coverageLabel, formatDate, formatDays, formatDuration, formatMonthName, parseMonth, today } from '@/utils/date'
 import { formatCurrency } from '@/utils/number'
 import { timesheet } from '@/wayfinder/routes'
 import { edit as editClient } from '@/wayfinder/routes/clients'
@@ -199,7 +199,7 @@ const openAddInvoice = (project: ProjectWithBilling) => {
   invoiceProjectId.value = project.id
   editingInvoiceId.value = null
   form.reset()
-  form.created_at = new Date().toISOString().slice(0, 10)
+  form.created_at = today.toString()
   form.clearErrors()
   invoiceOpen.value = true
 }
