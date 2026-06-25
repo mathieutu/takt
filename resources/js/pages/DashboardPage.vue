@@ -280,13 +280,13 @@ const barChartOptions = {
 }
 
 const progressBarClass = (percent: number) => {
-  if (percent >= 100) return 'bg-error'
+  if (percent > 100) return 'bg-error'
   if (percent >= 80) return 'bg-warning'
   return 'bg-success'
 }
 
 const progressTextClass = (percent: number) => {
-  if (percent >= 100) return 'text-error font-semibold'
+  if (percent > 100) return 'text-error font-semibold'
   if (percent >= 80) return 'text-warning font-medium'
   return 'text-muted'
 }

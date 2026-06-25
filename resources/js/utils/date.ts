@@ -1,4 +1,4 @@
-import { CalendarDate, getLocalTimeZone, isSameMonth, parseDate, today as getToday } from '@internationalized/date'
+import { CalendarDate, getLocalTimeZone, today as getToday, isSameMonth, parseDate } from '@internationalized/date'
 
 export type Day = { n: number, date: string, isWeekend: boolean, letter: string }
 
