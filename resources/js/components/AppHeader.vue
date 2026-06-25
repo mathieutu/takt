@@ -17,7 +17,7 @@ const unsubscribe = router.on('navigate', () => {
 onUnmounted(unsubscribe)
 
 const navItems = computed<NavigationMenuItem[]>(() => [
-  { label: 'Tableau de bord', icon: 'i-lucide-layout-dashboard', to: user.value ? dashboard() : login(), exact: true, active: user.value && page.url === dashboard().url, prefetch: true },
+  { label: 'Tableau de bord', icon: 'i-lucide-layout-dashboard', to: user.value ? dashboard() : login(), exact: true, active: user.value && page.url.split('?')[0] === dashboard().url, prefetch: true },
   { label: 'Activité', icon: 'i-lucide-calendar-days', to: timesheet(), active: page.url.startsWith(timesheet().url), prefetch: true },
   { label: 'Projets', icon: 'i-lucide-folder-kanban', to: projects.index(), active: page.url.startsWith(projects.index().url), prefetch: true },
 ])

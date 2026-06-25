@@ -240,71 +240,73 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
       <div v-if="invoices.length > 0" class="mt-4 px-0">
         <p class="mb-2 text-xs font-medium uppercase tracking-wide text-muted">Factures</p>
         <div class="rounded-lg border border-default overflow-hidden">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-default bg-muted/40 text-xs text-muted">
-                <th class="px-4 py-2.5 text-left font-medium">Client / Description</th>
-                <th class="px-4 py-2.5 text-right font-medium">Facturé</th>
-                <th class="px-4 py-2.5 text-right font-medium">Reçu</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="inv in invoices"
-                :key="inv.id"
-                class="border-b border-default last:border-0"
-              >
-                <td class="px-4 py-2.5">
-                  <div class="flex items-center gap-1">
-                    <span class="font-medium">{{ inv.project_name }}</span>
-                    <span class="text-muted">· {{ inv.client_name }}</span>
-                    <UButton :href="showBilling({ id: inv.client_id })" icon="i-lucide-receipt-text" color="neutral" variant="ghost" size="2xs" />
-                  </div>
-                  <p v-if="inv.notes" class="text-xs text-muted truncate">{{ inv.notes }}</p>
-                </td>
-                <td class="px-4 py-2.5 text-right tabular-nums">
-                  <template v-if="inCurrentMonth(inv.created_at)">
-                    <div>
-                      <span :class="inv.paid_at ? 'text-success' : 'text-amber-500'">{{ formatCurrency(inv.amount) }}</span>
-                      <span v-if="inv.daily_rate > 0" class="text-muted"> ({{ formatDays(inv.amount / inv.daily_rate) }})</span>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm min-w-[480px]">
+              <thead>
+                <tr class="border-b border-default bg-muted/40 text-xs text-muted">
+                  <th class="px-4 py-2.5 text-left font-medium">Client / Description</th>
+                  <th class="px-4 py-2.5 text-right font-medium">Facturé</th>
+                  <th class="px-4 py-2.5 text-right font-medium">Reçu</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="inv in invoices"
+                  :key="inv.id"
+                  class="border-b border-default last:border-0"
+                >
+                  <td class="px-4 py-2.5">
+                    <div class="flex items-center gap-1">
+                      <span class="font-medium">{{ inv.project_name }}</span>
+                      <span class="text-muted">· {{ inv.client_name }}</span>
+                      <UButton :href="showBilling({ id: inv.client_id })" icon="i-lucide-receipt-text" color="neutral" variant="ghost" size="2xs" />
                     </div>
-                    <div class="text-xs text-muted">{{ formatDate(inv.created_at) }}</div>
-                  </template>
-                  <span v-else class="text-xs text-muted">{{ formatDate(inv.created_at) }}</span>
-                </td>
-                <td class="px-4 py-2.5 text-right tabular-nums">
-                  <template v-if="inCurrentMonth(inv.paid_at)">
-                    <div>
-                      <span class="text-success">{{ formatCurrency(inv.amount) }}</span>
-                      <span v-if="inv.daily_rate > 0" class="text-muted"> ({{ formatDays(inv.amount / inv.daily_rate) }})</span>
-                    </div>
-                    <div class="text-xs text-muted">{{ formatDate(inv.paid_at!) }}</div>
-                  </template>
-                  <span v-else-if="inv.paid_at" class="text-xs text-muted">{{ formatDate(inv.paid_at) }}</span>
-                  <span v-else class="text-muted">—</span>
-                </td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr class="border-t-2 border-default bg-muted/30 text-sm font-semibold">
-                <td class="px-4 py-2.5">Total</td>
-                <td class="px-4 py-2.5 text-right tabular-nums">
-                  <template v-if="billedTotal > 0">
-                    <span>{{ formatCurrency(billedTotal) }}</span>
-                    <span v-if="billedDaysTotal > 0" class="font-normal text-muted"> ({{ formatDays(billedDaysTotal) }})</span>
-                  </template>
-                  <span v-else class="font-normal text-muted">—</span>
-                </td>
-                <td class="px-4 py-2.5 text-right tabular-nums text-success">
-                  <template v-if="paidTotal > 0">
-                    <span>{{ formatCurrency(paidTotal) }}</span>
-                    <span v-if="paidDaysTotal > 0" class="font-normal text-muted"> ({{ formatDays(paidDaysTotal) }})</span>
-                  </template>
-                  <span v-else class="font-normal text-muted">—</span>
-                </td>
-              </tr>
-            </tfoot>
-          </table>
+                    <p v-if="inv.notes" class="text-xs text-muted truncate">{{ inv.notes }}</p>
+                  </td>
+                  <td class="px-4 py-2.5 text-right tabular-nums">
+                    <template v-if="inCurrentMonth(inv.created_at)">
+                      <div>
+                        <span :class="inv.paid_at ? 'text-success' : 'text-amber-500'">{{ formatCurrency(inv.amount) }}</span>
+                        <span v-if="inv.daily_rate > 0" class="text-muted"> ({{ formatDays(inv.amount / inv.daily_rate) }})</span>
+                      </div>
+                      <div class="text-xs text-muted">{{ formatDate(inv.created_at) }}</div>
+                    </template>
+                    <span v-else class="text-xs text-muted">{{ formatDate(inv.created_at) }}</span>
+                  </td>
+                  <td class="px-4 py-2.5 text-right tabular-nums">
+                    <template v-if="inCurrentMonth(inv.paid_at)">
+                      <div>
+                        <span class="text-success">{{ formatCurrency(inv.amount) }}</span>
+                        <span v-if="inv.daily_rate > 0" class="text-muted"> ({{ formatDays(inv.amount / inv.daily_rate) }})</span>
+                      </div>
+                      <div class="text-xs text-muted">{{ formatDate(inv.paid_at!) }}</div>
+                    </template>
+                    <span v-else-if="inv.paid_at" class="text-xs text-muted">{{ formatDate(inv.paid_at) }}</span>
+                    <span v-else class="text-muted">—</span>
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="border-t-2 border-default bg-muted/30 text-sm font-semibold">
+                  <td class="px-4 py-2.5">Total</td>
+                  <td class="px-4 py-2.5 text-right tabular-nums">
+                    <template v-if="billedTotal > 0">
+                      <span>{{ formatCurrency(billedTotal) }}</span>
+                      <span v-if="billedDaysTotal > 0" class="font-normal text-muted"> ({{ formatDays(billedDaysTotal) }})</span>
+                    </template>
+                    <span v-else class="font-normal text-muted">—</span>
+                  </td>
+                  <td class="px-4 py-2.5 text-right tabular-nums text-success">
+                    <template v-if="paidTotal > 0">
+                      <span>{{ formatCurrency(paidTotal) }}</span>
+                      <span v-if="paidDaysTotal > 0" class="font-normal text-muted"> ({{ formatDays(paidDaysTotal) }})</span>
+                    </template>
+                    <span v-else class="font-normal text-muted">—</span>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
       </div>
     </div>

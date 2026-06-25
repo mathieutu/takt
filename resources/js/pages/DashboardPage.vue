@@ -381,12 +381,12 @@ const progressTextClass = (percent: number) => {
 <template>
   <Head title="Tableau de bord" />
   <div class="flex min-h-screen flex-col bg-default">
-    <main class="flex-1 px-6 py-8">
+    <main class="flex-1 px-4 py-6 md:px-6 md:py-8">
       <div class="mx-auto max-w-6xl space-y-6">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-y-3">
           <div>
             <h1 class="text-lg font-semibold">Tableau de bord</h1>
-            <p class="text-sm text-muted">Aperçu de votre activité</p>
+            <p class="hidden text-sm text-muted sm:block">Aperçu de votre activité</p>
           </div>
           <div class="flex items-center gap-1">
             <UButton
@@ -449,7 +449,7 @@ const progressTextClass = (percent: number) => {
             <UCard>
               <template #header>
                 <div class="flex items-center justify-between">
-                  <p class="text-sm font-semibold">Jours en {{ selectedMonthLabel }}</p>
+                  <p class="truncate text-sm font-semibold">Jours en {{ selectedMonthLabel }}</p>
                   <UIcon name="i-lucide-calendar-days" class="text-muted" />
                 </div>
               </template>
@@ -486,7 +486,7 @@ const progressTextClass = (percent: number) => {
             <UCard>
               <template #header>
                 <div class="flex items-center justify-between">
-                  <p class="text-sm font-semibold">Revenus en {{ selectedMonthLabel }}</p>
+                  <p class="truncate text-sm font-semibold">Revenus en {{ selectedMonthLabel }}</p>
                   <UIcon name="i-lucide-euro" class="text-muted" />
                 </div>
               </template>
@@ -520,7 +520,7 @@ const progressTextClass = (percent: number) => {
             <UCard>
               <template #header>
                 <div class="flex items-center justify-between">
-                  <p class="text-sm font-semibold">Factures impayées</p>
+                  <p class="truncate text-sm font-semibold">Factures impayées</p>
                   <UIcon name="i-lucide-clock" class="text-muted" />
                 </div>
               </template>
@@ -554,7 +554,7 @@ const progressTextClass = (percent: number) => {
             <UCard>
               <template #header>
                 <div class="flex items-center justify-between">
-                  <p class="text-sm font-semibold">{{ periodMonths > 1 ? `Sur les ${periodMonths} mois` : 'Sur le mois' }}</p>
+                  <p class="truncate text-sm font-semibold">{{ periodMonths > 1 ? `Sur les ${periodMonths} mois` : 'Sur le mois' }}</p>
                   <UIcon name="i-lucide-bar-chart-2" class="text-muted" />
                 </div>
               </template>

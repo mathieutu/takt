@@ -8,7 +8,8 @@
       "Skill(inertia-vue-development)",
       "Bash(rtk wc *)",
       "Bash(vendor/bin/pint *)",
-      "mcp__nuxt-ui-remote__get-example"
+      "mcp__nuxt-ui-remote__get-example",
+      "Bash(yarn lint:fix)"
     ]
   },
   "enableAllProjectMcpServers": true,

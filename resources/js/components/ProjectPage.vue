@@ -152,11 +152,14 @@ const clientMenuItems = (client: Client): DropdownMenuItem[][] => {
 const onSearch = useDebounceFn((value: string) => {
   router.visit(projectsRoutes.index({ mergeQuery: { search: value || null } }), { preserveState: true, replace: true })
 }, 300)
+
+const clientFilterHref = (clientId: string) =>
+  projectsRoutes.index({ mergeQuery: { client_id: clientId === props.client_id ? null : clientId } })
 </script>
 
 <template>
   <div class="flex flex-col bg-default">
-    <div class="flex-1 px-6 py-8">
+    <div class="flex-1 px-4 py-6 md:px-6 md:py-8">
       <div class="mx-auto max-w-5xl space-y-6">
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0 flex-1">
@@ -191,7 +194,7 @@ const onSearch = useDebounceFn((value: string) => {
             type="text"
             placeholder="Rechercher un projet ou un client..."
             icon="i-lucide-search"
-            class="w-72"
+            class="w-full sm:w-72"
             :ui="{ trailing: 'pe-1' }"
             @update:modelValue="onSearch"
           >
@@ -312,62 +315,66 @@ const onSearch = useDebounceFn((value: string) => {
             <p class="text-xs font-medium uppercase tracking-wide text-muted">Clients</p>
           </div>
 
-          <div
-            v-for="client in clients"
-            :key="client.id"
-            class="flex items-center gap-1 rounded-md px-2 py-1.5 transition-colors"
-            :class="client_id === client.id ? 'bg-primary/10 ring-1 ring-primary/20' : 'hover:bg-elevated'"
-          >
-            <div class="flex flex-1 min-w-0 items-center gap-2 px-1">
-              <span
-                class="truncate text-sm"
-                :class="{ 'text-primary font-medium': client_id === client.id }"
-                :title="client.name"
-              >{{ client.name }}</span>
-              <span class="text-xs text-muted">{{ formatCurrency(client.daily_rate) }}/j.</span>
-              <span
-                v-if="client.deleted_at"
-                class="inline-flex items-center gap-1 rounded-full bg-error/10 px-2 py-0.5 text-xs text-error"
+          <div class="overflow-x-auto">
+            <div class="min-w-[400px] space-y-1">
+              <div
+                v-for="client in clients"
+                :key="client.id"
+                class="flex items-center gap-1 rounded-md px-2 py-1.5 transition-colors"
+                :class="client_id === client.id ? 'bg-primary/10 ring-1 ring-primary/20' : 'hover:bg-elevated'"
               >
-                <UIcon name="i-lucide-archive" class="h-3 w-3" />
-                Archivé
-              </span>
-              <span
-                v-else-if="client.share_url"
-                class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted"
-                title="Partagé"
-              >
-                <UIcon name="i-lucide-users" class="h-3 w-3" />
-                Partagé
-              </span>
+                <div class="flex flex-1 min-w-0 items-center gap-2 px-1">
+                  <span
+                    class="min-w-0 truncate text-sm"
+                    :class="{ 'text-primary font-medium': client_id === client.id }"
+                    :title="client.name"
+                  >{{ client.name }}</span>
+                  <span class="shrink-0 text-xs text-muted">{{ formatCurrency(client.daily_rate) }}/j.</span>
+                  <span
+                    v-if="client.deleted_at"
+                    class="shrink-0 inline-flex items-center gap-1 rounded-full bg-error/10 px-2 py-0.5 text-xs text-error"
+                  >
+                    <UIcon name="i-lucide-archive" class="h-3 w-3" />
+                    Archivé
+                  </span>
+                  <span
+                    v-else-if="client.share_url"
+                    class="shrink-0 inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted"
+                    title="Partagé"
+                  >
+                    <UIcon name="i-lucide-users" class="h-3 w-3" />
+                    Partagé
+                  </span>
+                </div>
+                <UTooltip text="Filtrer les projets">
+                  <UButton
+                    icon="i-lucide-filter"
+                    color="neutral"
+                    variant="ghost"
+                    size="xs"
+                    :href="clientFilterHref(client.id)"
+                    :class="client_id === client.id ? 'text-primary' : ''"
+                  />
+                </UTooltip>
+                <UTooltip text="Facturation">
+                  <UButton
+                    :href="clientBillingShow(client)"
+                    icon="i-lucide-receipt-text"
+                    color="neutral"
+                    variant="ghost"
+                    size="xs"
+                  />
+                </UTooltip>
+                <UDropdownMenu :items="clientMenuItems(client)" class="shrink-0">
+                  <UButton
+                    icon="i-lucide-more-vertical"
+                    color="neutral"
+                    variant="ghost"
+                    size="xs"
+                  />
+                </UDropdownMenu>
+              </div>
             </div>
-            <UTooltip text="Filtrer les projets">
-              <UButton
-                icon="i-lucide-filter"
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                :href="projectsRoutes.index({ mergeQuery: { client_id: client.id === client_id ? null : client.id } })"
-                :class="client_id === client.id ? 'text-primary' : ''"
-              />
-            </UTooltip>
-            <UTooltip text="Facturation">
-              <UButton
-                :href="clientBillingShow(client)"
-                icon="i-lucide-receipt-text"
-                color="neutral"
-                variant="ghost"
-                size="xs"
-              />
-            </UTooltip>
-            <UDropdownMenu :items="clientMenuItems(client)" class="shrink-0">
-              <UButton
-                icon="i-lucide-more-vertical"
-                color="neutral"
-                variant="ghost"
-                size="xs"
-              />
-            </UDropdownMenu>
           </div>
         </div>
       </div>

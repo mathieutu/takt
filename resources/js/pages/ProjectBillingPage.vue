@@ -308,7 +308,7 @@ const dayLabel = (date: string): string => {
 
           <div class="space-y-6" :class="[project.deleted_at && ' rounded-xl bg-muted p-4']">
             <!-- Project header -->
-            <div class="flex items-start justify-between gap-4">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
               <div class="min-w-0">
                 <div class="flex items-center gap-2">
                   <h2 class="text-base font-semibold truncate">{{ project.name }}</h2>
@@ -324,8 +324,8 @@ const dayLabel = (date: string): string => {
                   </UTooltip>
                 </div>
               </div>
-              <div class="shrink-0 flex items-end flex-col gap-3">
-                <div class="flex items-center gap-1 text-sm text-muted">
+              <div class="flex flex-col gap-2 sm:items-end">
+                <div class="flex flex-wrap items-center gap-1 text-sm text-muted">
                   <span>{{ formatCurrency(project.daily_rate) }}/j.</span>
                   <template v-if="project.max_month_budget">
                     <span>•</span>
@@ -358,147 +358,149 @@ const dayLabel = (date: string): string => {
 
             <!-- Main table -->
             <div class="rounded-lg border border-default overflow-hidden">
-              <table class="w-full text-sm">
-                <thead>
-                  <tr class="border-b border-default bg-muted/40 text-xs text-muted">
-                    <th class="px-4 py-2.5 text-left font-medium">Mois</th>
-                    <th class="px-4 py-2.5 text-right font-medium">Travaillé</th>
-                    <th class="px-4 py-2.5 text-right font-medium">Facturé</th>
-                    <th class="px-4 py-2.5 text-right font-medium">À consommer</th>
-                    <th v-if="!is_shared" class="w-8 px-2" />
-                  </tr>
-                </thead>
-                <tbody>
-                  <template v-for="(m, monthIndex) in project.months" :key="m.month">
-                    <tr
-                      class="border-b border-default hover:bg-muted/20 cursor-pointer transition-colors"
-                      :class="isExpanded(project.id, m.month) ? 'bg-muted/20' : ''"
-                      @click="toggleMonth(project.id, m.month)"
-                    >
-                      <td class="px-4 py-2.5 font-medium">
-                        <div class="flex items-center gap-1.5">
-                          <UIcon
-                            :name="isExpanded(project.id, m.month) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
-                            class="text-muted w-3.5 h-3.5 shrink-0"
-                          />
-                          {{ monthLabel(m.month) }}
-                        </div>
-                      </td>
-                      <td
-                        class="px-4 py-2.5 text-right tabular-nums"
-                        :class="isCumulativeOverBudget(project, monthIndex) ? 'text-error font-medium' : 'text-muted'"
-                      >
-                        {{ formatCurrency(monthWorked(m, project.daily_rate)) }} ({{ formatDays(m.days_worked) }})
-                      </td>
-                      <td class="px-4 py-2.5 text-right tabular-nums">
-                        <template v-if="monthInvoiced(m) > 0">
-                          <span class="font-medium" :class="m.invoices.some(inv => !inv.paid_at) ? 'text-amber-500' : 'text-success'">{{ formatCurrency(monthInvoiced(m)) }}</span>
-                          <span v-if="fmtDays(monthInvoiced(m), project.daily_rate)" class="text-muted"> ({{ fmtDays(monthInvoiced(m), project.daily_rate) }})</span>
-                        </template>
-                        <span v-else class="text-muted">—</span>
-                      </td>
-                      <td class="px-4 py-2.5 text-right tabular-nums">
-                        <template v-if="cumulativeRemainingToConsume(project, monthIndex) !== null">
-                          <span :class="cumulativeRemainingToConsume(project, monthIndex)! < 0 ? 'text-error' : 'text-default'">
-                            {{ formatCurrency(cumulativeRemainingToConsume(project, monthIndex)!) }}
-                          </span>
-                          <span v-if="fmtDays(cumulativeRemainingToConsume(project, monthIndex)!, project.daily_rate)" class="text-muted"> ({{ fmtDays(cumulativeRemainingToConsume(project, monthIndex)!, project.daily_rate) }})</span>
-                          <span class="text-muted"> · {{ 100 - cumulativeConsumptionPercent(project, monthIndex)! }}%</span>
-                        </template>
-                        <span v-else class="text-muted">—</span>
-                      </td>
-                      <td v-if="!is_shared" class="px-2 text-right">
-                        <UTooltip text="CRA">
-                          <UButton
-                            :href="timesheet({ query: { month: m.month } })"
-                            icon="i-lucide-calendar"
-                            color="neutral"
-                            variant="ghost"
-                            size="2xs"
-                          />
-                        </UTooltip>
-                      </td>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm min-w-[640px]">
+                  <thead>
+                    <tr class="border-b border-default bg-muted/40 text-xs text-muted">
+                      <th class="px-4 py-2.5 text-left font-medium">Mois</th>
+                      <th class="px-4 py-2.5 text-right font-medium">Travaillé</th>
+                      <th class="px-4 py-2.5 text-right font-medium">Facturé</th>
+                      <th class="px-4 py-2.5 text-right font-medium">À consommer</th>
+                      <th v-if="!is_shared" class="w-8 px-2" />
                     </tr>
+                  </thead>
+                  <tbody>
+                    <template v-for="(m, monthIndex) in project.months" :key="m.month">
+                      <tr
+                        class="border-b border-default hover:bg-muted/20 cursor-pointer transition-colors"
+                        :class="isExpanded(project.id, m.month) ? 'bg-muted/20' : ''"
+                        @click="toggleMonth(project.id, m.month)"
+                      >
+                        <td class="px-4 py-2.5 font-medium">
+                          <div class="flex items-center gap-1.5">
+                            <UIcon
+                              :name="isExpanded(project.id, m.month) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+                              class="text-muted w-3.5 h-3.5 shrink-0"
+                            />
+                            {{ monthLabel(m.month) }}
+                          </div>
+                        </td>
+                        <td
+                          class="px-4 py-2.5 text-right tabular-nums"
+                          :class="isCumulativeOverBudget(project, monthIndex) ? 'text-error font-medium' : 'text-muted'"
+                        >
+                          {{ formatCurrency(monthWorked(m, project.daily_rate)) }} ({{ formatDays(m.days_worked) }})
+                        </td>
+                        <td class="px-4 py-2.5 text-right tabular-nums">
+                          <template v-if="monthInvoiced(m) > 0">
+                            <span class="font-medium" :class="m.invoices.some(inv => !inv.paid_at) ? 'text-amber-500' : 'text-success'">{{ formatCurrency(monthInvoiced(m)) }}</span>
+                            <span v-if="fmtDays(monthInvoiced(m), project.daily_rate)" class="text-muted"> ({{ fmtDays(monthInvoiced(m), project.daily_rate) }})</span>
+                          </template>
+                          <span v-else class="text-muted">—</span>
+                        </td>
+                        <td class="px-4 py-2.5 text-right tabular-nums">
+                          <template v-if="cumulativeRemainingToConsume(project, monthIndex) !== null">
+                            <span :class="cumulativeRemainingToConsume(project, monthIndex)! < 0 ? 'text-error' : 'text-default'">
+                              {{ formatCurrency(cumulativeRemainingToConsume(project, monthIndex)!) }}
+                            </span>
+                            <span v-if="fmtDays(cumulativeRemainingToConsume(project, monthIndex)!, project.daily_rate)" class="text-muted"> ({{ fmtDays(cumulativeRemainingToConsume(project, monthIndex)!, project.daily_rate) }})</span>
+                            <span class="text-muted"> · {{ 100 - cumulativeConsumptionPercent(project, monthIndex)! }}%</span>
+                          </template>
+                          <span v-else class="text-muted">—</span>
+                        </td>
+                        <td v-if="!is_shared" class="px-2 text-right">
+                          <UTooltip text="CRA">
+                            <UButton
+                              :href="timesheet({ query: { month: m.month } })"
+                              icon="i-lucide-calendar"
+                              color="neutral"
+                              variant="ghost"
+                              size="2xs"
+                            />
+                          </UTooltip>
+                        </td>
+                      </tr>
 
-                    <tr v-if="isExpanded(project.id, m.month)">
-                      <td :colspan="is_shared ? 4 : 5" class="px-0 py-0">
-                        <div class="border-b border-default bg-muted/10 px-6 py-3 space-y-3">
-                          <div v-if="Object.keys(m.entries).length > 0">
-                            <p class="text-xs font-medium text-muted mb-1.5 uppercase tracking-wide">Jours travaillés</p>
-                            <div class="space-y-1">
-                              <div
-                                v-for="(entry, date) in m.entries"
-                                :key="date"
-                                class="flex items-center gap-3 text-xs"
-                              >
-                                <span class="w-32 shrink-0 text-muted">{{ dayLabel(date) }}</span>
-                                <span class="w-8 shrink-0 font-medium tabular-nums">{{ coverageLabel(entry.coverage) }}j</span>
-                                <span v-if="entry.title" class="text-muted truncate">{{ entry.title }}</span>
+                      <tr v-if="isExpanded(project.id, m.month)">
+                        <td :colspan="is_shared ? 4 : 5" class="px-0 py-0">
+                          <div class="border-b border-default bg-muted/10 px-6 py-3 space-y-3">
+                            <div v-if="Object.keys(m.entries).length > 0">
+                              <p class="text-xs font-medium text-muted mb-1.5 uppercase tracking-wide">Jours travaillés</p>
+                              <div class="space-y-1">
+                                <div
+                                  v-for="(entry, date) in m.entries"
+                                  :key="date"
+                                  class="flex items-center gap-3 text-xs"
+                                >
+                                  <span class="w-32 shrink-0 text-muted">{{ dayLabel(date) }}</span>
+                                  <span class="w-8 shrink-0 font-medium tabular-nums">{{ coverageLabel(entry.coverage) }}j</span>
+                                  <span v-if="entry.title" class="text-muted truncate">{{ entry.title }}</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <p v-else class="text-xs text-muted italic">Aucune entrée pour ce mois.</p>
+                            <p v-else class="text-xs text-muted italic">Aucune entrée pour ce mois.</p>
 
-                          <div v-if="m.invoices.length > 0">
-                            <p class="text-xs font-medium text-muted mb-1.5 uppercase tracking-wide">Factures</p>
-                            <div class="space-y-1">
-                              <div
-                                v-for="inv in m.invoices"
-                                :key="inv.id"
-                                class="flex items-center gap-3 text-xs"
-                              >
-                                <span class="w-28 shrink-0 text-muted">
-                                  {{ inv.paid_at ? formatDate(inv.paid_at) : 'Non payé' }}
-                                </span>
-                                <span
-                                  class="font-medium tabular-nums"
-                                  :class="inv.paid_at ? 'text-success' : 'text-amber-500'"
-                                >{{ formatCurrency(inv.amount) }}</span>
-                                <span v-if="inv.notes" class="text-muted truncate flex-1">{{ inv.notes }}</span>
-                                <div v-if="!is_shared" class="ml-auto flex items-center gap-1" @click.stop>
-                                  <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="2xs" @click="openEditInvoice(inv)" />
-                                  <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="2xs" :to="destroyInvoice(inv)" preserveScroll />
+                            <div v-if="m.invoices.length > 0">
+                              <p class="text-xs font-medium text-muted mb-1.5 uppercase tracking-wide">Factures</p>
+                              <div class="space-y-1">
+                                <div
+                                  v-for="inv in m.invoices"
+                                  :key="inv.id"
+                                  class="flex items-center gap-3 text-xs"
+                                >
+                                  <span class="w-28 shrink-0 text-muted">
+                                    {{ inv.paid_at ? formatDate(inv.paid_at) : 'Non payé' }}
+                                  </span>
+                                  <span
+                                    class="font-medium tabular-nums"
+                                    :class="inv.paid_at ? 'text-success' : 'text-amber-500'"
+                                  >{{ formatCurrency(inv.amount) }}</span>
+                                  <span v-if="inv.notes" class="text-muted truncate flex-1">{{ inv.notes }}</span>
+                                  <div v-if="!is_shared" class="ml-auto flex items-center gap-1" @click.stop>
+                                    <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="2xs" @click="openEditInvoice(inv)" />
+                                    <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="2xs" :to="destroyInvoice(inv)" preserveScroll />
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           </div>
-                        </div>
+                        </td>
+                      </tr>
+                    </template>
+
+                    <tr v-if="project.months.length === 0">
+                      <td :colspan="is_shared ? 4 : 5" class="px-4 py-8 text-center text-sm text-muted">
+                        Aucune activité enregistrée.
                       </td>
                     </tr>
-                  </template>
+                  </tbody>
 
-                  <tr v-if="project.months.length === 0">
-                    <td :colspan="is_shared ? 4 : 5" class="px-4 py-8 text-center text-sm text-muted">
-                      Aucune activité enregistrée.
-                    </td>
-                  </tr>
-                </tbody>
-
-                <tfoot>
-                  <tr class="border-t-2 border-default bg-muted/30 text-sm font-semibold">
-                    <td class="px-4 py-3">Total</td>
-                    <td class="px-4 py-3 text-right tabular-nums text-muted">
-                      {{ formatCurrency(projectTotals(project).totalWorked) }}
-                      ({{ formatDays(projectTotals(project).totalDays) }})
-                    </td>
-                    <td class="px-4 py-3 text-right tabular-nums text-success">
-                      {{ formatCurrency(projectTotals(project).totalInvoiced) }}
-                      <span v-if="fmtDays(projectTotals(project).totalInvoiced, project.daily_rate)" class="font-normal text-muted">({{ fmtDays(projectTotals(project).totalInvoiced, project.daily_rate) }})</span>
-                    </td>
-                    <td class="px-4 py-3 text-right tabular-nums">
-                      <template v-if="projectTotals(project).remainingToConsume !== null">
-                        <span :class="projectTotals(project).remainingToConsume! < 0 ? 'text-error' : 'text-default'">
-                          {{ formatCurrency(projectTotals(project).remainingToConsume!) }}
-                        </span>
-                        <span v-if="fmtDays(projectTotals(project).remainingToConsume!, project.daily_rate)" class="font-normal text-muted"> ({{ fmtDays(projectTotals(project).remainingToConsume!, project.daily_rate) }})</span>
-                        <span class="font-normal text-muted"> · {{ 100 - totalConsumptionPercent(project)! }}%</span>
-                      </template>
-                      <span v-else class="font-normal text-muted">—</span>
-                    </td>
-                    <td v-if="!is_shared" class="px-2" />
-                  </tr>
-                </tfoot>
-              </table>
+                  <tfoot>
+                    <tr class="border-t-2 border-default bg-muted/30 text-sm font-semibold">
+                      <td class="px-4 py-3">Total</td>
+                      <td class="px-4 py-3 text-right tabular-nums text-muted">
+                        {{ formatCurrency(projectTotals(project).totalWorked) }}
+                        ({{ formatDays(projectTotals(project).totalDays) }})
+                      </td>
+                      <td class="px-4 py-3 text-right tabular-nums text-success">
+                        {{ formatCurrency(projectTotals(project).totalInvoiced) }}
+                        <span v-if="fmtDays(projectTotals(project).totalInvoiced, project.daily_rate)" class="font-normal text-muted">({{ fmtDays(projectTotals(project).totalInvoiced, project.daily_rate) }})</span>
+                      </td>
+                      <td class="px-4 py-3 text-right tabular-nums">
+                        <template v-if="projectTotals(project).remainingToConsume !== null">
+                          <span :class="projectTotals(project).remainingToConsume! < 0 ? 'text-error' : 'text-default'">
+                            {{ formatCurrency(projectTotals(project).remainingToConsume!) }}
+                          </span>
+                          <span v-if="fmtDays(projectTotals(project).remainingToConsume!, project.daily_rate)" class="font-normal text-muted"> ({{ fmtDays(projectTotals(project).remainingToConsume!, project.daily_rate) }})</span>
+                          <span class="font-normal text-muted"> · {{ 100 - totalConsumptionPercent(project)! }}%</span>
+                        </template>
+                        <span v-else class="font-normal text-muted">—</span>
+                      </td>
+                      <td v-if="!is_shared" class="px-2" />
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
 
             <!-- Summary indicators -->
