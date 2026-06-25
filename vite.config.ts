@@ -6,9 +6,6 @@ import { defineConfig } from 'vite'
 import { inertiaSsg } from './vite-plugin-inertia-ssg'
 
 export default defineConfig({
-  resolve: {
-    dedupe: ['@unhead/vue', 'unhead'],
-  },
   ssr: {
     noExternal: ['@nuxt/ui'],
   },

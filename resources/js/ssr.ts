@@ -1,7 +1,7 @@
 import type { InertiaAppSSRResponse, Page } from '@inertiajs/core'
 import { createInertiaApp } from '@inertiajs/vue3'
 import ui from '@nuxt/ui/vue-plugin'
-import { createHead } from '@unhead/vue/server'
+import { createHead, renderSSRHead } from '@unhead/vue/server'
 import { createSSRApp, h } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 
@@ -22,7 +22,7 @@ export default async (page: Page) => {
         .use(ui),
   })
 
-  const { headTags } = head.render()
+  const { headTags } = await renderSSRHead(head)
   app.head.push(headTags)
 
   return app

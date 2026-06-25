@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3'
+import { CalendarDate, type DateValue } from '@internationalized/date'
 import {
   type ActiveElement,
   BarController,
@@ -18,11 +19,11 @@ import {
   Tooltip,
   type TooltipItem,
 } from 'chart.js'
-import { computed, type ComputedRef } from 'vue'
+import { computed, type ComputedRef, onMounted, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
-import { formatDays, today } from '@/utils/date.ts'
+import { formatDays } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
-import { timesheet } from '@/wayfinder/routes'
+import { dashboard, timesheet } from '@/wayfinder/routes'
 import { show as showBilling } from '@/wayfinder/routes/clients/billing'
 import { edit as editProject } from '@/wayfinder/routes/projects'
 
@@ -41,6 +42,8 @@ ChartJS.register(
 )
 
 type DashboardProps = {
+  from: string,
+  to: string,
   kpis: {
     monthDays: number,
     workingDays: number,
@@ -90,8 +93,74 @@ type DashboardProps = {
   }>,
 }
 
-const now = new Date()
-const currentMonthLabel = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+const endMonthDate = computed(() => {
+  const [y, m] = props.to.split('-').map(Number)
+  return new CalendarDate(y!, m!, 1)
+})
+
+const periodLabel = computed(() => {
+  const fmt = (ym: string) => {
+    const [y, m] = ym.split('-').map(Number)
+    return new Date(y!, m! - 1).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
+  }
+  return `${fmt(props.from)} – ${fmt(props.to)}`
+})
+
+const selectedMonthLabel = computed(() => {
+  const [y, m] = props.to.split('-').map(Number)
+  return new Date(y!, m! - 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+})
+
+const isCurrentPeriod = computed(() => {
+  const [y, m] = props.to.split('-').map(Number)
+  const now = new Date()
+  return y === now.getFullYear() && m === now.getMonth() + 1
+})
+
+const calendarValue = computed(() => {
+  const [fy, fm] = props.from.split('-').map(Number)
+  return { start: new CalendarDate(fy!, fm!, 1), end: endMonthDate.value }
+})
+
+const prevPeriod = computed(() => {
+  const [fy, fm] = props.from.split('-').map(Number)
+  const [ty, tm] = props.to.split('-').map(Number)
+  return {
+    from: new CalendarDate(fy!, fm!, 1).subtract({ months: 1 }).toString().slice(0, 7),
+    to: new CalendarDate(ty!, tm!, 1).subtract({ months: 1 }).toString().slice(0, 7),
+  }
+})
+
+const nextPeriod = computed(() => {
+  const [fy, fm] = props.from.split('-').map(Number)
+  const [ty, tm] = props.to.split('-').map(Number)
+  return {
+    from: new CalendarDate(fy!, fm!, 1).add({ months: 1 }).toString().slice(0, 7),
+    to: new CalendarDate(ty!, tm!, 1).add({ months: 1 }).toString().slice(0, 7),
+  }
+})
+
+const pickerOpen = ref(false)
+
+const onRangeSelect = (value: { start: DateValue | undefined, end: DateValue | undefined } | null) => {
+  if (!value?.start || !value?.end) return
+  const from = value.start.toString().slice(0, 7)
+  const to = value.end.toString().slice(0, 7)
+  localStorage.setItem('dashboard_period', JSON.stringify({ from, to }))
+  pickerOpen.value = false
+  router.visit(dashboard({ query: { from, to } }), { preserveScroll: true })
+}
+
+onMounted(() => {
+  const params = new URLSearchParams(window.location.search)
+  if (params.has('from') || params.has('to')) return
+  const stored = localStorage.getItem('dashboard_period')
+  if (!stored) return
+  const { from, to } = JSON.parse(stored) as { from: string, to: string }
+  if (from !== props.from || to !== props.to) {
+    router.visit(dashboard({ query: { from, to } }), { replace: true, preserveScroll: true })
+  }
+})
 
 // ── Chart colors ──────────────────────────────────────────────────────────────
 
@@ -112,6 +181,7 @@ const withAlpha = (color: string, alpha: number): string => color.replace(/\)$/,
 // ── Computed ──────────────────────────────────────────────────────────────────
 
 const projectsWithStats = computed(() => {
+  const now = new Date()
   const totalDays = props.projects.reduce((sum, p) => sum + p.workedDaysCount, 0)
 
   return props.projects
@@ -221,7 +291,7 @@ const barChartOptions = {
   onClick: (_event: ChartEvent, elements: ActiveElement[]) => {
     if (!elements.length) return
     const offset = props.chart.labels.length - 1 - elements[0]!.index
-    const month = today.subtract({ months: offset }).toString().slice(0, 7)
+    const month = endMonthDate.value.subtract({ months: offset }).toString().slice(0, 7)
     router.visit(timesheet({ query: { month } }))
   },
   plugins: {
@@ -302,7 +372,43 @@ const progressTextClass = (percent: number) => {
             <h1 class="text-lg font-semibold">Tableau de bord</h1>
             <p class="text-sm text-muted">Aperçu de votre activité</p>
           </div>
-          <UButton :label="currentMonthLabel" :href="timesheet()" icon="i-lucide-calendar-days" />
+          <div class="flex items-center gap-1">
+            <UButton
+              icon="i-lucide-chevron-left"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              :href="dashboard({ query: prevPeriod })"
+              preserveScroll
+            />
+            <UPopover v-model:open="pickerOpen">
+              <UButton
+                :label="periodLabel"
+                icon="i-lucide-calendar-days"
+                color="neutral"
+                variant="outline"
+                size="sm"
+              />
+              <template #content>
+                <UCalendar
+                  type="month"
+                  range
+                  locale="fr-FR"
+                  :modelValue="calendarValue"
+                  class="p-2"
+                  @update:modelValue="onRangeSelect"
+                />
+              </template>
+            </UPopover>
+            <UButton
+              icon="i-lucide-chevron-right"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              :href="dashboard({ query: nextPeriod })"
+              preserveScroll
+            />
+          </div>
         </div>
 
         <!-- KPIs -->
@@ -311,7 +417,7 @@ const progressTextClass = (percent: number) => {
             <UCard>
               <template #header>
                 <div class="flex items-center justify-between">
-                  <p class="text-sm font-semibold">Jours ce mois</p>
+                  <p class="text-sm font-semibold">{{ isCurrentPeriod ? 'Jours ce mois' : `Jours en ${selectedMonthLabel}` }}</p>
                   <UIcon name="i-lucide-calendar-days" class="text-muted" />
                 </div>
               </template>
@@ -348,7 +454,7 @@ const progressTextClass = (percent: number) => {
             <UCard>
               <template #header>
                 <div class="flex items-center justify-between">
-                  <p class="text-sm font-semibold">Revenus ce mois</p>
+                  <p class="text-sm font-semibold">{{ isCurrentPeriod ? 'Revenus ce mois' : `Revenus en ${selectedMonthLabel}` }}</p>
                   <UIcon name="i-lucide-euro" class="text-muted" />
                 </div>
               </template>
@@ -416,7 +522,7 @@ const progressTextClass = (percent: number) => {
             <UCard>
               <template #header>
                 <div class="flex items-center justify-between">
-                  <p class="text-sm font-semibold">12 derniers mois</p>
+                  <p class="text-sm font-semibold">Sur la période</p>
                   <UIcon name="i-lucide-bar-chart-2" class="text-muted" />
                 </div>
               </template>
@@ -446,7 +552,7 @@ const progressTextClass = (percent: number) => {
         <!-- Chart -->
         <UCard>
           <template #header>
-            <p class="text-sm font-semibold">Activité sur 12 mois</p>
+            <p class="text-sm font-semibold">Activité sur la période</p>
           </template>
           <div class="h-72 cursor-pointer">
             <Bar :data="barChartData" :options="barChartOptions" />

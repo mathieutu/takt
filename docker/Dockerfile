@@ -41,7 +41,7 @@ ENTRYPOINT ["docker-entrypoint"]
 CMD ["--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
 
 # Stage 2: Build front-end assets
-FROM node:alpine AS front
+FROM node:lts-alpine AS front
 WORKDIR /usr/src/app
 
 # Install corepack and enable yarn

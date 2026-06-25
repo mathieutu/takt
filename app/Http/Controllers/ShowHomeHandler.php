@@ -21,7 +21,23 @@ class ShowHomeHandler
         }
 
         $now = CarbonImmutable::now();
-        $rollingYearStart = $now->subMonths(12)->startOfMonth();
+
+        $to = $request->query('to')
+            ? CarbonImmutable::parse($request->query('to'))->startOfMonth()
+            : $now->startOfMonth();
+
+        $from = $request->query('from')
+            ? CarbonImmutable::parse($request->query('from'))->startOfMonth()
+            : $to->subMonths(11);
+
+        $isCurrentOrFuturePeriod = $to->gte($now->startOfMonth());
+        $windowEnd = $isCurrentOrFuturePeriod ? $now : $to->endOfMonth();
+
+        $currentMonthStart = $to;
+        $rollingYearStart = $from;
+        $periodMonths = $from->diffInMonths($to) + 1;
+        $prevYearStart = $from->subMonths($periodMonths);
+        $prevMonthStart = $to->subMonth();
 
         $userClientIds = $request->user()->clients()->withTrashed()->pluck('id');
 
@@ -42,22 +58,20 @@ class ShowHomeHandler
             return redirect()->route('projects.index');
         }
 
-        $currentMonthStart = $now->startOfMonth();
-        $prevYearStart = $now->subMonths(24)->startOfMonth();
-        $prevMonthStart = $currentMonthStart->subMonth();
-
         $allEntries = $projects->flatMap->timesheetEntries;
         $allInvoices = $projects->flatMap->invoices;
 
-        $holidays = app(HolidayService::class)->forMonth($now);
-        $workingDaysInMonth = $this->countWorkingDays($currentMonthStart, $now->endOfMonth(), $holidays);
-        $workingDaysPassed = $this->countWorkingDays($currentMonthStart, $now, $holidays);
+        $holidays = app(HolidayService::class)->forMonth($to);
+        $workingDaysInMonth = $this->countWorkingDays($currentMonthStart, $to->endOfMonth(), $holidays);
+        $workingDaysPassed = $isCurrentOrFuturePeriod
+            ? $this->countWorkingDays($currentMonthStart, $now, $holidays)
+            : $workingDaysInMonth;
         $monthAdvancement = $workingDaysInMonth > 0
             ? round($workingDaysPassed / $workingDaysInMonth, 4)
             : 0;
 
         $monthDays = round(
-            $allEntries->filter(fn ($e) => $e->date->year === $now->year && $e->date->month === $now->month)
+            $allEntries->filter(fn ($e) => $e->date->year === $to->year && $e->date->month === $to->month)
                 ->sum('coverage') / 100,
             2
         );
@@ -67,9 +81,9 @@ class ShowHomeHandler
             2
         );
 
-        $monthRevenue = $this->revenueForMonth($projects, $now);
+        $monthRevenue = $this->revenueForMonth($projects, $to);
         $prevMonthRevenue = $this->revenueForMonth($projects, $prevMonthStart);
-        $yearRevenue = $this->revenueInRange($projects, $rollingYearStart, $now);
+        $yearRevenue = $this->revenueInRange($projects, $rollingYearStart, $windowEnd);
         $prevYearRevenue = $this->revenueInRange($projects, $prevYearStart, $rollingYearStart->subDay());
 
         $projectedRevenue = $monthAdvancement > 0
@@ -98,23 +112,23 @@ class ShowHomeHandler
             ->groupBy(fn ($p) => $p->client->name)
             ->map(fn ($clientProjects, $clientName) => [
                 'clientName' => $clientName,
-                'revenue' => $this->revenueInRange($clientProjects, $rollingYearStart, $now),
+                'revenue' => $this->revenueInRange($clientProjects, $rollingYearStart, $windowEnd),
             ])
             ->filter(fn ($item) => $item['revenue'] > 0)
             ->sortByDesc('revenue')
             ->values()
             ->all();
 
-        [$totalDays12m, $weightedSum] = $projects->reduce(function ($carry, $p) use ($rollingYearStart) {
+        [$totalDays12m, $weightedSum] = $projects->reduce(function ($carry, $p) use ($rollingYearStart, $windowEnd) {
             $days = $p->timesheetEntries
-                ->filter(fn ($e) => $e->date->gte($rollingYearStart))
+                ->filter(fn ($e) => $e->date->gte($rollingYearStart) && $e->date->lte($windowEnd))
                 ->sum('coverage') / 100;
 
             return [$carry[0] + $days, $carry[1] + $days * $p->daily_rate];
         }, [0, 0]);
         $weightedRate = $totalDays12m > 0 ? (int) round($weightedSum / $totalDays12m) : 0;
 
-        $months = collect(range(11, 0))->map(fn ($i) => $now->subMonths($i)->startOfMonth());
+        $months = collect(range($periodMonths - 1, 0))->map(fn ($i) => $to->subMonths($i)->startOfMonth());
         $chartLabels = $months->map(fn ($m) => $m->format('M'))->all();
 
         $chartProjects = $projects->map(fn ($p) => [
@@ -130,11 +144,11 @@ class ShowHomeHandler
             ->sum('amount')
         )->values()->all();
 
-        $projectsData = $projects->map(function ($p) use ($now, $currentMonthStart) {
+        $projectsData = $projects->map(function ($p) use ($to, $currentMonthStart) {
             $workedDaysCount = round($p->timesheetEntries->sum('coverage') / 100, 2);
             $monthDaysCount = round(
                 $p->timesheetEntries
-                    ->filter(fn ($e) => $e->date->year === $now->year && $e->date->month === $now->month)
+                    ->filter(fn ($e) => $e->date->year === $to->year && $e->date->month === $to->month)
                     ->sum('coverage') / 100,
                 2
             );
@@ -167,6 +181,8 @@ class ShowHomeHandler
         })->values()->all();
 
         return Inertia::render('DashboardPage', [
+            'from' => $from->format('Y-m'),
+            'to' => $to->format('Y-m'),
             'kpis' => [
                 'monthDays' => $monthDays,
                 'workingDays' => $workingDaysInMonth,
