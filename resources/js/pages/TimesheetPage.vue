@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ErrorBag, Errors, FormComponentOptimisticCallback, PageProps as InertiaPageProps } from '@inertiajs/core'
 import { Form, Head, router } from '@inertiajs/vue3'
+import { CalendarDate, type DateValue } from '@internationalized/date'
 import { computed, nextTick, ref, watch } from 'vue'
 import TimesheetGrid from '@/components/TimesheetGrid.vue'
 import {
@@ -12,6 +13,7 @@ import {
   today,
 } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
+import { timesheet } from '@/wayfinder/routes'
 import { show as showBilling } from '@/wayfinder/routes/clients/billing'
 import { sync as syncEntries } from '@/wayfinder/routes/projects/entries'
 
@@ -51,6 +53,15 @@ const holidays = computed(() => new Map(Object.entries(props.holidays)))
 
 const tableScrollRef = ref<HTMLElement | null>(null)
 const activeEntry = ref<ActiveEntry | null>(null)
+const monthPickerOpen = ref(false)
+
+const currentMonthCalendarDate = computed(() => new CalendarDate(props.current.year, props.current.month, 1))
+
+const onMonthSelect = (value: DateValue | { start?: DateValue, end?: DateValue } | DateValue[] | null | undefined) => {
+  if (!value || Array.isArray(value) || 'start' in value) return
+  monthPickerOpen.value = false
+  router.visit(timesheet({ query: { month: value.toString().slice(0, 7) } }))
+}
 
 const centerTodayColumn = (behavior: ScrollBehavior = 'auto') => {
   const isCurrentMonth =
@@ -180,9 +191,25 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
           <UTooltip text="Mois précédent" :kbds="['p']">
             <UButton :to="urls.prevMonth" icon="i-lucide-chevron-left" color="neutral" variant="ghost" size="xs" />
           </UTooltip>
-          <span class="sm:min-w-35 text-center text-sm font-medium text-default">
-            {{ formatMonthName(current.month) }} {{ current.year }}
-          </span>
+          <UPopover v-model:open="monthPickerOpen">
+            <UButton
+              :label="`${formatMonthName(current.month)} ${current.year}`"
+              icon="i-lucide-calendar-days"
+              color="neutral"
+              variant="outline"
+              size="sm"
+            />
+            <template #content>
+              <UCalendar
+                type="month"
+                size="sm"
+                locale="fr-FR"
+                :modelValue="currentMonthCalendarDate"
+                class="p-2"
+                @update:modelValue="onMonthSelect"
+              />
+            </template>
+          </UPopover>
           <UTooltip text="Mois suivant" :kbds="['n']">
             <UButton :to="urls.nextMonth" icon="i-lucide-chevron-right" color="neutral" variant="ghost" size="xs" />
           </UTooltip>
