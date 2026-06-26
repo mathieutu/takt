@@ -5,7 +5,7 @@ import { queryParams, type RouteDefinition, type RouteQueryOptions } from "./../
 
 /**
  * @see \App\Http\Controllers\UserController::update
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:26
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:30
  * @route "/profile"
  */
 export const update = (options?: RouteQueryOptions): RouteDefinition<"put"> => ({
@@ -20,7 +20,7 @@ update.definition = {
 
 /**
  * @see \App\Http\Controllers\UserController::update
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:26
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:30
  * @route "/profile"
  */
 update.url = (options?: RouteQueryOptions) => {
@@ -29,7 +29,7 @@ update.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\UserController::update
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:26
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:30
  * @route "/profile"
  */
 update.put = (options?: RouteQueryOptions): RouteDefinition<"put"> => ({
@@ -46,7 +46,7 @@ update.put = (options?: RouteQueryOptions): RouteDefinition<"put"> => ({
 
 /**
  * @see \App\Http\Controllers\UserController::destroy
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:40
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:44
  * @route "/profile"
  */
 export const destroy = (options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
@@ -61,7 +61,7 @@ destroy.definition = {
 
 /**
  * @see \App\Http\Controllers\UserController::destroy
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:40
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:44
  * @route "/profile"
  */
 destroy.url = (options?: RouteQueryOptions) => {
@@ -70,7 +70,7 @@ destroy.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\UserController::destroy
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:40
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:44
  * @route "/profile"
  */
 destroy.delete = (options?: RouteQueryOptions): RouteDefinition<"delete"> => ({

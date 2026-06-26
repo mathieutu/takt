@@ -5,7 +5,7 @@ import { queryParams, type RouteDefinition, type RouteQueryOptions } from "./../
 
 /**
  * @see \App\Http\Controllers\AuthController::redirect
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:22
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:23
  * @route "/login/redirect"
  */
 export const redirect = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -20,7 +20,7 @@ redirect.definition = {
 
 /**
  * @see \App\Http\Controllers\AuthController::redirect
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:22
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:23
  * @route "/login/redirect"
  */
 redirect.url = (options?: RouteQueryOptions) => {
@@ -29,7 +29,7 @@ redirect.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\AuthController::redirect
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:22
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:23
  * @route "/login/redirect"
  */
 redirect.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -39,7 +39,7 @@ redirect.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\AuthController::redirect
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:22
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:23
  * @route "/login/redirect"
  */
 redirect.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -56,7 +56,7 @@ redirect.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\AuthController::callback
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:27
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:28
  * @route "/login/callback"
  */
 export const callback = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -71,7 +71,7 @@ callback.definition = {
 
 /**
  * @see \App\Http\Controllers\AuthController::callback
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:27
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:28
  * @route "/login/callback"
  */
 callback.url = (options?: RouteQueryOptions) => {
@@ -80,7 +80,7 @@ callback.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\AuthController::callback
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:27
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:28
  * @route "/login/callback"
  */
 callback.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -90,7 +90,7 @@ callback.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\AuthController::callback
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:27
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:28
  * @route "/login/callback"
  */
 callback.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -107,7 +107,7 @@ callback.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\AuthController::disabled
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:53
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:54
  * @route "/login/disabled"
  */
 export const disabled = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -122,7 +122,7 @@ disabled.definition = {
 
 /**
  * @see \App\Http\Controllers\AuthController::disabled
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:53
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:54
  * @route "/login/disabled"
  */
 disabled.url = (options?: RouteQueryOptions) => {
@@ -131,7 +131,7 @@ disabled.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\AuthController::disabled
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:53
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:54
  * @route "/login/disabled"
  */
 disabled.post = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({

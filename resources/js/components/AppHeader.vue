@@ -4,8 +4,11 @@ import type { NavigationMenuItem } from '@nuxt/ui/components/NavigationMenu.vue.
 import { router, usePage } from '@inertiajs/vue3'
 import { computed, onUnmounted, ref } from 'vue'
 import TaktLogo from '@/components/TaktLogo.vue'
+import { useCommandPalette } from '@/composables/useCommandPalette'
 import { dashboard, login, logout, profile, timesheet } from '@/wayfinder/routes'
 import projects from '@/wayfinder/routes/projects'
+
+const { open } = useCommandPalette()
 
 const page = usePage()
 const user = computed(() => page.props.auth?.user)
@@ -46,6 +49,15 @@ const mobileMenuItems = computed<NavigationMenuItem[]>(() => [
     <UNavigationMenu :items="navItems" />
 
     <template #right>
+      <UTooltip v-if="user" text="Rechercher" :kbds="['meta', 'K']">
+        <UButton
+          icon="i-lucide-search"
+          color="neutral"
+          variant="ghost"
+          aria-label="Rechercher"
+          @click="open()"
+        />
+      </UTooltip>
       <template v-if="user">
         <UButton
           class="lg:hidden"

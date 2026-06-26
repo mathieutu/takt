@@ -11,7 +11,7 @@ export namespace Inertia {
         /**
          * @see [\App\Http\Controllers\ShowHomeHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowHomeHandler.php)
          */
-        export type DashboardPage = Inertia.SharedData & { kpis: { monthDays: number, workingDays: number, fillRate: number, monthRevenue: number, projectedRevenue: number, yearRevenue: number, outstandingAmount: unknown, outstandingCount: unknown, overdueCount: unknown, weightedRate: number, trendDays: number, trendRevenue: number, trendYear: number }, chart: { labels: unknown, projects: unknown, billed: unknown }, projects: unknown, monthAdvancement: number }
+        export type DashboardPage = Inertia.SharedData & { from: string, to: string, firstEntryMonth: unknown, kpis: { monthDays: number, workingDays: boolean | null, fillRate: number, monthRevenue: number, projectedRevenue: number, periodRevenue: number, outstandingAmount: unknown, outstandingCount: unknown, overdueCount: unknown, periodWorkingDays: number, trendDays: number, trendRevenue: number, trendPeriod: number, prevPeriodRevenue: number, prevMonthRevenue: number }, chart: { labels: unknown, projects: unknown, billed: unknown, workingDays: unknown }, projects: unknown, monthAdvancement: number, outstandingInvoices: unknown, periodRevenueByClient: unknown }
 
         /**
          * @see [\App\Http\Controllers\AuthController::show](/Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php)
@@ -48,7 +48,7 @@ export namespace Inertia {
         /**
          * @see [\App\Http\Controllers\ShowTimesheetHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowTimesheetHandler.php)
          */
-        export type TimesheetPage = Inertia.SharedData & { current: { year: number, month: number }, urls: { nextMonth: string, prevMonth: string }, holidays: [], projects: unknown }
+        export type TimesheetPage = Inertia.SharedData & { current: { year: number, month: number }, urls: { nextMonth: string, prevMonth: string }, holidays: [], invoices: unknown, projects: unknown }
     }
 }
 
@@ -78,6 +78,13 @@ export namespace App {
 
                     /**
                      * @see [\App\Http\Controllers\AuthController::show](/Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+
+                export namespace Demo {
+                    /**
+                     * @see [\App\Http\Controllers\AuthController::demo](/Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
@@ -331,7 +338,7 @@ export namespace App {
                     export type Request = {    amount: number;
                         paid_at?: string | null;
                         notes?: string | null;
-                        created_at?: string | null;}
+                        created_at: string;}
                 }
 
                 export namespace Update {
@@ -341,12 +348,21 @@ export namespace App {
                     export type Request = {    amount: number;
                         paid_at?: string | null;
                         notes?: string | null;
-                        created_at?: string | null;}
+                        created_at: string;}
                 }
 
                 export namespace Destroy {
                     /**
                      * @see [\App\Http\Controllers\ProjectInvoiceController::destroy](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+            }
+
+            export namespace CommandBarController {
+                export namespace __invoke {
+                    /**
+                     * @see [\App\Http\Controllers\CommandBarController::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/CommandBarController.php)
                      */
                     export type Request = Record<string, unknown>
                 }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\CommandBarController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectInvoiceController;
 use App\Http\Controllers\ShowHomeHandler;
@@ -53,6 +54,7 @@ Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
 
     // Pages
     Route::get('timesheet', ShowTimesheetHandler::class)->name('timesheet');
+    Route::get('command-bar', CommandBarController::class)->name('command-bar');
 });
 
 Route::get('shares/{token}', ShowSharedHandler::class)->name('shares.show');

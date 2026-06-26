@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3'
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import AppHeader from '@/components/AppHeader.vue'
+import CommandPalette from '@/components/CommandPalette.vue'
+import { useCommandPalette } from '@/composables/useCommandPalette'
 import { formatDateTime } from '@/utils/date.ts'
 import { useFlash } from '../composables/useFlash'
 
@@ -9,11 +11,24 @@ const page = usePage()
 const updatedAt = computed(() => page.props.updatedAt)
 
 useFlash()
+
+const { toggle } = useCommandPalette()
+
+const handleKeydown = (e: KeyboardEvent) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault()
+    toggle()
+  }
+}
+
+onMounted(() => window.addEventListener('keydown', handleKeydown))
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 </script>
 
 <template>
   <UApp>
     <AppHeader />
+    <CommandPalette />
 
     <div v-if="page.props.auth?.isDemo" class="bg-primary-200 text-primary-800 px-4 py-4 text-center text-base">
       Compte de démonstration · Vous pouvez modifier les données, mais elles sont réinitialisées régulièrement.
