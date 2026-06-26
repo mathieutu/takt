@@ -50,15 +50,15 @@ type DashboardProps = {
     fillRate: number,
     monthRevenue: number,
     projectedRevenue: number,
-    yearRevenue: number,
+    periodRevenue: number,
     outstandingAmount: number,
     outstandingCount: number,
     overdueCount: number,
-    weightedRate: number,
+    periodWorkingDays: number,
     trendDays: number,
     trendRevenue: number,
-    trendYear: number,
-    prevYearRevenue: number,
+    trendPeriod: number,
+    prevPeriodRevenue: number,
     prevMonthRevenue: number,
   },
   chart: {
@@ -88,7 +88,7 @@ type DashboardProps = {
     amount: number,
     daysWaiting: number,
   }>,
-  yearRevenueByClient: Array<{
+  periodRevenueByClient: Array<{
     clientName: string,
     revenue: number,
   }>,
@@ -180,6 +180,13 @@ const PROJECT_PALETTE = [
   '--color-amber-500',
   '--color-teal-500',
   '--color-purple-500',
+  '--color-orange-500',
+  '--color-cyan-500',
+  '--color-emerald-500',
+  '--color-pink-500',
+  '--color-sky-500',
+  '--color-lime-500',
+  '--color-violet-500',
 ]
 
 const getCssColor = (varName: string): string => (
@@ -365,6 +372,18 @@ const barChartOptions = {
   },
 }
 
+const totalPeriodDays = computed(() =>
+  props.projects.reduce((sum, p) => sum + p.periodDaysCount, 0),
+)
+
+const periodDailyRate = computed(() =>
+  totalPeriodDays.value > 0 ? Math.round(props.kpis.periodRevenue / totalPeriodDays.value) : 0,
+)
+
+const periodFillRate = computed(() =>
+  props.kpis.periodWorkingDays > 0 ? Math.round((totalPeriodDays.value / props.kpis.periodWorkingDays) * 100) : 0,
+)
+
 const progressBarClass = (percent: number) => {
   if (percent > 100) return 'bg-error'
   if (percent >= 80) return 'bg-warning'
@@ -462,7 +481,7 @@ const progressTextClass = (percent: number) => {
                 />
               </div>
               <div class="mt-1 flex items-center justify-between">
-                <p class="text-xs text-muted">{{ kpis.fillRate }}% remplis</p>
+                <p class="text-xs text-muted">{{ kpis.fillRate }}% d'occupation</p>
                 <span
                   class="flex items-center gap-0.5 text-xs"
                   :class="kpis.trendDays >= 0 ? 'text-success' : 'text-error'"
@@ -543,14 +562,14 @@ const progressTextClass = (percent: number) => {
                   <span class="truncate" :class="inv.daysWaiting > 30 ? 'text-error' : 'text-muted'">{{ inv.clientName }}</span>
                   <span class="shrink-0 font-medium" :class="inv.daysWaiting > 30 ? 'text-error' : ''">
                     {{ formatCurrency(inv.amount) }}
-                    <span class="font-normal text-muted">— {{ inv.daysWaiting }} j</span>
+                    <span class="font-normal text-muted"> depuis {{ formatDays(inv.daysWaiting) }}</span>
                   </span>
                 </div>
               </div>
             </template>
           </UTooltip>
 
-          <UTooltip :disabled="yearRevenueByClient.length === 0" :delayDuration="300" :ui="tooltipUi">
+          <UTooltip :disabled="periodRevenueByClient.length === 0" :delayDuration="300" :ui="tooltipUi">
             <UCard>
               <template #header>
                 <div class="flex items-center justify-between">
@@ -558,23 +577,36 @@ const progressTextClass = (percent: number) => {
                   <UIcon name="i-lucide-bar-chart-2" class="text-muted" />
                 </div>
               </template>
-              <p class="text-2xl font-bold">{{ formatCurrency(kpis.yearRevenue) }}</p>
+              <p class="text-2xl font-bold">{{ formatCurrency(kpis.periodRevenue) }}</p>
               <p class="mt-1 text-xs text-muted">
-                <span class="font-medium">{{ formatCurrency(kpis.weightedRate) }}/j</span> · <span class="font-medium">{{ formatCurrency(Math.round(kpis.yearRevenue / periodMonths)) }}/mois</span>
+                <span class="font-medium">{{ formatDays(totalPeriodDays) }}</span> · <span class="font-medium">{{ formatCurrency(periodDailyRate) }}/j</span> · <span class="font-medium">{{ formatCurrency(Math.round(kpis.periodRevenue / periodMonths)) }}/mois</span>
               </p>
-              <p
-                class="mt-1 flex items-center gap-0.5 text-xs"
-                :class="kpis.trendYear >= 0 ? 'text-success' : 'text-error'"
-              >
-                <UIcon :name="kpis.trendYear >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'" class="size-3 shrink-0" />
-                <span>{{ kpis.trendYear >= 0 ? '+' : '' }}{{ kpis.trendYear }}% {{ periodMonths > 1 ? `vs les ${periodMonths} précédents` : 'vs le mois précédent' }} ({{ formatCurrency(kpis.prevYearRevenue) }})</span>
-              </p>
+              <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-elevated">
+                <div
+                  class="h-1.5 rounded-full bg-primary transition-all"
+                  :style="{ width: `${Math.min(periodFillRate, 100)}%` }"
+                />
+              </div>
+              <div class="mt-1 flex items-center justify-between">
+                <p class="text-xs text-muted">{{ periodFillRate }}% d'occupation</p>
+                <span
+                  class="flex items-center gap-0.5 text-xs"
+                  :class="kpis.trendPeriod >= 0 ? 'text-success' : 'text-error'"
+                >
+                  <UIcon :name="kpis.trendPeriod >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'" class="size-3" />
+                  {{ kpis.trendPeriod >= 0 ? '+' : '' }}{{ kpis.trendPeriod }}%
+                </span>
+              </div>
             </UCard>
             <template #content>
-              <div class="min-w-48 space-y-1 text-xs">
-                <div v-for="item in yearRevenueByClient" :key="item.clientName" class="flex justify-between gap-4">
+              <div class="min-w-52 space-y-1 text-xs">
+                <div v-for="item in periodRevenueByClient" :key="item.clientName" class="flex justify-between gap-4">
                   <span class="truncate text-muted">{{ item.clientName }}</span>
                   <span class="shrink-0 font-medium">{{ formatCurrency(item.revenue) }}</span>
+                </div>
+                <div class="border-t border-default pt-1.5 text-muted">
+                  <div>{{ periodFillRate }}% d'occupation sur {{ kpis.periodWorkingDays }} j. ouvrés</div>
+                  <div>{{ kpis.trendPeriod >= 0 ? '+' : '' }}{{ kpis.trendPeriod }}% {{ periodMonths > 1 ? `vs les ${periodMonths} précédents` : 'vs le mois précédent' }} ({{ formatCurrency(kpis.prevPeriodRevenue) }})</div>
                 </div>
               </div>
             </template>

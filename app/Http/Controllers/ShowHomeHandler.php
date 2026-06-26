@@ -62,8 +62,11 @@ class ShowHomeHandler
         $allInvoices = $projects->flatMap->invoices;
         $firstEntryMonth = $allEntries->min('date')?->format('Y-m');
 
-        $holidays = app(HolidayService::class)->forMonth($to);
+        $holidayService = app(HolidayService::class);
+        $holidays = $holidayService->forMonth($to);
         $workingDaysInMonth = $this->countWorkingDays($currentMonthStart, $to->endOfMonth(), $holidays);
+        $periodHolidays = $holidayService->forPeriod($rollingYearStart, $windowEnd);
+        $periodWorkingDays = $this->countWorkingDays($rollingYearStart, $windowEnd, $periodHolidays);
         $workingDaysPassed = $isCurrentOrFuturePeriod
             ? $this->countWorkingDays($currentMonthStart, $now, $holidays)
             : $workingDaysInMonth;
@@ -84,8 +87,8 @@ class ShowHomeHandler
 
         $monthRevenue = $this->revenueForMonth($projects, $to);
         $prevMonthRevenue = $this->revenueForMonth($projects, $prevMonthStart);
-        $yearRevenue = $this->revenueInRange($projects, $rollingYearStart, $windowEnd);
-        $prevYearRevenue = $this->revenueInRange($projects, $prevYearStart, $rollingYearStart->subDay());
+        $periodRevenue = $this->revenueInRange($projects, $rollingYearStart, $windowEnd);
+        $prevPeriodRevenue = $this->revenueInRange($projects, $prevYearStart, $rollingYearStart->subDay());
 
         $projectedRevenue = $monthAdvancement > 0
             ? (int) round($monthRevenue / $monthAdvancement)
@@ -93,7 +96,7 @@ class ShowHomeHandler
 
         $trendDays = $prevMonthDays > 0 ? (int) round(($monthDays - $prevMonthDays) / $prevMonthDays * 100) : 0;
         $trendRevenue = $prevMonthRevenue > 0 ? (int) round(($projectedRevenue - $prevMonthRevenue) / $prevMonthRevenue * 100) : 0;
-        $trendYear = $prevYearRevenue > 0 ? (int) round(($yearRevenue - $prevYearRevenue) / $prevYearRevenue * 100) : 0;
+        $trendPeriod = $prevPeriodRevenue > 0 ? (int) round(($periodRevenue - $prevPeriodRevenue) / $prevPeriodRevenue * 100) : 0;
 
         $outstanding = $allInvoices->whereNull('paid_at');
         $outstandingAmount = $outstanding->sum('amount');
@@ -109,7 +112,7 @@ class ShowHomeHandler
             ])
         )->sortByDesc('daysWaiting')->values()->all();
 
-        $yearRevenueByClient = $projects
+        $periodRevenueByClient = $projects
             ->groupBy(fn ($p) => $p->client->name)
             ->map(fn ($clientProjects, $clientName) => [
                 'clientName' => $clientName,
@@ -119,15 +122,6 @@ class ShowHomeHandler
             ->sortByDesc('revenue')
             ->values()
             ->all();
-
-        [$totalDays12m, $weightedSum] = $projects->reduce(function ($carry, $p) use ($rollingYearStart, $windowEnd) {
-            $days = $p->timesheetEntries
-                ->filter(fn ($e) => $e->date->gte($rollingYearStart) && $e->date->lte($windowEnd))
-                ->sum('coverage') / 100;
-
-            return [$carry[0] + $days, $carry[1] + $days * $p->daily_rate];
-        }, [0, 0]);
-        $weightedRate = $totalDays12m > 0 ? (int) round($weightedSum / $totalDays12m) : 0;
 
         $months = collect(range($periodMonths - 1, 0))->map(fn ($i) => $to->subMonths($i)->startOfMonth());
         $chartLabels = $months->map(fn ($m) => $m->format('M'))->all();
@@ -202,15 +196,15 @@ class ShowHomeHandler
                 'fillRate' => $workingDaysInMonth > 0 ? (int) round($monthDays / $workingDaysInMonth * 100) : 0,
                 'monthRevenue' => $monthRevenue,
                 'projectedRevenue' => $projectedRevenue,
-                'yearRevenue' => $yearRevenue,
+                'periodRevenue' => $periodRevenue,
                 'outstandingAmount' => $outstandingAmount,
                 'outstandingCount' => $outstandingCount,
                 'overdueCount' => $overdueCount,
-                'weightedRate' => $weightedRate,
+                'periodWorkingDays' => $periodWorkingDays,
                 'trendDays' => $trendDays,
                 'trendRevenue' => $trendRevenue,
-                'trendYear' => $trendYear,
-                'prevYearRevenue' => $prevYearRevenue,
+                'trendPeriod' => $trendPeriod,
+                'prevPeriodRevenue' => $prevPeriodRevenue,
                 'prevMonthRevenue' => $prevMonthRevenue,
             ],
             'chart' => [
@@ -221,7 +215,7 @@ class ShowHomeHandler
             'projects' => $projectsData,
             'monthAdvancement' => $monthAdvancement,
             'outstandingInvoices' => $outstandingInvoices,
-            'yearRevenueByClient' => $yearRevenueByClient,
+            'periodRevenueByClient' => $periodRevenueByClient,
         ]);
     }
 

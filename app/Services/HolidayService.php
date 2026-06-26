@@ -27,4 +27,18 @@ class HolidayService
             ARRAY_FILTER_USE_KEY,
         );
     }
+
+    public function forPeriod(CarbonInterface $from, CarbonInterface $to): array
+    {
+        $holidays = [];
+        for ($year = $from->year; $year <= $to->year; $year++) {
+            $holidays = array_merge($holidays, $this->forYear($year));
+        }
+
+        return array_filter(
+            $holidays,
+            fn (string $key) => $key >= $from->toDateString() && $key <= $to->toDateString(),
+            ARRAY_FILTER_USE_KEY,
+        );
+    }
 }
