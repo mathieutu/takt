@@ -139,6 +139,12 @@ class ShowHomeHandler
             ->sum('amount')
         )->values()->all();
 
+        $chartWorkingDays = $months->map(fn ($m) => $this->countWorkingDays(
+            $m,
+            $m->endOfMonth(),
+            $holidayService->forMonth($m),
+        ))->values()->all();
+
         $projectsData = $projects
             ->filter(fn ($p) => $p->timesheetEntries
                 ->contains(fn ($e) => $e->date->gte($rollingYearStart) && $e->date->lte($windowEnd))
@@ -211,6 +217,7 @@ class ShowHomeHandler
                 'labels' => $chartLabels,
                 'projects' => $chartProjects,
                 'billed' => $chartBilled,
+                'workingDays' => $chartWorkingDays,
             ],
             'projects' => $projectsData,
             'monthAdvancement' => $monthAdvancement,

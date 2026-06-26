@@ -10,7 +10,6 @@ import {
   type ChartDataset,
   type ChartEvent,
   Chart as ChartJS,
-  Filler,
   LinearScale,
   LineController,
   LineElement,
@@ -38,7 +37,6 @@ ChartJS.register(
   LineElement,
   PointElement,
   Tooltip,
-  Filler,
 )
 
 type DashboardProps = {
@@ -65,6 +63,7 @@ type DashboardProps = {
     labels: string[],
     projects: Array<{ name: string, data: number[] }>,
     billed: number[],
+    workingDays: number[],
   },
   projects: Array<{
     id: string,
@@ -307,6 +306,36 @@ const barChartData = computed(() => ({
   ],
 })) as ComputedRef<ChartData<'bar', number[]>>
 
+const workingDaysMarkerPlugin = {
+  id: 'workingDaysMarker',
+  afterDatasetsDraw(chart: ChartJS) {
+    const workingDays = props.chart.workingDays
+    const yScale = chart.scales.y
+    if (!yScale || !workingDays.length) return
+
+    const firstBarMeta = chart.getDatasetMeta(0)
+    if (!firstBarMeta?.data?.length) return
+
+    const { ctx } = chart
+    ctx.save()
+    ctx.strokeStyle = 'rgba(156,163,175,0.6)'
+    ctx.lineWidth = 1
+    ctx.setLineDash([6, 4])
+
+    firstBarMeta.data.forEach((bar: any, i: number) => {
+      const v = workingDays[i]
+      if (v === undefined) return
+      const y = yScale.getPixelForValue(v)
+      ctx.beginPath()
+      ctx.moveTo(bar.x - bar.width / 2, y)
+      ctx.lineTo(bar.x + bar.width / 2, y)
+      ctx.stroke()
+    })
+
+    ctx.restore()
+  },
+}
+
 const barChartOptions = {
   responsive: true,
   maintainAspectRatio: false,
@@ -334,6 +363,17 @@ const barChartOptions = {
         ? (props.chart.billed[ctx.dataIndex] ?? 0) > 0
         : (ctx.parsed.y ?? 0) > 0,
       callbacks: {
+        title: (items: TooltipItem<'bar'>[]) => {
+          if (!items.length) return ''
+          const i = items[0]!.dataIndex
+          const { year: fromYear, month: fromMonth } = parseYearMonth(props.from)
+          const date = new CalendarDate(fromYear, fromMonth, 1).add({ months: i })
+          const label = new Date(date.year, date.month - 1)
+            .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+            .replace(/^./, c => c.toUpperCase())
+          const v = props.chart.workingDays[i]
+          return v !== undefined ? `${label} (${formatDays(v)}. ouvrés)` : label
+        },
         label: (ctx: TooltipItem<'bar'>) => {
           if (ctx.dataset.label === 'Facturé') {
             return ` Facturé : ${formatCurrency(props.chart.billed[ctx.dataIndex]!)}`
@@ -619,7 +659,7 @@ const progressTextClass = (percent: number) => {
             <p class="text-sm font-semibold">Activité sur la période</p>
           </template>
           <div class="h-72 cursor-pointer">
-            <Bar :data="barChartData" :options="barChartOptions" />
+            <Bar :data="barChartData" :options="barChartOptions" :plugins="[workingDaysMarkerPlugin]" />
           </div>
         </UCard>
 
