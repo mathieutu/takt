@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\TimesheetEntry;
 use App\Services\HolidayService;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonPeriod;
@@ -41,11 +42,14 @@ class ShowHomeHandler
 
         $userClientIds = $request->user()->clients()->withTrashed()->pluck('id');
 
+        $minDate = TimesheetEntry::whereIn('project_id', Project::withTrashed()->whereIn('client_id', $userClientIds)->pluck('id'))->min('date');
+        $firstEntryMonth = $minDate ? CarbonImmutable::parse($minDate)->format('Y-m') : null;
+
         $projects = Project::withTrashed()
             ->whereIn('client_id', $userClientIds)
-            ->where(function ($q) use ($rollingYearStart) {
+            ->where(function ($q) use ($rollingYearStart, $windowEnd) {
                 $q->whereNull('deleted_at')
-                    ->orWhereHas('timesheetEntries', fn ($q) => $q->where('date', '>=', $rollingYearStart));
+                    ->orWhereHas('timesheetEntries', fn ($q) => $q->whereBetween('date', [$rollingYearStart, $windowEnd]));
             })
             ->with([
                 'client' => fn ($q) => $q->withTrashed(),
@@ -60,7 +64,6 @@ class ShowHomeHandler
 
         $allEntries = $projects->flatMap->timesheetEntries;
         $allInvoices = $projects->flatMap->invoices;
-        $firstEntryMonth = $allEntries->min('date')?->format('Y-m');
 
         $holidayService = app(HolidayService::class);
         $holidays = $holidayService->forMonth($to);
