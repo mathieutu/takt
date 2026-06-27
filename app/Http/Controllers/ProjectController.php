@@ -190,9 +190,20 @@ class ProjectController
         ]);
 
         foreach ($validated['entries'] as $entry) {
+            $data = Arr::except($entry, 'date');
+            $isEmpty = ($data['coverage'] ?? 0) === 0
+                && blank($data['title'] ?? null)
+                && blank($data['description'] ?? null);
+
+            if ($isEmpty) {
+                TimesheetEntry::where(['project_id' => $project->id, 'date' => $entry['date']])->delete();
+
+                continue;
+            }
+
             TimesheetEntry::updateOrCreate(
                 ['project_id' => $project->id, 'date' => $entry['date']],
-                Arr::except($entry, 'date'),
+                $data,
             );
         }
 
