@@ -5,6 +5,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CommandBarController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectInvoiceController;
+use App\Http\Controllers\ShowApiDocHandler;
 use App\Http\Controllers\ShowHomeHandler;
 use App\Http\Controllers\ShowSharedHandler;
 use App\Http\Controllers\ShowTimesheetHandler;
@@ -33,6 +34,8 @@ Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
     Route::get('profile', [UserController::class, 'edit'])->name('profile');
     Route::put('profile', [UserController::class, 'update'])->name('profile.update');
     Route::delete('profile', [UserController::class, 'destroy'])->name('profile.destroy');
+    Route::post('profile/tokens/regenerate', [UserController::class, 'regenerateToken'])->name('profile.tokens.regenerate');
+    Route::delete('profile/tokens', [UserController::class, 'deleteToken'])->name('profile.tokens.destroy');
 
     // Clients
     Route::resource('clients', ClientController::class)->only(['edit', 'update', 'destroy'])->withTrashed(['destroy']);
@@ -54,6 +57,7 @@ Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
 
     // Pages
     Route::get('timesheet', ShowTimesheetHandler::class)->name('timesheet');
+    Route::get('docs/api', ShowApiDocHandler::class)->name('docs.api');
     Route::get('command-bar', CommandBarController::class)->name('command-bar');
 });
 

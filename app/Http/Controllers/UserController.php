@@ -9,6 +9,7 @@ use App\Models\TimesheetEntry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,11 +20,12 @@ class UserController
         $user = $request->user();
 
         return Inertia::render('ProfilePage', [
-            'user' => [
-                'name' => $user->name,
-                'email' => $user->email,
-                'github_id' => $user->github_id,
-            ],
+            'user' => $user->export([
+                'name',
+                'email',
+                'github_id',
+                'api_token',
+            ]),
         ]);
     }
 
@@ -39,6 +41,22 @@ class UserController
         return redirect()
             ->route('profile')
             ->with('success', 'Votre profil a été mis à jour.');
+    }
+
+    public function regenerateToken(Request $request): RedirectResponse
+    {
+        $request->user()->update(['api_token' => Str::random(80)]);
+
+        return redirect()->route('profile')
+            ->with('success', 'Token API régénéré.');
+    }
+
+    public function deleteToken(Request $request): RedirectResponse
+    {
+        $request->user()->update(['api_token' => null]);
+
+        return redirect()->route('profile')
+            ->with('success', 'Token API supprimé.');
     }
 
     public function destroy(Request $request): RedirectResponse

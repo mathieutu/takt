@@ -4,7 +4,7 @@
 import { queryParams, type RouteDefinition, type RouteQueryOptions } from "./../index";
 
 /**
- * @see /Users/mathieutu/Projects/takt/routes/web.php:62
+ * @see /Users/mathieutu/Projects/takt/routes/web.php:66
  * @route "/up"
  */
 export const up = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -18,7 +18,7 @@ up.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see /Users/mathieutu/Projects/takt/routes/web.php:62
+ * @see /Users/mathieutu/Projects/takt/routes/web.php:66
  * @route "/up"
  */
 up.url = (options?: RouteQueryOptions) => {
@@ -26,7 +26,7 @@ up.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see /Users/mathieutu/Projects/takt/routes/web.php:62
+ * @see /Users/mathieutu/Projects/takt/routes/web.php:66
  * @route "/up"
  */
 up.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -35,7 +35,7 @@ up.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 })
 
 /**
- * @see /Users/mathieutu/Projects/takt/routes/web.php:62
+ * @see /Users/mathieutu/Projects/takt/routes/web.php:66
  * @route "/up"
  */
 up.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -256,7 +256,7 @@ logout.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\UserController::edit
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:17
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:18
  * @route "/profile"
  */
 export const profile = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -271,7 +271,7 @@ profile.definition = {
 
 /**
  * @see \App\Http\Controllers\UserController::edit
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:17
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:18
  * @route "/profile"
  */
 profile.url = (options?: RouteQueryOptions) => {
@@ -280,7 +280,7 @@ profile.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\UserController::edit
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:17
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:18
  * @route "/profile"
  */
 profile.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -290,7 +290,7 @@ profile.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\UserController::edit
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:17
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:18
  * @route "/profile"
  */
 profile.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -358,7 +358,7 @@ timesheet.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\CommandBarController::__invoke
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/CommandBarController.php:10
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/CommandBarController.php:9
  * @route "/command-bar"
  */
 export const commandBar = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -373,7 +373,7 @@ commandBar.definition = {
 
 /**
  * @see \App\Http\Controllers\CommandBarController::__invoke
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/CommandBarController.php:10
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/CommandBarController.php:9
  * @route "/command-bar"
  */
 commandBar.url = (options?: RouteQueryOptions) => {
@@ -382,7 +382,7 @@ commandBar.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\CommandBarController::__invoke
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/CommandBarController.php:10
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/CommandBarController.php:9
  * @route "/command-bar"
  */
 commandBar.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -392,7 +392,7 @@ commandBar.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\CommandBarController::__invoke
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/CommandBarController.php:10
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/CommandBarController.php:9
  * @route "/command-bar"
  */
 commandBar.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({

@@ -115,7 +115,7 @@ const syncCoverage = (projectId: string, date: string, coverage: number) => {
   const existing = project.entries[date] ?? null
 
   return router.visit(syncEntries({ project }), {
-    data: { [date]: { coverage } },
+    data: { entries: [{ date, coverage }] },
     only: ['projects'],
     preserveState: true,
     preserveScroll: true,
@@ -159,16 +159,16 @@ type InertiaOptimisticPage = InertiaPageProps & {
 }
 const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage> = (rawPage, rawData) => {
   const page = rawPage as InertiaOptimisticPage & { projects: Project[] }
-  const data = rawData as Record<string, EntryData>
+  const data = (rawData as { entries: EntryData[] }).entries[0]
   return {
     projects: page.projects.map(p => p.id !== activeEntry.value?.projectId ? p : {
       ...p,
       entries: {
         ...p.entries,
         [activeEntry.value!.date]: {
-          coverage: Number(data[activeEntry.value!.date].coverage),
-          title: data[activeEntry.value!.date].title ?? '',
-          description: data[activeEntry.value!.date].description ?? '',
+          coverage: Number(data.coverage),
+          title: data.title ?? '',
+          description: data.description ?? '',
         },
       },
     }),
@@ -366,9 +366,10 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
         @success="activeEntry = null"
       >
         <div class="space-y-4">
+          <input type="hidden" name="entries[0][date]" :value="activeEntry.date" />
           <UFormField label="Couverture (%)">
             <UInput
-              :name="`${activeEntry.date}[coverage]`"
+              name="entries[0][coverage]"
               type="number" min="0" max="100"
               :defaultValue="activeEntry.coverage"
               class="w-full"
@@ -376,7 +377,7 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
           </UFormField>
           <UFormField label="Titre">
             <UInput
-              :name="`${activeEntry.date}[title]`"
+              name="entries[0][title]"
               type="text" placeholder="Ex. Développement de la feature X"
               :defaultValue="activeEntry.title"
               class="w-full"
@@ -384,7 +385,7 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
           </UFormField>
           <UFormField label="Description">
             <UTextarea
-              :name="`${activeEntry.date}[description]`"
+              name="entries[0][description]"
               :rows="3" placeholder="Détails de l'activité..."
               :defaultValue="activeEntry.description"
               class="w-full"

@@ -21,7 +21,7 @@ export namespace Inertia {
         /**
          * @see [\App\Http\Controllers\UserController::edit](/Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php)
          */
-        export type ProfilePage = Inertia.SharedData & { user: { name: string, email: string, github_id: string | null } }
+        export type ProfilePage = Inertia.SharedData & { user: { name: string, email: string, github_id: string | null }, api_token: string | null }
 
         /**
          * @see [\App\Http\Controllers\ClientController::edit](/Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php)
@@ -49,6 +49,11 @@ export namespace Inertia {
          * @see [\App\Http\Controllers\ShowTimesheetHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowTimesheetHandler.php)
          */
         export type TimesheetPage = Inertia.SharedData & { current: { year: number, month: number }, urls: { nextMonth: string, prevMonth: string }, holidays: [], invoices: unknown, projects: unknown }
+
+        /**
+         * @see [\App\Http\Controllers\ShowApiDocHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowApiDocHandler.php)
+         */
+        export type ApiDocPage = Inertia.SharedData & { base_url: Illuminate.Contracts.Routing.UrlGenerator | string, api_token: string | null, projects: unknown }
     }
 }
 
@@ -142,6 +147,20 @@ export namespace App {
                 export namespace Destroy {
                     /**
                      * @see [\App\Http\Controllers\UserController::destroy](/Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+
+                export namespace RegenerateToken {
+                    /**
+                     * @see [\App\Http\Controllers\UserController::regenerateToken](/Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+
+                export namespace DeleteToken {
+                    /**
+                     * @see [\App\Http\Controllers\UserController::deleteToken](/Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
@@ -246,6 +265,17 @@ export namespace App {
                     export type Request = Record<string, unknown>
                 }
 
+                export namespace SyncEntries {
+                    /**
+                     * @see [\App\Http\Controllers\ProjectController::syncEntries](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
+                     */
+                    export type Request = {    entries: unknown[];
+                        "entries.*.date": string;
+                        "entries.*.coverage": number;
+                        "entries.*.title"?: string | null;
+                        "entries.*.description"?: string | null;}
+                }
+
                 export namespace Store {
                     /**
                      * @see [\App\Http\Controllers\ProjectController::store](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
@@ -269,15 +299,6 @@ export namespace App {
                         client_id: string;
                         created_at: string;
                         deleted_at?: string | null;}
-                }
-
-                export namespace SyncEntries {
-                    /**
-                     * @see [\App\Http\Controllers\ProjectController::syncEntries](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
-                     */
-                    export type Request = {    "*.coverage": number;
-                        "*.title"?: string | null;
-                        "*.description"?: string | null;}
                 }
 
                 export namespace Destroy {
@@ -311,6 +332,34 @@ export namespace App {
 
                     /**
                      * @see [\App\Http\Controllers\ShowTimesheetHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowTimesheetHandler.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+            }
+
+            export namespace ShowApiDocHandler {
+                export namespace __invoke {
+                    /**
+                     * @see [\App\Http\Controllers\ShowApiDocHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowApiDocHandler.php)
+                     */
+                    export type Response = Inertia.Pages.ApiDocPage
+
+                    /**
+                     * @see [\App\Http\Controllers\ShowApiDocHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowApiDocHandler.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+            }
+
+            export namespace CommandBarController {
+                export namespace __invoke {
+                    /**
+                     * @see [\App\Http\Controllers\CommandBarController::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/CommandBarController.php)
+                     */
+                    export type Response = { clients: unknown, projects: unknown }
+
+                    /**
+                     * @see [\App\Http\Controllers\CommandBarController::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/CommandBarController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
@@ -354,15 +403,6 @@ export namespace App {
                 export namespace Destroy {
                     /**
                      * @see [\App\Http\Controllers\ProjectInvoiceController::destroy](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php)
-                     */
-                    export type Request = Record<string, unknown>
-                }
-            }
-
-            export namespace CommandBarController {
-                export namespace __invoke {
-                    /**
-                     * @see [\App\Http\Controllers\CommandBarController::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/CommandBarController.php)
                      */
                     export type Request = Record<string, unknown>
                 }

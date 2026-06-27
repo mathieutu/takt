@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Concerns\BuildsProjectsPageProps;
 use App\Models\Project;
 use App\Models\TimesheetEntry;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -177,19 +179,25 @@ class ProjectController
             ->with('success', 'Projet restauré avec succès.');
     }
 
-    public function syncEntries(Request $request, Project $project): RedirectResponse
+    public function syncEntries(Request $request, Project $project): RedirectResponse|JsonResponse
     {
-        $entries = $request->validate([
-            '*.coverage' => ['required', 'integer', 'between:0,100'],
-            '*.title' => ['nullable', 'string'],
-            '*.description' => ['nullable', 'string'],
+        $validated = $request->validate([
+            'entries' => ['required', 'array'],
+            'entries.*.date' => ['required', 'date'],
+            'entries.*.coverage' => ['required', 'integer', 'between:0,100'],
+            'entries.*.title' => ['nullable', 'string'],
+            'entries.*.description' => ['nullable', 'string'],
         ]);
 
-        foreach ($entries as $date => $data) {
+        foreach ($validated['entries'] as $entry) {
             TimesheetEntry::updateOrCreate(
-                ['project_id' => $project->id, 'date' => $date],
-                $data,
+                ['project_id' => $project->id, 'date' => $entry['date']],
+                Arr::except($entry, 'date'),
             );
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Entries synchronized.']);
         }
 
         return redirect()->back();

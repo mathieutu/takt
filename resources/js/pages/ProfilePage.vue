@@ -1,23 +1,47 @@
 <script setup lang="ts">
 import { Form, Head, router } from '@inertiajs/vue3'
+import { useToast } from '@nuxt/ui/composables'
 import { ref } from 'vue'
 import { useConfirm } from '@/composables/useConfirm.ts'
+import { api as apiDocUrl } from '@/wayfinder/routes/docs'
 import { destroy, update } from '@/wayfinder/routes/profile'
+import { destroy as destroyToken, regenerate as regenerateToken } from '@/wayfinder/routes/profile/tokens'
 
 const props = defineProps<{
   user: {
     name: string,
     email: string,
     github_id: string | null,
+    api_token: string | null,
   },
 }>()
 
 const values = ref(props.user)
 
-const deleteUser = useConfirm({
+const toast = useToast()
+const isTokenVisible = ref(false)
+
+const copyToken = async () => {
+  await navigator.clipboard.writeText(props.user.api_token!)
+  toast.add({ title: 'Token copié dans le presse-papier', color: 'success' })
+}
+
+const destroyUserConfirm = useConfirm({
   title: 'Supprimer définitivement votre compte ?',
   description: 'Cette action est irréversible. Toutes vos données seront perdues.',
   onConfirm: () => router.visit(destroy()),
+})
+
+const destroyTokenConfirm = useConfirm({
+  title: 'Supprimer définitivement votre token d\'api ?',
+  description: 'Cette action est irréversible. Votre api ne fonctionnera plus.',
+  onConfirm: () => router.visit(destroyToken(), { preserveScroll: true }),
+})
+
+const regenerateTokenConfirm = useConfirm({
+  title: 'Régénérer votre token d\'api ?',
+  description: 'Cette action est irréversible. Votre api ne fonctionnera plus avec l\'ancien Token.',
+  onConfirm: () => router.visit(regenerateToken(), { preserveScroll: true }),
 })
 </script>
 
@@ -72,6 +96,95 @@ const deleteUser = useConfirm({
 
       <UCard>
         <template #header>
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-semibold">Accès API</h2>
+            <UButton
+              label="Documentation"
+              icon="i-lucide-book-open"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              :href="apiDocUrl()"
+            />
+          </div>
+        </template>
+
+        <div class="space-y-4">
+          <p class="text-sm text-muted">
+            Utilisez ce token pour accéder à l'API depuis un script externe.
+            Il est affiché en clair — conservez-le en lieu sûr.
+          </p>
+
+          <div v-if="user.api_token">
+            <UInput
+              :value="user.api_token"
+              :type="isTokenVisible ? 'text' : 'password'"
+              variant="subtle"
+              readonly
+              class="w-full font-mono text-xs"
+              :ui="{
+                base: ['pe-16'],
+              }"
+            >
+              <template #trailing>
+                <div class="">
+                  <UTooltip :text="isTokenVisible ? 'Masquer' : 'Afficher'">
+                    <UButton
+                      :icon="isTokenVisible ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                      color="neutral"
+                      variant="link"
+                      size="sm"
+                      :aria-label="isTokenVisible ? 'Masquer le token' : 'Afficher le token'"
+                      class=""
+                      @click="isTokenVisible = !isTokenVisible"
+                    />
+                  </UTooltip>
+                  <UTooltip text="Copier">
+                    <UButton
+                      icon="i-lucide-copy"
+                      color="neutral"
+                      variant="link"
+                      size="sm"
+                      aria-label="Copier le token"
+                      class="pr-0"
+                      @click="copyToken"
+                    />
+                  </UTooltip>
+                </div>
+              </template>
+            </UInput>
+          </div>
+          <p v-else class="text-sm">Aucun token généré.</p>
+
+          <div class="flex justify-end gap-2">
+            <UButton
+              v-if="user.api_token"
+              label="Supprimer le token"
+              color="error"
+              variant="ghost"
+              @click="destroyTokenConfirm()"
+            />
+            <UButton
+              v-if="user.api_token"
+              label="Régénérer"
+              color="neutral"
+              variant="outline"
+              @click="regenerateTokenConfirm()"
+            />
+            <UButton
+              v-else
+              label="Générer un token"
+              color="primary"
+              variant="solid"
+              preserveScroll
+              :href="regenerateToken()"
+            />
+          </div>
+        </div>
+      </UCard>
+
+      <UCard>
+        <template #header>
           <h2 class="text-sm font-semibold">Zone de danger</h2>
         </template>
 
@@ -85,7 +198,7 @@ const deleteUser = useConfirm({
             label="Supprimer"
             color="error"
             variant="outline"
-            @click="() => void deleteUser()"
+            @click="() => void destroyUserConfirm()"
           />
         </div>
       </UCard>

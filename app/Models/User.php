@@ -18,6 +18,7 @@ use Illuminate\Foundation\Auth\Access\Authorizable;
  * @property string|null $github_id
  * @property string|null $avatar
  * @property string|null $remember_token
+ * @property string|null $api_token
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property-read Collection<int, Client> $clients
