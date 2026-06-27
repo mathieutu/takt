@@ -145,7 +145,9 @@ const onCellClick = (projectId: string, date: string) => {
 
 const openEntry = (projectId: string, date: string) => {
   const project = props.projects.find(p => p.id === projectId)!
-  activeEntry.value = { projectId, date, isArchived: !!project.deleted_at, ...project.entries[date]! }
+  const entry = project.entries[date] ?? null
+  if (project.deleted_at && !entry?.title && !entry?.description) return
+  activeEntry.value = { projectId, date, isArchived: !!project.deleted_at, ...entry! }
 }
 
 const entryDateLabel = (date: string): string => {

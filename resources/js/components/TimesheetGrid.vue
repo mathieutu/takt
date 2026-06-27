@@ -44,7 +44,6 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
   const base = [
     isDeleted ? 'cursor-disabled' : 'cursor-pointer',
     isTodayDay && 'border-primary/50',
-    isDeleted && 'pointer-events-none',
   ]
 
   if (coverage >= 100) return [...base, 'bg-primary/25 hover:bg-primary/30']
