@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import type { ComponentPublicInstance } from 'vue'
 import { CalendarDate } from '@internationalized/date'
-import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { today } from '@/utils/date.ts'
 
 const props = defineProps<{
@@ -12,101 +11,90 @@ const emit = defineEmits<{
   'update:modelValue': [value: string],
 }>()
 
-const inputDate = useTemplateRef('inputDate')
 const calendarOpen = ref(false)
-const prevModelValue = ref<string | null>(null)
 
-const toCalendarDate = (dateStr?: string | null): CalendarDate | null => {
-  if (!dateStr) return null
-  const [y, m, d] = dateStr.split('-').map(Number)
-  if (!y || !m || !d) return null
-  return new CalendarDate(y, m, d)
+const toDisplay = (dateStr?: string | null): string => {
+  if (!dateStr) return ''
+  const [y, m, d] = dateStr.split('-')
+  if (!y || !m || !d) return ''
+  return `${d}/${m}/${y}`
 }
 
-const toDateString = (date: { year: number, month: number, day: number } | null): string => {
-  if (!date) return ''
-  return `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`
+const parseInput = (raw: string): string | null => {
+  const trimmed = raw.trim()
+  if (!trimmed) return ''
+
+  const parts = trimmed.split(/[/\-.]/)
+
+  const day = parseInt(parts[0] || '')
+  if (!day || day < 1 || day > 31) return null
+
+  const month = parts[1] ? (parseInt(parts[1]) || today.month) : today.month
+  if (month < 1 || month > 12) return null
+
+  let year = parts[2] ? (parseInt(parts[2]) || today.year) : today.year
+  if (year > 0 && year < 100) year += 2000
+
+  const date = new Date(year, month - 1, day)
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null
+
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
+
+const displayValue = ref(toDisplay(props.modelValue))
+
+watch(() => props.modelValue, val => {
+  displayValue.value = toDisplay(val)
+})
 
 const calendarValue = computed<CalendarDate | null>({
-  get: () => toCalendarDate(props.modelValue),
-  set: val => emit('update:modelValue', toDateString(val)),
-})
-
-watch(calendarValue, val => {
-  if (val && calendarOpen.value) {
+  get: () => {
+    if (!props.modelValue) return null
+    const [y, m, d] = props.modelValue.split('-').map(Number)
+    if (!y || !m || !d) return null
+    return new CalendarDate(y, m, d)
+  },
+  set: val => {
+    if (!val) return
+    const str = `${val.year}-${String(val.month).padStart(2, '0')}-${String(val.day).padStart(2, '0')}`
+    emit('update:modelValue', str === props.modelValue ? '' : str)
     calendarOpen.value = false
-  }
+  },
 })
 
-const getSegmentValue = (segmentName: string): number | null => {
-  const refs = (inputDate.value as any)?.inputsRef as ComponentPublicInstance[] | undefined
-  const el = refs
-    ?.map(r => r?.$el as HTMLElement | undefined)
-    .find(el => el?.dataset?.segment === segmentName || el?.getAttribute('data-reka-date-field-segment') === segmentName)
-  if (!el || el.hasAttribute('data-placeholder')) return null
-  const val = Number.parseInt(el.textContent?.trim() || '')
-  return Number.isNaN(val) ? null : val
-}
-
-const tryAutoComplete = async () => {
-  if (calendarValue.value || prevModelValue.value) return
-
-  await nextTick()
-
-  const day = getSegmentValue('day')
-  const month = getSegmentValue('month')
-  const year = getSegmentValue('year')
-
-  if (day === null && month === null && year === null) return
-
-  emit('update:modelValue', toDateString({ day: day ?? today.day, month: month ?? today.month, year: year ?? today.year }))
-}
-
-const onFocusin = (e: FocusEvent) => {
-  const relatedTarget = e.relatedTarget as Element | null
-
-  if (!relatedTarget || !(e.currentTarget as Element).contains(relatedTarget)) {
-    prevModelValue.value = props.modelValue || null
+const onBlur = () => {
+  const parsed = parseInput(displayValue.value)
+  if (parsed === null) {
+    displayValue.value = ''
+    emit('update:modelValue', '')
     return
   }
-
-  tryAutoComplete()
-}
-
-const onFocusout = (e: FocusEvent) => {
-  if (calendarOpen.value) return
-
-  const relatedTarget = e.relatedTarget as Element | null
-  if ((e.currentTarget as Element).contains(relatedTarget)) return
-
-  tryAutoComplete()
+  displayValue.value = toDisplay(parsed)
+  emit('update:modelValue', parsed)
 }
 </script>
 
 <template>
-  <div @focusin="onFocusin" @focusout="onFocusout">
-    <UInputDate
-      ref="inputDate"
-      v-model="calendarValue"
-      locale="fr-FR"
-      class="w-full"
-    >
-      <template #trailing>
-        <UPopover v-model:open="calendarOpen" :reference="(inputDate as any)?.inputsRef?.[3]?.$el">
-          <UButton
-            color="neutral"
-            variant="link"
-            size="sm"
-            icon="i-lucide-calendar"
-            aria-label="Choisir une date"
-            class="px-0"
-          />
-          <template #content>
-            <UCalendar v-model="calendarValue" class="p-2" />
-          </template>
-        </UPopover>
-      </template>
-    </UInputDate>
-  </div>
+  <UInput
+    v-model="displayValue"
+    placeholder="JJ/MM/AAAA"
+    class="w-full"
+    @blur="onBlur"
+  >
+    <template #trailing>
+      <UPopover v-model:open="calendarOpen">
+        <UButton
+          color="neutral"
+          variant="link"
+          size="sm"
+          icon="i-lucide-calendar"
+          aria-label="Choisir une date"
+          class="px-0"
+        />
+        <template #content>
+          <UCalendar v-model="calendarValue" class="p-2" />
+        </template>
+      </UPopover>
+    </template>
+  </UInput>
 </template>
