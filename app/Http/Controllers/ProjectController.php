@@ -181,6 +181,10 @@ class ProjectController
 
     public function syncEntries(Request $request, Project $project): RedirectResponse|JsonResponse
     {
+        if ($project->trashed()) {
+            return response()->json(['message' => 'This project is archived and can\'t be updated.'], 422);
+        }
+
         $validated = $request->validate([
             'entries' => ['required', 'array'],
             'entries.*.date' => ['required', 'date'],
