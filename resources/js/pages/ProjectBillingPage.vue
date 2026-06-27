@@ -193,23 +193,32 @@ const fmtDays = (amount: number, dailyRate: number): string | null =>
 const invoiceOpen = ref(false)
 const editingInvoiceId = ref<string | null>(null)
 const invoiceProjectId = ref<string | null>(null)
-const form = useForm({ amount: '', paid_at: '', notes: '', created_at: '' })
+const form = useForm({ amount: '', paid_at: '', notes: '', created_at: '', project_id: '' })
+
+const projectSelectItems = computed(() =>
+  props.projects.map(p => ({
+    value: p.id,
+    label: p.deleted_at ? `${p.name} (archivé)` : p.name,
+  })),
+)
 
 const openAddInvoice = (project: ProjectWithBilling) => {
   invoiceProjectId.value = project.id
   editingInvoiceId.value = null
   form.reset()
   form.created_at = today.toString()
+  form.project_id = project.id
   form.clearErrors()
   invoiceOpen.value = true
 }
 
-const openEditInvoice = (inv: MonthInvoice) => {
+const openEditInvoice = (inv: MonthInvoice, project: ProjectWithBilling) => {
   editingInvoiceId.value = inv.id
   form.amount = String(inv.amount / 100)
   form.paid_at = inv.paid_at ?? ''
   form.created_at = inv.created_at
   form.notes = inv.notes ?? ''
+  form.project_id = project.id
   form.clearErrors()
   invoiceOpen.value = true
 }
@@ -225,6 +234,7 @@ const submitInvoice = () => {
       paid_at: data.paid_at || null,
       created_at: data.created_at || null,
       notes: data.notes || null,
+      ...(editingInvoiceId.value ? { project_id: data.project_id } : {}),
     }))
     .submit(route, {
       preserveScroll: true,
@@ -457,7 +467,7 @@ const dayLabel = (date: string): string => {
                                   >{{ formatCurrency(inv.amount) }}</span>
                                   <span v-if="inv.notes" class="text-muted truncate flex-1">{{ inv.notes }}</span>
                                   <div v-if="!is_shared" class="ml-auto flex items-center gap-1" @click.stop>
-                                    <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="2xs" @click="openEditInvoice(inv)" />
+                                    <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="2xs" @click="openEditInvoice(inv, project)" />
                                     <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="2xs" :to="destroyInvoice(inv)" preserveScroll />
                                   </div>
                                 </div>
@@ -572,6 +582,13 @@ const dayLabel = (date: string): string => {
     <UModal v-model:open="invoiceOpen" :title="editingInvoiceId ? 'Modifier la facture' : 'Ajouter une facture'">
       <template #body>
         <form id="invoice-form" class="space-y-4" @submit.prevent="submitInvoice">
+          <UFormField v-if="editingInvoiceId && projects.length > 1" label="Projet" :error="form.errors.project_id">
+            <USelect
+              v-model="form.project_id"
+              :items="projectSelectItems"
+              class="w-full"
+            />
+          </UFormField>
           <UFormField label="Montant (€)" required :error="form.errors.amount">
             <UInput
               v-model="form.amount"

@@ -6,6 +6,7 @@ use App\Models\Invoice;
 use App\Models\Project;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ProjectInvoiceController
 {
@@ -28,6 +29,7 @@ class ProjectInvoiceController
             'paid_at' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'created_at' => ['required', 'date'],
+            'project_id' => ['sometimes', 'string', Rule::exists('projects', 'id')->where('client_id', $invoice->project->client_id)],
         ]));
 
         return redirect()->back();
