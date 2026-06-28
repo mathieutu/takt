@@ -228,13 +228,9 @@ const projectsWithStats = computed(() => {
         daysSince,
       }
     })
-    .toSorted((a, b) => {
-      const aDate = a.lastActivity ?? ''
-      const bDate = b.lastActivity ?? ''
-      if (bDate !== aDate) return bDate < aDate ? -1 : 1
-      if (b.periodDaysCount !== a.periodDaysCount) return b.periodDaysCount - a.periodDaysCount
-      return b.dailyRate - a.dailyRate
-    })
+    .toSorted((a, b) =>
+      a.clientName.localeCompare(b.clientName, 'fr') || a.name.localeCompare(b.name, 'fr'),
+    )
 })
 
 const tooltipUi = {
