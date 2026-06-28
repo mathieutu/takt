@@ -380,6 +380,12 @@ const barChartOptions = {
           }
           return ` ${ctx.dataset.label} : ${formatDays(ctx.parsed.y ?? 0)}`
         },
+        footer: (items: TooltipItem<'bar'>[]) => {
+          if (!items.length) return ''
+          const i = items[0]!.dataIndex
+          const total = props.chart.projects.reduce((sum, p) => sum + (p.data[i] ?? 0), 0) / 100
+          return total > 0 ? `Total : ${formatDays(total)}` : ''
+        },
       },
     },
   },
