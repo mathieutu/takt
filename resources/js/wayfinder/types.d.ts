@@ -21,7 +21,7 @@ export namespace Inertia {
         /**
          * @see [\App\Http\Controllers\UserController::edit](/Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php)
          */
-        export type ProfilePage = Inertia.SharedData & { user: { name: string, email: string, github_id: string | null }, api_token: string | null }
+        export type ProfilePage = Inertia.SharedData & { user: unknown[] }
 
         /**
          * @see [\App\Http\Controllers\ClientController::edit](/Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php)
@@ -397,7 +397,8 @@ export namespace App {
                     export type Request = {    amount: number;
                         paid_at?: string | null;
                         notes?: string | null;
-                        created_at: string;}
+                        created_at: string;
+                        project_id?: string;}
                 }
 
                 export namespace Destroy {

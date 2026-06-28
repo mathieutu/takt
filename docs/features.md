@@ -107,12 +107,44 @@ The public route `/shares/{token}` is unauthenticated. It renders the same billi
 
 ---
 
+## API
+
+Programmatic access to timesheet data via a Bearer token. The token is generated from the profile page and can be regenerated or revoked at any time.
+
+| Method | URI | Handler | Auth |
+|--------|-----|---------|------|
+| GET | `/docs/api` | `ShowApiDocHandler` | session |
+| PATCH | `/api/projects/{project}/entries` | `ProjectController@syncEntries` | `Bearer token` |
+
+**Endpoint details — `PATCH /api/projects/{project}/entries`:**
+
+Synchronises (creates or updates) timesheet entries for a project. Entries with `coverage: 0` are treated as deletions.
+
+Request body:
+```json
+{
+  "entries": [
+    { "date": "2026-01-15", "coverage": 75, "title": "Dev feature", "description": "..." }
+  ]
+}
+```
+
+- `date` — required, `YYYY-MM-DD`
+- `coverage` — required, integer 0–100 (percentage of a workday)
+- `title` / `description` — optional
+
+Response: `200 { "message": "Entries synchronized." }` | `401` invalid token | `403` project not owned | `422` validation error
+
+---
+
 ## Profile
 
-Edit profile and optionally change password. Account deletion clears the session.
+Edit profile, manage API token, and delete account.
 
 | Method | URI | Handler |
 |--------|-----|---------|
 | GET | `/profile` | `UserController@edit` |
 | PUT | `/profile` | `UserController@update` |
 | DELETE | `/profile` | `UserController@destroy` |
+| POST | `/profile/tokens` | `UserController@regenerateToken` |
+| DELETE | `/profile/tokens` | `UserController@deleteToken` |

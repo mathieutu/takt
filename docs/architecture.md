@@ -4,7 +4,7 @@
 
 ## Overview
 
-Takt is a monolithic Laravel application rendered as a single-page application via **Inertia.js v3**. There is no separate API — the server renders page props directly and the frontend navigates without full page reloads.
+Takt is a monolithic Laravel application rendered as a single-page application via **Inertia.js v3**. The server renders page props directly and the frontend navigates without full page reloads. A thin REST API (`/api/*`) is also exposed for programmatic access, authenticated via Bearer token.
 
 ```
 Browser ──Inertia visit──▶ Laravel route

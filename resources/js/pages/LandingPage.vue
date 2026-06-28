@@ -47,9 +47,9 @@ const features: Feature[] = [
     description: 'Lien public en lecture seule pour partager un bilan de facturation sans compte requis.',
   },
   {
-    icon: 'i-lucide-receipt',
-    title: 'Pas d\'édition de factures',
-    description: 'Délègue l\'édition de devis ou de factures à votre Plateforme Agréée de facturation electronique (PA/PDP).',
+    icon: 'i-lucide-terminal',
+    title: 'API & automatisation',
+    description: 'Synchronisez vos feuilles de temps depuis vos propres scripts via une API REST sécurisée par token.',
   },
 ]
 

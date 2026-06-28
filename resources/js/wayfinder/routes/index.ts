@@ -52,7 +52,7 @@ up.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\ShowHomeHandler::__invoke
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowHomeHandler.php:17
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowHomeHandler.php:18
  * @route "/"
  */
 export const dashboard = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -67,7 +67,7 @@ dashboard.definition = {
 
 /**
  * @see \App\Http\Controllers\ShowHomeHandler::__invoke
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowHomeHandler.php:17
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowHomeHandler.php:18
  * @route "/"
  */
 dashboard.url = (options?: RouteQueryOptions) => {
@@ -76,7 +76,7 @@ dashboard.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\ShowHomeHandler::__invoke
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowHomeHandler.php:17
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowHomeHandler.php:18
  * @route "/"
  */
 dashboard.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -86,7 +86,7 @@ dashboard.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\ShowHomeHandler::__invoke
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowHomeHandler.php:17
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowHomeHandler.php:18
  * @route "/"
  */
 dashboard.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({

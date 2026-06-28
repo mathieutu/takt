@@ -6,7 +6,7 @@ import { queryParams, type RouteDefinition, type RouteQueryOptions } from "./../
 /**
  * @see \App\Http\Controllers\UserController::regenerateToken
  * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:46
- * @route "/profile/tokens/regenerate"
+ * @route "/profile/tokens"
  */
 export const regenerate = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
     url: regenerate.url(options),
@@ -15,13 +15,13 @@ export const regenerate = (options?: RouteQueryOptions): RouteDefinition<"post">
 
 regenerate.definition = {
     methods: ["post"],
-    url: "/profile/tokens/regenerate",
+    url: "/profile/tokens",
 } satisfies RouteDefinition<["post"]>
 
 /**
  * @see \App\Http\Controllers\UserController::regenerateToken
  * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:46
- * @route "/profile/tokens/regenerate"
+ * @route "/profile/tokens"
  */
 regenerate.url = (options?: RouteQueryOptions) => {
     return regenerate.definition.url + queryParams(options)
@@ -30,7 +30,7 @@ regenerate.url = (options?: RouteQueryOptions) => {
 /**
  * @see \App\Http\Controllers\UserController::regenerateToken
  * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php:46
- * @route "/profile/tokens/regenerate"
+ * @route "/profile/tokens"
  */
 regenerate.post = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
     url: regenerate.url(options),

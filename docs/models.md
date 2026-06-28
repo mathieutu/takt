@@ -12,6 +12,7 @@ The authenticated account. Linked to GitHub via OAuth or created locally.
 | `email` | string | Unique email address |
 | `github_id` | string\|null | GitHub user ID |
 | `avatar` | string\|null | GitHub avatar URL |
+| `api_token` | string\|null | Bearer token for REST API access |
 
 **Relations:**
 - `hasMany(Client)` — clients owned by this user

@@ -34,7 +34,7 @@ Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
     Route::get('profile', [UserController::class, 'edit'])->name('profile');
     Route::put('profile', [UserController::class, 'update'])->name('profile.update');
     Route::delete('profile', [UserController::class, 'destroy'])->name('profile.destroy');
-    Route::post('profile/tokens/regenerate', [UserController::class, 'regenerateToken'])->name('profile.tokens.regenerate');
+    Route::post('profile/tokens', [UserController::class, 'regenerateToken'])->name('profile.tokens.regenerate');
     Route::delete('profile/tokens', [UserController::class, 'deleteToken'])->name('profile.tokens.destroy');
 
     // Clients
