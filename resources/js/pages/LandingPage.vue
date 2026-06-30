@@ -256,59 +256,55 @@ const stack: StackItem[] = [
             <!-- ── Mockup 1 : Tableau de bord ─────────────── -->
             <div class="overflow-hidden rounded-xl border border-white bg-white shadow-md ring-1 ring-indigo-100/80 dark:border-slate-700 dark:bg-slate-800 dark:ring-slate-700">
               <div class="relative aspect-video w-full overflow-hidden bg-slate-50 p-3 dark:bg-slate-900/80">
-                <div class="mb-2 flex items-center gap-1">
+                <!-- Chrome + période nav -->
+                <div class="mb-1.5 flex items-center gap-1">
                   <div class="size-1.5 rounded-full bg-red-400" /><div class="size-1.5 rounded-full bg-yellow-400" /><div class="size-1.5 rounded-full bg-green-400" />
                   <span class="ml-1.5 text-[9px] font-medium text-slate-500 dark:text-slate-400">Tableau de bord</span>
-                  <span class="ml-auto rounded border border-primary-200 bg-primary-50 px-1.5 text-[7px] text-primary-600 dark:border-primary-500/20 dark:bg-primary-500/10 dark:text-primary-400">{{ formatMonthName(new Date().getMonth() + 1) }} {{ new Date().getFullYear() }}</span>
+                  <div class="ml-auto flex items-center gap-0.5">
+                    <span class="flex size-3.5 cursor-pointer items-center justify-center rounded text-[9px] text-slate-400 transition-colors hover:bg-slate-200 dark:hover:bg-slate-700">‹</span>
+                    <span class="flex items-center gap-0.5 rounded border border-slate-200 bg-white px-1 py-0.5 text-[6px] text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                      juil. 25 – juin 26
+                    </span>
+                    <span class="flex size-3.5 cursor-pointer items-center justify-center rounded text-[9px] text-slate-400 transition-colors hover:bg-slate-200 dark:hover:bg-slate-700">›</span>
+                  </div>
                 </div>
+
+                <!-- KPI cards -->
                 <div class="mb-1.5 grid grid-cols-4 gap-1">
-                  <div class="rounded border border-slate-200 bg-white px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800">
-                    <p class="text-[6px] text-slate-400">Jours ce mois</p>
-                    <p class="mt-0.5 text-[10px] font-bold text-slate-800 dark:text-slate-100">14 j</p>
-                    <div class="my-0.5 h-px w-full rounded bg-slate-100 dark:bg-slate-700">
-                      <div class="h-px rounded bg-primary-500" style="width:67%" />
+                  <div
+                    v-for="kpi in [
+                      { label: 'Jours en juin 26', value: '14 j', sub: 'sur 21 j. ouvrés', bar: 67, trend: '↑ +12%', tc: 'text-emerald-500' },
+                      { label: 'Revenus juin 26', value: '9 100 €', sub: 'proj. 13 650 €', bar: null, trend: '↑ +8%', tc: 'text-emerald-500' },
+                      { label: 'Factures impayées', value: '3 200 €', sub: '2 impayées', bar: null, trend: '✓ Aucun retard', tc: 'text-emerald-500' },
+                      { label: 'Sur les 12 mois', value: '98 400 €', sub: '151 j · 650 €/j', bar: 82, trend: '↑ +15%', tc: 'text-emerald-500' },
+                    ]"
+                    :key="kpi.label"
+                    class="cursor-default rounded border border-slate-200 bg-white px-1.5 py-1 transition-all hover:-translate-y-px hover:shadow-sm dark:border-slate-700 dark:bg-slate-800"
+                  >
+                    <p class="truncate text-[5.5px] text-slate-400">{{ kpi.label }}</p>
+                    <p class="mt-0.5 text-[10px] font-bold tabular-nums text-slate-800 dark:text-slate-100">{{ kpi.value }}</p>
+                    <p class="text-[5.5px] text-slate-400">{{ kpi.sub }}</p>
+                    <div v-if="kpi.bar" class="my-0.5 h-px w-full rounded bg-slate-100 dark:bg-slate-700">
+                      <div class="h-px rounded bg-primary-500" :style="{ width: `${kpi.bar}%` }" />
                     </div>
-                    <p class="text-[6px] text-emerald-500">↑ +12%</p>
-                  </div>
-                  <div class="rounded border border-slate-200 bg-white px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800">
-                    <p class="text-[6px] text-slate-400">Revenus</p>
-                    <p class="mt-0.5 text-[10px] font-bold text-slate-800 dark:text-slate-100">9 100 €</p>
-                    <p class="text-[6px] text-slate-400">proj. <span class="text-primary-500">13 650 €</span></p>
-                    <p class="text-[6px] text-emerald-500">↑ +8%</p>
-                  </div>
-                  <div class="rounded border border-slate-200 bg-white px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800">
-                    <p class="text-[6px] text-slate-400">Factures</p>
-                    <p class="mt-0.5 text-[10px] font-bold text-slate-800 dark:text-slate-100">3 200 €</p>
-                    <p class="text-[6px] text-slate-400">2 impayées</p>
-                    <p class="text-[6px] text-emerald-500">✓ Aucun retard</p>
-                  </div>
-                  <div class="rounded border border-slate-200 bg-white px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800">
-                    <p class="text-[6px] text-slate-400">12 mois</p>
-                    <p class="mt-0.5 text-[10px] font-bold text-slate-800 dark:text-slate-100">98 400 €</p>
-                    <p class="text-[6px] text-slate-400">TJM 650 €/j</p>
-                    <p class="text-[6px] text-emerald-500">↑ +15%</p>
+                    <p class="mt-0.5 text-[5.5px]" :class="kpi.tc">{{ kpi.trend }}</p>
                   </div>
                 </div>
+
+                <!-- Chart -->
                 <div class="rounded border border-slate-200 bg-white p-1.5 dark:border-slate-700 dark:bg-slate-800">
-                  <p class="mb-1 text-[7px] font-medium text-slate-500 dark:text-slate-400">Activité sur 12 mois</p>
+                  <p class="mb-0.5 text-[7px] font-medium text-slate-500 dark:text-slate-400">Activité sur la période</p>
                   <div class="flex items-end gap-0.5" style="height:38px">
                     <div
                       v-for="(h, i) in [28, 42, 55, 38, 62, 48, 70, 43, 58, 78, 63, 90]"
                       :key="i"
-                      class="flex-1 rounded-t-sm"
-                      :class="i === 11 ? 'bg-indigo-500' : 'bg-indigo-400/40'"
+                      class="flex-1 cursor-pointer rounded-t-sm transition-colors"
+                      :class="i === 11 ? 'bg-indigo-500' : 'bg-indigo-400/40 hover:bg-indigo-500/60'"
                       :style="{ height: `${h}%` }"
                     />
                   </div>
-                  <div class="mt-0.5 flex justify-between text-[6px] text-slate-300 dark:text-slate-600">
-                    <span>
-                      {{ formatMonthName(new Date().getMonth() + 2).slice(0, 4) }}
-                      {{ (new Date().getFullYear() - 1).toString().slice(2) }}
-                    </span>
-                    <span>
-                      {{ formatMonthName(new Date().getMonth() + 1).slice(0, 4) }}
-                      {{ new Date().getFullYear().toString().slice(2) }}
-                    </span>
+                  <div class="mt-0.5 flex justify-between text-[5.5px] text-slate-300 dark:text-slate-600">
+                    <span>juil. 25</span><span>juin 26</span>
                   </div>
                 </div>
               </div>
@@ -320,52 +316,96 @@ const stack: StackItem[] = [
             <!-- ── Mockup 2 : Feuille de temps ──────────── -->
             <div class="overflow-hidden rounded-xl border border-white bg-white shadow-md ring-1 ring-indigo-100/80 dark:border-slate-700 dark:bg-slate-800 dark:ring-slate-700">
               <div class="relative aspect-video w-full overflow-hidden bg-slate-50 p-3 dark:bg-slate-900/80">
-                <div class="mb-2 flex items-center justify-between">
+                <!-- Chrome + header -->
+                <div class="mb-1.5 flex items-center justify-between">
                   <div class="flex items-center gap-1">
                     <div class="size-1.5 rounded-full bg-red-400" /><div class="size-1.5 rounded-full bg-yellow-400" /><div class="size-1.5 rounded-full bg-green-400" />
-                    <span class="ml-1.5 text-[9px] font-medium text-slate-500 dark:text-slate-400">Feuille de temps</span>
+                    <span class="ml-1.5 text-[9px] font-medium text-slate-500 dark:text-slate-400">Rapport d'activité</span>
+                    <span class="text-[6px] text-slate-400">· 14 j (9 100 €)</span>
                   </div>
-                  <div class="flex items-center gap-1 text-[7px] text-slate-500">
-                    <span>‹</span><span class="font-medium">juin 2025</span><span>›</span>
+                  <div class="flex items-center gap-0.5">
+                    <span class="flex size-3.5 cursor-pointer items-center justify-center rounded text-[9px] text-slate-400 transition-colors hover:bg-slate-200 dark:hover:bg-slate-700">‹</span>
+                    <span class="rounded border border-slate-200 bg-white px-1 py-0.5 text-[6px] font-medium text-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400">juin 2025</span>
+                    <span class="flex size-3.5 cursor-pointer items-center justify-center rounded text-[9px] text-slate-400 transition-colors hover:bg-slate-200 dark:hover:bg-slate-700">›</span>
                   </div>
                 </div>
+
+                <!-- Grid -->
                 <div class="overflow-hidden rounded border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
-                  <div class="grid border-b border-slate-100 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/80" style="grid-template-columns: 3.5rem repeat(14, 1fr)">
-                    <div class="px-1 py-1 text-[6px] text-slate-400">Projet</div>
+                  <!-- Header: lettre + numéro -->
+                  <div class="grid border-b border-slate-100 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/80" style="grid-template-columns: 3rem repeat(13, 1fr)">
+                    <div class="border-r border-slate-100 px-1 py-0.5 text-[5.5px] font-medium text-slate-400 dark:border-slate-700">Projet</div>
                     <div
-                      v-for="(d, i) in [2, 3, 4, 5, 6, 9, 10, 11, 12, 13, 16, 17, 18, 19]"
+                      v-for="(day, i) in [
+                        { n: 2, l: 'L' }, { n: 3, l: 'M' }, { n: 4, l: 'M' }, { n: 5, l: 'J' }, { n: 6, l: 'V' },
+                        { n: 9, l: 'L' }, { n: 10, l: 'M' }, { n: 11, l: 'M' }, { n: 12, l: 'J' }, { n: 13, l: 'V' },
+                        { n: 16, l: 'L' }, { n: 17, l: 'M' }, { n: 18, l: 'M' },
+                      ]"
                       :key="i"
-                      class="py-1 text-center text-[6px]"
-                      :class="i === 5 ? 'bg-primary-50 font-semibold text-primary-500 dark:bg-primary-500/10' : 'text-slate-400'"
+                      class="py-0.5 text-center"
+                      :class="i === 5 ? 'bg-primary-50 dark:bg-primary-500/10' : ''"
                     >
-                      {{ d }}
+                      <p class="text-[5px]" :class="i === 5 ? 'font-semibold text-primary-400' : 'text-slate-300 dark:text-slate-600'">{{ day.l }}</p>
+                      <p class="text-[6px] font-semibold" :class="i === 5 ? 'text-primary-600 dark:text-primary-400' : 'text-slate-500 dark:text-slate-400'">{{ day.n }}</p>
                     </div>
                   </div>
+
                   <!-- Acme Corp -->
-                  <div class="grid items-center border-b border-slate-100 dark:border-slate-700" style="grid-template-columns: 3.5rem repeat(14, 1fr)">
-                    <div class="flex items-center gap-1 px-1 py-1">
-                      <div class="size-1 shrink-0 rounded-full bg-indigo-500" /><span class="truncate text-[6.5px] text-slate-600 dark:text-slate-300">Acme Corp</span>
+                  <div class="group/row grid items-center border-b border-slate-100 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-700/20" style="grid-template-columns: 3rem repeat(13, 1fr)">
+                    <div class="flex items-center gap-0.5 border-r border-slate-100 px-1 py-1.5 dark:border-slate-700">
+                      <div class="size-1 shrink-0 rounded-full bg-indigo-500" />
+                      <span class="truncate text-[5.5px] text-slate-600 dark:text-slate-300">Acme</span>
                     </div>
-                    <div class="mx-px rounded-sm bg-indigo-400/70" style="height:11px" /><div class="mx-px rounded-sm bg-indigo-400/70" style="height:11px" /><div class="mx-px rounded-sm bg-indigo-400/70" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-indigo-400/70" style="height:11px" /><div class="mx-px rounded-sm bg-indigo-400/70" style="height:11px" /><div class="mx-px rounded-sm bg-indigo-400/70" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-indigo-400/70" style="height:11px" /><div class="mx-px rounded-sm bg-indigo-400/70" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-indigo-400/70" style="height:11px" /><div class="mx-px rounded-sm bg-indigo-400/70" style="height:11px" />
+                    <div
+                      v-for="(cov, i) in [1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0.5]"
+                      :key="i"
+                      class="mx-px rounded-sm transition-colors"
+                      :class="[
+                        cov === 1 ? 'bg-primary-500/25 hover:bg-primary-500/40' : cov === 0.5 ? 'bg-primary-500/10 hover:bg-primary-500/20' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/40 dark:hover:bg-slate-700',
+                        i === 5 ? 'ring-1 ring-inset ring-primary-200 dark:ring-primary-500/20' : '',
+                      ]"
+                      style="height:11px"
+                    />
                   </div>
+
                   <!-- StartupXYZ -->
-                  <div class="grid items-center border-b border-slate-100 dark:border-slate-700" style="grid-template-columns: 3.5rem repeat(14, 1fr)">
-                    <div class="flex items-center gap-1 px-1 py-1">
-                      <div class="size-1 shrink-0 rounded-full bg-rose-500" /><span class="truncate text-[6.5px] text-slate-600 dark:text-slate-300">StartupXYZ</span>
+                  <div class="group/row grid items-center border-b border-slate-100 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-700/20" style="grid-template-columns: 3rem repeat(13, 1fr)">
+                    <div class="flex items-center gap-0.5 border-r border-slate-100 px-1 py-1.5 dark:border-slate-700">
+                      <div class="size-1 shrink-0 rounded-full bg-rose-500" />
+                      <span class="truncate text-[5.5px] text-slate-600 dark:text-slate-300">Startup</span>
                     </div>
-                    <div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-rose-400/70" style="height:11px" /><div class="mx-px rounded-sm bg-rose-400/70" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-rose-400/70" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-rose-400/70" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" />
+                    <div
+                      v-for="(cov, i) in [0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0.5, 0, 0]"
+                      :key="i"
+                      class="mx-px rounded-sm transition-colors"
+                      :class="cov === 1 ? 'bg-primary-500/25 hover:bg-primary-500/40' : cov === 0.5 ? 'bg-primary-500/10 hover:bg-primary-500/20' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/40 dark:hover:bg-slate-700'"
+                      style="height:11px"
+                    />
                   </div>
+
                   <!-- Freelance -->
-                  <div class="grid items-center" style="grid-template-columns: 3.5rem repeat(14, 1fr)">
-                    <div class="flex items-center gap-1 px-1 py-1">
-                      <div class="size-1 shrink-0 rounded-full bg-amber-500" /><span class="truncate text-[6.5px] text-slate-600 dark:text-slate-300">Freelance</span>
+                  <div class="group/row grid items-center transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/20" style="grid-template-columns: 3rem repeat(13, 1fr)">
+                    <div class="flex items-center gap-0.5 border-r border-slate-100 px-1 py-1.5 dark:border-slate-700">
+                      <div class="size-1 shrink-0 rounded-full bg-amber-500" />
+                      <span class="truncate text-[5.5px] text-slate-600 dark:text-slate-300">Freelance</span>
                     </div>
-                    <div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-amber-400/70" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" /><div class="mx-px rounded-sm bg-amber-400/40" style="height:11px" /><div class="mx-px rounded-sm bg-slate-100 dark:bg-slate-700/40" style="height:11px" />
+                    <div
+                      v-for="(cov, i) in [0, 0, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0, 1]"
+                      :key="i"
+                      class="mx-px rounded-sm transition-colors"
+                      :class="cov === 1 ? 'bg-primary-500/25 hover:bg-primary-500/40' : cov === 0.5 ? 'bg-primary-500/10 hover:bg-primary-500/20' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/40 dark:hover:bg-slate-700'"
+                      style="height:11px"
+                    />
                   </div>
                 </div>
-                <div class="mt-1.5 flex items-center justify-between px-0.5">
-                  <span class="text-[7px] text-slate-400 dark:text-slate-500">14 j enregistrés</span>
-                  <span class="text-[8px] font-semibold text-slate-600 dark:text-slate-300">9 100 €</span>
+
+                <!-- Footer -->
+                <div class="mt-1.5 flex items-center justify-between">
+                  <div class="flex items-center gap-1">
+                    <div class="size-1.5 rounded border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-700" />
+                    <span class="text-[5.5px] text-slate-400">Week-ends / fériés</span>
+                  </div>
+                  <span class="text-[7px] font-semibold text-slate-600 dark:text-slate-300">9 100 €</span>
                 </div>
               </div>
               <div class="border-t border-slate-100 px-4 py-2.5 dark:border-slate-700">
@@ -376,63 +416,81 @@ const stack: StackItem[] = [
             <!-- ── Mockup 3 : Facturation ──────────────────── -->
             <div class="overflow-hidden rounded-xl border border-white bg-white shadow-md ring-1 ring-indigo-100/80 dark:border-slate-700 dark:bg-slate-800 dark:ring-slate-700">
               <div class="relative aspect-video w-full overflow-hidden bg-slate-50 p-3 dark:bg-slate-900/80">
-                <div class="mb-2 flex items-center gap-1">
+                <!-- Chrome -->
+                <div class="mb-1.5 flex items-center gap-1">
                   <div class="size-1.5 rounded-full bg-red-400" /><div class="size-1.5 rounded-full bg-yellow-400" /><div class="size-1.5 rounded-full bg-green-400" />
                   <span class="ml-1.5 text-[9px] font-medium text-slate-500 dark:text-slate-400">Facturation · Acme Corp</span>
                 </div>
+
+                <!-- Project header -->
                 <div class="mb-1.5 flex items-start justify-between">
                   <div>
                     <p class="text-[8px] font-semibold text-slate-700 dark:text-slate-200">Projet Alpha</p>
-                    <p class="text-[6.5px] text-slate-400">650 €/j · max 8 000 €/mois</p>
+                    <p class="text-[6px] text-slate-400">Acme Corp · 650 €/j · max 8 000 €/mois</p>
                   </div>
-                  <div class="rounded border border-primary-200 bg-primary-50 px-1.5 py-0.5 text-[7px] font-medium text-primary-600 dark:border-primary-500/30 dark:bg-primary-500/10 dark:text-primary-400">
+                  <div class="cursor-pointer rounded border border-primary-200 bg-primary-50 px-1.5 py-0.5 text-[7px] font-medium text-primary-600 transition-colors hover:bg-primary-100 dark:border-primary-500/30 dark:bg-primary-500/10 dark:text-primary-400 dark:hover:bg-primary-500/20">
                     + Facture
                   </div>
                 </div>
+
+                <!-- Billing table -->
                 <div class="overflow-hidden rounded border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
-                  <div class="grid border-b border-slate-100 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/80" style="grid-template-columns: 2fr 1.8fr 1.8fr 1.4fr">
-                    <div class="px-1.5 py-0.5 text-[6px] font-medium uppercase tracking-wide text-slate-400">Mois</div>
-                    <div class="px-1.5 py-0.5 text-right text-[6px] font-medium uppercase tracking-wide text-slate-400">Travaillé</div>
-                    <div class="px-1.5 py-0.5 text-right text-[6px] font-medium uppercase tracking-wide text-slate-400">Facturé</div>
-                    <div class="px-1.5 py-0.5 text-right text-[6px] font-medium uppercase tracking-wide text-slate-400">Solde</div>
+                  <!-- Header -->
+                  <div class="grid border-b border-slate-100 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/80" style="grid-template-columns: 0.5rem 2.2fr 1.8fr 1.8fr 1.8fr">
+                    <div />
+                    <div class="px-1.5 py-0.5 text-[5.5px] font-medium uppercase tracking-wide text-slate-400">Mois</div>
+                    <div class="px-1.5 py-0.5 text-right text-[5.5px] font-medium uppercase tracking-wide text-slate-400">Travaillé</div>
+                    <div class="px-1.5 py-0.5 text-right text-[5.5px] font-medium uppercase tracking-wide text-slate-400">Facturé</div>
+                    <div class="px-1.5 py-0.5 text-right text-[5.5px] font-medium uppercase tracking-wide text-slate-400">À consommer</div>
                   </div>
-                  <div class="grid items-center border-b border-slate-100 dark:border-slate-700" style="grid-template-columns: 2fr 1.8fr 1.8fr 1.4fr">
-                    <div class="px-1.5 py-1 text-[7px] font-medium text-slate-600 dark:text-slate-300">Juin 2025</div>
-                    <div class="px-1.5 py-1 text-right text-[7px] tabular-nums text-slate-400">5 200 €</div>
-                    <div class="px-1.5 py-1 text-right text-[7px] tabular-nums text-slate-300 dark:text-slate-600">—</div>
-                    <div class="px-1.5 py-1 text-right text-[7px] tabular-nums font-medium text-amber-500">-5 200 €</div>
+
+                  <!-- Rows -->
+                  <div
+                    v-for="row in [
+                      { month: 'Juin 2025', worked: '5 200 €', invoiced: '—', remaining: '2 800 €', iClass: 'text-slate-300 dark:text-slate-600', rClass: 'text-amber-500', rowBg: 'bg-amber-50/40 dark:bg-amber-500/5 hover:bg-amber-50 dark:hover:bg-amber-500/10' },
+                      { month: 'Mai 2025', worked: '7 800 €', invoiced: '7 800 €', remaining: '1 700 €', iClass: 'font-medium text-emerald-500', rClass: 'text-emerald-500', rowBg: 'hover:bg-slate-50 dark:hover:bg-slate-700/20' },
+                      { month: 'Avr. 2025', worked: '6 500 €', invoiced: '6 500 €', remaining: '1 500 €', iClass: 'font-medium text-emerald-500', rClass: 'text-emerald-500', rowBg: 'hover:bg-slate-50 dark:hover:bg-slate-700/20' },
+                    ]"
+                    :key="row.month"
+                    class="group grid cursor-pointer items-center border-b border-slate-100 transition-colors dark:border-slate-700"
+                    :class="row.rowBg"
+                    style="grid-template-columns: 0.5rem 2.2fr 1.8fr 1.8fr 1.8fr"
+                  >
+                    <div class="pl-1 text-[6px] text-slate-300 transition-colors group-hover:text-slate-400 dark:text-slate-600">›</div>
+                    <div class="px-1.5 py-1 text-[7px] font-medium text-slate-600 dark:text-slate-300">{{ row.month }}</div>
+                    <div class="px-1.5 py-1 text-right text-[7px] tabular-nums text-slate-400">{{ row.worked }}</div>
+                    <div class="px-1.5 py-1 text-right text-[7px] tabular-nums" :class="row.iClass">{{ row.invoiced }}</div>
+                    <div class="px-1.5 py-1 text-right text-[7px] tabular-nums" :class="row.rClass">{{ row.remaining }}</div>
                   </div>
-                  <div class="grid items-center border-b border-slate-100 dark:border-slate-700" style="grid-template-columns: 2fr 1.8fr 1.8fr 1.4fr">
-                    <div class="px-1.5 py-1 text-[7px] font-medium text-slate-600 dark:text-slate-300">Mai 2025</div>
-                    <div class="px-1.5 py-1 text-right text-[7px] tabular-nums text-slate-400">7 800 €</div>
-                    <div class="px-1.5 py-1 text-right text-[7px] tabular-nums font-medium text-emerald-500">7 800 €</div>
-                    <div class="px-1.5 py-1 text-right text-[7px] tabular-nums text-emerald-500">0 €</div>
-                  </div>
-                  <div class="grid items-center border-b border-slate-100 dark:border-slate-700" style="grid-template-columns: 2fr 1.8fr 1.8fr 1.4fr">
-                    <div class="px-1.5 py-1 text-[7px] font-medium text-slate-600 dark:text-slate-300">Avr 2025</div>
-                    <div class="px-1.5 py-1 text-right text-[7px] tabular-nums text-slate-400">6 500 €</div>
-                    <div class="px-1.5 py-1 text-right text-[7px] tabular-nums font-medium text-emerald-500">6 500 €</div>
-                    <div class="px-1.5 py-1 text-right text-[7px] tabular-nums text-emerald-500">0 €</div>
-                  </div>
-                  <div class="grid items-center border-t-2 border-slate-200 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-800/50" style="grid-template-columns: 2fr 1.8fr 1.8fr 1.4fr">
+
+                  <!-- Total -->
+                  <div class="grid items-center border-t-2 border-slate-200 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-800/50" style="grid-template-columns: 0.5rem 2.2fr 1.8fr 1.8fr 1.8fr">
+                    <div />
                     <div class="px-1.5 py-1 text-[7px] font-semibold text-slate-600 dark:text-slate-300">Total</div>
                     <div class="px-1.5 py-1 text-right text-[7px] tabular-nums font-medium text-slate-500">19 500 €</div>
                     <div class="px-1.5 py-1 text-right text-[7px] tabular-nums font-semibold text-emerald-500">14 300 €</div>
-                    <div class="px-1.5 py-1 text-right text-[7px] tabular-nums font-semibold text-amber-500">-5 200 €</div>
+                    <div class="px-1.5 py-1 text-right text-[7px] tabular-nums font-semibold text-amber-500">6 000 €</div>
                   </div>
                 </div>
+
+                <!-- Footer indicators -->
                 <div class="mt-1.5 flex gap-1.5">
                   <div class="flex-1 rounded border border-slate-200 bg-white px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800">
-                    <p class="text-[6px] text-slate-400">À facturer</p>
-                    <p class="text-[9px] font-semibold text-amber-500">5 200 €</p>
+                    <p class="text-[5.5px] text-slate-400">À facturer</p>
+                    <p class="text-[9px] font-semibold tabular-nums text-amber-500">5 200 €</p>
                   </div>
                   <div class="flex-1 rounded border border-slate-200 bg-white px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800">
-                    <p class="text-[6px] text-slate-400">Total facturé</p>
-                    <p class="text-[9px] font-semibold text-emerald-500">14 300 €</p>
+                    <div class="mb-0.5 flex items-baseline justify-between">
+                      <p class="text-[5.5px] text-slate-400">Budget consommé</p>
+                      <p class="text-[6px] font-semibold text-amber-500">81%</p>
+                    </div>
+                    <div class="h-px w-full rounded bg-slate-100 dark:bg-slate-700">
+                      <div class="h-px rounded bg-amber-400" style="width:81%" />
+                    </div>
                   </div>
                   <div class="flex-1 rounded border border-slate-200 bg-white px-1.5 py-1 dark:border-slate-700 dark:bg-slate-800">
-                    <p class="text-[6px] text-slate-400">Reste budget</p>
-                    <p class="text-[9px] font-semibold text-slate-600 dark:text-slate-300">2 800 €</p>
+                    <p class="text-[5.5px] text-slate-400">Total facturé</p>
+                    <p class="text-[9px] font-semibold tabular-nums text-emerald-500">14 300 €</p>
                   </div>
                 </div>
               </div>
