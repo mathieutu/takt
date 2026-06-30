@@ -2,7 +2,8 @@
 import type { Day } from '@/utils/date.ts'
 import { useTemplateRef } from 'vue'
 import { useTimesheetKeyboard } from '@/composables/useTimesheetKeyboard.ts'
-import { coverageLabel, formatDays, isToday } from '@/utils/date.ts'
+import { useToday } from '@/composables/useToday.ts'
+import { coverageLabel, formatDays } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
 import { show as billingShow } from '@/wayfinder/routes/clients/billing'
 
@@ -34,6 +35,7 @@ const emit = defineEmits<{
 
 const tableRef = useTemplateRef<HTMLTableElement>('table-ref')
 useTimesheetKeyboard(tableRef, () => days, () => projects, emit)
+const { isToday } = useToday()
 
 const getCellClasses = (project: GridProject, day: Day): Array<string | boolean> => {
   const coverage = project.entries[day.date]?.coverage ?? 0

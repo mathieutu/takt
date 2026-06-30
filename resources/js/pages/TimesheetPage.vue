@@ -4,13 +4,13 @@ import { Form, Head, router } from '@inertiajs/vue3'
 import { CalendarDate, type DateValue } from '@internationalized/date'
 import { computed, nextTick, ref, watch } from 'vue'
 import TimesheetGrid from '@/components/TimesheetGrid.vue'
+import { useToday } from '@/composables/useToday.ts'
 import {
   daysInMonth,
   formatDate,
   formatDays,
   formatMonthName,
   isInMonth,
-  today,
 } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
 import { timesheet } from '@/wayfinder/routes'
@@ -51,6 +51,8 @@ const props = defineProps<Props>()
 
 const holidays = computed(() => new Map(Object.entries(props.holidays)))
 
+const { today } = useToday()
+
 const tableScrollRef = ref<HTMLElement | null>(null)
 const activeEntry = ref<ActiveEntry | null>(null)
 const monthPickerOpen = ref(false)
@@ -65,12 +67,12 @@ const onMonthSelect = (value: DateValue | { start?: DateValue, end?: DateValue }
 
 const centerTodayColumn = (behavior: ScrollBehavior = 'auto') => {
   const isCurrentMonth =
-    props.current.year === today.year
-    && props.current.month === today.month
+    props.current.year === today.value.year
+    && props.current.month === today.value.month
 
   if (!isCurrentMonth || !tableScrollRef.value) return
 
-  tableScrollRef.value.querySelector<HTMLElement>(`#day-col-${today.toString()}`)
+  tableScrollRef.value.querySelector<HTMLElement>(`#day-col-${today.value.toString()}`)
     ?.scrollIntoView({ behavior, block: 'nearest', inline: 'center' })
 }
 
