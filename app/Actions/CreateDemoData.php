@@ -10,8 +10,15 @@ class CreateDemoData
 {
     public const string DEMO_EMAIL = 'contact+takt@mathieutu.dev';
 
+    private CarbonImmutable $now;
+
+    /** Shared pool of available days per month, consumed across all projects. */
+    private array $monthSchedules = [];
+
     public function __invoke()
     {
+        $this->now = now()->toImmutable();
+
         $demo = User::create([
             'name' => 'Compte DEMO',
             'email' => self::DEMO_EMAIL,
@@ -30,19 +37,19 @@ class CreateDemoData
     /** Date string N months ago. */
     private function d(int $months, int $weeks = 0): string
     {
-        return now()->subMonths($months)->subWeeks($weeks)->toDateString();
+        return $this->now->subMonths($months)->subWeeks($weeks)->toDateString();
     }
 
     /** Date string for day $day of the month $monthsAgo months ago (1-indexed). */
     private function dm(int $monthsAgo, int $dayOfMonth): string
     {
-        return now()->subMonths($monthsAgo)->startOfMonth()->addDays($dayOfMonth - 1)->toDateString();
+        return $this->now->subMonths($monthsAgo)->startOfMonth()->addDays($dayOfMonth - 1)->toDateString();
     }
 
     /** CarbonImmutable N months ago, for invoice created_at. */
     private function dt(int $months, int $weeks = 0): CarbonImmutable
     {
-        return now()->subMonths($months)->subWeeks($weeks);
+        return $this->now->subMonths($months)->subWeeks($weeks);
     }
 
     /**
@@ -59,7 +66,7 @@ class CreateDemoData
             $this->monthSchedules[$monthsAgo] = $pool;
         }
 
-        $today = (int) now()->format('j');
+        $today = (int) $this->now->format('j');
         $count = min(rand($min, $max), count($this->monthSchedules[$monthsAgo]));
         $days = array_splice($this->monthSchedules[$monthsAgo], 0, $count);
 

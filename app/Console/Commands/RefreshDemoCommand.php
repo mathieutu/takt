@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\TimesheetEntry;
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class RefreshDemoCommand extends Command
 {
@@ -21,9 +22,10 @@ class RefreshDemoCommand extends Command
 
     public function handle(CreateDemoData $createDemoData): void
     {
-        $this->removeExistingDemoData();
-
-        $createDemoData();
+        DB::transaction(function () use ($createDemoData) {
+            $this->removeExistingDemoData();
+            $createDemoData();
+        });
 
         $this->info('Compte de démo recréé avec succès.');
     }
