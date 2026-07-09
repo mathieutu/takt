@@ -135,6 +135,7 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
           :class="[getCellClasses(project, day), isToday(days[index + 1]?.date) ? 'border-r-primary/50' : '']"
           @mouseenter="($event.target as HTMLElement).focus()"
           @click="!project.deleted_at ? emit('cellClick', project.id, day.date) : undefined"
+          @contextmenu.prevent="!project.deleted_at ? emit('setCoverage', project.id, day.date, 0) : undefined"
         >
           <span
             v-if="project.entries[day.date]?.coverage"
