@@ -56,7 +56,7 @@ trait BuildsProjectBillingEntry
             'daily_rate' => $project->daily_rate,
             'max_month_budget' => $project->max_month_budget,
             'max_total_budget' => $project->max_total_budget,
-            'is_archived' => $project->isArchived(),
+            'is_inactive' => $project->isInactive(),
             'client' => ['id' => $project->client_id, 'name' => $clientNameOverride ?? $project->client->name],
             'months' => $months->values(),
             'months_elapsed' => $monthsElapsed,

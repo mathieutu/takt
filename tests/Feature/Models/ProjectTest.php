@@ -2,92 +2,112 @@
 
 use App\Models\Project;
 
-describe('isArchived', function () {
-    it('is not archived without an end date', function () {
+describe('isInactive', function () {
+    it('is not inactive without an end date', function () {
         $project = Project::factory()->create(['end_date' => null]);
 
-        expect($project->isArchived())->toBeFalse();
+        expect($project->isInactive())->toBeFalse();
     });
 
-    it('is not archived when the end date is in the future', function () {
+    it('is not inactive when the end date is in the future', function () {
         $project = Project::factory()->create(['end_date' => today()->addDay()]);
 
-        expect($project->isArchived())->toBeFalse();
+        expect($project->isInactive())->toBeFalse();
     });
 
-    it('is archived from the end date onward, included', function () {
+    it('is not inactive on the end date itself', function () {
         $project = Project::factory()->create(['end_date' => today()]);
 
-        expect($project->isArchived())->toBeTrue();
+        expect($project->isInactive())->toBeFalse();
     });
 
-    it('is archived when the end date is in the past', function () {
+    it('is inactive starting the day after the end date', function () {
         $project = Project::factory()->create(['end_date' => today()->subDay()]);
 
-        expect($project->isArchived())->toBeTrue();
+        expect($project->isInactive())->toBeTrue();
+    });
+
+    it('is inactive when the start date is in the future', function () {
+        $project = Project::factory()->create(['start_date' => today()->addDay(), 'end_date' => null]);
+
+        expect($project->isInactive())->toBeTrue();
     });
 });
 
 describe('scopeActive', function () {
-    it('includes projects without an end date and with a future end date', function () {
+    it('includes projects without an end date, with a future end date, or ending today', function () {
         $active = Project::factory()->create(['end_date' => null]);
         $futureEnd = Project::factory()->create(['end_date' => today()->addDay()]);
-        $archived = Project::factory()->archived()->create();
+        $endingToday = Project::factory()->create(['end_date' => today()]);
+        $inactive = Project::factory()->inactive()->create();
 
         $results = Project::active()->pluck('id');
 
-        expect($results)->toContain($active->id, $futureEnd->id)
-            ->not->toContain($archived->id);
+        expect($results)->toContain($active->id, $futureEnd->id, $endingToday->id)
+            ->not->toContain($inactive->id);
+    });
+
+    it('excludes projects whose start date is in the future', function () {
+        $notYetStarted = Project::factory()->create(['start_date' => today()->addDay(), 'end_date' => null]);
+
+        expect(Project::active()->pluck('id'))->not->toContain($notYetStarted->id);
     });
 });
 
-describe('scopeArchived', function () {
-    it('includes only projects with a past or today end date', function () {
+describe('scopeInactive', function () {
+    it('includes only projects ended before today', function () {
         $active = Project::factory()->create(['end_date' => null]);
-        $archived = Project::factory()->archived()->create();
+        $endingToday = Project::factory()->create(['end_date' => today()]);
+        $inactive = Project::factory()->inactive()->create();
 
-        $results = Project::archived()->pluck('id');
+        $results = Project::inactive()->pluck('id');
 
-        expect($results)->toContain($archived->id)
-            ->not->toContain($active->id);
+        expect($results)->toContain($inactive->id)
+            ->not->toContain($active->id, $endingToday->id);
+    });
+
+    it('includes projects whose start date is in the future', function () {
+        $notYetStarted = Project::factory()->create(['start_date' => today()->addDay(), 'end_date' => null]);
+
+        expect(Project::inactive()->pluck('id'))->toContain($notYetStarted->id);
     });
 });
 
-describe('isOpenOn', function () {
-    it('is closed before the start date', function () {
+describe('isActiveOn', function () {
+    it('is not active before the start date', function () {
         $project = Project::factory()->create(['start_date' => today(), 'end_date' => null]);
 
-        expect($project->isOpenOn(today()->subDay()))->toBeFalse();
+        expect($project->isActiveOn(today()->subDay()))->toBeFalse();
     });
 
-    it('is open on the start date', function () {
+    it('is active on the start date', function () {
         $project = Project::factory()->create(['start_date' => today(), 'end_date' => null]);
 
-        expect($project->isOpenOn(today()))->toBeTrue();
+        expect($project->isActiveOn(today()))->toBeTrue();
     });
 
-    it('is open without an end date, however far in the future', function () {
+    it('is active without an end date, however far in the future', function () {
         $project = Project::factory()->create(['start_date' => today(), 'end_date' => null]);
 
-        expect($project->isOpenOn(today()->addYears(5)))->toBeTrue();
+        expect($project->isActiveOn(today()->addYears(5)))->toBeTrue();
     });
 
-    it('is open on the end date, even for an already archived project', function () {
+    it('is active on the end date, even for an already inactive project', function () {
         $project = Project::factory()->create([
             'start_date' => today()->subMonths(2),
             'end_date' => today()->subDay(),
         ]);
 
-        expect($project->isArchived())->toBeTrue()
-            ->and($project->isOpenOn($project->end_date))->toBeTrue();
+        expect($project->isInactive())->toBeTrue()
+            ->and($project->isActiveOn($project->end_date))->toBeTrue();
     });
 
-    it('is closed after the end date', function () {
+    it('is not active after the end date', function () {
         $project = Project::factory()->create([
             'start_date' => today()->subMonths(2),
             'end_date' => today()->subDay(),
         ]);
 
-        expect($project->isOpenOn(today()))->toBeFalse();
+        expect($project->isActiveOn(today()))->toBeFalse();
     });
 });

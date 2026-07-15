@@ -61,22 +61,30 @@ class Project extends Model implements HasUser
         ];
     }
 
-    public function scopeActive(Builder $query): void
+    public function scopeActive(Builder $query, CarbonInterface|string|null $date = null): void
     {
-        $query->where(fn ($q) => $q->whereNull('end_date')->orWhere('end_date', '>=', today()->addDay()));
+        $date = CarbonImmutable::parse($date ?? today())->startOfDay();
+
+        $query->where('start_date', '<=', $date)
+            ->where(fn ($q) => $q->whereNull('end_date')->orWhere('end_date', '>=', $date));
     }
 
-    public function scopeArchived(Builder $query): void
+    public function scopeInactive(Builder $query, CarbonInterface|string|null $date = null): void
     {
-        $query->whereNotNull('end_date')->where('end_date', '<', today()->addDay());
+        $date = CarbonImmutable::parse($date ?? today())->startOfDay();
+
+        $query->where(fn ($q) => $q
+            ->where('start_date', '>', $date)
+            ->orWhere(fn ($q) => $q->whereNotNull('end_date')->where('end_date', '<', $date))
+        );
     }
 
-    public function isArchived(): bool
+    public function isInactive(): bool
     {
-        return $this->end_date !== null && $this->end_date->lt(today()->addDay());
+        return ! $this->isActiveOn(today());
     }
 
-    public function isOpenOn(CarbonInterface|string $date): bool
+    public function isActiveOn(CarbonInterface|string $date): bool
     {
         $date = CarbonImmutable::parse($date)->startOfDay();
 

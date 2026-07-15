@@ -189,7 +189,7 @@ class ShowHomeHandler
                     'workedDaysCount' => $workedDaysCount,
                     'periodDaysCount' => $periodDaysCount,
                     'monthDaysCount' => $monthDaysCount,
-                    'isArchived' => $p->isArchived(),
+                    'isInactive' => $p->isInactive(),
                     'lastActivity' => $p->timesheetEntries->sortByDesc('date')->first()?->date->toDateString(),
                     'unbilled' => max(0, $totalWorkedAmount - $p->invoices->sum('amount')),
                 ];

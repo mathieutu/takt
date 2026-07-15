@@ -16,7 +16,7 @@ export type GridProject = {
   entries: Record<string, EntryData>,
   days?: number,
   revenue?: number,
-  is_archived?: boolean,
+  is_inactive?: boolean,
   start_date: string,
   end_date?: string | null,
 }
@@ -39,17 +39,17 @@ const tableRef = useTemplateRef<HTMLTableElement>('table-ref')
 useTimesheetKeyboard(tableRef, () => days, () => projects, emit)
 const { isToday } = useToday()
 
-const isDayOpen = (project: GridProject, day: Day): boolean =>
+const isActiveOn = (project: GridProject, day: Day): boolean =>
   day.date >= project.start_date && (!project.end_date || day.date <= project.end_date)
 
 const getCellClasses = (project: GridProject, day: Day): Array<string | boolean> => {
   const coverage = project.entries[day.date]?.coverage ?? 0
-  const isClosed = !isDayOpen(project, day)
+  const isInactive = !isActiveOn(project, day)
   const isHolidayOrWeekend = holidays.has(day.date) || day.isWeekend
   const isTodayDay = isToday(day.date)
 
   const base = [
-    isClosed ? 'cursor-disabled' : 'cursor-pointer',
+    isInactive ? 'cursor-disabled' : 'cursor-pointer',
     isTodayDay && 'border-primary/50',
   ]
 
@@ -105,10 +105,10 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
       <tr v-for="(project, projectIndex) in projects" :key="project.id" class="group/row">
         <td class="sm:sticky sm:left-0 sm:z-10 overflow-hidden border-b border-r border-l border-default bg-default px-3 py-2">
           <div class="flex items-center gap-1 min-w-0">
-            <UTooltip v-if="project.is_archived" text="Archivé">
+            <UTooltip v-if="project.is_inactive" text="Inactif">
               <UIcon name="i-lucide-archive" class="w-3.5 h-3.5 shrink-0 text-muted" />
             </UTooltip>
-            <div class="truncate text-sm font-medium flex-1" :class="project.is_archived ? 'text-muted' : 'text-default'">{{ project.name }}</div>
+            <div class="truncate text-sm font-medium flex-1" :class="project.is_inactive ? 'text-muted' : 'text-default'">{{ project.name }}</div>
           </div>
           <div class="flex items-center gap-1 min-w-0 text-xs text-muted">
             <span class="truncate flex-1 min-w-0">{{ project.client.name }}</span>
@@ -135,12 +135,12 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
           :data-col="index"
           :data-project-id="project.id"
           :data-date="day.date"
-          :data-deleted="!isDayOpen(project, day) ? true : undefined"
+          :data-deleted="!isActiveOn(project, day) ? true : undefined"
           class="group/cell h-13 relative border-b border-r border-default transition-colors select-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/50"
           :class="[getCellClasses(project, day), isToday(days[index + 1]?.date) ? 'border-r-primary/50' : '']"
           @mouseenter="($event.target as HTMLElement).focus()"
-          @click="isDayOpen(project, day) ? emit('cellClick', project.id, day.date) : undefined"
-          @contextmenu.prevent="isDayOpen(project, day) ? emit('setCoverage', project.id, day.date, 0) : undefined"
+          @click="isActiveOn(project, day) ? emit('cellClick', project.id, day.date) : undefined"
+          @contextmenu.prevent="isActiveOn(project, day) ? emit('setCoverage', project.id, day.date, 0) : undefined"
         >
           <span
             v-if="project.entries[day.date]?.coverage"
@@ -153,15 +153,16 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
             class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary/70 transition-opacity group-hover/cell:opacity-0"
           />
           <UTooltip
-            v-if="isDayOpen(project, day) || project.entries[day.date]?.title || project.entries[day.date]?.description"
-            :text="isDayOpen(project, day) ? 'Modifier l\'entrée' : 'Voir les détails'"
+            v-if="isActiveOn(project, day) || project.entries[day.date]?.title
+              || project.entries[day.date]?.description"
+            :text="isActiveOn(project, day) ? 'Modifier l\'entrée' : 'Voir les détails'"
           >
             <button
               type="button"
               class="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded opacity-0 transition-opacity hover:bg-primary/25 group-hover/cell:opacity-100"
               @click.stop="emit('actionClick', project.id, day.date)"
             >
-              <UIcon :name="isDayOpen(project, day) ? 'i-lucide-pencil' : 'i-lucide-eye'" class="h-3 w-3 text-primary" />
+              <UIcon :name="isActiveOn(project, day) ? 'i-lucide-pencil' : 'i-lucide-eye'" class="h-3 w-3 text-primary" />
             </button>
           </UTooltip>
         </td>

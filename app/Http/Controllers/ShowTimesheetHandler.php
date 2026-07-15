@@ -56,7 +56,7 @@ class ShowTimesheetHandler
                 'name',
                 'client' => ['id', 'name'],
                 'daily_rate',
-                'isArchived() as is_archived',
+                'isInactive() as is_inactive',
             ])->merge([
                 'start_date' => $p->start_date->toDateString(),
                 'end_date' => $p->end_date?->toDateString(),

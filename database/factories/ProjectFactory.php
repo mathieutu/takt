@@ -21,7 +21,7 @@ class ProjectFactory extends Factory
         ];
     }
 
-    public function archived(): static
+    public function inactive(): static
     {
         return $this->state(fn () => ['start_date' => today()->subMonth(), 'end_date' => today()->subDay()]);
     }

@@ -23,10 +23,10 @@ class ProjectController
         $user = $request->user();
 
         if ($user->projects()->active()->doesntExist()) {
-            $hasArchived = $user->projects()->archived()->exists()
+            $hasHidden = $user->projects()->inactive()->exists()
                 || $user->clients()->onlyTrashed()->exists();
 
-            if (! $hasArchived) {
+            if (! $hasHidden) {
                 return redirect()->route('projects.create');
             }
 
@@ -150,7 +150,7 @@ class ProjectController
 
     public function destroy(Project $project): RedirectResponse
     {
-        if ($project->isArchived()) {
+        if ($project->isInactive()) {
             if ($project->timesheetEntries()->exists() || $project->invoices()->exists()) {
                 return redirect()
                     ->back()
@@ -168,7 +168,7 @@ class ProjectController
 
         return redirect()
             ->back()
-            ->with('success', 'Projet archivé avec succès.');
+            ->with('success', 'Projet désactivé avec succès.');
     }
 
     public function restore(Project $project): RedirectResponse
@@ -178,7 +178,7 @@ class ProjectController
 
         return redirect()
             ->back()
-            ->with('success', 'Projet restauré avec succès.');
+            ->with('success', 'Projet réactivé avec succès.');
     }
 
     public function syncEntries(Request $request, Project $project): RedirectResponse|JsonResponse
@@ -189,7 +189,7 @@ class ProjectController
                 'required',
                 'date',
                 function (string $attribute, mixed $value, Closure $fail) use ($project) {
-                    if (! $project->isOpenOn($value)) {
+                    if (! $project->isActiveOn($value)) {
                         $fail('Ce projet ne peut pas recevoir de coverage à cette date.');
                     }
                 },

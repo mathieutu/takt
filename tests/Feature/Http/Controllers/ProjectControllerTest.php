@@ -21,8 +21,8 @@ describe('destroy', function () {
         expect($project->refresh()->end_date->toDateString())->toBe(today()->toDateString());
     });
 
-    it('permanently deletes an already archived project without entries', function () {
-        $project = Project::factory()->for($this->client)->archived()->create();
+    it('permanently deletes an already inactive project without entries', function () {
+        $project = Project::factory()->for($this->client)->inactive()->create();
 
         $this->actingAs($this->user)
             ->delete(route('projects.destroy', $project))
@@ -31,8 +31,8 @@ describe('destroy', function () {
         expect(Project::find($project->id))->toBeNull();
     });
 
-    it('refuses to permanently delete an archived project with timesheet entries', function () {
-        $project = Project::factory()->for($this->client)->archived()->create();
+    it('refuses to permanently delete an inactive project with timesheet entries', function () {
+        $project = Project::factory()->for($this->client)->inactive()->create();
         TimesheetEntry::factory()->for($project)->create();
 
         $this->actingAs($this->user)
@@ -44,8 +44,8 @@ describe('destroy', function () {
 });
 
 describe('restore', function () {
-    it('restores an archived project by clearing its end date', function () {
-        $project = Project::factory()->for($this->client)->archived()->create();
+    it('restores an inactive project by clearing its end date', function () {
+        $project = Project::factory()->for($this->client)->inactive()->create();
 
         $this->actingAs($this->user)
             ->post(route('projects.restore', $project))
@@ -67,7 +67,7 @@ describe('syncEntries', function () {
     });
 
     it('rejects an entry dated after the end date', function () {
-        $project = Project::factory()->for($this->client)->archived()->create();
+        $project = Project::factory()->for($this->client)->inactive()->create();
 
         $this->actingAs($this->user)
             ->patchJson(route('projects.entries.sync', $project), [
@@ -76,8 +76,8 @@ describe('syncEntries', function () {
             ->assertStatus(422);
     });
 
-    it('accepts an entry dated on the end date, even for an already archived project', function () {
-        $project = Project::factory()->for($this->client)->archived()->create();
+    it('accepts an entry dated on the end date, even for an already inactive project', function () {
+        $project = Project::factory()->for($this->client)->inactive()->create();
 
         $this->actingAs($this->user)
             ->patchJson(route('projects.entries.sync', $project), [

@@ -17,7 +17,7 @@ trait BuildsProjectsPageProps
 
         return [
             'has_trashed' => fn () => (
-                $request->user()->projects()->archived()->exists()
+                $request->user()->projects()->inactive()->exists()
                 || $request->user()->clients()->onlyTrashed()->exists()
             ),
 
@@ -62,7 +62,7 @@ trait BuildsProjectsPageProps
                     'client' => ['id', 'name'],
                     'start_date',
                     'end_date',
-                    'isArchived() as is_archived',
+                    'isInactive() as is_inactive',
                 ]);
             },
 

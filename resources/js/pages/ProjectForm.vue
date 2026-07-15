@@ -42,7 +42,7 @@ type BackgroundProject = {
   client: { id: string, name: string },
   start_date: string,
   end_date: string | null,
-  is_archived: boolean,
+  is_inactive: boolean,
 }
 
 const { modal } = defineProps<{

@@ -24,7 +24,7 @@ type Project = {
   client: { id: string, name: string },
   daily_rate: number,
   entries: Record<string, EntryData>,
-  is_archived?: boolean,
+  is_inactive?: boolean,
   start_date: string,
   end_date?: string | null,
 }
@@ -147,13 +147,13 @@ const onCellClick = (projectId: string, date: string) => {
   return syncCoverage(projectId, date, newCoverage)
 }
 
-const isDayOpen = (project: Project, date: string): boolean =>
+const isActiveOn = (project: Project, date: string): boolean =>
   date >= project.start_date && (!project.end_date || date <= project.end_date)
 
 const openEntry = (projectId: string, date: string) => {
   const project = props.projects.find(p => p.id === projectId)!
   const entry = project.entries[date] ?? null
-  const isReadOnly = !isDayOpen(project, date)
+  const isReadOnly = !isActiveOn(project, date)
   if (isReadOnly && !entry?.title && !entry?.description) return
   activeEntry.value = { projectId, date, isReadOnly, ...entry! }
 }

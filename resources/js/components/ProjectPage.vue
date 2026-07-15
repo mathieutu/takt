@@ -31,7 +31,7 @@ type Project = {
   client: { id: string, name: string },
   start_date: string,
   end_date: string | null,
-  is_archived: boolean,
+  is_inactive: boolean,
 }
 
 const props = withDefaults(defineProps<{
@@ -59,8 +59,8 @@ const copied = ref(false)
 const confirm = useConfirm()
 
 const deleteProject = (project: Project) => confirm({
-  title: project.is_archived ? `Supprimer "${project.name}" ?` : `Archiver "${project.name}" ?`,
-  description: project.is_archived ? 'Toutes les données seront perdues définitivement.' : 'Vous pourrez le restaurer ultérieurement.',
+  title: project.is_inactive ? `Supprimer "${project.name}" ?` : `Désactiver "${project.name}" ?`,
+  description: project.is_inactive ? 'Toutes les données seront perdues définitivement.' : 'Vous pourrez le réactiver ultérieurement.',
   onConfirm: () => router.visit(projectsRoutes.destroy(project), { preserveScroll: true }),
 })
 
@@ -69,15 +69,15 @@ const projectMenuItems = (project: Project): DropdownMenuItem[][] => [
     { label: 'Modifier', icon: 'i-lucide-pencil', href: projectsRoutes.edit(project, { mergeQuery: {} }), only: ['modal'] },
     { label: 'Dupliquer', icon: 'i-lucide-copy', href: projectsRoutes.duplicate(project) },
   ],
-  project.is_archived ? [
-    { label: 'Restaurer', icon: 'i-lucide-rotate-ccw', href: projectsRoutes.restore(project) },
+  project.is_inactive ? [
+    { label: 'Réactiver', icon: 'i-lucide-rotate-ccw', href: projectsRoutes.restore(project) },
     {
       label: 'Supprimer définitivement',
       icon: 'i-lucide-trash-2',
       color: 'error' as const,
       onSelect: () => deleteProject(project),
     },
-  ] : [{ label: 'Archiver', icon: 'i-lucide-archive', color: 'error' as const, onSelect: () => deleteProject(project) }],
+  ] : [{ label: 'Désactiver', icon: 'i-lucide-archive', color: 'error' as const, onSelect: () => deleteProject(project) }],
 ]
 
 const deleteClient = (client: Client) => confirm({
@@ -253,7 +253,7 @@ const clientFilterHref = (clientId: string) =>
             v-for="project in projects"
             :key="project.id"
             class="rounded-lg border border-default bg-elevated p-5 flex flex-col h-full justify-between transition-opacity"
-            :class="project.is_archived ? 'opacity-60' : ''"
+            :class="project.is_inactive ? 'opacity-60' : ''"
           >
             <div class="flex items-start justify-between gap-2">
               <div class="min-w-0 flex-1">
@@ -299,11 +299,11 @@ const clientFilterHref = (clientId: string) =>
               <div class="flex items-center gap-2">
                 <span v-if="project.daily_rate != null" class="text-xs font-medium">{{ formatCurrency(project.daily_rate) }}/j.</span>
                 <span
-                  v-if="project.is_archived"
+                  v-if="project.is_inactive"
                   class="inline-flex items-center gap-1 rounded-full bg-error/10 px-2 py-0.5 text-xs text-error"
                 >
                   <UIcon name="i-lucide-archive" class="h-3 w-3" />
-                  Archivé
+                  Inactif
                 </span>
               </div>
               <span v-if="project.start_date" class="text-xs text-muted">{{ formatDate(project.start_date, true) }}</span>
