@@ -5,7 +5,7 @@ import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOpt
 
 /**
  * @see \App\Http\Controllers\ProjectController::syncEntries
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:183
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:184
  * @route "/projects/{project}/entries"
  */
 export const sync = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"patch"> => ({
@@ -20,7 +20,7 @@ sync.definition = {
 
 /**
  * @see \App\Http\Controllers\ProjectController::syncEntries
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:183
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:184
  * @route "/projects/{project}/entries"
  */
 sync.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -51,7 +51,7 @@ sync.url = (args: { project: string | { id: string } } | [ project: string | { i
 
 /**
  * @see \App\Http\Controllers\ProjectController::syncEntries
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:183
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:184
  * @route "/projects/{project}/entries"
  */
 sync.patch = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"patch"> => ({

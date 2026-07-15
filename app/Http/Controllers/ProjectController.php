@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Concerns\BuildsProjectsPageProps;
 use App\Models\Project;
 use App\Models\TimesheetEntry;
+use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -182,13 +183,17 @@ class ProjectController
 
     public function syncEntries(Request $request, Project $project): RedirectResponse|JsonResponse
     {
-        if ($project->isArchived()) {
-            return response()->json(['message' => 'This project is archived and can\'t be updated.'], 422);
-        }
-
         $validated = $request->validate([
             'entries' => ['required', 'array'],
-            'entries.*.date' => ['required', 'date'],
+            'entries.*.date' => [
+                'required',
+                'date',
+                function (string $attribute, mixed $value, Closure $fail) use ($project) {
+                    if (! $project->isOpenOn($value)) {
+                        $fail('Ce projet ne peut pas recevoir de coverage à cette date.');
+                    }
+                },
+            ],
             'entries.*.coverage' => ['required', 'integer', 'between:0,100'],
             'entries.*.title' => ['nullable', 'string'],
             'entries.*.description' => ['nullable', 'string'],

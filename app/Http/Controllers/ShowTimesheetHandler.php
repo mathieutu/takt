@@ -58,6 +58,8 @@ class ShowTimesheetHandler
                 'daily_rate',
                 'isArchived() as is_archived',
             ])->merge([
+                'start_date' => $p->start_date->toDateString(),
+                'end_date' => $p->end_date?->toDateString(),
                 'entries' => $p->timesheetEntries
                     ->keyBy(fn (TimesheetEntry $e) => $e->date->toDateString())
                     ->map(fn (TimesheetEntry $e) => $e->export([

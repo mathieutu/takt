@@ -17,6 +17,8 @@ export type GridProject = {
   days?: number,
   revenue?: number,
   is_archived?: boolean,
+  start_date: string,
+  end_date?: string | null,
 }
 
 const { holidays, days, projects } = defineProps<{
@@ -37,14 +39,17 @@ const tableRef = useTemplateRef<HTMLTableElement>('table-ref')
 useTimesheetKeyboard(tableRef, () => days, () => projects, emit)
 const { isToday } = useToday()
 
+const isDayOpen = (project: GridProject, day: Day): boolean =>
+  day.date >= project.start_date && (!project.end_date || day.date <= project.end_date)
+
 const getCellClasses = (project: GridProject, day: Day): Array<string | boolean> => {
   const coverage = project.entries[day.date]?.coverage ?? 0
-  const isDeleted = !!project.is_archived
+  const isClosed = !isDayOpen(project, day)
   const isHolidayOrWeekend = holidays.has(day.date) || day.isWeekend
   const isTodayDay = isToday(day.date)
 
   const base = [
-    isDeleted ? 'cursor-disabled' : 'cursor-pointer',
+    isClosed ? 'cursor-disabled' : 'cursor-pointer',
     isTodayDay && 'border-primary/50',
   ]
 
@@ -130,12 +135,12 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
           :data-col="index"
           :data-project-id="project.id"
           :data-date="day.date"
-          :data-deleted="project.is_archived ? true : undefined"
+          :data-deleted="!isDayOpen(project, day) ? true : undefined"
           class="group/cell h-13 relative border-b border-r border-default transition-colors select-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/50"
           :class="[getCellClasses(project, day), isToday(days[index + 1]?.date) ? 'border-r-primary/50' : '']"
           @mouseenter="($event.target as HTMLElement).focus()"
-          @click="!project.is_archived ? emit('cellClick', project.id, day.date) : undefined"
-          @contextmenu.prevent="!project.is_archived ? emit('setCoverage', project.id, day.date, 0) : undefined"
+          @click="isDayOpen(project, day) ? emit('cellClick', project.id, day.date) : undefined"
+          @contextmenu.prevent="isDayOpen(project, day) ? emit('setCoverage', project.id, day.date, 0) : undefined"
         >
           <span
             v-if="project.entries[day.date]?.coverage"
@@ -148,15 +153,15 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
             class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary/70 transition-opacity group-hover/cell:opacity-0"
           />
           <UTooltip
-            v-if="!project.is_archived || (project.entries[day.date]?.title || project.entries[day.date]?.description)"
-            :text="project.is_archived ? 'Voir les détails' : 'Modifier l\'entrée'"
+            v-if="isDayOpen(project, day) || project.entries[day.date]?.title || project.entries[day.date]?.description"
+            :text="isDayOpen(project, day) ? 'Modifier l\'entrée' : 'Voir les détails'"
           >
             <button
               type="button"
               class="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded opacity-0 transition-opacity hover:bg-primary/25 group-hover/cell:opacity-100"
               @click.stop="emit('actionClick', project.id, day.date)"
             >
-              <UIcon :name="project.is_archived ? 'i-lucide-eye' : 'i-lucide-pencil'" class="h-3 w-3 text-primary" />
+              <UIcon :name="isDayOpen(project, day) ? 'i-lucide-pencil' : 'i-lucide-eye'" class="h-3 w-3 text-primary" />
             </button>
           </UTooltip>
         </td>

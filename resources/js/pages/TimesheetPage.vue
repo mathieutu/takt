@@ -25,8 +25,10 @@ type Project = {
   daily_rate: number,
   entries: Record<string, EntryData>,
   is_archived?: boolean,
+  start_date: string,
+  end_date?: string | null,
 }
-type ActiveEntry = { projectId: string, date: string, isArchived: boolean } & EntryData
+type ActiveEntry = { projectId: string, date: string, isReadOnly: boolean } & EntryData
 
 type Invoice = {
   id: string,
@@ -145,11 +147,15 @@ const onCellClick = (projectId: string, date: string) => {
   return syncCoverage(projectId, date, newCoverage)
 }
 
+const isDayOpen = (project: Project, date: string): boolean =>
+  date >= project.start_date && (!project.end_date || date <= project.end_date)
+
 const openEntry = (projectId: string, date: string) => {
   const project = props.projects.find(p => p.id === projectId)!
   const entry = project.entries[date] ?? null
-  if (project.is_archived && !entry?.title && !entry?.description) return
-  activeEntry.value = { projectId, date, isArchived: !!project.is_archived, ...entry! }
+  const isReadOnly = !isDayOpen(project, date)
+  if (isReadOnly && !entry?.title && !entry?.description) return
+  activeEntry.value = { projectId, date, isReadOnly, ...entry! }
 }
 
 const entryDateLabel = (date: string): string => {
@@ -345,7 +351,7 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
 
   <UModal :open="!!activeEntry" :title="activeEntry ? entryDateLabel(activeEntry.date) : ''" @update:open="(val: boolean) => val || (activeEntry = null)">
     <template #body>
-      <template v-if="activeEntry?.isArchived">
+      <template v-if="activeEntry?.isReadOnly">
         <div class="space-y-4">
           <div v-if="activeEntry.title" class="flex flex-col gap-1">
             <p class="text-xs font-medium text-muted">Titre</p>
@@ -400,7 +406,7 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
     </template>
     <template #footer="{ close }">
       <div class="flex justify-end gap-2">
-        <UButton v-if="activeEntry?.isArchived" label="Fermer" color="neutral" variant="outline" @click="close" />
+        <UButton v-if="activeEntry?.isReadOnly" label="Fermer" color="neutral" variant="outline" @click="close" />
         <template v-else>
           <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
           <UButton type="submit" form="entry-form" label="Enregistrer" />

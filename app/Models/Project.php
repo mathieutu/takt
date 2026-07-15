@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Contracts\HasUser;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -73,6 +74,13 @@ class Project extends Model implements HasUser
     public function isArchived(): bool
     {
         return $this->end_date !== null && $this->end_date->lt(today()->addDay());
+    }
+
+    public function isOpenOn(CarbonInterface|string $date): bool
+    {
+        $date = CarbonImmutable::parse($date)->startOfDay();
+
+        return $this->start_date->lte($date) && ($this->end_date === null || $this->end_date->gte($date));
     }
 
     public function user(): BelongsToThrough
