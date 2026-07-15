@@ -56,7 +56,17 @@ describe('restore', function () {
 });
 
 describe('syncEntries', function () {
-    it('rejects syncing entries on an archived project', function () {
+    it('rejects an entry dated before the start date', function () {
+        $project = Project::factory()->for($this->client)->create(['start_date' => today(), 'end_date' => null]);
+
+        $this->actingAs($this->user)
+            ->patchJson(route('projects.entries.sync', $project), [
+                'entries' => [['date' => today()->subDay()->toDateString(), 'coverage' => 100]],
+            ])
+            ->assertStatus(422);
+    });
+
+    it('rejects an entry dated after the end date', function () {
         $project = Project::factory()->for($this->client)->archived()->create();
 
         $this->actingAs($this->user)
@@ -64,6 +74,30 @@ describe('syncEntries', function () {
                 'entries' => [['date' => today()->toDateString(), 'coverage' => 100]],
             ])
             ->assertStatus(422);
+    });
+
+    it('accepts an entry dated on the end date, even for an already archived project', function () {
+        $project = Project::factory()->for($this->client)->archived()->create();
+
+        $this->actingAs($this->user)
+            ->patchJson(route('projects.entries.sync', $project), [
+                'entries' => [['date' => $project->end_date->toDateString(), 'coverage' => 100]],
+            ])
+            ->assertSuccessful();
+
+        expect($project->timesheetEntries()->where('date', $project->end_date->toDateString())->exists())->toBeTrue();
+    });
+
+    it('accepts an entry within the open date range', function () {
+        $project = Project::factory()->for($this->client)->create(['start_date' => today(), 'end_date' => null]);
+
+        $this->actingAs($this->user)
+            ->patchJson(route('projects.entries.sync', $project), [
+                'entries' => [['date' => today()->toDateString(), 'coverage' => 100]],
+            ])
+            ->assertSuccessful();
+
+        expect($project->timesheetEntries()->where('date', today()->toDateString())->exists())->toBeTrue();
     });
 });
 

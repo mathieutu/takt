@@ -23,6 +23,6 @@ class ProjectFactory extends Factory
 
     public function archived(): static
     {
-        return $this->state(fn () => ['end_date' => today()->subDay()]);
+        return $this->state(fn () => ['start_date' => today()->subMonth(), 'end_date' => today()->subDay()]);
     }
 }

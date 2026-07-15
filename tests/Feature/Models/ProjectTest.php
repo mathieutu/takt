@@ -52,3 +52,42 @@ describe('scopeArchived', function () {
             ->not->toContain($active->id);
     });
 });
+
+describe('isOpenOn', function () {
+    it('is closed before the start date', function () {
+        $project = Project::factory()->create(['start_date' => today(), 'end_date' => null]);
+
+        expect($project->isOpenOn(today()->subDay()))->toBeFalse();
+    });
+
+    it('is open on the start date', function () {
+        $project = Project::factory()->create(['start_date' => today(), 'end_date' => null]);
+
+        expect($project->isOpenOn(today()))->toBeTrue();
+    });
+
+    it('is open without an end date, however far in the future', function () {
+        $project = Project::factory()->create(['start_date' => today(), 'end_date' => null]);
+
+        expect($project->isOpenOn(today()->addYears(5)))->toBeTrue();
+    });
+
+    it('is open on the end date, even for an already archived project', function () {
+        $project = Project::factory()->create([
+            'start_date' => today()->subMonths(2),
+            'end_date' => today()->subDay(),
+        ]);
+
+        expect($project->isArchived())->toBeTrue()
+            ->and($project->isOpenOn($project->end_date))->toBeTrue();
+    });
+
+    it('is closed after the end date', function () {
+        $project = Project::factory()->create([
+            'start_date' => today()->subMonths(2),
+            'end_date' => today()->subDay(),
+        ]);
+
+        expect($project->isOpenOn(today()))->toBeFalse();
+    });
+});
