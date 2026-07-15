@@ -46,7 +46,6 @@ Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
 
     // Projects
     Route::resource('projects', ProjectController::class)->except(['show']);
-    Route::post('projects/{project}/restore', [ProjectController::class, 'restore'])->name('projects.restore');
     Route::post('projects/{project}/duplicate', [ProjectController::class, 'duplicate'])->name('projects.duplicate');
     Route::patch('projects/{project}/entries', [ProjectController::class, 'syncEntries'])->name('projects.entries.sync');
 

@@ -150,35 +150,17 @@ class ProjectController
 
     public function destroy(Project $project): RedirectResponse
     {
-        if ($project->isInactive()) {
-            if ($project->timesheetEntries()->exists() || $project->invoices()->exists()) {
-                return redirect()
-                    ->back()
-                    ->with('error', 'Impossible de supprimer définitivement un projet ayant des entrées.');
-            }
-
-            $project->delete();
-
+        if ($project->timesheetEntries()->exists() || $project->invoices()->exists()) {
             return redirect()
                 ->back()
-                ->with('success', 'Projet supprimé définitivement.');
+                ->with('error', 'Impossible de supprimer définitivement un projet ayant des entrées.');
         }
 
-        $project->update(['end_date' => today()]);
+        $project->delete();
 
         return redirect()
             ->back()
-            ->with('success', 'Projet désactivé avec succès.');
-    }
-
-    public function restore(Project $project): RedirectResponse
-    {
-        $project->update(['end_date' => null]);
-        $project->client->restore();
-
-        return redirect()
-            ->back()
-            ->with('success', 'Projet réactivé avec succès.');
+            ->with('success', 'Projet supprimé définitivement.');
     }
 
     public function syncEntries(Request $request, Project $project): RedirectResponse|JsonResponse

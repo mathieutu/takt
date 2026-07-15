@@ -59,8 +59,8 @@ const copied = ref(false)
 const confirm = useConfirm()
 
 const deleteProject = (project: Project) => confirm({
-  title: project.is_inactive ? `Supprimer "${project.name}" ?` : `Désactiver "${project.name}" ?`,
-  description: project.is_inactive ? 'Toutes les données seront perdues définitivement.' : 'Vous pourrez le réactiver ultérieurement.',
+  title: `Supprimer "${project.name}" ?`,
+  description: 'Toutes les données seront perdues définitivement.',
   onConfirm: () => router.visit(projectsRoutes.destroy(project), { preserveScroll: true }),
 })
 
@@ -69,22 +69,21 @@ const projectMenuItems = (project: Project): DropdownMenuItem[][] => [
     { label: 'Modifier', icon: 'i-lucide-pencil', href: projectsRoutes.edit(project, { mergeQuery: {} }), only: ['modal'] },
     { label: 'Dupliquer', icon: 'i-lucide-copy', href: projectsRoutes.duplicate(project) },
   ],
-  project.is_inactive ? [
-    { label: 'Réactiver', icon: 'i-lucide-rotate-ccw', href: projectsRoutes.restore(project) },
+  [
     {
       label: 'Supprimer définitivement',
       icon: 'i-lucide-trash-2',
       color: 'error' as const,
       onSelect: () => deleteProject(project),
     },
-  ] : [{ label: 'Désactiver', icon: 'i-lucide-archive', color: 'error' as const, onSelect: () => deleteProject(project) }],
+  ],
 ]
 
 const deleteClient = (client: Client) => confirm({
   title: client.deleted_at ? `Supprimer "${client.name}" ?` : `Archiver "${client.name}" ?`,
   description: client.deleted_at
     ? 'Toutes les données seront perdues définitivement.'
-    : 'Cela archivera également tous ses projets. Vous pourrez les restaurer ultérieurement.',
+    : 'Cela terminera également tous ses projets.',
   onConfirm: () => router.visit(clientRoutes.destroy(client), { preserveScroll: true }),
 })
 
@@ -224,7 +223,7 @@ const clientFilterHref = (clientId: string) =>
           <template v-if="has_trashed">
             <UButton
               v-if="!with_trashed"
-              label="Afficher les archivés"
+              label="Afficher les inactifs"
               icon="i-lucide-archive"
               color="neutral"
               variant="outline"
@@ -233,7 +232,7 @@ const clientFilterHref = (clientId: string) =>
             />
             <UButton
               v-else-if="has_active"
-              label="Masquer les archivés"
+              label="Masquer les inactifs"
               icon="i-lucide-eye-off"
               color="error"
               variant="outline"

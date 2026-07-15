@@ -357,69 +357,6 @@ destroy.delete = (args: { project: string | { id: string } } | [ project: string
 
 
 /**
- * @see \App\Http\Controllers\ProjectController::restore
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:174
- * @route "/projects/{project}/restore"
- */
-export const restore = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
-    url: restore.url(args, options),
-    method: "post",
-})
-
-restore.definition = {
-    methods: ["post"],
-    url: "/projects/{project}/restore",
-} satisfies RouteDefinition<["post"]>
-
-/**
- * @see \App\Http\Controllers\ProjectController::restore
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:174
- * @route "/projects/{project}/restore"
- */
-restore.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
-    if (typeof args === "string" || typeof args === "number") {
-        args = { project: args }
-    }
-    
-    if (typeof args === "object" && !Array.isArray(args) && "id" in args) {
-        args = { project: args.id }
-    }
-    
-    if (Array.isArray(args)) {
-        args = {
-        project: args[0],
-    }
-    }
-    
-    args = applyUrlDefaults(args)
-    
-    const parsedArgs = {
-        project: typeof args.project === "object" ? args.project.id : args.project,
-    }
-    
-    return restore.definition.url
-        .replace("{project}", parsedArgs.project.toString())
-        .replace(/\/+$/, "") + queryParams(options)
-}
-
-/**
- * @see \App\Http\Controllers\ProjectController::restore
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:174
- * @route "/projects/{project}/restore"
- */
-restore.post = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
-    url: restore.url(args, options),
-    method: "post",
-})
-
-
-
-
-
-
-
-
-/**
  * @see \App\Http\Controllers\ProjectController::duplicate
  * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:96
  * @route "/projects/{project}/duplicate"
@@ -490,7 +427,6 @@ const projects = {
     edit,
     update,
     destroy,
-    restore,
     duplicate,
     entries,
 }

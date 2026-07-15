@@ -11,17 +11,17 @@ beforeEach(function () {
 });
 
 describe('destroy', function () {
-    it('archives an active project by setting its end date to today', function () {
+    it('permanently deletes an active project without entries', function () {
         $project = Project::factory()->for($this->client)->create(['end_date' => null]);
 
         $this->actingAs($this->user)
             ->delete(route('projects.destroy', $project))
             ->assertRedirect();
 
-        expect($project->refresh()->end_date->toDateString())->toBe(today()->toDateString());
+        expect(Project::find($project->id))->toBeNull();
     });
 
-    it('permanently deletes an already inactive project without entries', function () {
+    it('permanently deletes an inactive project without entries', function () {
         $project = Project::factory()->for($this->client)->inactive()->create();
 
         $this->actingAs($this->user)
@@ -31,8 +31,8 @@ describe('destroy', function () {
         expect(Project::find($project->id))->toBeNull();
     });
 
-    it('refuses to permanently delete an inactive project with timesheet entries', function () {
-        $project = Project::factory()->for($this->client)->inactive()->create();
+    it('refuses to permanently delete a project with timesheet entries', function () {
+        $project = Project::factory()->for($this->client)->create();
         TimesheetEntry::factory()->for($project)->create();
 
         $this->actingAs($this->user)
@@ -41,17 +41,16 @@ describe('destroy', function () {
 
         expect(Project::find($project->id))->not->toBeNull();
     });
-});
 
-describe('restore', function () {
-    it('restores an inactive project by clearing its end date', function () {
-        $project = Project::factory()->for($this->client)->inactive()->create();
+    it('refuses to permanently delete a project with invoices', function () {
+        $project = Project::factory()->for($this->client)->create();
+        $project->invoices()->create(['amount' => 100000]);
 
         $this->actingAs($this->user)
-            ->post(route('projects.restore', $project))
+            ->delete(route('projects.destroy', $project))
             ->assertRedirect();
 
-        expect($project->refresh()->end_date)->toBeNull();
+        expect(Project::find($project->id))->not->toBeNull();
     });
 });
 

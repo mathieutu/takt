@@ -308,13 +308,6 @@ export namespace App {
                     export type Request = Record<string, unknown>
                 }
 
-                export namespace Restore {
-                    /**
-                     * @see [\App\Http\Controllers\ProjectController::restore](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
-                     */
-                    export type Request = Record<string, unknown>
-                }
-
                 export namespace Duplicate {
                     /**
                      * @see [\App\Http\Controllers\ProjectController::duplicate](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
