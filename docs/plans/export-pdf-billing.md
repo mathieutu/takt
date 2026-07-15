@@ -27,11 +27,11 @@ Ce document est **autonome et complet** : il documente l'implémentation de bout
 - [x] **Checklist manuelle MVP validée par l'utilisateur** (point de contrôle obligatoire avant Phase 2)
 
 ### Phase 2 — Itération design
-- [ ] `resources/js/utils/number.ts` (locale `fr-FR` fixée)
-- [ ] `resources/js/exports/billing-pdf.ts` (point d'entrée Vite, formatage réel injecté)
-- [ ] `vite.config.ts` (entrée ajoutée au tableau `input`)
-- [ ] CSS compilé inliné dans le Blade (`Vite::content('resources/css/app.css')`)
-- [ ] Design du calendrier finalisé (skills `dataviz` + `frontend-design` activés, cohérent thème `pink`)
+- [x] `resources/js/utils/number.ts` (locale `fr-FR` fixée)
+- [x] `resources/js/exports/billing-pdf.ts` (point d'entrée Vite, formatage réel injecté)
+- [x] `vite.config.ts` / `vite.config.exports.ts` (build dédié en mode library — **déviation** : un simple ajout au tableau `input` du build principal produit un module ES avec des imports vers des chunks partagés, invalides une fois inliné en `<script>` brut sans URL de base ; un build library/IIFE séparé produit un bundle autonome sans imports)
+- [x] CSS compilé inliné dans le Blade (`Vite::content('resources/css/app.css')` + `resources/css/exports-theme.css` — **ajout non prévu au plan initial** : les tokens couleur `--ui-primary`/`--ui-color-*` ne sont jamais définis dans le CSS statique compilé, ils sont injectés à l'exécution par le plugin Vue `@nuxt/ui/vue-plugin` ; capturés une fois depuis le rendu SSR réel de l'app et committés en fichier statique, avec note de régénération en cas de changement de thème)
+- [x] Design du calendrier finalisé (skills `dataviz` + `frontend-design` activés, cohérent thème `pink`)
 - [ ] **Preview HTML validée par l'utilisateur** (boucle d'itération, possiblement plusieurs allers-retours)
 - [ ] **Export PDF réel validé par l'utilisateur** (glyphes de coverage, montants, sauts de page)
 
