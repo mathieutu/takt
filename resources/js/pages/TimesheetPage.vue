@@ -114,7 +114,15 @@ const paidDaysTotal = computed(() =>
     .reduce((s, i) => s + i.amount / i.daily_rate, 0),
 )
 
+// Cancels the previous in-flight request for the same cell before firing a new
+// one, so a double click only ever results in a single request reaching the
+// server. The optimistic update still applies instantly on every click.
+const pendingCancelTokens = new Map<string, { cancel: () => void }>()
+
 const syncCoverage = (projectId: string, date: string, coverage: number) => {
+  const key = `${projectId}:${date}`
+  pendingCancelTokens.get(key)?.cancel()
+
   const project = props.projects.find(p => p.id === projectId)!
   const existing = project.entries[date] ?? null
 
@@ -123,6 +131,8 @@ const syncCoverage = (projectId: string, date: string, coverage: number) => {
     only: ['projects'],
     preserveState: true,
     preserveScroll: true,
+    onCancelToken: token => pendingCancelTokens.set(key, token),
+    onFinish: () => pendingCancelTokens.delete(key),
     // @ts-expect-error issue with Inertia types
     optimistic: ({ projects }: Props) => ({
       projects: projects.map(p => p.id !== projectId ? p : {
