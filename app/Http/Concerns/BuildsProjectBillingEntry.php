@@ -4,7 +4,9 @@ namespace App\Http\Concerns;
 
 use App\Models\Invoice;
 use App\Models\Project;
+use App\Services\HolidayService;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
 
 trait BuildsProjectBillingEntry
 {
@@ -62,5 +64,23 @@ trait BuildsProjectBillingEntry
             'months_elapsed' => $monthsElapsed,
             'months_with_entries_count' => $timesheetMonths->count(),
         ];
+    }
+
+    /**
+     * @param  Collection<int, array{months: array<int, array{month: string}>}>  $builtProjects
+     * @return array<string, string>
+     */
+    protected function buildHolidaysForPeriod(HolidayService $holidays, Collection $builtProjects): array
+    {
+        $months = $builtProjects->flatMap(fn (array $p) => collect($p['months'])->pluck('month'));
+
+        if ($months->isEmpty()) {
+            return [];
+        }
+
+        $from = CarbonImmutable::createFromFormat('Y-m-d', $months->min().'-01');
+        $to = CarbonImmutable::createFromFormat('Y-m-d', $months->max().'-01')->endOfMonth();
+
+        return $holidays->forPeriod($from, $to);
     }
 }

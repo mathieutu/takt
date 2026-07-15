@@ -1,13 +1,51 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3'
-import { computed, ref } from 'vue'
+import {
+  type ActiveElement,
+  BarController,
+  BarElement,
+  CategoryScale,
+  type ChartData,
+  type ChartDataset,
+  type ChartEvent,
+  Chart as ChartJS,
+  Tooltip as ChartTooltip,
+  LinearScale,
+  LineController,
+  LineElement,
+  PointElement,
+  type TooltipItem,
+} from 'chart.js'
+import { computed, type ComputedRef, ref } from 'vue'
+import { Bar } from 'vue-chartjs'
+import BillingMonthCalendar from '@/components/BillingMonthCalendar.vue'
 import DateInput from '@/components/DateInput.vue'
-import { coverageLabel, formatDate, formatDays, formatDuration, formatMonthName, parseMonth, today } from '@/utils/date'
+import { formatDate, formatDays, formatDuration, formatMonthName, parseMonth, today } from '@/utils/date'
 import { formatCurrency } from '@/utils/number'
 import { timesheet } from '@/wayfinder/routes'
 import { edit as editClient } from '@/wayfinder/routes/clients'
 import { destroy as destroyInvoice, store as storeInvoice, update as updateInvoice } from '@/wayfinder/routes/invoices'
 import { edit as editProject, index as projectsIndex } from '@/wayfinder/routes/projects'
+
+const props = defineProps<{
+  projects: ProjectWithBilling[],
+  holidays: Record<string, string>,
+  is_shared: boolean,
+  shared_by?: string,
+}>()
+
+const holidays = computed(() => new Map(Object.entries(props.holidays)))
+
+ChartJS.register(
+  BarController,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineController,
+  LineElement,
+  PointElement,
+  ChartTooltip,
+)
 
 type EntryData = { coverage: number, title: string, description: string }
 
@@ -38,12 +76,6 @@ type ProjectWithBilling = {
   months_elapsed: number,
   months_with_entries_count: number,
 }
-
-const props = defineProps<{
-  projects: ProjectWithBilling[],
-  is_shared: boolean,
-  shared_by?: string,
-}>()
 
 const inactiveProjects = computed(() => props.projects.filter(p => p.is_inactive))
 const showInactive = ref(inactiveProjects.value.length === props.projects.length)
@@ -95,6 +127,18 @@ const projectTotals = (project: ProjectWithBilling) => {
 
 const monthWorked = (m: MonthRow, dailyRate: number) => m.days_worked * dailyRate
 const monthInvoiced = (m: MonthRow) => m.invoices.reduce((s, i) => s + i.amount, 0)
+
+const projectMaxDays = (project: ProjectWithBilling): number =>
+  Math.max(...project.months.map(m => m.days_worked), 1)
+
+const monthIntensityClass = (m: MonthRow, project: ProjectWithBilling): string => {
+  if (m.days_worked <= 0) return 'bg-muted'
+  const ratio = m.days_worked / projectMaxDays(project)
+  if (ratio <= 0.25) return 'bg-primary/25'
+  if (ratio <= 0.5) return 'bg-primary/45'
+  if (ratio <= 0.75) return 'bg-primary/70'
+  return 'bg-primary'
+}
 
 const daysSince = (dateStr: string): number => {
   const d = new Date(`${dateStr}T00:00:00`)
@@ -183,6 +227,144 @@ const clientTotals = computed(() => {
   return { totalDays, totalWorked, averageDailyRate }
 })
 
+// ── Activity chart ─────────────────────────────────────────────────────────────
+
+const PROJECT_PALETTE = [
+  '--color-indigo-500',
+  '--color-rose-500',
+  '--color-amber-500',
+  '--color-teal-500',
+  '--color-purple-500',
+  '--color-orange-500',
+  '--color-cyan-500',
+  '--color-emerald-500',
+]
+
+const getCssColor = (varName: string): string =>
+  window.getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
+
+const chartMonths = computed(() => {
+  const months = new Set<string>()
+  visibleProjects.value.forEach(p => p.months.forEach(m => months.add(m.month)))
+  return [...months].sort()
+})
+
+const chartMonthLabel = (ym: string): string => {
+  const { year, month } = parseMonth(ym)
+  return new Date(year, month - 1).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' })
+}
+
+const barChartData = computed(() => ({
+  labels: chartMonths.value.map(chartMonthLabel),
+  datasets: [
+    ...visibleProjects.value.map((project, pi) => {
+      const daysByMonth = new Map(project.months.map(m => [m.month, m.days_worked]))
+      return {
+        type: 'bar',
+        label: project.name,
+        data: chartMonths.value.map(ym => daysByMonth.get(ym) ?? 0),
+        backgroundColor: getCssColor(PROJECT_PALETTE[pi % PROJECT_PALETTE.length]!),
+        stack: 'worked',
+        order: 2,
+      } satisfies ChartDataset<'bar', number[]>
+    }),
+    (() => {
+      const monthlyAmounts = chartMonths.value.map(ym => visibleProjects.value.reduce((sum, project) => {
+        const m = project.months.find(mm => mm.month === ym)
+        return m ? sum + monthInvoiced(m) : sum
+      }, 0))
+      return {
+        type: 'line',
+        label: 'Facturé',
+        data: monthlyAmounts.reduce<number[]>((acc, v) => [...acc, (acc.at(-1) ?? 0) + v / 100], []),
+        borderColor: getCssColor('--color-green-500'),
+        backgroundColor: 'transparent',
+        cubicInterpolationMode: 'monotone' as const,
+        pointRadius: monthlyAmounts.map(v => v > 0 ? 3 : 0),
+        pointHoverRadius: monthlyAmounts.map(v => v > 0 ? 5 : 0),
+        borderWidth: 2,
+        yAxisID: 'y1',
+        order: 1,
+      } satisfies ChartDataset<'line', number[]>
+    })(),
+  ],
+})) as ComputedRef<ChartData<'bar', number[]>>
+
+const projectsInvoicedInMonth = (month: string): ProjectWithBilling[] =>
+  visibleProjects.value.filter(project => {
+    const m = project.months.find(mm => mm.month === month)
+    return m ? monthInvoiced(m) > 0 : false
+  })
+
+const openMonthForProjects = (month: string, projects: ProjectWithBilling[], scroll: boolean) => {
+  expandedMonths.value.clear()
+  projects.forEach(project => expandedMonths.value.add(`${project.id}:${month}`))
+  const firstProject = projects[0]
+  if (!scroll || !firstProject) return
+  requestAnimationFrame(() => {
+    document.getElementById(`month-row-${firstProject.id}-${month}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  })
+}
+
+const barChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: { mode: 'index' as const, intersect: false },
+  onClick: (event: ChartEvent, _elements: ActiveElement[], chart: ChartJS) => {
+    if (!event.native) return
+    const points = chart.getElementsAtEventForMode(event.native, 'nearest', { intersect: true }, true)
+    if (!points.length) return
+    const { index, datasetIndex } = points[0]!
+    const month = chartMonths.value[index]
+    if (!month) return
+
+    const clickedProject = visibleProjects.value[datasetIndex]
+    if (clickedProject) {
+      openMonthForProjects(month, [clickedProject], true)
+      return
+    }
+
+    const invoicedProjects = projectsInvoicedInMonth(month)
+    openMonthForProjects(month, invoicedProjects, invoicedProjects.length === 1)
+  },
+  plugins: {
+    legend: {
+      display: true,
+      position: 'bottom' as const,
+      labels: { boxWidth: 12, boxHeight: 12, font: { size: 11 }, padding: 16, color: 'rgb(107,114,128)' },
+    },
+    tooltip: {
+      callbacks: {
+        label: (ctx: TooltipItem<'bar'>) => ctx.dataset.label === 'Facturé'
+          ? ` Facturé (cumulé) : ${formatCurrency(Math.round((ctx.parsed.y ?? 0) * 100))}`
+          : ` ${ctx.dataset.label} : ${formatDays(ctx.parsed.y ?? 0)}`,
+      },
+    },
+  },
+  scales: {
+    x: { stacked: true, grid: { display: false }, ticks: { font: { size: 11 } } },
+    y: {
+      stacked: true,
+      beginAtZero: true,
+      grid: { color: 'rgba(0,0,0,0.05)' },
+      ticks: { font: { size: 11 }, callback: (v: number | string) => `${Number(v)}j` },
+    },
+    y1: {
+      position: 'right' as const,
+      beginAtZero: true,
+      grid: { display: false },
+      ticks: {
+        font: { size: 11 },
+        callback: (v: number | string) => {
+          const n = Number(v)
+          return n === 0 ? '0' : n >= 1000 ? `${n / 1000}k€` : `${n}€`
+        },
+      },
+    },
+  },
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 const fmtDays = (amount: number, dailyRate: number): string | null =>
@@ -251,12 +433,6 @@ const monthLabel = (ym: string): string => {
   const { year, month } = parseMonth(ym)
   return `${formatMonthName(month)} ${year}`
 }
-
-const dayLabel = (date: string): string => {
-  const d = new Date(`${date}T00:00:00`)
-  const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam']
-  return `${days[d.getDay()]} ${d.getDate()} ${formatMonthName(d.getMonth() + 1)}`
-}
 </script>
 
 <template>
@@ -294,24 +470,31 @@ const dayLabel = (date: string): string => {
           />
         </div>
 
-        <!-- Client totals -->
-        <div v-if="visibleProjects.length > 1" class="rounded-lg border border-default px-4 py-3">
-          <p class="text-xs font-medium text-muted mb-2 uppercase tracking-wide">Total {{ visibleProjects[0]?.client.name }}</p>
-          <div class="flex flex-wrap gap-6 text-sm">
-            <div>
-              <span class="text-muted">Jours travaillés</span>
-              <span class="ml-2 font-semibold tabular-nums">{{ formatDays(clientTotals.totalDays) }}</span>
+        <!-- Activity chart -->
+        <UCard v-if="visibleProjects.length > 0">
+          <template #header>
+            <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+              <p class="text-sm font-semibold">{{ visibleProjects[0]?.client.name }}</p>
+              <div v-if="visibleProjects.length > 1" class="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+                <div>
+                  <span class="text-muted">Jours travaillés</span>
+                  <span class="ml-2 font-semibold tabular-nums">{{ formatDays(clientTotals.totalDays) }}</span>
+                </div>
+                <div>
+                  <span class="text-muted">Rémunération</span>
+                  <span class="ml-2 font-semibold tabular-nums">{{ formatCurrency(clientTotals.totalWorked) }}</span>
+                </div>
+                <div v-if="clientTotals.averageDailyRate !== null">
+                  <span class="text-muted">TJ moyen</span>
+                  <span class="ml-2 font-semibold tabular-nums">{{ formatCurrency(clientTotals.averageDailyRate) }}/j</span>
+                </div>
+              </div>
             </div>
-            <div>
-              <span class="text-muted">Rémunération</span>
-              <span class="ml-2 font-semibold tabular-nums">{{ formatCurrency(clientTotals.totalWorked) }}</span>
-            </div>
-            <div v-if="clientTotals.averageDailyRate !== null">
-              <span class="text-muted">TJ moyen</span>
-              <span class="ml-2 font-semibold tabular-nums">{{ formatCurrency(clientTotals.averageDailyRate) }}/j</span>
-            </div>
+          </template>
+          <div class="h-64 cursor-pointer">
+            <Bar :data="barChartData" :options="barChartOptions" />
           </div>
-        </div>
+        </UCard>
 
         <template v-for="(project, index) in visibleProjects" :key="project.id">
           <div v-if="index > 0" class="border-t-2 border-default" />
@@ -382,6 +565,7 @@ const dayLabel = (date: string): string => {
                   <tbody>
                     <template v-for="(m, monthIndex) in project.months" :key="m.month">
                       <tr
+                        :id="`month-row-${project.id}-${m.month}`"
                         class="border-b border-default hover:bg-muted/20 cursor-pointer transition-colors"
                         :class="isExpanded(project.id, m.month) ? 'bg-muted/20' : ''"
                         @click="toggleMonth(project.id, m.month)"
@@ -392,6 +576,7 @@ const dayLabel = (date: string): string => {
                               :name="isExpanded(project.id, m.month) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
                               class="text-muted w-3.5 h-3.5 shrink-0"
                             />
+                            <span class="h-3 w-3 rounded-sm shrink-0" :class="monthIntensityClass(m, project)" />
                             {{ monthLabel(m.month) }}
                           </div>
                         </td>
@@ -436,19 +621,8 @@ const dayLabel = (date: string): string => {
                           <div class="border-b border-default bg-muted/10 px-6 py-3 space-y-3">
                             <div v-if="Object.keys(m.entries).length > 0">
                               <p class="text-xs font-medium text-muted mb-1.5 uppercase tracking-wide">Jours travaillés</p>
-                              <div class="space-y-1">
-                                <div
-                                  v-for="(entry, date) in m.entries"
-                                  :key="date"
-                                  class="flex items-center gap-3 text-xs"
-                                >
-                                  <span class="w-32 shrink-0 text-muted">{{ dayLabel(date) }}</span>
-                                  <span class="w-8 shrink-0 font-medium tabular-nums">{{ coverageLabel(entry.coverage) }}j</span>
-                                  <span v-if="entry.title" class="text-muted truncate">{{ entry.title }}</span>
-                                </div>
-                              </div>
+                              <BillingMonthCalendar :month="m.month" :entries="m.entries" :holidays="holidays" />
                             </div>
-                            <p v-else class="text-xs text-muted italic">Aucune entrée pour ce mois.</p>
 
                             <div v-if="m.invoices.length > 0">
                               <p class="text-xs font-medium text-muted mb-1.5 uppercase tracking-wide">Factures</p>

@@ -6,6 +6,7 @@ use App\Http\Concerns\BuildsProjectBillingEntry;
 use App\Http\Concerns\BuildsProjectsPageProps;
 use App\Models\Client;
 use App\Models\Project;
+use App\Services\HolidayService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -71,7 +72,7 @@ class ClientController
         return redirect()->back()->with('success', 'Client supprimé avec succès.');
     }
 
-    public function showBilling(Request $request, Client $client): Response
+    public function showBilling(Request $request, Client $client, HolidayService $holidays): Response
     {
         $projects = $client->projects()->orderBy('created_at')->get();
 
@@ -79,8 +80,11 @@ class ClientController
 
         $projects->load(['timesheetEntries', 'invoices']);
 
+        $builtProjects = $projects->map(fn (Project $p) => $this->buildProjectBillingEntry($p, $client->name))->values();
+
         return Inertia::render('ProjectBillingPage', [
-            'projects' => $projects->map(fn (Project $p) => $this->buildProjectBillingEntry($p, $client->name))->values(),
+            'projects' => $builtProjects,
+            'holidays' => $this->buildHolidaysForPeriod($holidays, $builtProjects),
             'is_shared' => false,
         ]);
     }
