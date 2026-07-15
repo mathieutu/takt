@@ -28,7 +28,7 @@ type Project = {
   start_date: string,
   end_date?: string | null,
 }
-type ActiveEntry = { projectId: string, date: string, isReadOnly: boolean } & EntryData
+type EditingEntry = { projectId: string, date: string, isReadOnly: boolean } & EntryData
 
 type Invoice = {
   id: string,
@@ -56,7 +56,7 @@ const holidays = computed(() => new Map(Object.entries(props.holidays)))
 const { today } = useToday()
 
 const tableScrollRef = ref<HTMLElement | null>(null)
-const activeEntry = ref<ActiveEntry | null>(null)
+const editingEntry = ref<EditingEntry | null>(null)
 const monthPickerOpen = ref(false)
 
 const currentMonthCalendarDate = computed(() => new CalendarDate(props.current.year, props.current.month, 1))
@@ -155,8 +155,19 @@ const openEntry = (projectId: string, date: string) => {
   const entry = project.entries[date] ?? null
   const isReadOnly = !isActiveOn(project, date)
   if (isReadOnly && !entry?.title && !entry?.description) return
-  activeEntry.value = { projectId, date, isReadOnly, ...entry! }
+  editingEntry.value = { projectId, date, isReadOnly, ...entry! }
 }
+
+const editingProject = computed(() => props.projects.find(p => p.id === editingEntry.value?.projectId))
+
+const inactiveWarning = computed(() => {
+  const project = editingProject.value
+  if (!project?.is_inactive) return null
+  if (project.end_date && project.end_date < today.value.toString()) {
+    return `Ce projet est terminé depuis le ${formatDate(project.end_date, true)}.`
+  }
+  return `Ce projet démarre le ${formatDate(project.start_date, true)}.`
+})
 
 const entryDateLabel = (date: string): string => {
   const d = new Date(`${date}T00:00:00`)
@@ -171,11 +182,11 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
   const page = rawPage as InertiaOptimisticPage & { projects: Project[] }
   const data = (rawData as { entries: EntryData[] }).entries[0]
   return {
-    projects: page.projects.map(p => p.id !== activeEntry.value?.projectId ? p : {
+    projects: page.projects.map(p => p.id !== editingEntry.value?.projectId ? p : {
       ...p,
       entries: {
         ...p.entries,
-        [activeEntry.value!.date]: {
+        [editingEntry.value!.date]: {
           coverage: Number(data.coverage),
           title: data.title ?? '',
           description: data.description ?? '',
@@ -349,39 +360,46 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
     </div>
   </div>
 
-  <UModal :open="!!activeEntry" :title="activeEntry ? entryDateLabel(activeEntry.date) : ''" @update:open="(val: boolean) => val || (activeEntry = null)">
+  <UModal :open="!!editingEntry" :title="editingEntry ? entryDateLabel(editingEntry.date) : ''" @update:open="(val: boolean) => val || (editingEntry = null)">
     <template #body>
-      <template v-if="activeEntry?.isReadOnly">
+      <template v-if="editingEntry?.isReadOnly">
         <div class="space-y-4">
-          <div v-if="activeEntry.title" class="flex flex-col gap-1">
+          <div v-if="editingEntry.title" class="flex flex-col gap-1">
             <p class="text-xs font-medium text-muted">Titre</p>
-            <p class="text-sm">{{ activeEntry.title }}</p>
+            <p class="text-sm">{{ editingEntry.title }}</p>
           </div>
-          <div v-if="activeEntry.description" class="flex flex-col gap-1">
+          <div v-if="editingEntry.description" class="flex flex-col gap-1">
             <p class="text-xs font-medium text-muted">Description</p>
-            <p class="text-sm whitespace-pre-wrap">{{ activeEntry.description }}</p>
+            <p class="text-sm whitespace-pre-wrap">{{ editingEntry.description }}</p>
           </div>
         </div>
       </template>
       <Form
-        v-else-if="activeEntry"
+        v-else-if="editingEntry"
         id="entry-form"
-        :key="`${activeEntry.projectId}:${activeEntry.date}`"
-        :action="syncEntries(activeEntry.projectId)"
+        :key="`${editingEntry.projectId}:${editingEntry.date}`"
+        :action="syncEntries(editingEntry.projectId)"
         method="patch"
         :only="['projects']"
         :preserveState="true"
         :preserveScroll="true"
         :optimistic="entryFormOptimistic"
-        @success="activeEntry = null"
+        @success="editingEntry = null"
       >
         <div class="space-y-4">
-          <input type="hidden" name="entries[0][date]" :value="activeEntry.date" />
+          <UAlert
+            v-if="inactiveWarning"
+            color="warning"
+            variant="subtle"
+            icon="i-lucide-triangle-alert"
+            :description="inactiveWarning"
+          />
+          <input type="hidden" name="entries[0][date]" :value="editingEntry.date" />
           <UFormField label="Couverture (%)">
             <UInput
               name="entries[0][coverage]"
               type="number" min="0" max="100"
-              :defaultValue="activeEntry.coverage"
+              :defaultValue="editingEntry.coverage"
               class="w-full"
             />
           </UFormField>
@@ -389,7 +407,7 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
             <UInput
               name="entries[0][title]"
               type="text" placeholder="Ex. Développement de la feature X"
-              :defaultValue="activeEntry.title"
+              :defaultValue="editingEntry.title"
               class="w-full"
             />
           </UFormField>
@@ -397,7 +415,7 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
             <UTextarea
               name="entries[0][description]"
               :rows="3" placeholder="Détails de l'activité..."
-              :defaultValue="activeEntry.description"
+              :defaultValue="editingEntry.description"
               class="w-full"
             />
           </UFormField>
@@ -406,7 +424,7 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
     </template>
     <template #footer="{ close }">
       <div class="flex justify-end gap-2">
-        <UButton v-if="activeEntry?.isReadOnly" label="Fermer" color="neutral" variant="outline" @click="close" />
+        <UButton v-if="editingEntry?.isReadOnly" label="Fermer" color="neutral" variant="outline" @click="close" />
         <template v-else>
           <UButton label="Annuler" color="neutral" variant="outline" @click="close" />
           <UButton type="submit" form="entry-form" label="Enregistrer" />

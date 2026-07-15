@@ -71,7 +71,7 @@ export const useTimesheetKeyboard = (
     const digit = Number.parseInt(event.key)
     if (digit >= 0 && digit <= 9) {
       const activeCell = getActiveCell()
-      if (!activeCell || activeCell.dataset.deleted) return
+      if (!activeCell || activeCell.dataset.quickEditDisabled) return
       event.preventDefault()
       emit('setCoverage', activeCell.dataset.projectId!, activeCell.dataset.date!, digit === 0 ? 0 : Math.round(100 / digit))
       return
@@ -97,7 +97,7 @@ export const useTimesheetKeyboard = (
     const colIndex = Number.parseInt(activeCell?.dataset.col ?? '0')
 
     if (action === 'main') {
-      if (!activeCell || activeCell.dataset.deleted) return
+      if (!activeCell || activeCell.dataset.quickEditDisabled) return
       event.preventDefault()
       emit('cellClick', activeCell.dataset.projectId!, activeCell.dataset.date!)
       return

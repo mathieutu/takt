@@ -42,14 +42,16 @@ const { isToday } = useToday()
 const isActiveOn = (project: GridProject, day: Day): boolean =>
   day.date >= project.start_date && (!project.end_date || day.date <= project.end_date)
 
+const canQuickEdit = (project: GridProject, day: Day): boolean =>
+  isActiveOn(project, day) && !project.is_inactive
+
 const getCellClasses = (project: GridProject, day: Day): Array<string | boolean> => {
   const coverage = project.entries[day.date]?.coverage ?? 0
-  const isInactive = !isActiveOn(project, day)
   const isHolidayOrWeekend = holidays.has(day.date) || day.isWeekend
   const isTodayDay = isToday(day.date)
 
   const base = [
-    isInactive ? 'cursor-disabled' : 'cursor-pointer',
+    isActiveOn(project, day) ? 'cursor-pointer' : 'cursor-disabled',
     isTodayDay && 'border-primary/50',
   ]
 
@@ -135,12 +137,12 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
           :data-col="index"
           :data-project-id="project.id"
           :data-date="day.date"
-          :data-deleted="!isActiveOn(project, day) ? true : undefined"
+          :data-quick-edit-disabled="!canQuickEdit(project, day) ? true : undefined"
           class="group/cell h-13 relative border-b border-r border-default transition-colors select-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/50"
           :class="[getCellClasses(project, day), isToday(days[index + 1]?.date) ? 'border-r-primary/50' : '']"
           @mouseenter="($event.target as HTMLElement).focus()"
-          @click="isActiveOn(project, day) ? emit('cellClick', project.id, day.date) : undefined"
-          @contextmenu.prevent="isActiveOn(project, day) ? emit('setCoverage', project.id, day.date, 0) : undefined"
+          @click="canQuickEdit(project, day) ? emit('cellClick', project.id, day.date) : undefined"
+          @contextmenu.prevent="canQuickEdit(project, day) ? emit('setCoverage', project.id, day.date, 0) : undefined"
         >
           <span
             v-if="project.entries[day.date]?.coverage"
