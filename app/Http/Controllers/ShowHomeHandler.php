@@ -42,13 +42,13 @@ class ShowHomeHandler
 
         $userClientIds = $request->user()->clients()->withTrashed()->pluck('id');
 
-        $minDate = TimesheetEntry::whereIn('project_id', Project::withTrashed()->whereIn('client_id', $userClientIds)->pluck('id'))->min('date');
+        $minDate = TimesheetEntry::whereIn('project_id', Project::query()->whereIn('client_id', $userClientIds)->pluck('id'))->min('date');
         $firstEntryMonth = $minDate ? CarbonImmutable::parse($minDate)->format('Y-m') : null;
 
-        $projects = Project::withTrashed()
+        $projects = Project::query()
             ->whereIn('client_id', $userClientIds)
             ->where(function ($q) use ($rollingYearStart, $windowEnd) {
-                $q->whereNull('deleted_at')
+                $q->whereNull('end_date')
                     ->orWhereHas('timesheetEntries', fn ($q) => $q->whereBetween('date', [$rollingYearStart, $windowEnd]));
             })
             ->with([
@@ -169,7 +169,7 @@ class ShowHomeHandler
                 $totalWorkedAmount = $p->timesheetEntries
                     ->sum(fn ($e) => (int) round($e->coverage / 100 * $p->daily_rate));
                 $firstEntry = $p->timesheetEntries->sortBy('date')->first();
-                $projectStart = $firstEntry ? $firstEntry->date : $p->created_at;
+                $projectStart = $firstEntry ? $firstEntry->date : $p->start_date;
                 $monthsElapsed = max(1, $projectStart->startOfMonth()->diffInMonths($currentMonthStart) + 1);
                 $theoreticalBudget = match (true) {
                     $p->max_total_budget !== null => $p->max_total_budget,
@@ -189,7 +189,7 @@ class ShowHomeHandler
                     'workedDaysCount' => $workedDaysCount,
                     'periodDaysCount' => $periodDaysCount,
                     'monthDaysCount' => $monthDaysCount,
-                    'deletedAt' => $p->deleted_at?->toDateTimeString(),
+                    'isArchived' => $p->isArchived(),
                     'lastActivity' => $p->timesheetEntries->sortByDesc('date')->first()?->date->toDateString(),
                     'unbilled' => max(0, $totalWorkedAmount - $p->invoices->sum('amount')),
                 ];

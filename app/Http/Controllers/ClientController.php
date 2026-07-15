@@ -56,13 +56,13 @@ class ClientController
     public function destroy(Client $client): RedirectResponse
     {
         if (! $client->deleted_at) {
-            $client->projects()->delete();
+            $client->projects()->update(['end_date' => today()]);
             $client->delete();
 
             return redirect()->back()->with('success', 'Client et ses projets archivés avec succès.');
         }
 
-        if ($client->projects()->withTrashed()->exists()) {
+        if ($client->projects()->exists()) {
             return redirect()->back()->with('error', 'Impossible de supprimer un client ayant des projets.');
         }
 
@@ -73,7 +73,7 @@ class ClientController
 
     public function showBilling(Request $request, Client $client): Response
     {
-        $projects = $client->projects()->withTrashed()->orderBy('created_at')->get();
+        $projects = $client->projects()->orderBy('created_at')->get();
 
         abort_if($projects->isEmpty(), 404);
 

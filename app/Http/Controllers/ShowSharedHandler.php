@@ -16,7 +16,7 @@ class ShowSharedHandler
     {
         $client = Client::with('user')->where('share_token', $token)->firstOrFail();
 
-        $projects = $client->projects()->withTrashed()->orderBy('created_at')->get();
+        $projects = $client->projects()->orderBy('created_at')->get();
 
         abort_if($projects->isEmpty(), 404);
 

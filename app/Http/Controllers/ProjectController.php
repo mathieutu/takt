@@ -21,8 +21,8 @@ class ProjectController
     {
         $user = $request->user();
 
-        if ($user->projects()->doesntExist()) {
-            $hasArchived = $user->projects()->onlyTrashed()->exists()
+        if ($user->projects()->active()->doesntExist()) {
+            $hasArchived = $user->projects()->archived()->exists()
                 || $user->clients()->onlyTrashed()->exists();
 
             if (! $hasArchived) {
@@ -84,6 +84,7 @@ class ProjectController
             'max_month_budget' => $data['max_month_budget'],
             'max_total_budget' => $data['max_total_budget'],
             'client_id' => $data['client_id'],
+            'start_date' => today(),
         ]);
 
         return redirect()
@@ -93,7 +94,7 @@ class ProjectController
 
     public function duplicate(Project $project): RedirectResponse
     {
-        $newProject = tap($project->replicate(['deleted_at']))->save();
+        $newProject = tap($project->replicate(['end_date']))->save();
 
         return redirect()
             ->route('projects.edit', ['project' => $newProject])
@@ -116,8 +117,8 @@ class ProjectController
                     'max_total_budget',
                     'client_id',
                 ])->merge([
-                    'created_at' => $project->created_at?->toDateString(),
-                    'deleted_at' => $project->deleted_at?->toDateString(),
+                    'start_date' => $project->start_date->toDateString(),
+                    'end_date' => $project->end_date?->toDateString(),
                 ]),
                 'clients' => $request->user()->clients()->get()->map->export(['id', 'name', 'daily_rate']),
             ],
@@ -133,8 +134,8 @@ class ProjectController
             'max_month_budget' => ['nullable', 'integer', 'min:1'],
             'max_total_budget' => ['nullable', 'integer', 'min:1'],
             'client_id' => ['required', Rule::exists('clients', 'id')->where('user_id', $request->user()->id)],
-            'created_at' => ['required', 'date'],
-            'deleted_at' => ['nullable', 'date'],
+            'start_date' => ['required', 'date'],
+            'end_date' => ['nullable', 'date'],
         ]);
 
         $project->update($data);
@@ -146,23 +147,23 @@ class ProjectController
             ->with('success', 'Projet mis à jour avec succès.');
     }
 
-    public function destroy(Project $project, Request $request): RedirectResponse
+    public function destroy(Project $project): RedirectResponse
     {
-        if ($project->deleted_at) {
+        if ($project->isArchived()) {
             if ($project->timesheetEntries()->exists() || $project->invoices()->exists()) {
                 return redirect()
                     ->back()
                     ->with('error', 'Impossible de supprimer définitivement un projet ayant des entrées.');
             }
 
-            $project->forceDelete();
+            $project->delete();
 
             return redirect()
                 ->back()
                 ->with('success', 'Projet supprimé définitivement.');
         }
 
-        $project->delete();
+        $project->update(['end_date' => today()]);
 
         return redirect()
             ->back()
@@ -171,7 +172,7 @@ class ProjectController
 
     public function restore(Project $project): RedirectResponse
     {
-        $project->restore();
+        $project->update(['end_date' => null]);
         $project->client->restore();
 
         return redirect()
@@ -181,7 +182,7 @@ class ProjectController
 
     public function syncEntries(Request $request, Project $project): RedirectResponse|JsonResponse
     {
-        if ($project->trashed()) {
+        if ($project->isArchived()) {
             return response()->json(['message' => 'This project is archived and can\'t be updated.'], 422);
         }
 

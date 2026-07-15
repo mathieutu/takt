@@ -45,13 +45,13 @@ Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
     Route::get('clients/{client}/billing', [ClientController::class, 'showBilling'])->name('clients.billing.show')->withTrashed();
 
     // Projects
-    Route::resource('projects', ProjectController::class)->except(['show'])->withTrashed(['edit', 'update', 'destroy']);
-    Route::post('projects/{project}/restore', [ProjectController::class, 'restore'])->name('projects.restore')->withTrashed();
-    Route::post('projects/{project}/duplicate', [ProjectController::class, 'duplicate'])->name('projects.duplicate')->withTrashed();
+    Route::resource('projects', ProjectController::class)->except(['show']);
+    Route::post('projects/{project}/restore', [ProjectController::class, 'restore'])->name('projects.restore');
+    Route::post('projects/{project}/duplicate', [ProjectController::class, 'duplicate'])->name('projects.duplicate');
     Route::patch('projects/{project}/entries', [ProjectController::class, 'syncEntries'])->name('projects.entries.sync');
 
     // Project invoices
-    Route::post('projects/{project}/invoices', [ProjectInvoiceController::class, 'store'])->name('invoices.store')->withTrashed();
+    Route::post('projects/{project}/invoices', [ProjectInvoiceController::class, 'store'])->name('invoices.store');
     Route::put('invoices/{invoice}', [ProjectInvoiceController::class, 'update'])->name('invoices.update');
     Route::delete('invoices/{invoice}', [ProjectInvoiceController::class, 'destroy'])->name('invoices.destroy');
 

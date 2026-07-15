@@ -19,9 +19,8 @@ class ShowTimesheetHandler
     {
         $date = $request->date('month', 'Y-m') ?? now()->startOfMonth();
         $projects = $request->user()->projects()
-            ->withTrashed()
-            ->where('projects.created_at', '<=', $date->endOfMonth())
-            ->where(fn ($q) => $q->whereNull('projects.deleted_at')->orWhere('projects.deleted_at', '>=', $date->startOfMonth()))
+            ->where('projects.start_date', '<=', $date->endOfMonth())
+            ->where(fn ($q) => $q->whereNull('projects.end_date')->orWhere('projects.end_date', '>=', $date->startOfMonth()))
             ->with(['timesheetEntries' => fn (HasMany $query) => $query->whereBetween('date', [$date->startOfMonth(), $date->endOfMonth()])])
             ->orderBy('projects.name')
             ->get();
@@ -31,7 +30,7 @@ class ShowTimesheetHandler
                 ->whereBetween('created_at', [$date->startOfMonth(), $date->endOfMonth()])
                 ->orWhereBetween('paid_at', [$date->startOfMonth(), $date->endOfMonth()])
             )
-            ->with(['project' => fn (BelongsTo $q) => $q->withTrashed()->with(['client' => fn (BelongsTo $q) => $q->withTrashed()])])
+            ->with(['project' => fn (BelongsTo $q) => $q->with(['client' => fn (BelongsTo $q) => $q->withTrashed()])])
             ->get();
 
         return Inertia::render('TimesheetPage', [
@@ -57,7 +56,7 @@ class ShowTimesheetHandler
                 'name',
                 'client' => ['id', 'name'],
                 'daily_rate',
-                'deleted_at',
+                'isArchived() as is_archived',
             ])->merge([
                 'entries' => $p->timesheetEntries
                     ->keyBy(fn (TimesheetEntry $e) => $e->date->toDateString())

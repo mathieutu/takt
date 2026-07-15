@@ -64,11 +64,11 @@ class UserController
         $user = $request->user();
 
         $clientIds = Client::withTrashed()->where('user_id', $user->id)->pluck('id');
-        $projectIds = Project::withTrashed()->whereIn('client_id', $clientIds)->pluck('id');
+        $projectIds = Project::query()->whereIn('client_id', $clientIds)->pluck('id');
 
         TimesheetEntry::whereIn('project_id', $projectIds)->forceDelete();
         Invoice::whereIn('project_id', $projectIds)->forceDelete();
-        Project::withTrashed()->whereIn('id', $projectIds)->forceDelete();
+        Project::query()->whereIn('id', $projectIds)->delete();
         Client::withTrashed()->whereIn('id', $clientIds)->forceDelete();
 
         $user->delete();

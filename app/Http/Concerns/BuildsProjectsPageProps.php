@@ -17,20 +17,20 @@ trait BuildsProjectsPageProps
 
         return [
             'has_trashed' => fn () => (
-                $request->user()->projects()->onlyTrashed()->exists()
+                $request->user()->projects()->archived()->exists()
                 || $request->user()->clients()->onlyTrashed()->exists()
             ),
 
-            'has_active' => fn () => $request->user()->projects()->exists(),
+            'has_active' => fn () => $request->user()->projects()->active()->exists(),
 
             'projects' => function () use ($request, $search, $clientId, $withTrashed, $sort) {
                 $user = $request->user();
 
                 $query = $withTrashed ?
-                    Project::withTrashed()
+                    Project::query()
                         ->with(['client' => fn ($q) => $q->withTrashed()])
                         ->whereIn('client_id', $user->clients()->withTrashed()->pluck('id'))
-                    : $user->projects();
+                    : $user->projects()->active();
 
                 if ($search) {
                     $clientsQuery = $withTrashed
@@ -48,7 +48,7 @@ trait BuildsProjectsPageProps
                 }
 
                 $query->orderBy(
-                    str_starts_with($sort, 'rate') ? 'projects.daily_rate' : 'projects.created_at',
+                    str_starts_with($sort, 'rate') ? 'projects.daily_rate' : 'projects.start_date',
                     str_ends_with($sort, 'asc') ? 'asc' : 'desc',
                 );
 
@@ -60,8 +60,9 @@ trait BuildsProjectsPageProps
                     'max_month_budget',
                     'max_total_budget',
                     'client' => ['id', 'name'],
-                    'created_at',
-                    'deleted_at',
+                    'start_date',
+                    'end_date',
+                    'isArchived() as is_archived',
                 ]);
             },
 

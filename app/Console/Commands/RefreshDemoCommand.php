@@ -39,11 +39,11 @@ class RefreshDemoCommand extends Command
         }
 
         $clientIds = $user->clients()->withTrashed()->pluck('id');
-        $projectIds = Project::whereIn('client_id', $clientIds)->withTrashed()->pluck('id');
+        $projectIds = Project::whereIn('client_id', $clientIds)->pluck('id');
 
         TimesheetEntry::whereIn('project_id', $projectIds)->delete();
         Invoice::whereIn('project_id', $projectIds)->delete();
-        Project::whereIn('id', $projectIds)->withTrashed()->forceDelete();
+        Project::whereIn('id', $projectIds)->delete();
         Client::whereIn('id', $clientIds)->withTrashed()->forceDelete();
         $user->delete();
     }

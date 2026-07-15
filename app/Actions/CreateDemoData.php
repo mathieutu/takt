@@ -116,7 +116,7 @@ class CreateDemoData
             'name' => 'Refonte site corporate',
             'daily_rate' => 50000,
             'description' => 'Refonte complète du site vitrine : audit, design, développement et mise en production.',
-            'created_at' => now()->subMonths(18),
+            'start_date' => now()->subMonths(18),
         ]);
         $refonte->timesheetEntries()->createMany(
             $this->generateEntries(18, 8, 2, 5, [
@@ -131,14 +131,13 @@ class CreateDemoData
             ['amount' => 450000, 'paid_at' => $this->d(10), 'created_at' => $this->dt(11),    'notes' => 'Facture ACS-002 — Phase 2 : développement'],
             ['amount' => 250000, 'paid_at' => $this->d(7),  'created_at' => $this->dt(8),     'notes' => 'Facture ACS-003 — Phase 3 : mise en production'],
         ]);
-        $refonte->delete();
-        $refonte->update(['deleted_at' => $this->dt(8)]);
+        $refonte->update(['end_date' => $this->dt(8)->toDateString()]);
 
         $campagne = $agence->projects()->create([
             'name' => 'Campagne réseaux sociaux',
             'daily_rate' => 50000,
             'description' => 'Stratégie éditoriale, création de contenus et production vidéo pour les réseaux sociaux.',
-            'created_at' => now()->subMonths(6),
+            'start_date' => now()->subMonths(6),
         ]);
         $campagne->timesheetEntries()->createMany(
             $this->generateEntries(6, 2, 2, 5, [
@@ -166,7 +165,7 @@ class CreateDemoData
             'name' => 'Audit et refonte du SI associatif',
             'daily_rate' => 40000,
             'description' => "Audit du système d'information existant et migration vers des outils libres et collaboratifs.",
-            'created_at' => now()->subMonths(20),
+            'start_date' => now()->subMonths(20),
         ]);
         $audit->timesheetEntries()->createMany(
             $this->generateEntries(20, 15, 2, 5, [
@@ -179,15 +178,14 @@ class CreateDemoData
             ['amount' => 240000, 'paid_at' => $this->d(17), 'created_at' => $this->dt(18), 'notes' => 'Facture ANT-001 — Audit et spécifications'],
             ['amount' => 240000, 'paid_at' => $this->d(13), 'created_at' => $this->dt(14), 'notes' => 'Facture ANT-002 — Déploiement et formation'],
         ]);
-        $audit->delete();
-        $audit->update(['deleted_at' => $this->dt(14)]);
+        $audit->update(['end_date' => $this->dt(14)->toDateString()]);
 
         $gestion = $asso->projects()->create([
             'name' => 'Outil de gestion des adhérents',
             'daily_rate' => 40000,
             'max_total_budget' => 2000000,
             'description' => "Développement d'une application web sur mesure pour gérer les adhésions, cotisations et événements.",
-            'created_at' => now()->subMonths(10),
+            'start_date' => now()->subMonths(10),
         ]);
         $gestion->timesheetEntries()->createMany(
             $this->generateEntries(10, 0, 3, 7, [
@@ -217,7 +215,7 @@ class CreateDemoData
             'daily_rate' => 45000,
             'max_month_budget' => 495000,
             'description' => 'Cours de développement web pour les BTS SIO option SLAM : HTML/CSS, JavaScript, PHP et projet fil rouge.',
-            'created_at' => now()->subMonths(21),
+            'start_date' => now()->subMonths(21),
         ]);
         $bts2425->timesheetEntries()->createMany(
             $this->generateEntries(21, 12, 4, 10, [
@@ -236,15 +234,14 @@ class CreateDemoData
             ['amount' => 360000, 'paid_at' => $this->d(13), 'created_at' => $this->dt(13, 2), 'notes' => 'Facture LTM-004 — BTS SIO 2024/2025 — Trimestre 4'],
             ['amount' => 360000, 'paid_at' => $this->d(12), 'created_at' => $this->dt(12, 2), 'notes' => 'Facture LTM-005 — BTS SIO 2024/2025 — Solde'],
         ]);
-        $bts2425->delete();
-        $bts2425->update(['deleted_at' => $this->dt(12)]);
+        $bts2425->update(['end_date' => $this->dt(12)->toDateString()]);
 
         $bts2526 = $lycee->projects()->create([
             'name' => 'Formation dev web — BTS SIO 2025/2026',
             'daily_rate' => 45000,
             'max_month_budget' => 495000,
             'description' => 'Cours de développement web pour les BTS SIO option SLAM, année 2025/2026.',
-            'created_at' => now()->subMonths(9),
+            'start_date' => now()->subMonths(9),
         ]);
         $bts2526->timesheetEntries()->createMany(
             $this->generateEntries(9, 0, 4, 10, [
@@ -274,7 +271,7 @@ class CreateDemoData
             'daily_rate' => 60000,
             'max_month_budget' => 660000,
             'description' => "Développement du produit minimum viable d'une plateforme SaaS B2B de gestion de projets agiles.",
-            'created_at' => now()->subMonths(12),
+            'start_date' => now()->subMonths(12),
         ]);
         $mvp->timesheetEntries()->createMany(
             $this->generateEntries(12, 6, 4, 10, [
@@ -296,7 +293,7 @@ class CreateDemoData
             'daily_rate' => 60000,
             'max_total_budget' => 630000,
             'description' => "Refonte complète de l'API publique avec authentification OAuth2, nouveaux endpoints et SDKs.",
-            'created_at' => now()->subMonths(3),
+            'start_date' => now()->subMonths(3),
         ]);
         $api->timesheetEntries()->createMany(
             $this->generateEntries(3, 0, 3, 5, [
@@ -323,7 +320,7 @@ class CreateDemoData
             'name' => 'Refonte processus RH',
             'daily_rate' => 55000,
             'description' => 'Audit et modernisation des processus RH : recrutement, onboarding et évaluation.',
-            'created_at' => now()->subMonths(30),
+            'start_date' => now()->subMonths(30),
         ]);
         $rh->timesheetEntries()->createMany(
             $this->generateEntries(30, 28, 1, 3, [
@@ -336,14 +333,13 @@ class CreateDemoData
             ['amount' => 165000, 'paid_at' => $this->d(28), 'created_at' => $this->dt(29),    'notes' => 'Facture LRC-001 — Audit RH'],
             ['amount' => 110000, 'paid_at' => $this->d(27), 'created_at' => $this->dt(27, 2), 'notes' => 'Facture LRC-002 — Accompagnement mise en œuvre'],
         ]);
-        $rh->delete();
-        $rh->update(['deleted_at' => $this->dt(27)]);
+        $rh->update(['end_date' => $this->dt(27)->toDateString()]);
 
         $formation = $leroux->projects()->create([
             'name' => 'Formation management intermédiaire',
             'daily_rate' => 55000,
             'description' => 'Parcours de formation pour les managers de proximité : communication, délégation et gestion des conflits.',
-            'created_at' => now()->subMonths(27),
+            'start_date' => now()->subMonths(27),
         ]);
         $formation->timesheetEntries()->createMany(
             $this->generateEntries(27, 25, 1, 3, [
@@ -355,8 +351,7 @@ class CreateDemoData
         $formation->invoices()->createMany([
             ['amount' => 330000, 'paid_at' => $this->d(25), 'created_at' => $this->dt(26), 'notes' => 'Facture LRC-003 — Formation management'],
         ]);
-        $formation->delete();
-        $formation->update(['deleted_at' => $this->dt(24)]);
+        $formation->update(['end_date' => $this->dt(24)->toDateString()]);
 
         $leroux->delete();
         $leroux->update(['deleted_at' => $this->dt(24)]);

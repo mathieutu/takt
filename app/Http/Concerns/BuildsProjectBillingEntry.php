@@ -47,7 +47,7 @@ trait BuildsProjectBillingEntry
 
         $now = CarbonImmutable::now();
         $firstEntry = $project->timesheetEntries->sortBy('date')->first();
-        $projectStart = $firstEntry ? $firstEntry->date : $project->created_at;
+        $projectStart = $firstEntry ? $firstEntry->date : $project->start_date;
         $monthsElapsed = max(1, $projectStart->startOfMonth()->diffInMonths($now->startOfMonth()) + 1);
 
         return [
@@ -56,7 +56,7 @@ trait BuildsProjectBillingEntry
             'daily_rate' => $project->daily_rate,
             'max_month_budget' => $project->max_month_budget,
             'max_total_budget' => $project->max_total_budget,
-            'deleted_at' => $project->deleted_at?->toDateTimeString(),
+            'is_archived' => $project->isArchived(),
             'client' => ['id' => $project->client_id, 'name' => $clientNameOverride ?? $project->client->name],
             'months' => $months->values(),
             'months_elapsed' => $monthsElapsed,

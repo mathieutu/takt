@@ -49,7 +49,7 @@ class TimesheetEntry extends Model implements HasUser
     public function user(): BelongsToThrough
     {
         return $this->belongsToThrough(User::class, [Project::class, Client::class])
-            ->withTrashed(['projects.deleted_at', 'clients.deleted_at']);
+            ->withTrashed(['clients.deleted_at']);
     }
 
     public function project(): BelongsTo
