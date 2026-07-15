@@ -4,10 +4,10 @@ namespace App\Models;
 
 use App\Contracts\HasUser;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Znck\Eloquent\Relations\BelongsToThrough;
 
 /**
@@ -18,7 +18,8 @@ use Znck\Eloquent\Relations\BelongsToThrough;
  * @property int|null $max_month_budget
  * @property int|null $max_total_budget
  * @property string|null $description
- * @property CarbonImmutable|null $deleted_at
+ * @property CarbonImmutable $start_date
+ * @property CarbonImmutable|null $end_date
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property-read Client|null $client
@@ -30,26 +31,22 @@ use Znck\Eloquent\Relations\BelongsToThrough;
  *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Project onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereClientId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereDailyRate($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereEndDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereMaxMonthBudget($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereStartDate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Project whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Project withTrashed(bool $withTrashed = true)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Project withoutTrashed()
  *
  * @mixin \Eloquent
  */
 class Project extends Model implements HasUser
 {
-    use SoftDeletes;
-
     protected $with = ['client'];
 
     protected function casts(): array
@@ -58,7 +55,24 @@ class Project extends Model implements HasUser
             'daily_rate' => 'integer',
             'max_month_budget' => 'integer',
             'max_total_budget' => 'integer',
+            'start_date' => 'date',
+            'end_date' => 'date',
         ];
+    }
+
+    public function scopeActive(Builder $query): void
+    {
+        $query->where(fn ($q) => $q->whereNull('end_date')->orWhere('end_date', '>=', today()->addDay()));
+    }
+
+    public function scopeArchived(Builder $query): void
+    {
+        $query->whereNotNull('end_date')->where('end_date', '<', today()->addDay());
+    }
+
+    public function isArchived(): bool
+    {
+        return $this->end_date !== null && $this->end_date->lt(today()->addDay());
     }
 
     public function user(): BelongsToThrough
