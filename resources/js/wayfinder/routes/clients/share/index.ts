@@ -5,7 +5,7 @@ import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOpt
 
 /**
  * @see \App\Http\Controllers\ClientController::storeShare
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:88
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:122
  * @route "/clients/{client}/share"
  */
 export const store = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -20,7 +20,7 @@ store.definition = {
 
 /**
  * @see \App\Http\Controllers\ClientController::storeShare
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:88
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:122
  * @route "/clients/{client}/share"
  */
 store.url = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -51,7 +51,7 @@ store.url = (args: { client: string | { id: string } } | [ client: string | { id
 
 /**
  * @see \App\Http\Controllers\ClientController::storeShare
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:88
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:122
  * @route "/clients/{client}/share"
  */
 store.post = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -68,7 +68,7 @@ store.post = (args: { client: string | { id: string } } | [ client: string | { i
 
 /**
  * @see \App\Http\Controllers\ClientController::destroyShare
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:97
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:131
  * @route "/clients/{client}/share"
  */
 export const destroy = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
@@ -83,7 +83,7 @@ destroy.definition = {
 
 /**
  * @see \App\Http\Controllers\ClientController::destroyShare
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:97
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:131
  * @route "/clients/{client}/share"
  */
 destroy.url = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -114,7 +114,7 @@ destroy.url = (args: { client: string | { id: string } } | [ client: string | { 
 
 /**
  * @see \App\Http\Controllers\ClientController::destroyShare
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:97
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:131
  * @route "/clients/{client}/share"
  */
 destroy.delete = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({

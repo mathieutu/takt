@@ -41,4 +41,8 @@ return [
         'redirect' => env('GITHUB_REDIRECT_URI', '/login/callback'),
     ],
 
+    'pdf' => [
+        'api_url' => env('PDF_GEN_API_URL', 'https://pdf.mathieutu.dev/api/gen'),
+    ],
+
 ];

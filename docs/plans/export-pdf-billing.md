@@ -7,24 +7,24 @@ Ce document est **autonome et complet** : il documente l'implémentation de bout
 > Les agents qui implémentent ce plan doivent **cocher les cases ci-dessous au fur et à mesure**, et committer ces mises à jour avec le code correspondant (ou au minimum avant de rendre la main en fin de session). Ce fichier, versionné dans le repo, est la source de vérité persistante entre les sessions — contrairement aux todo-lists éphémères (TaskCreate/TaskUpdate) qui ne survivent pas d'une session à l'autre. Les points en **gras** sont des points de contrôle utilisateur obligatoires : ne pas les cocher soi-même, attendre le retour explicite de l'utilisateur.
 
 ### Phase 0 — Contrat & scaffolding
-- [ ] `config/services.php` + `.env.example`
-- [ ] `app/Services/PdfGenerator.php`
-- [ ] `app/Http/Requests/ExportBillingRequest.php`
-- [ ] `BuildsProjectBillingEntry::buildBillingExportViewData()` / `buildBillingExportResponse()` / `buildExportFilename()`
-- [ ] `ClientController::exportBilling()` / `previewBillingExport()` / `resolveExportProjects()`
-- [ ] `ExportSharedBillingHandler`
-- [ ] Routes (`clients.billing.export`, `clients.billing.export.preview`, `shares.billing.export`) + throttle
-- [ ] Wayfinder régénéré (helpers TS disponibles)
-- [ ] Tests Pest `ExportBillingTest` (tous les cas listés en Phase 0)
-- [ ] `vendor/bin/pint --dirty --format agent` passé
+- [x] `config/services.php` + `.env.example`
+- [x] `app/Services/PdfGenerator.php`
+- [x] `app/Http/Requests/ExportBillingRequest.php`
+- [x] `BuildsProjectBillingEntry::buildBillingExportViewData()` / `buildBillingExportResponse()` / `buildExportFilename()`
+- [x] `ClientController::exportBilling()` / `previewBillingExport()` / `resolveExportProjects()`
+- [x] `ExportSharedBillingHandler`
+- [x] Routes (`clients.billing.export`, `clients.billing.export.preview`, `shares.billing.export`) + throttle
+- [x] Wayfinder régénéré (helpers TS disponibles)
+- [x] Tests Pest `ExportBillingTest` (tous les cas listés en Phase 0)
+- [x] `vendor/bin/pint --dirty --format agent` passé
 
 ### Phase 1 — MVP bout en bout
-- [ ] `resources/views/exports/billing.blade.php` (version minimale, formatage brut)
-- [ ] `resources/js/types/billing.ts`
-- [ ] `resources/js/components/ExportBillingModal.vue`
-- [ ] `ProjectBillingPage.vue` (bouton export, prop `token`, types extraits)
-- [ ] `ShowSharedHandler.php` (prop `token` ajoutée)
-- [ ] **Checklist manuelle MVP validée par l'utilisateur** (point de contrôle obligatoire avant Phase 2)
+- [x] `resources/views/exports/billing.blade.php` (version minimale, formatage brut)
+- [x] `resources/js/types/billing.ts`
+- [x] `resources/js/components/ExportBillingModal.vue`
+- [x] `ProjectBillingPage.vue` (bouton export, prop `token`, types extraits)
+- [x] `ShowSharedHandler.php` (prop `token` ajoutée)
+- [x] **Checklist manuelle MVP validée par l'utilisateur** (point de contrôle obligatoire avant Phase 2)
 
 ### Phase 2 — Itération design
 - [ ] `resources/js/utils/number.ts` (locale `fr-FR` fixée)

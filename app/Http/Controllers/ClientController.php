@@ -4,14 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Http\Concerns\BuildsProjectBillingEntry;
 use App\Http\Concerns\BuildsProjectsPageProps;
+use App\Http\Requests\ExportBillingRequest;
 use App\Models\Client;
 use App\Models\Project;
 use App\Services\HolidayService;
+use App\Services\PdfGenerator;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class ClientController
 {
@@ -87,6 +92,31 @@ class ClientController
             'holidays' => $this->buildHolidaysForPeriod($holidays, $builtProjects),
             'is_shared' => false,
         ]);
+    }
+
+    public function exportBilling(ExportBillingRequest $request, Client $client, HolidayService $holidays, PdfGenerator $pdf): HttpResponse
+    {
+        $projects = $this->resolveExportProjects($client, $request);
+
+        return $this->buildBillingExportResponse($client, $projects, $request->user()->name, $request->user()->email, $request->validated('from'), $request->validated('to'), $holidays, $pdf);
+    }
+
+    public function previewBillingExport(ExportBillingRequest $request, Client $client, HolidayService $holidays): View
+    {
+        abort_unless(app()->environment(['local', 'testing']), 404);
+
+        $projects = $this->resolveExportProjects($client, $request);
+        $viewData = $this->buildBillingExportViewData($client, $projects, $request->user()->name, $request->user()->email, $request->validated('from'), $request->validated('to'), $holidays);
+
+        return view('exports.billing', $viewData);
+    }
+
+    private function resolveExportProjects(Client $client, ExportBillingRequest $request): Collection
+    {
+        $projects = $client->projects()->whereIn('id', $request->validated('project_ids'))->with(['timesheetEntries', 'invoices'])->get();
+        abort_if($projects->count() !== count($request->validated('project_ids')), 404);
+
+        return $projects;
     }
 
     public function storeShare(Client $client): RedirectResponse

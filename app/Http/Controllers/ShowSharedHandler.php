@@ -30,6 +30,7 @@ class ShowSharedHandler
             'is_shared' => true,
             'projects' => $builtProjects,
             'holidays' => $this->buildHolidaysForPeriod($holidays, $builtProjects),
+            'token' => $token,
         ]);
     }
 }

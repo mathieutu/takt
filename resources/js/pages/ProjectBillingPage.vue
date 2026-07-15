@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { MonthInvoice, MonthRow, ProjectWithBilling } from '@/types/billing'
 import { Head, useForm } from '@inertiajs/vue3'
 import {
   type ActiveElement,
@@ -20,6 +21,7 @@ import { computed, type ComputedRef, ref } from 'vue'
 import { Bar } from 'vue-chartjs'
 import BillingMonthCalendar from '@/components/BillingMonthCalendar.vue'
 import DateInput from '@/components/DateInput.vue'
+import ExportBillingModal from '@/components/ExportBillingModal.vue'
 import { formatDate, formatDays, formatDuration, formatMonthName, parseMonth, today } from '@/utils/date'
 import { formatCurrency } from '@/utils/number'
 import { timesheet } from '@/wayfinder/routes'
@@ -32,6 +34,7 @@ const props = defineProps<{
   holidays: Record<string, string>,
   is_shared: boolean,
   shared_by?: string,
+  token?: string,
 }>()
 
 const holidays = computed(() => new Map(Object.entries(props.holidays)))
@@ -47,42 +50,14 @@ ChartJS.register(
   ChartTooltip,
 )
 
-type EntryData = { coverage: number, title: string, description: string }
-
-type MonthInvoice = {
-  id: string,
-  amount: number,
-  paid_at: string | null,
-  created_at: string,
-  notes: string | null,
-}
-
-type MonthRow = {
-  month: string,
-  days_worked: number,
-  entries: Record<string, EntryData>,
-  invoices: MonthInvoice[],
-}
-
-type ProjectWithBilling = {
-  id: string,
-  name: string,
-  daily_rate: number,
-  max_month_budget: number | null,
-  max_total_budget: number | null,
-  is_inactive: boolean,
-  client: { id: string, name: string },
-  months: MonthRow[],
-  months_elapsed: number,
-  months_with_entries_count: number,
-}
-
 const inactiveProjects = computed(() => props.projects.filter(p => p.is_inactive))
 const showInactive = ref(inactiveProjects.value.length === props.projects.length)
 
 const visibleProjects = computed(() =>
   showInactive.value ? props.projects : props.projects.filter(p => !p.is_inactive),
 )
+
+const exportModalOpen = ref(false)
 
 // ── Expand state ───────────────────────────────────────────────────────────────
 
@@ -459,15 +434,25 @@ const monthLabel = (ym: string): string => {
               size="sm"
             />
           </UTooltip>
-          <UButton
-            v-if="inactiveProjects.length > 0 && inactiveProjects.length < projects.length"
-            :label="showInactive ? 'Masquer les inactifs' : 'Afficher les projets inactifs'"
-            :icon="showInactive ? 'i-lucide-eye-off' : 'i-lucide-archive'"
-            color="neutral"
-            variant="outline"
-            size="sm"
-            @click="showInactive = !showInactive"
-          />
+          <div class="ms-auto flex items-center gap-2">
+            <UButton
+              v-if="inactiveProjects.length > 0 && inactiveProjects.length < projects.length"
+              :label="showInactive ? 'Masquer les inactifs' : 'Afficher les projets inactifs'"
+              :icon="showInactive ? 'i-lucide-eye-off' : 'i-lucide-archive'"
+              color="neutral"
+              variant="outline"
+              size="sm"
+              @click="showInactive = !showInactive"
+            />
+            <UButton
+              label="Exporter"
+              icon="i-lucide-download"
+              color="neutral"
+              variant="outline"
+              size="sm"
+              @click="exportModalOpen = true"
+            />
+          </div>
         </div>
 
         <!-- Activity chart -->
@@ -795,5 +780,13 @@ const monthLabel = (ym: string): string => {
         </div>
       </template>
     </UModal>
+
+    <ExportBillingModal
+      v-model:open="exportModalOpen"
+      :projects="visibleProjects"
+      :clientId="visibleProjects[0]?.client.id"
+      :shareToken="token"
+      :isShared="is_shared"
+    />
   </div>
 </template>

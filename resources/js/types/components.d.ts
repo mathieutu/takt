@@ -17,6 +17,7 @@ declare module 'vue' {
     UButton: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']
     UCalendar: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Calendar.vue')['default']
     UCard: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Card.vue')['default']
+    UCheckboxGroup: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/CheckboxGroup.vue')['default']
     UCommandPalette: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/CommandPalette.vue')['default']
     UDropdownMenu: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/DropdownMenu.vue')['default']
     UFooter: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Footer.vue')['default']

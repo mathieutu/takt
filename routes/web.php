@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CommandBarController;
+use App\Http\Controllers\ExportSharedBillingHandler;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectInvoiceController;
 use App\Http\Controllers\ShowApiDocHandler;
@@ -43,6 +44,8 @@ Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
     Route::post('clients/{client}/share', [ClientController::class, 'storeShare'])->name('clients.share.store');
     Route::delete('clients/{client}/share', [ClientController::class, 'destroyShare'])->name('clients.share.destroy');
     Route::get('clients/{client}/billing', [ClientController::class, 'showBilling'])->name('clients.billing.show')->withTrashed();
+    Route::get('clients/{client}/billing/export', [ClientController::class, 'exportBilling'])->name('clients.billing.export')->withTrashed()->middleware('throttle:10,1');
+    Route::get('clients/{client}/billing/export/preview', [ClientController::class, 'previewBillingExport'])->name('clients.billing.export.preview')->withTrashed();
 
     // Projects
     Route::resource('projects', ProjectController::class)->except(['show']);
@@ -61,6 +64,7 @@ Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
 });
 
 Route::get('shares/{token}', ShowSharedHandler::class)->name('shares.show');
+Route::get('shares/{token}/export', ExportSharedBillingHandler::class)->name('shares.billing.export')->middleware('throttle:10,1');
 
 Route::get('up', function () {
     $updatedAt = config('app.updated_at');
