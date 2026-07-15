@@ -297,8 +297,8 @@ export namespace App {
                         max_month_budget?: number | null;
                         max_total_budget?: number | null;
                         client_id: string;
-                        created_at: string;
-                        deleted_at?: string | null;}
+                        start_date: string;
+                        end_date?: string | null;}
                 }
 
                 export namespace Destroy {

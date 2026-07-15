@@ -32,7 +32,7 @@ type ProjectWithBilling = {
   daily_rate: number,
   max_month_budget: number | null,
   max_total_budget: number | null,
-  deleted_at: string | null,
+  is_archived: boolean,
   client: { id: string, name: string },
   months: MonthRow[],
   months_elapsed: number,
@@ -45,11 +45,11 @@ const props = defineProps<{
   shared_by?: string,
 }>()
 
-const archivedProjects = computed(() => props.projects.filter(p => p.deleted_at))
+const archivedProjects = computed(() => props.projects.filter(p => p.is_archived))
 const showArchived = ref(archivedProjects.value.length === props.projects.length)
 
 const visibleProjects = computed(() =>
-  showArchived.value ? props.projects : props.projects.filter(p => !p.deleted_at),
+  showArchived.value ? props.projects : props.projects.filter(p => !p.is_archived),
 )
 
 // ── Expand state ───────────────────────────────────────────────────────────────
@@ -198,7 +198,7 @@ const form = useForm({ amount: '', paid_at: '', notes: '', created_at: '', proje
 const projectSelectItems = computed(() =>
   props.projects.map(p => ({
     value: p.id,
-    label: p.deleted_at ? `${p.name} (archivé)` : p.name,
+    label: p.is_archived ? `${p.name} (archivé)` : p.name,
   })),
 )
 
@@ -316,13 +316,13 @@ const dayLabel = (date: string): string => {
         <template v-for="(project, index) in visibleProjects" :key="project.id">
           <div v-if="index > 0" class="border-t-2 border-default" />
 
-          <div class="space-y-6" :class="[project.deleted_at && ' rounded-xl bg-muted p-4']">
+          <div class="space-y-6" :class="[project.is_archived && ' rounded-xl bg-muted p-4']">
             <!-- Project header -->
             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
               <div class="min-w-0">
                 <div class="flex items-center gap-2">
                   <h2 class="text-base font-semibold truncate">{{ project.name }}</h2>
-                  <UBadge v-if="project.deleted_at" label="Archivé" color="neutral" variant="subtle" size="sm" class="shrink-0" />
+                  <UBadge v-if="project.is_archived" label="Archivé" color="neutral" variant="subtle" size="sm" class="shrink-0" />
                   <UTooltip v-if="!is_shared" text="Modifier le projet">
                     <UButton :href="editProject(project)" icon="i-lucide-pencil" color="neutral" variant="ghost" size="2xs" class="shrink-0" />
                   </UTooltip>

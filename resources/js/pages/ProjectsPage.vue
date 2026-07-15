@@ -19,8 +19,9 @@ type Project = {
   max_month_budget: number | null,
   max_total_budget: number | null,
   client: { id: string, name: string },
-  created_at: string,
-  deleted_at: string | null,
+  start_date: string,
+  end_date: string | null,
+  is_archived: boolean,
 }
 
 const props = withDefaults(defineProps<{

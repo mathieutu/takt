@@ -149,7 +149,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
 
 /**
  * @see \App\Http\Controllers\ProjectController::edit
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:103
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:104
  * @route "/projects/{project}/edit"
  */
 export const edit = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -164,7 +164,7 @@ edit.definition = {
 
 /**
  * @see \App\Http\Controllers\ProjectController::edit
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:103
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:104
  * @route "/projects/{project}/edit"
  */
 edit.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -195,7 +195,7 @@ edit.url = (args: { project: string | { id: string } } | [ project: string | { i
 
 /**
  * @see \App\Http\Controllers\ProjectController::edit
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:103
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:104
  * @route "/projects/{project}/edit"
  */
 edit.get = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -205,7 +205,7 @@ edit.get = (args: { project: string | { id: string } } | [ project: string | { i
 
 /**
  * @see \App\Http\Controllers\ProjectController::edit
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:103
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:104
  * @route "/projects/{project}/edit"
  */
 edit.head = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -222,7 +222,7 @@ edit.head = (args: { project: string | { id: string } } | [ project: string | { 
 
 /**
  * @see \App\Http\Controllers\ProjectController::update
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:127
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:128
  * @route "/projects/{project}"
  */
 export const update = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
@@ -237,7 +237,7 @@ update.definition = {
 
 /**
  * @see \App\Http\Controllers\ProjectController::update
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:127
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:128
  * @route "/projects/{project}"
  */
 update.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -268,7 +268,7 @@ update.url = (args: { project: string | { id: string } } | [ project: string | {
 
 /**
  * @see \App\Http\Controllers\ProjectController::update
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:127
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:128
  * @route "/projects/{project}"
  */
 update.put = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
@@ -278,7 +278,7 @@ update.put = (args: { project: string | { id: string } } | [ project: string | {
 
 /**
  * @see \App\Http\Controllers\ProjectController::update
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:127
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:128
  * @route "/projects/{project}"
  */
 update.patch = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"patch"> => ({
@@ -295,7 +295,7 @@ update.patch = (args: { project: string | { id: string } } | [ project: string |
 
 /**
  * @see \App\Http\Controllers\ProjectController::destroy
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:149
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:150
  * @route "/projects/{project}"
  */
 export const destroy = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
@@ -310,7 +310,7 @@ destroy.definition = {
 
 /**
  * @see \App\Http\Controllers\ProjectController::destroy
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:149
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:150
  * @route "/projects/{project}"
  */
 destroy.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -341,7 +341,7 @@ destroy.url = (args: { project: string | { id: string } } | [ project: string | 
 
 /**
  * @see \App\Http\Controllers\ProjectController::destroy
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:149
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:150
  * @route "/projects/{project}"
  */
 destroy.delete = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
@@ -358,7 +358,7 @@ destroy.delete = (args: { project: string | { id: string } } | [ project: string
 
 /**
  * @see \App\Http\Controllers\ProjectController::restore
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:172
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:173
  * @route "/projects/{project}/restore"
  */
 export const restore = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -373,7 +373,7 @@ restore.definition = {
 
 /**
  * @see \App\Http\Controllers\ProjectController::restore
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:172
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:173
  * @route "/projects/{project}/restore"
  */
 restore.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -404,7 +404,7 @@ restore.url = (args: { project: string | { id: string } } | [ project: string | 
 
 /**
  * @see \App\Http\Controllers\ProjectController::restore
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:172
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:173
  * @route "/projects/{project}/restore"
  */
 restore.post = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -421,7 +421,7 @@ restore.post = (args: { project: string | { id: string } } | [ project: string |
 
 /**
  * @see \App\Http\Controllers\ProjectController::duplicate
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:94
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:95
  * @route "/projects/{project}/duplicate"
  */
 export const duplicate = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -436,7 +436,7 @@ duplicate.definition = {
 
 /**
  * @see \App\Http\Controllers\ProjectController::duplicate
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:94
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:95
  * @route "/projects/{project}/duplicate"
  */
 duplicate.url = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -467,7 +467,7 @@ duplicate.url = (args: { project: string | { id: string } } | [ project: string 
 
 /**
  * @see \App\Http\Controllers\ProjectController::duplicate
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:94
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php:95
  * @route "/projects/{project}/duplicate"
  */
 duplicate.post = (args: { project: string | { id: string } } | [ project: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({

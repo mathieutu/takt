@@ -5,7 +5,7 @@ import { isToday } from '@/utils/date.ts'
 
 type Project = {
   id: string,
-  deleted_at?: string | null,
+  is_archived?: boolean,
 }
 
 type EmitFn = {

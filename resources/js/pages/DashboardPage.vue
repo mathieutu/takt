@@ -77,7 +77,7 @@ type DashboardProps = {
     workedDaysCount: number,
     periodDaysCount: number,
     monthDaysCount: number,
-    deletedAt: string | null,
+    isArchived: boolean,
     lastActivity: string | null,
     unbilled: number,
   }>,
@@ -752,9 +752,9 @@ const progressTextClass = (percent: number) => {
 
                 <div
                   class="text-xs"
-                  :class="!p.deletedAt && p.daysSince && p.daysSince > 10 ? 'text-warning' : 'text-muted'"
+                  :class="!p.isArchived && p.daysSince && p.daysSince > 10 ? 'text-warning' : 'text-muted'"
                 >
-                  <template v-if="p.deletedAt">Archivé</template>
+                  <template v-if="p.isArchived">Archivé</template>
                   <template v-else-if="p.daysSince === 0">aujourd'hui</template>
                   <template v-else-if="!p.daysSince">jamais</template>
                   <template v-else>{{ formatDays(p.daysSince) }}</template>

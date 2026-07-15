@@ -16,7 +16,7 @@ export type GridProject = {
   entries: Record<string, EntryData>,
   days?: number,
   revenue?: number,
-  deleted_at?: string | null,
+  is_archived?: boolean,
 }
 
 const { holidays, days, projects } = defineProps<{
@@ -39,7 +39,7 @@ const { isToday } = useToday()
 
 const getCellClasses = (project: GridProject, day: Day): Array<string | boolean> => {
   const coverage = project.entries[day.date]?.coverage ?? 0
-  const isDeleted = !!project.deleted_at
+  const isDeleted = !!project.is_archived
   const isHolidayOrWeekend = holidays.has(day.date) || day.isWeekend
   const isTodayDay = isToday(day.date)
 
@@ -100,10 +100,10 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
       <tr v-for="(project, projectIndex) in projects" :key="project.id" class="group/row">
         <td class="sm:sticky sm:left-0 sm:z-10 overflow-hidden border-b border-r border-l border-default bg-default px-3 py-2">
           <div class="flex items-center gap-1 min-w-0">
-            <UTooltip v-if="project.deleted_at" text="Archivé">
+            <UTooltip v-if="project.is_archived" text="Archivé">
               <UIcon name="i-lucide-archive" class="w-3.5 h-3.5 shrink-0 text-muted" />
             </UTooltip>
-            <div class="truncate text-sm font-medium flex-1" :class="project.deleted_at ? 'text-muted' : 'text-default'">{{ project.name }}</div>
+            <div class="truncate text-sm font-medium flex-1" :class="project.is_archived ? 'text-muted' : 'text-default'">{{ project.name }}</div>
           </div>
           <div class="flex items-center gap-1 min-w-0 text-xs text-muted">
             <span class="truncate flex-1 min-w-0">{{ project.client.name }}</span>
@@ -130,12 +130,12 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
           :data-col="index"
           :data-project-id="project.id"
           :data-date="day.date"
-          :data-deleted="project.deleted_at ? true : undefined"
+          :data-deleted="project.is_archived ? true : undefined"
           class="group/cell h-13 relative border-b border-r border-default transition-colors select-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/50"
           :class="[getCellClasses(project, day), isToday(days[index + 1]?.date) ? 'border-r-primary/50' : '']"
           @mouseenter="($event.target as HTMLElement).focus()"
-          @click="!project.deleted_at ? emit('cellClick', project.id, day.date) : undefined"
-          @contextmenu.prevent="!project.deleted_at ? emit('setCoverage', project.id, day.date, 0) : undefined"
+          @click="!project.is_archived ? emit('cellClick', project.id, day.date) : undefined"
+          @contextmenu.prevent="!project.is_archived ? emit('setCoverage', project.id, day.date, 0) : undefined"
         >
           <span
             v-if="project.entries[day.date]?.coverage"
@@ -148,15 +148,15 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
             class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary/70 transition-opacity group-hover/cell:opacity-0"
           />
           <UTooltip
-            v-if="!project.deleted_at || (project.entries[day.date]?.title || project.entries[day.date]?.description)"
-            :text="project.deleted_at ? 'Voir les détails' : 'Modifier l\'entrée'"
+            v-if="!project.is_archived || (project.entries[day.date]?.title || project.entries[day.date]?.description)"
+            :text="project.is_archived ? 'Voir les détails' : 'Modifier l\'entrée'"
           >
             <button
               type="button"
               class="absolute right-0.5 top-0.5 flex h-5 w-5 items-center justify-center rounded opacity-0 transition-opacity hover:bg-primary/25 group-hover/cell:opacity-100"
               @click.stop="emit('actionClick', project.id, day.date)"
             >
-              <UIcon :name="project.deleted_at ? 'i-lucide-eye' : 'i-lucide-pencil'" class="h-3 w-3 text-primary" />
+              <UIcon :name="project.is_archived ? 'i-lucide-eye' : 'i-lucide-pencil'" class="h-3 w-3 text-primary" />
             </button>
           </UTooltip>
         </td>

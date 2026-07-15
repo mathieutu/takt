@@ -19,8 +19,8 @@ type ProjectFormData = {
   max_month_budget: number | null,
   max_total_budget: number | null,
   client_id: string,
-  created_at: string,
-  deleted_at: string | null,
+  start_date: string,
+  end_date: string | null,
 }
 
 type BackgroundClient = {
@@ -40,8 +40,9 @@ type BackgroundProject = {
   max_month_budget: number | null,
   max_total_budget: number | null,
   client: { id: string, name: string },
-  created_at: string,
-  deleted_at: string | null,
+  start_date: string,
+  end_date: string | null,
+  is_archived: boolean,
 }
 
 const { modal } = defineProps<{
@@ -70,8 +71,8 @@ const form = useForm({
   client_id: modal.project?.client_id ?? modal.clients[0]?.id ?? null,
   client_name: '',
   client_rate: null as number | null,
-  created_at: modal.project?.created_at ?? '',
-  deleted_at: modal.project?.deleted_at ?? '',
+  start_date: modal.project?.start_date ?? '',
+  end_date: modal.project?.end_date ?? '',
 })
 
 watch(() => form.client_id, clientId => {
@@ -189,12 +190,12 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
           </UFormField>
 
           <template v-if="modal.project">
-            <UFormField label="Début le" required :error="form.errors.created_at">
-              <DateInput v-model="form.created_at" />
+            <UFormField label="Début le" required :error="form.errors.start_date">
+              <DateInput v-model="form.start_date" />
             </UFormField>
 
-            <UFormField label="Fin le" :error="form.errors.deleted_at">
-              <DateInput v-model="form.deleted_at" />
+            <UFormField label="Fin le" :error="form.errors.end_date">
+              <DateInput v-model="form.end_date" />
             </UFormField>
           </template>
         </UForm>

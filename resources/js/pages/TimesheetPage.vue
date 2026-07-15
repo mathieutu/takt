@@ -24,7 +24,7 @@ type Project = {
   client: { id: string, name: string },
   daily_rate: number,
   entries: Record<string, EntryData>,
-  deleted_at?: string | null,
+  is_archived?: boolean,
 }
 type ActiveEntry = { projectId: string, date: string, isArchived: boolean } & EntryData
 
@@ -148,8 +148,8 @@ const onCellClick = (projectId: string, date: string) => {
 const openEntry = (projectId: string, date: string) => {
   const project = props.projects.find(p => p.id === projectId)!
   const entry = project.entries[date] ?? null
-  if (project.deleted_at && !entry?.title && !entry?.description) return
-  activeEntry.value = { projectId, date, isArchived: !!project.deleted_at, ...entry! }
+  if (project.is_archived && !entry?.title && !entry?.description) return
+  activeEntry.value = { projectId, date, isArchived: !!project.is_archived, ...entry! }
 }
 
 const entryDateLabel = (date: string): string => {
