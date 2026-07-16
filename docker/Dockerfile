@@ -58,6 +58,7 @@ RUN --mount=type=cache,target=/root/.yarn yarn install --immutable && yarn build
 # Final stage: Combine back-end and front-end
 FROM back-deps AS back
 COPY --link --from=front /usr/src/app/public/build ./public/build
+COPY --link --from=front /usr/src/app/public/build-exports ./public/build-exports
 
 ARG UPDATED_AT
 ENV UPDATED_AT=${UPDATED_AT}
