@@ -32,7 +32,7 @@ export namespace Inertia {
          * @see [\App\Http\Controllers\ClientController::showBilling](/Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php)
          * @see [\App\Http\Controllers\ShowSharedHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowSharedHandler.php)
          */
-        export type ProjectBillingPage = Inertia.SharedData & { projects: unknown, is_shared: false, shared_by?: unknown }
+        export type ProjectBillingPage = Inertia.SharedData & { projects: unknown, holidays: Record<string, string>, is_shared: false, shared_by?: unknown, token?: string }
 
         /**
          * @see [\App\Http\Controllers\ProjectController::index](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
@@ -197,6 +197,16 @@ export namespace App {
                      */
                     export type Request = {    name: string;
                         daily_rate: number;}
+                }
+
+                export namespace ExportBilling {
+                    /**
+                     * @see [\App\Http\Controllers\ClientController::exportBilling](/Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php)
+                     */
+                    export type Request = {    project_ids: unknown[];
+                        "project_ids.*"?: string;
+                        from: string;
+                        to: string;}
                 }
 
                 export namespace Destroy {
@@ -399,6 +409,18 @@ export namespace App {
                      * @see [\App\Http\Controllers\ProjectInvoiceController::destroy](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php)
                      */
                     export type Request = Record<string, unknown>
+                }
+            }
+
+            export namespace ExportSharedBillingHandler {
+                export namespace __invoke {
+                    /**
+                     * @see [\App\Http\Controllers\ExportSharedBillingHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ExportSharedBillingHandler.php)
+                     */
+                    export type Request = {    project_ids: unknown[];
+                        "project_ids.*"?: string;
+                        from: string;
+                        to: string;}
                 }
             }
         }

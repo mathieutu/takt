@@ -4,7 +4,7 @@
 import { queryParams, type RouteDefinition, type RouteQueryOptions } from "./../index";
 
 /**
- * @see /Users/mathieutu/Projects/takt/routes/web.php:65
+ * @see /Users/mathieutu/Projects/takt/routes/web.php:68
  * @route "/up"
  */
 export const up = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -18,7 +18,7 @@ up.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see /Users/mathieutu/Projects/takt/routes/web.php:65
+ * @see /Users/mathieutu/Projects/takt/routes/web.php:68
  * @route "/up"
  */
 up.url = (options?: RouteQueryOptions) => {
@@ -26,7 +26,7 @@ up.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see /Users/mathieutu/Projects/takt/routes/web.php:65
+ * @see /Users/mathieutu/Projects/takt/routes/web.php:68
  * @route "/up"
  */
 up.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -35,7 +35,7 @@ up.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 })
 
 /**
- * @see /Users/mathieutu/Projects/takt/routes/web.php:65
+ * @see /Users/mathieutu/Projects/takt/routes/web.php:68
  * @route "/up"
  */
 up.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
