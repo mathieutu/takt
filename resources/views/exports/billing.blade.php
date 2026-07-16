@@ -186,39 +186,48 @@
                         @endforeach
 
                         <div style="break-inside: avoid;">
-                            <footer class="mt-8 rounded-lg border border-default bg-muted/20 p-4">
-                                <dl class="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-4">
-                                    <div>
-                                        <dt class="text-[11px] uppercase tracking-wide text-muted">Jours travaillés</dt>
-                                        <dd class="mt-0.5 text-sm font-semibold tabular-nums text-default"><span data-days="{{ $totalDays }}"></span></dd>
-                                    </div>
-                                    <div>
-                                        <dt class="text-[11px] uppercase tracking-wide text-muted">Total facturable</dt>
-                                        <dd class="mt-0.5 text-sm font-semibold tabular-nums text-default"><span data-currency-cents="{{ $totalWorked }}"></span></dd>
-                                    </div>
-                                    <div>
-                                        <dt class="text-[11px] uppercase tracking-wide text-muted">Total facturé</dt>
-                                        <dd class="mt-0.5 text-sm font-semibold tabular-nums text-default"><span data-currency-cents="{{ $totalInvoiced }}"></span></dd>
-                                    </div>
-                                    <div>
-                                        <dt class="text-[11px] uppercase tracking-wide text-muted">
-                                            {{ $openingToInvoice !== 0 ? 'Reste à facturer (période)' : 'Reste à facturer' }}
-                                        </dt>
-                                        <dd class="mt-0.5 text-sm font-semibold tabular-nums {{ $toInvoice < 0 ? 'text-error' : 'text-default' }}">
-                                            <span data-currency-cents="{{ $toInvoice }}"></span>
-                                        </dd>
-                                    </div>
-                                </dl>
+                            @php
+                                // Negative = reste à facturer, positive = trop perçu.
+                                $openingBalance = -$openingToInvoice;
+                                $periodBalance = -$toInvoice;
+                                $currentBalance = $openingBalance + $periodBalance;
+                                $dailyRate = $project['daily_rate'];
+                            @endphp
 
-                                @if($openingToInvoice !== 0)
-                                    <div class="mt-3 flex items-center justify-between border-t border-default pt-3 text-xs">
-                                        <span class="text-muted">Solde à facturer avant la période : <strong class="text-default" data-currency-cents="{{ $openingToInvoice }}"></strong></span>
-                                        <span class="font-semibold text-default">
-                                            Solde total à facturer :
-                                            <span class="{{ ($openingToInvoice + $toInvoice) < 0 ? 'text-error' : 'text-default' }}" data-currency-cents="{{ $openingToInvoice + $toInvoice }}"></span>
-                                        </span>
-                                    </div>
-                                @endif
+                            <footer class="mt-8 rounded-lg border border-default p-4">
+                                <table class="w-full text-xs" style="border-collapse: collapse;">
+                                    <colgroup>
+                                        <col style="width: auto;">
+                                        <col style="width: 1%;">
+                                        <col style="width: 1%;">
+                                    </colgroup>
+                                    <tbody>
+                                        @if($openingBalance !== 0)
+                                            <tr>
+                                                <td class="py-1.5 text-muted">Solde avant la période</td>
+                                                <td class="py-1.5 text-right font-medium text-default">{{ $openingBalance > 0 ? '+' : '−' }}</td>
+                                                <td class="py-1.5 pl-1 text-right font-medium tabular-nums text-default" data-currency-cents="{{ abs($openingBalance) }}"></td>
+                                            </tr>
+                                        @endif
+                                        <tr>
+                                            <td class="py-1.5 text-muted">
+                                                <span data-days="{{ $totalDays }}"></span> travaillés × <span data-currency-cents="{{ $dailyRate }}"></span>/j
+                                            </td>
+                                            <td class="py-1.5 text-right font-medium text-default">−</td>
+                                            <td class="py-1.5 pl-1 text-right font-medium tabular-nums text-default" data-currency-cents="{{ $totalWorked }}"></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1.5 text-muted">Montant facturé</td>
+                                            <td class="py-1.5 text-right font-medium text-default">+</td>
+                                            <td class="py-1.5 pl-1 text-right font-medium tabular-nums text-default" data-currency-cents="{{ $totalInvoiced }}"></td>
+                                        </tr>
+                                        <tr style="border-top: 2px solid var(--ui-border);">
+                                            <td class="pt-2 text-sm font-semibold text-default">Solde actuel</td>
+                                            <td class="pt-2 text-right text-base font-bold text-default">{{ match (true) { $currentBalance < 0 => '-', $currentBalance > 0 => '+', default => ''} }}</td>
+                                            <td class="pt-2 pl-1 text-right text-base font-bold tabular-nums text-default" data-currency-cents="{{ abs($currentBalance) }}"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </footer>
 
                             @if($loop->last)
