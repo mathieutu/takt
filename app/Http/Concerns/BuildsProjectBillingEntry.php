@@ -2,6 +2,7 @@
 
 namespace App\Http\Concerns;
 
+use App\Http\Requests\ExportBillingRequest;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Project;
@@ -14,6 +15,18 @@ use Symfony\Component\HttpFoundation\Response;
 
 trait BuildsProjectBillingEntry
 {
+    /**
+     * @return Collection<int, Project>
+     */
+    protected function resolveExportProjects(Client $client, ExportBillingRequest $request): Collection
+    {
+        $projectIds = $request->validated('project_ids');
+        $projects = $client->projects()->whereIn('id', $projectIds)->with(['timesheetEntries', 'invoices'])->get();
+        abort_if($projects->count() !== count($projectIds), 404);
+
+        return $projects;
+    }
+
     protected function buildProjectBillingEntry(Project $project, ?string $clientNameOverride = null): array
     {
         $invoicesByMonth = $project->invoices
@@ -90,7 +103,19 @@ trait BuildsProjectBillingEntry
 
     /**
      * @param  Collection<int, Project>  $projects  déjà filtrée sur project_ids, avec timesheetEntries+invoices chargées
+     * @return array{
+     *     projects: Collection<int, array<string, mixed>>,
+     *     clientName: string,
+     *     providerName: ?string,
+     *     providerEmail: ?string,
+     *     from: string,
+     *     to: string,
+     *     holidays: array<string, string>,
+     * }
      */
+    // TODO: providerName/providerEmail/from/to/sourceUrl are threaded positionally through this method and
+    // buildBillingExportResponse() below — a small DTO (e.g. ExportContext) would remove the risk of mixing
+    // up parameters at the two call sites (ClientController::exportBilling, ExportSharedBillingHandler).
     protected function buildBillingExportViewData(
         Client $client,
         Collection $projects,
@@ -102,14 +127,24 @@ trait BuildsProjectBillingEntry
     ): array {
         $built = $projects->map(fn (Project $p) => $this->buildProjectBillingEntry($p, $client->name))
             ->map(function (array $entry) use ($from, $to) {
-                $priorMonths = collect($entry['months'])->filter(fn ($m) => $m['month'] < $from);
+                $allMonths = collect($entry['months']);
+                $priorMonths = $allMonths->filter(fn ($m) => $m['month'] < $from);
+                $periodMonths = $allMonths->filter(fn ($m) => $m['month'] >= $from && $m['month'] <= $to)->values();
+
                 $priorWorked = $priorMonths->sum(fn ($m) => $m['days_worked'] * $entry['daily_rate']);
                 $priorInvoiced = $priorMonths->flatMap(fn ($m) => $m['invoices'])->sum('amount');
+
+                $totalWorked = $periodMonths->sum(fn ($m) => $m['days_worked'] * $entry['daily_rate']);
+                $totalInvoiced = $periodMonths->flatMap(fn ($m) => $m['invoices'])->sum('amount');
 
                 return [
                     ...$entry,
                     'opening_to_invoice' => $priorWorked - $priorInvoiced,
-                    'months' => collect($entry['months'])->filter(fn ($m) => $m['month'] >= $from && $m['month'] <= $to)->values(),
+                    'months' => $periodMonths,
+                    'total_days' => $periodMonths->sum('days_worked'),
+                    'total_worked' => $totalWorked,
+                    'total_invoiced' => $totalInvoiced,
+                    'to_invoice' => $totalWorked - $totalInvoiced,
                 ];
             });
 

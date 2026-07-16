@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import type { ProjectWithBilling } from '@/types/billing'
-import { CalendarDate, type DateValue } from '@internationalized/date'
 import { useToast } from '@nuxt/ui/composables'
 import { computed, ref } from 'vue'
-import { parseMonth, today, toYearMonth } from '@/utils/date'
+import { useMonthRangePicker } from '@/composables/useMonthRangePicker'
+import { today, toYearMonth } from '@/utils/date'
 import { exportMethod as exportClientBilling } from '@/wayfinder/routes/clients/billing'
 import { exportMethod as exportSharedBilling } from '@/wayfinder/routes/shares/billing'
 
@@ -21,18 +21,19 @@ const toast = useToast()
 // ── Default selection ─────────────────────────────────────────────────────────
 
 const projectToInvoice = (project: ProjectWithBilling): number => {
-  const totalWorked = project.months.reduce((sum, m) => sum + m.days_worked * project.daily_rate, 0)
-  const totalInvoiced = project.months.flatMap(m => m.invoices).reduce((sum, invoice) => sum + invoice.amount, 0)
+  const totalWorked = project.months.reduce((sum, month) => sum + month.days_worked * project.daily_rate, 0)
+  const totalInvoiced = project.months.flatMap(month => month.invoices)
+    .reduce((sum, invoice) => sum + invoice.amount, 0)
   return totalWorked - totalInvoiced
 }
 
 const lastInvoiceDate = (project: ProjectWithBilling): string | null => {
-  const dates = project.months.flatMap(m => m.invoices).map(invoice => invoice.created_at).toSorted()
+  const dates = project.months.flatMap(month => month.invoices).map(invoice => invoice.created_at).toSorted()
   return dates.at(-1) ?? null
 }
 
 const oldestMonthWithData = (projects: ProjectWithBilling[]): string | null => {
-  const months = projects.flatMap(project => project.months.map(m => m.month)).toSorted()
+  const months = projects.flatMap(project => project.months.map(month => month.month)).toSorted()
   return months[0] ?? null
 }
 
@@ -65,31 +66,7 @@ const projectItems = computed(() => props.projects.map(project => ({
 
 // ── Month range picker ─────────────────────────────────────────────────────────
 
-const pickerOpen = ref(false)
-
-const yearMonthToCalendarDate = (yearMonth: string): CalendarDate => {
-  const { year, month } = parseMonth(yearMonth)
-  return new CalendarDate(year, month, 1)
-}
-
-const calendarValue = computed(() => ({
-  start: yearMonthToCalendarDate(rangeFrom.value),
-  end: yearMonthToCalendarDate(rangeTo.value),
-}))
-
-const onRangeSelect = (value: { start: DateValue | undefined, end: DateValue | undefined } | null) => {
-  if (!value?.start || !value?.end) return
-  rangeFrom.value = toYearMonth(value.start)
-  rangeTo.value = toYearMonth(value.end)
-  pickerOpen.value = false
-}
-
-const formatMonthShort = (yearMonth: string): string => {
-  const { year, month } = parseMonth(yearMonth)
-  return new Date(year, month - 1).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
-}
-
-const periodLabel = computed(() => `${formatMonthShort(rangeFrom.value)} – ${formatMonthShort(rangeTo.value)}`)
+const { pickerOpen, calendarValue, onRangeSelect, periodLabel } = useMonthRangePicker(rangeFrom, rangeTo)
 
 // ── Export ─────────────────────────────────────────────────────────────────────
 

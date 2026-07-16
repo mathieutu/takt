@@ -45,7 +45,6 @@ Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
     Route::delete('clients/{client}/share', [ClientController::class, 'destroyShare'])->name('clients.share.destroy');
     Route::get('clients/{client}/billing', [ClientController::class, 'showBilling'])->name('clients.billing.show')->withTrashed();
     Route::get('clients/{client}/billing/export', [ClientController::class, 'exportBilling'])->name('clients.billing.export')->withTrashed()->middleware('throttle:10,1');
-    Route::get('clients/{client}/billing/export/preview', [ClientController::class, 'previewBillingExport'])->name('clients.billing.export.preview')->withTrashed();
 
     // Projects
     Route::resource('projects', ProjectController::class)->except(['show']);

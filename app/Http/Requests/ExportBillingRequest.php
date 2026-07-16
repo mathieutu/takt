@@ -12,7 +12,7 @@ class ExportBillingRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true; // gate géré par le middleware de route / le token
+        return true; // authorization is handled by the route middleware / share token
     }
 
     /**

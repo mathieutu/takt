@@ -28,7 +28,7 @@ describe('clients.billing.export', function () {
         $response = $this->actingAs($this->user)
             ->get(route('clients.billing.export', $this->client).'?'.billingExportQuery([$this->project->id], '2026-01', '2026-06'));
 
-        $response->assertStatus(200)
+        $response->assertSuccessful()
             ->assertHeader('Content-Type', 'application/pdf');
 
         $expectedFilename = Str::slug($this->client->name).'_'.Str::slug($this->project->name).'_2026-01_2026-06.pdf';
@@ -43,7 +43,7 @@ describe('clients.billing.export', function () {
 
         $this->actingAs($this->user)
             ->get(route('clients.billing.export', $this->client).'?'.billingExportQuery([$this->project->id], '2026-01', '2026-06'))
-            ->assertStatus(200);
+            ->assertSuccessful();
 
         Http::assertSent(function ($request) {
             $pdfOptions = $request->data()['pdfOptions'] ?? null;
@@ -67,7 +67,7 @@ describe('clients.billing.export', function () {
 
         $this->actingAs($this->user)
             ->get(route('clients.billing.export', $this->client).'?'.billingExportQuery([$this->project->id], '2026-01', '2026-06'))
-            ->assertStatus(200);
+            ->assertSuccessful();
 
         $expectedHref = route('shares.show', $this->client->share_token);
 
@@ -85,7 +85,7 @@ describe('clients.billing.export', function () {
 
         $this->actingAs($otherUser)
             ->get(route('clients.billing.export', $this->client).'?'.billingExportQuery([$this->project->id], '2026-01', '2026-06'))
-            ->assertStatus(403);
+            ->assertForbidden();
     });
 
     it('returns 404 when a project_id belongs to another client', function () {
@@ -96,7 +96,7 @@ describe('clients.billing.export', function () {
 
         $this->actingAs($this->user)
             ->get(route('clients.billing.export', $this->client).'?'.billingExportQuery([$otherProject->id], '2026-01', '2026-06'))
-            ->assertStatus(404);
+            ->assertNotFound();
     });
 
     it('returns a 502 with a generic message when the PDF service fails', function () {
@@ -120,20 +120,6 @@ describe('clients.billing.export', function () {
     });
 });
 
-describe('clients.billing.export.preview', function () {
-    it('returns the rendered HTML in the testing environment without calling the PDF service', function () {
-        Http::fake();
-
-        $response = $this->actingAs($this->user)
-            ->get(route('clients.billing.export.preview', $this->client).'?'.billingExportQuery([$this->project->id], '2026-01', '2026-06'));
-
-        $response->assertStatus(200)
-            ->assertHeader('Content-Type', 'text/html; charset=UTF-8');
-
-        Http::assertNothingSent();
-    });
-});
-
 describe('shares.billing.export', function () {
     beforeEach(function () {
         $this->client->update(['share_token' => (string) Str::uuid()]);
@@ -146,7 +132,7 @@ describe('shares.billing.export', function () {
 
         $response = $this->get(route('shares.billing.export', $this->client->share_token).'?'.billingExportQuery([$this->project->id], '2026-01', '2026-06'));
 
-        $response->assertStatus(200)
+        $response->assertSuccessful()
             ->assertHeader('Content-Type', 'application/pdf');
         expect($response->getContent())->toBe('%PDF-1.4 fake-pdf-content');
     });
@@ -157,7 +143,7 @@ describe('shares.billing.export', function () {
         ]);
 
         $this->get(route('shares.billing.export', $this->client->share_token).'?'.billingExportQuery([$this->project->id], '2026-01', '2026-06'))
-            ->assertStatus(200);
+            ->assertSuccessful();
 
         $expectedHref = route('shares.show', $this->client->share_token);
 
@@ -172,7 +158,7 @@ describe('shares.billing.export', function () {
         Http::fake();
 
         $this->get(route('shares.billing.export', 'invalid-token').'?'.billingExportQuery([$this->project->id], '2026-01', '2026-06'))
-            ->assertStatus(404);
+            ->assertNotFound();
     });
 
     it('throttles after 10 requests per minute', function () {
@@ -185,9 +171,9 @@ describe('shares.billing.export', function () {
         $url = route('shares.billing.export', $this->client->share_token).'?'.billingExportQuery([$this->project->id], '2026-01', '2026-06');
 
         foreach (range(1, 10) as $_) {
-            $this->get($url)->assertStatus(200);
+            $this->get($url)->assertSuccessful();
         }
 
-        $this->get($url)->assertStatus(429);
+        $this->get($url)->assertTooManyRequests();
     });
 });

@@ -36,12 +36,13 @@ Ce document est **autonome et complet** : il documente l'implémentation de bout
 - [x] **Export PDF réel validé par l'utilisateur** (glyphes de coverage, montants, sauts de page) — correction apportée : le résumé des totaux et le bloc "Bon pour accord" doivent toujours rester sur la même page (regroupés dans un même conteneur `break-inside: avoid`, au lieu de deux blocs indépendants qui pouvaient se retrouver coupés l'un de l'autre)
 
 ### Phase 3 — Refactor & finalisation
-- [ ] Relecture de cohérence des 3 workstreams (nommage, structure, pas de duplication résiduelle)
-- [ ] Décision utilisateur actée sur le sort de la route de preview (gardée gated ou retirée)
-- [ ] `vendor/bin/pint --dirty --format agent`, `yarn lint:fix && yarn typecheck`, `php artisan test --compact` (suite complète) tous verts
-- [ ] Résidus de la Phase 1 (formatage brut, styles minimaux) nettoyés si remplacés en Phase 2
-- [ ] **Feu vert utilisateur obtenu explicitement avant tout commit**
-- [ ] Commit effectué
+- [x] Relecture de cohérence des 3 workstreams (nommage, structure, pas de duplication résiduelle) — résolution des projets d'export mutualisée dans `BuildsProjectBillingEntry::resolveExportProjects()` (dupliquée entre `ClientController` et `ExportSharedBillingHandler` jusque-là)
+- [x] Décision utilisateur actée sur le sort de la route de preview : **retirée entièrement** (`clients.billing.export.preview`, `ClientController::previewBillingExport()`, test dédié, Wayfinder régénéré)
+- [x] `vendor/bin/pint --dirty --format agent`, `yarn lint:fix && yarn typecheck`, `php artisan test --compact` (suite complète) tous verts (seul échec : `ExampleTest` pré-existant, lié à l'absence de serveur SSR Vite en environnement de test, sans rapport avec cette feature)
+- [x] Résidus de la Phase 1 (formatage brut, styles minimaux) nettoyés si remplacés en Phase 2 — rien à nettoyer, déjà remplacé en Phase 2
+- [x] Revue de code post-implémentation (`/review`) menée sur la branche complète — nettoyage appliqué : assertions Pest sémantiques, PHPDoc array shape, dédup du lookup `share_token` (`Client::findByShareTokenOrFail()`), totaux d'export précalculés côté PHP au lieu d'être recalculés dans le Blade, composable `useMonthRangePicker` partagé entre la modale d'export et `DashboardPage.vue`
+- [x] **Feu vert utilisateur obtenu explicitement avant tout commit**
+- [x] Commit effectué
 
 ---
 
@@ -81,7 +82,7 @@ Une première version de ce plan a été écrite par un agent sans jamais avoir 
 10. **Nom du fichier** : `{Client}_{Projet(s)}_{from}_{to}.pdf` (partie projet omise si plusieurs projets sélectionnés).
 11. **Rate limiting** : `shares/{token}/export` est accessible sans authentification (token de partage permanent, sans TTL) et appelle un service externe coûteux → `throttle:10,1` sur les deux routes d'export.
 12. **Timeout de la requête synchrone** (génération jusqu'à 65s) : reste synchrone, pas de queue (aucun `Job` n'existe dans ce repo — introduire une brique async serait disproportionné pour une feature à faible trafic). **Rappel opérationnel avant mise en prod** : vérifier que le timeout du reverse proxy (nginx/Caddy) et `max_execution_time` PHP-FPM/Octane dépassent bien 65s + marge.
-13. **Route de preview HTML (Phase 2 uniquement, voir plus bas)** : une route qui retourne la vue Blade directement en HTML (sans passer par le service PDF externe), gated `local`/`testing` uniquement, pour itérer vite sur le design sans round-trip vers le service externe à chaque changement.
+13. **Route de preview HTML (Phase 2 uniquement, voir plus bas)** : une route qui retourne la vue Blade directement en HTML (sans passer par le service PDF externe), gated `local`/`testing` uniquement, pour itérer vite sur le design sans round-trip vers le service externe à chaque changement. **Retirée en Phase 3** une fois le design validé (route, `ClientController::previewBillingExport()`, test dédié) — décision explicite de l'utilisateur, plutôt que de la garder en dette pour d'hypothétiques futurs ajustements.
 14. **Numérotation de page ("Page X / Y") : implémentée.** Le service externe `pdf.mathieutu.dev` supporte désormais un objet `pdfOptions` (`headerTemplate`/`footerTemplate`/`margin`, mêmes conventions que `Puppeteer.page.pdf()` — classes spéciales `pageNumber`/`totalPages` auto-remplies dans les templates). Le hack CSS `position: fixed` du footer a été remplacé par ce mécanisme natif (`PdfGenerator::fromView()` accepte un 3e paramètre `$pdfOptions`, vue dédiée `resources/views/exports/billing-footer.blade.php` avec styles inline — contrainte Puppeteer : ce fragment est rendu dans un contexte isolé, sans accès au CSS de `billing.blade.php`). Au passage, le texte "Généré avec Takt" est devenu un lien cliquable vers la page live correspondante (`shares.show` si le client a un `share_token`, sinon `config('app.url')`). **Limitation connue et acceptée** : la route de preview HTML (`clients.billing.export.preview`) n'affiche plus aucun footer (ni branding ni pagination), car elle rend la vue directement sans passer par `PdfGenerator`/`pdfOptions` — seul un vrai export PDF montre le nouveau footer. Voir la section "Numérotation de page" plus bas (mise à jour, prompt `pdf-gen` conservé pour trace historique).
 
 ---

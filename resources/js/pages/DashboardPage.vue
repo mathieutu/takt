@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3'
-import { CalendarDate, type DateValue } from '@internationalized/date'
+import { CalendarDate } from '@internationalized/date'
 import {
   type ActiveElement,
   BarController,
@@ -18,8 +18,9 @@ import {
   Tooltip,
   type TooltipItem,
 } from 'chart.js'
-import { computed, type ComputedRef, ref } from 'vue'
+import { computed, type ComputedRef } from 'vue'
 import { Bar } from 'vue-chartjs'
+import { useMonthRangePicker } from '@/composables/useMonthRangePicker'
 import { formatDays } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
 import { dashboard, timesheet } from '@/wayfinder/routes'
@@ -101,34 +102,30 @@ const parseYearMonth = (yearMonth: string) => {
 
 const toYearMonth = (date: CalendarDate) => date.toString().slice(0, 7)
 
-const endMonthDate = computed(() => {
-  const { year, month } = parseYearMonth(props.to)
-  return new CalendarDate(year, month, 1)
-})
-
-const periodLabel = computed(() => {
-  const formatShort = (yearMonth: string) => {
-    const { year, month } = parseYearMonth(yearMonth)
-    return new Date(year, month - 1).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' })
-  }
-  return `${formatShort(props.from)} – ${formatShort(props.to)}`
-})
-
-const selectedMonthLabel = computed(() => {
-  const { year, month } = parseYearMonth(props.to)
-  return new Date(year, month - 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
-})
-
 const periodMonths = computed(() => {
   const { year: fromYear, month: fromMonth } = parseYearMonth(props.from)
   const { year: toYear, month: toMonth } = parseYearMonth(props.to)
   return (toYear - fromYear) * 12 + (toMonth - fromMonth) + 1
 })
 
-const calendarValue = computed(() => {
-  const { year: fromYear, month: fromMonth } = parseYearMonth(props.from)
-  return { start: new CalendarDate(fromYear, fromMonth, 1), end: endMonthDate.value }
+const endMonthDate = computed(() => {
+  const { year, month } = parseYearMonth(props.to)
+  return new CalendarDate(year, month, 1)
 })
+
+const {
+  pickerOpen,
+  calendarValue,
+  onRangeSelect,
+  formatMonthLabel,
+  periodLabel,
+} = useMonthRangePicker(
+  computed(() => props.from),
+  computed(() => props.to),
+  range => router.visit(dashboard({ query: range }), { preserveScroll: true }),
+)
+
+const selectedMonthLabel = computed(() => formatMonthLabel(props.to, 'long'))
 
 const prevPeriod = computed(() => {
   const { year: fromYear, month: fromMonth } = parseYearMonth(props.from)
@@ -147,16 +144,6 @@ const nextPeriod = computed(() => {
     to: toYearMonth(new CalendarDate(toYear, toMonth, 1).add({ months: 1 })),
   }
 })
-
-const pickerOpen = ref(false)
-
-const onRangeSelect = (value: { start: DateValue | undefined, end: DateValue | undefined } | null) => {
-  if (!value?.start || !value?.end) return
-  router.visit(
-    dashboard({ query: { from: value.start.toString().slice(0, 7), to: value.end.toString().slice(0, 7) } }),
-    { preserveScroll: true },
-  )
-}
 
 const currentYear = new Date().getFullYear()
 const currentMonth = new Date().getMonth() + 1

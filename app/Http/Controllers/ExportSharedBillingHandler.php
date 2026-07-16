@@ -15,9 +15,8 @@ class ExportSharedBillingHandler
 
     public function __invoke(ExportBillingRequest $request, string $token, HolidayService $holidays, PdfGenerator $pdf): Response
     {
-        $client = Client::with('user')->where('share_token', $token)->firstOrFail();
-        $projects = $client->projects()->whereIn('id', $request->validated('project_ids'))->with(['timesheetEntries', 'invoices'])->get();
-        abort_if($projects->isEmpty() || $projects->count() !== count($request->validated('project_ids')), 404);
+        $client = Client::findByShareTokenOrFail($token);
+        $projects = $this->resolveExportProjects($client, $request);
 
         $sourceUrl = route('shares.show', $token);
 

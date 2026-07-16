@@ -57,4 +57,9 @@ class Client extends Model implements HasUser
     {
         return $this->hasMany(Project::class);
     }
+
+    public static function findByShareTokenOrFail(string $token): self
+    {
+        return static::with('user')->whereShareToken($token)->firstOrFail();
+    }
 }

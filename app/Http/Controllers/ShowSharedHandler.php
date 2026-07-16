@@ -15,7 +15,7 @@ class ShowSharedHandler
 
     public function __invoke(string $token, HolidayService $holidays): Response
     {
-        $client = Client::with('user')->where('share_token', $token)->firstOrFail();
+        $client = Client::findByShareTokenOrFail($token);
 
         $projects = $client->projects()->orderBy('created_at')->get();
 

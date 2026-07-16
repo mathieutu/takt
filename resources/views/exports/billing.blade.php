@@ -53,11 +53,10 @@
 
     @foreach($projects as $project)
         @php
-            $totalDays = collect($project['months'])->sum('days_worked');
-            $totalWorked = collect($project['months'])->sum(fn ($month) => $month['days_worked'] * $project['daily_rate']);
-            $allInvoices = collect($project['months'])->flatMap(fn ($month) => $month['invoices'] ?? []);
-            $totalInvoiced = $allInvoices->sum('amount');
-            $toInvoice = $totalWorked - $totalInvoiced;
+            $totalDays = $project['total_days'];
+            $totalWorked = $project['total_worked'];
+            $totalInvoiced = $project['total_invoiced'];
+            $toInvoice = $project['to_invoice'];
             $openingToInvoice = $project['opening_to_invoice'];
         @endphp
 
