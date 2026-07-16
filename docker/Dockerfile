@@ -49,7 +49,7 @@ RUN npm -g install corepack --force && corepack enable
 
 # Install Node dependencies with cache mount
 COPY --link package.json .yarnrc.yml yarn.lock .yarn ./
-COPY --link vite-plugin-inertia-ssg.ts vite.config.ts tsconfig.json ./
+COPY --link vite-plugin-inertia-ssg.ts vite.config.ts vite.config.exports.ts tsconfig.json ./
 COPY --link resources resources
 
 # Install and build in a single RUN to share the Yarn cache mount

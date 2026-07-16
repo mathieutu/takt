@@ -18,9 +18,9 @@
   ],
   "require": {
     "php": "^8.3",
-    "inertiajs/inertia-laravel": "^3.1.0",
-    "laravel/framework": "^13.14.0",
-    "laravel/socialite": "^5.27.0",
+    "inertiajs/inertia-laravel": "^3.1.1",
+    "laravel/framework": "^13.20.0",
+    "laravel/socialite": "^5.28.0",
     "laravel/tinker": "^3.0.2",
     "mathieutu/exporter": "^3.4.0",
     "staudenmeir/belongs-to-through": "^2.18.0"
@@ -28,14 +28,14 @@
   "require-dev": {
     "barryvdh/laravel-ide-helper": "^3.7.0",
     "fakerphp/faker": "^1.24.1",
-    "laravel/boost": "^2.4.9",
+    "laravel/boost": "^2.4.12",
     "laravel/pail": "^1.2.7",
-    "laravel/pao": "^1.1.0",
-    "laravel/pint": "^1.29.1",
+    "laravel/pao": "^1.1.2",
+    "laravel/pint": "^1.29.3",
     "laravel/wayfinder": "dev-next",
     "mockery/mockery": "^1.6.12",
-    "nunomaduro/collision": "^8.9.4",
-    "pestphp/pest": "^4.7.2",
+    "nunomaduro/collision": "^8.9.5",
+    "pestphp/pest": "^4.7.5",
     "pestphp/pest-plugin-laravel": "^4.1.0"
   },
   "autoload": {
