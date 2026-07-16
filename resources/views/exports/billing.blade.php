@@ -3,6 +3,8 @@
 <head>
     <meta charset="utf-8">
     <title>Facturation {{ $clientName }}</title>
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=inter:300,400,500,600,700" rel="stylesheet"/>
     <style>
         @page { size: A4; margin: 16mm 14mm 20mm; }
         html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }

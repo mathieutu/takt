@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" type="image/svg+xml" href="/logo.svg">
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=inter:300,400,500,600,700" rel="stylesheet"/>
     <meta name="description" content="Gestion du temps et facturation pour freelances. Feuille de temps, projets, suivi de facturation et partage client.">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="{{ config('app.name') }}">
