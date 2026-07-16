@@ -36,6 +36,48 @@ describe('clients.billing.export', function () {
         expect($response->getContent())->toBe('%PDF-1.4 fake-pdf-content');
     });
 
+    it('sends pdfOptions with a footerTemplate and margin, linking to the app URL when the client has no share_token', function () {
+        Http::fake([
+            config('services.pdf.api_url') => Http::response('%PDF-1.4 fake-pdf-content'),
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('clients.billing.export', $this->client).'?'.billingExportQuery([$this->project->id], '2026-01', '2026-06'))
+            ->assertStatus(200);
+
+        Http::assertSent(function ($request) {
+            $pdfOptions = $request->data()['pdfOptions'] ?? null;
+
+            expect($pdfOptions)->not->toBeNull();
+            expect($pdfOptions['footerTemplate'])->toContain('class="pageNumber"')
+                ->toContain('class="totalPages"')
+                ->toContain('href="'.config('app.url').'"');
+            expect($pdfOptions['margin'])->toHaveKeys(['top', 'bottom', 'left', 'right']);
+
+            return true;
+        });
+    });
+
+    it('links the footer to shares.show when the client has a share_token', function () {
+        $this->client->update(['share_token' => (string) Str::uuid()]);
+
+        Http::fake([
+            config('services.pdf.api_url') => Http::response('%PDF-1.4 fake-pdf-content'),
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('clients.billing.export', $this->client).'?'.billingExportQuery([$this->project->id], '2026-01', '2026-06'))
+            ->assertStatus(200);
+
+        $expectedHref = route('shares.show', $this->client->share_token);
+
+        Http::assertSent(function ($request) use ($expectedHref) {
+            expect($request->data()['pdfOptions']['footerTemplate'])->toContain('href="'.$expectedHref.'"');
+
+            return true;
+        });
+    });
+
     it('denies access to a non-owner', function () {
         $otherUser = User::factory()->create();
 
@@ -107,6 +149,23 @@ describe('shares.billing.export', function () {
         $response->assertStatus(200)
             ->assertHeader('Content-Type', 'application/pdf');
         expect($response->getContent())->toBe('%PDF-1.4 fake-pdf-content');
+    });
+
+    it('links the footer to shares.show with the token used for the export', function () {
+        Http::fake([
+            config('services.pdf.api_url') => Http::response('%PDF-1.4 fake-pdf-content'),
+        ]);
+
+        $this->get(route('shares.billing.export', $this->client->share_token).'?'.billingExportQuery([$this->project->id], '2026-01', '2026-06'))
+            ->assertStatus(200);
+
+        $expectedHref = route('shares.show', $this->client->share_token);
+
+        Http::assertSent(function ($request) use ($expectedHref) {
+            expect($request->data()['pdfOptions']['footerTemplate'])->toContain('href="'.$expectedHref.'"');
+
+            return true;
+        });
     });
 
     it('returns 404 for an invalid share token', function () {

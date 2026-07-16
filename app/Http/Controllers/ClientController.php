@@ -97,8 +97,9 @@ class ClientController
     public function exportBilling(ExportBillingRequest $request, Client $client, HolidayService $holidays, PdfGenerator $pdf): HttpResponse
     {
         $projects = $this->resolveExportProjects($client, $request);
+        $sourceUrl = $client->share_token ? route('shares.show', $client->share_token) : config('app.url');
 
-        return $this->buildBillingExportResponse($client, $projects, $request->user()->name, $request->user()->email, $request->validated('from'), $request->validated('to'), $holidays, $pdf);
+        return $this->buildBillingExportResponse($client, $projects, $request->user()->name, $request->user()->email, $request->validated('from'), $request->validated('to'), $holidays, $pdf, $sourceUrl);
     }
 
     public function previewBillingExport(ExportBillingRequest $request, Client $client, HolidayService $holidays): View

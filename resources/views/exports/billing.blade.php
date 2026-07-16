@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>Facturation {{ $clientName }}</title>
     <style>
-        @page { size: A4; margin: 16mm 14mm; }
+        @page { size: A4; margin: 16mm 14mm 20mm; }
         html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .project { page-break-before: always; }
         .project:first-of-type { page-break-before: avoid; }
@@ -44,7 +44,7 @@
     </style>
     <style>{!! \Illuminate\Support\Facades\Vite::content('resources/css/app.css') !!}</style>
 </head>
-<body class="bg-default font-sans text-sm text-default" style="padding-bottom: 10mm;">
+<body class="bg-default font-sans text-sm text-default">
     @php
         $periodFromLabel = \Illuminate\Support\Str::ucfirst(\Carbon\Carbon::createFromFormat('Y-m', $from)->translatedFormat('F Y'));
         $periodToLabel = \Illuminate\Support\Str::ucfirst(\Carbon\Carbon::createFromFormat('Y-m', $to)->translatedFormat('F Y'));
@@ -226,12 +226,6 @@
             </tbody>
         </table>
     @endforeach
-
-    <footer class="flex items-center justify-between border-t border-default pt-1 text-[10px] text-muted" style="position: fixed; left: 0; right: 0; bottom: 4mm;">
-        <span>Généré avec Takt</span>
-        <span>{{ now()->translatedFormat('d/m/Y à H:i') }}</span>
-        <span>{{ config('app.url') }}</span>
-    </footer>
 
     <script>{!! \Illuminate\Support\Facades\Vite::content('resources/js/exports/billing-pdf.ts', 'build-exports') !!}</script>
 </body>

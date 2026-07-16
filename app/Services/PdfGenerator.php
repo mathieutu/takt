@@ -16,11 +16,15 @@ class PdfGenerator
         $this->apiUrl = config('services.pdf.api_url');
     }
 
-    public function fromView(string $view, array $data = []): string
+    public function fromView(string $view, array $data = [], array $pdfOptions = []): string
     {
-        $response = Http::asJson()->timeout(65)->post($this->apiUrl, [
-            'html' => view($view, $data)->render(),
-        ]);
+        $payload = ['html' => view($view, $data)->render()];
+
+        if ($pdfOptions !== []) {
+            $payload['pdfOptions'] = $pdfOptions;
+        }
+
+        $response = Http::asJson()->timeout(65)->post($this->apiUrl, $payload);
 
         if ($response->failed()) {
             throw new RuntimeException("Failed to generate PDF: {$response->body()}");

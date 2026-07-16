@@ -136,12 +136,21 @@ trait BuildsProjectBillingEntry
         string $to,
         HolidayService $holidays,
         PdfGenerator $pdf,
+        string $sourceUrl,
     ): Response {
         $viewData = $this->buildBillingExportViewData($client, $projects, $providerName, $providerEmail, $from, $to, $holidays);
         $filename = $this->buildExportFilename($client->name, $viewData['projects'], $from, $to);
 
+        $pdfOptions = [
+            'footerTemplate' => view('exports.billing-footer', [
+                'linkHref' => $sourceUrl,
+                'generatedAt' => now()->translatedFormat('d/m/Y à H:i'),
+            ])->render(),
+            'margin' => ['top' => '16mm', 'bottom' => '20mm', 'left' => '14mm', 'right' => '14mm'],
+        ];
+
         try {
-            $bytes = $pdf->fromView('exports.billing', $viewData);
+            $bytes = $pdf->fromView('exports.billing', $viewData, $pdfOptions);
         } catch (\Throwable $e) {
             report($e);
 

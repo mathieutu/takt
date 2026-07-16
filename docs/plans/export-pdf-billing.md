@@ -82,7 +82,7 @@ Une première version de ce plan a été écrite par un agent sans jamais avoir 
 11. **Rate limiting** : `shares/{token}/export` est accessible sans authentification (token de partage permanent, sans TTL) et appelle un service externe coûteux → `throttle:10,1` sur les deux routes d'export.
 12. **Timeout de la requête synchrone** (génération jusqu'à 65s) : reste synchrone, pas de queue (aucun `Job` n'existe dans ce repo — introduire une brique async serait disproportionné pour une feature à faible trafic). **Rappel opérationnel avant mise en prod** : vérifier que le timeout du reverse proxy (nginx/Caddy) et `max_execution_time` PHP-FPM/Octane dépassent bien 65s + marge.
 13. **Route de preview HTML (Phase 2 uniquement, voir plus bas)** : une route qui retourne la vue Blade directement en HTML (sans passer par le service PDF externe), gated `local`/`testing` uniquement, pour itérer vite sur le design sans round-trip vers le service externe à chaque changement.
-14. **Numérotation de page ("Page X / Y") : non implémentée, bloquée par le service externe.** Vérifié dans le README GitHub `mathieutu/pdf-gen` : `POST /api/gen` n'accepte que `html`/`urls`/`files`/`filename` — pas de `headerTemplate`/`footerTemplate`/`displayHeaderFooter` (les options natives de `Puppeteer.page.pdf()` qui permettent une numérotation fiable via les classes `pageNumber`/`totalPages`). Le README liste explicitement "Customizable page settings (coming soon, open to contributions)". Chromium n'implémente pas non plus `counter(page)`/`counter(pages)` en CSS pur pour l'impression (spec CSS Paged Media non supportée) — donc aucune solution côté HTML/CSS/JS de ce repo ne peut afficher un numéro de page fiable à 100 %. Voir la section "Numérotation de page — dépendance externe" plus bas pour le prompt à soumettre au projet `pdf-gen` et le plan d'intégration une fois la feature disponible. En attendant, le header et le footer répétés sur chaque page (Phase 2) utilisent la technique CSS `position: fixed` — qui fonctionne pour du contenu répété mais ne peut pas connaître le numéro de page ni le total.
+14. **Numérotation de page ("Page X / Y") : implémentée.** Le service externe `pdf.mathieutu.dev` supporte désormais un objet `pdfOptions` (`headerTemplate`/`footerTemplate`/`margin`, mêmes conventions que `Puppeteer.page.pdf()` — classes spéciales `pageNumber`/`totalPages` auto-remplies dans les templates). Le hack CSS `position: fixed` du footer a été remplacé par ce mécanisme natif (`PdfGenerator::fromView()` accepte un 3e paramètre `$pdfOptions`, vue dédiée `resources/views/exports/billing-footer.blade.php` avec styles inline — contrainte Puppeteer : ce fragment est rendu dans un contexte isolé, sans accès au CSS de `billing.blade.php`). Au passage, le texte "Généré avec Takt" est devenu un lien cliquable vers la page live correspondante (`shares.show` si le client a un `share_token`, sinon `config('app.url')`). **Limitation connue et acceptée** : la route de preview HTML (`clients.billing.export.preview`) n'affiche plus aucun footer (ni branding ni pagination), car elle rend la vue directement sans passer par `PdfGenerator`/`pdfOptions` — seul un vrai export PDF montre le nouveau footer. Voir la section "Numérotation de page" plus bas (mise à jour, prompt `pdf-gen` conservé pour trace historique).
 
 ---
 
@@ -451,9 +451,9 @@ Une fois la Phase 0 posée, construire en parallèle (ça peut être 2 agents di
 
 ---
 
-## Numérotation de page — dépendance externe (non implémentée)
+## Numérotation de page — implémentée
 
-Cf. décision verrouillée #14. Le service `pdf.mathieutu.dev` (projet `mathieutu/pdf-gen`) ne supporte pas aujourd'hui les templates header/footer natifs de Puppeteer, seule voie fiable pour un "Page X / Y". Deux volets :
+Cf. décision verrouillée #14. Le service `pdf.mathieutu.dev` (projet `mathieutu/pdf-gen`) supporte désormais les templates header/footer natifs de Puppeteer via `pdfOptions`. Le prompt ci-dessous (§1) a été soumis et a débloqué la feature ; le §2 documente maintenant l'intégration réellement livrée côté `takt`, conservé pour trace historique.
 
 ### 1. Prompt à soumettre au projet `pdf-gen`
 
@@ -488,12 +488,14 @@ Cf. décision verrouillée #14. Le service `pdf.mathieutu.dev` (projet `mathieut
 > }
 > ```
 
-### 2. Intégration côté `takt` une fois la feature disponible
+### 2. Intégration côté `takt` (livrée)
 
-- `App\Services\PdfGenerator::fromView()` : ajouter `displayHeaderFooter: true`, `margin` (mêmes valeurs que `@page { margin: 16mm 14mm; }` dans `billing.blade.php`, avec un `top`/`bottom` élargi pour laisser la place au header/footer, ex. `20mm`/`18mm`), `headerTemplate`/`footerTemplate` au payload envoyé à `POST /api/gen`.
-- Les templates header/footer envoyés seront des fragments HTML **séparés et minimalistes** (contrainte Puppeteer : pas de feuille de style externe, pas d'héritage du CSS de la page principale) — probablement deux petites vues Blade dédiées (`exports.billing-header`, `exports.billing-footer`) avec des styles inline reprenant juste les couleurs de marque en dur (pas besoin de réutiliser tout le bundle Tailwind pour un footer/header aussi réduit).
-- Une fois ça fonctionne, ça permettra de **remplacer** le hack `position: fixed` actuel (header par projet + footer document) par le mécanisme natif Puppeteer, plus robuste et avec un vrai `pageNumber`/`totalPages` — cf. `resources/views/exports/billing.blade.php`, blocs `<header style="position: fixed...">` et `<footer style="position: fixed...">`.
-- Ne pas bloquer la Phase 3 de ce plan là-dessus : c'est un suivi indépendant, à traiter quand `pdf-gen` aura shippé la feature.
+- `App\Services\PdfGenerator::fromView()` accepte un 3e paramètre `array $pdfOptions = []`, injecté dans le payload sous la clé `pdfOptions` uniquement si non vide (pas de `displayHeaderFooter` explicite à passer — il s'active automatiquement dès qu'un template est fourni). Seul `footerTemplate` est utilisé (pas de `headerTemplate` : le header par-projet reste un `<thead>` répété par table, inchangé, pas besoin de numérotation).
+- `margin` envoyé : `['top' => '16mm', 'bottom' => '20mm', 'left' => '14mm', 'right' => '14mm']` (bas élargi pour laisser la place au footer). `@page { margin: 16mm 14mm 20mm; }` dans `billing.blade.php` reste synchronisé à la main pour la route de preview (qui n'utilise pas `pdfOptions`).
+- Nouveau fragment dédié `resources/views/exports/billing-footer.blade.php` (styles inline uniquement, contrainte Puppeteer — pas d'accès au CSS de `billing.blade.php`) : "Généré avec Takt" en lien cliquable (`shares.show` si `share_token`, sinon `config('app.url')`), date, et `Page <span class="pageNumber"></span> / <span class="totalPages"></span>` (classes auto-remplies par Puppeteer).
+- L'ancien hack `position: fixed` du footer document a été **retiré** de `billing.blade.php` (le header par-projet, lui, n'a jamais utilisé ce hack et reste inchangé).
+- **Limitation connue et acceptée** : la route de preview HTML (`clients.billing.export.preview`) n'affiche plus aucun footer — elle rend la vue sans passer par `PdfGenerator`/`pdfOptions`. Seul un vrai export PDF montre le nouveau footer.
+- Threading de l'URL du lien : `BuildsProjectBillingEntry::buildBillingExportResponse()` prend un paramètre `string $sourceUrl`, calculé par chaque appelant (`ClientController::exportBilling()` et `ExportSharedBillingHandler`).
 
 ---
 
