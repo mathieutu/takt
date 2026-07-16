@@ -29,8 +29,8 @@ Ce document est **autonome et complet** : il documente l'implémentation de bout
 ### Phase 2 — Itération design
 - [x] `resources/js/utils/number.ts` (locale `fr-FR` fixée)
 - [x] `resources/js/exports/billing-pdf.ts` (point d'entrée Vite, formatage réel injecté)
-- [x] `vite.config.ts` / `vite.config.exports.ts` (build dédié en mode library — **déviation** : un simple ajout au tableau `input` du build principal produit un module ES avec des imports vers des chunks partagés, invalides une fois inliné en `<script>` brut sans URL de base ; un build library/IIFE séparé produit un bundle autonome sans imports)
-- [x] CSS compilé inliné dans le Blade (`Vite::content('resources/css/app.css')` + `resources/css/exports-theme.css` — **ajout non prévu au plan initial** : les tokens couleur `--ui-primary`/`--ui-color-*` ne sont jamais définis dans le CSS statique compilé, ils sont injectés à l'exécution par le plugin Vue `@nuxt/ui/vue-plugin` ; capturés une fois depuis le rendu SSR réel de l'app et committés en fichier statique, avec note de régénération en cas de changement de thème)
+- [x] `vite.config.ts` / `vite.config.exports.ts` (build dédié — **déviation** : un simple ajout au tableau `input` du build principal produit un module ES avec des imports vers des chunks partagés, invalides une fois inliné en `<script>` brut sans URL de base. `vite.config.exports.ts` reste un fichier de config séparé mais réutilise `laravel-vite-plugin` (`buildDirectory: 'build-exports'`) combiné à `build.lib`/IIFE — bundle autonome sans imports, **et** manifest standard lisible via `Vite::content('resources/js/exports/billing-pdf.ts', 'build-exports')` au lieu d'un `file_get_contents(public_path(...))` en dur)
+- [x] CSS compilé inliné dans le Blade (`Vite::content('resources/css/app.css')` — **ajout non prévu au plan initial** : les tokens couleur `--ui-primary`/`--ui-color-*` ne sont jamais définis dans le CSS statique compilé, ils sont injectés à l'exécution par le plugin Vue `@nuxt/ui/vue-plugin`, qui n'est pas un module résolvable hors du pipeline Vite (pas de fichier JS réel derrière `@nuxt/ui/vue-plugin`, juste un module virtuel généré par le plugin `ui()`) — le faire tourner pour de vrai (même juste pour capturer sa sortie) demanderait un harnais SSR Vue dédié, plus de mécanisme que le problème n'en vaut la peine. Deux approches plus lourdes essayées et abandonnées (captures manuelles, puis reconstruction de la formule de dérivation des couleurs) avant de converger sur la plus simple : les ~9 variables `--ui-*` réellement utilisées par le template (`grep` sur les classes Tailwind du Blade) sont définies **à la main, en dur**, dans un petit bloc `<style>` en tête de `billing.blade.php`, avec un commentaire renvoyant à `vite.config.ts` si la couleur primaire de l'app change un jour. Choix explicite de l'utilisateur : préférer un peu de duplication simple et lisible à un mécanisme de régénération automatique.)
 - [x] Design du calendrier finalisé (skills `dataviz` + `frontend-design` activés, cohérent thème `pink`)
 - [ ] **Preview HTML validée par l'utilisateur** (boucle d'itération, possiblement plusieurs allers-retours)
 - [ ] **Export PDF réel validé par l'utilisateur** (glyphes de coverage, montants, sauts de page)
@@ -82,6 +82,7 @@ Une première version de ce plan a été écrite par un agent sans jamais avoir 
 11. **Rate limiting** : `shares/{token}/export` est accessible sans authentification (token de partage permanent, sans TTL) et appelle un service externe coûteux → `throttle:10,1` sur les deux routes d'export.
 12. **Timeout de la requête synchrone** (génération jusqu'à 65s) : reste synchrone, pas de queue (aucun `Job` n'existe dans ce repo — introduire une brique async serait disproportionné pour une feature à faible trafic). **Rappel opérationnel avant mise en prod** : vérifier que le timeout du reverse proxy (nginx/Caddy) et `max_execution_time` PHP-FPM/Octane dépassent bien 65s + marge.
 13. **Route de preview HTML (Phase 2 uniquement, voir plus bas)** : une route qui retourne la vue Blade directement en HTML (sans passer par le service PDF externe), gated `local`/`testing` uniquement, pour itérer vite sur le design sans round-trip vers le service externe à chaque changement.
+14. **Numérotation de page ("Page X / Y") : non implémentée, bloquée par le service externe.** Vérifié dans le README GitHub `mathieutu/pdf-gen` : `POST /api/gen` n'accepte que `html`/`urls`/`files`/`filename` — pas de `headerTemplate`/`footerTemplate`/`displayHeaderFooter` (les options natives de `Puppeteer.page.pdf()` qui permettent une numérotation fiable via les classes `pageNumber`/`totalPages`). Le README liste explicitement "Customizable page settings (coming soon, open to contributions)". Chromium n'implémente pas non plus `counter(page)`/`counter(pages)` en CSS pur pour l'impression (spec CSS Paged Media non supportée) — donc aucune solution côté HTML/CSS/JS de ce repo ne peut afficher un numéro de page fiable à 100 %. Voir la section "Numérotation de page — dépendance externe" plus bas pour le prompt à soumettre au projet `pdf-gen` et le plan d'intégration une fois la feature disponible. En attendant, le header et le footer répétés sur chaque page (Phase 2) utilisent la technique CSS `position: fixed` — qui fonctionne pour du contenu répété mais ne peut pas connaître le numéro de page ni le total.
 
 ---
 
@@ -447,6 +448,52 @@ Une fois la Phase 0 posée, construire en parallèle (ça peut être 2 agents di
 ### Checklist manuelle — validation du design (utilisateur, en boucle)
 - [ ] Preview HTML : structure, hiérarchie visuelle, cohérence avec le thème de l'app (via le CSS compilé inliné)
 - [ ] Export PDF réel : rendu des glyphes de coverage (pas de tofu), montants au format `1 234 €` (pas `€1,234`), calendrier lisible à l'impression, sauts de page corrects par projet
+
+---
+
+## Numérotation de page — dépendance externe (non implémentée)
+
+Cf. décision verrouillée #14. Le service `pdf.mathieutu.dev` (projet `mathieutu/pdf-gen`) ne supporte pas aujourd'hui les templates header/footer natifs de Puppeteer, seule voie fiable pour un "Page X / Y". Deux volets :
+
+### 1. Prompt à soumettre au projet `pdf-gen`
+
+À copier-coller dans une session travaillant sur ce repo (`mathieutu/pdf-gen`), pour ajouter le support en s'alignant simplement sur l'API native de Puppeteer plutôt que d'inventer une abstraction :
+
+> Add page header/footer + page-number support to `POST /api/gen`.
+>
+> **Context.** The API currently renders `html`/`urls`/`files` into a merged PDF via Puppeteer's `page.pdf()` with no header/footer support — flagged "Customizable page settings (coming soon, open to contributions)" in the README. A consumer needs a repeating header/footer per page and reliable page-number/total-page numbering, which Puppeteer already supports natively via `page.pdf({ displayHeaderFooter, headerTemplate, footerTemplate, margin })`, but the current API doesn't expose these options.
+>
+> **Goal.** Add optional request parameters that map 1:1 onto Puppeteer's own `page.pdf()` header/footer options — no new abstraction, straight pass-through:
+>
+> | Parameter | Type | Maps to |
+> |---|---|---|
+> | `displayHeaderFooter` | `boolean` | `page.pdf({ displayHeaderFooter })` |
+> | `headerTemplate` | `string` (HTML) | `page.pdf({ headerTemplate })` |
+> | `footerTemplate` | `string` (HTML) | `page.pdf({ footerTemplate })` |
+> | `margin` | `{ top?, bottom?, left?, right? }` (CSS lengths, e.g. `"20mm"`) | `page.pdf({ margin })` |
+>
+> **Implementation notes.**
+> - Puppeteer's own constraints apply unchanged: `headerTemplate`/`footerTemplate` must be self-contained HTML with inline styles only (no external stylesheets/scripts), and support the special classes `date`, `title`, `url`, `pageNumber`, `totalPages` for Puppeteer to substitute values.
+> - `displayHeaderFooter: true` without an explicit `margin` produces a margin too small to fit typical header/footer content — don't add implicit magic, just document that callers should pass `margin` explicitly alongside the templates.
+> - These options only make sense for HTML-rendered pages — check how the current merge pipeline turns `html`/`urls`/`files` into individual `page.pdf()` calls, and decide whether to apply them per-HTML-input-only or to every page in the merge (whichever is simpler given the current internals — no need to overthink it).
+> - Update the README's parameter table and drop the "coming soon" line once shipped.
+>
+> **Example request:**
+> ```json
+> {
+>   "html": "<html>...</html>",
+>   "displayHeaderFooter": true,
+>   "margin": { "top": "20mm", "bottom": "16mm", "left": "14mm", "right": "14mm" },
+>   "footerTemplate": "<div style=\"font-size:8px; width:100%; text-align:center; color:#999;\">Page <span class=\"pageNumber\"></span> / <span class=\"totalPages\"></span></div>"
+> }
+> ```
+
+### 2. Intégration côté `takt` une fois la feature disponible
+
+- `App\Services\PdfGenerator::fromView()` : ajouter `displayHeaderFooter: true`, `margin` (mêmes valeurs que `@page { margin: 16mm 14mm; }` dans `billing.blade.php`, avec un `top`/`bottom` élargi pour laisser la place au header/footer, ex. `20mm`/`18mm`), `headerTemplate`/`footerTemplate` au payload envoyé à `POST /api/gen`.
+- Les templates header/footer envoyés seront des fragments HTML **séparés et minimalistes** (contrainte Puppeteer : pas de feuille de style externe, pas d'héritage du CSS de la page principale) — probablement deux petites vues Blade dédiées (`exports.billing-header`, `exports.billing-footer`) avec des styles inline reprenant juste les couleurs de marque en dur (pas besoin de réutiliser tout le bundle Tailwind pour un footer/header aussi réduit).
+- Une fois ça fonctionne, ça permettra de **remplacer** le hack `position: fixed` actuel (header par projet + footer document) par le mécanisme natif Puppeteer, plus robuste et avec un vrai `pageNumber`/`totalPages` — cf. `resources/views/exports/billing.blade.php`, blocs `<header style="position: fixed...">` et `<footer style="position: fixed...">`.
+- Ne pas bloquer la Phase 3 de ce plan là-dessus : c'est un suivi indépendant, à traiter quand `pdf-gen` aura shippé la feature.
 
 ---
 

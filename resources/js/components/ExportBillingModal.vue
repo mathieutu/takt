@@ -171,7 +171,7 @@ const exportPdf = async () => {
           label="Exporter"
           icon="i-lucide-download"
           :loading="isExporting"
-          :disabled="selectedProjectIds.length === 0"
+          :disabled="!selectedProjectIds.length"
           @click="exportPdf"
         />
       </div>
