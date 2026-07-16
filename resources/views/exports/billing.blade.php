@@ -172,6 +172,11 @@
                                                         {{ $invoice['paid_at'] ? 'Payée le '.\Carbon\Carbon::parse($invoice['paid_at'])->translatedFormat('d/m/Y') : 'Non payée' }}
                                                     </td>
                                                 </tr>
+                                                @if(trim($invoice['notes'] ?? '') !== '')
+                                                    <tr class="border-b border-default bg-muted/20 last:border-b-0">
+                                                        <td class="px-3 py-1.5 text-[11px] text-muted" colspan="3">{{ $invoice['notes'] }}</td>
+                                                    </tr>
+                                                @endif
                                             @endforeach
                                         </tbody>
                                     </table>
