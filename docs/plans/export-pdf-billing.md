@@ -32,8 +32,8 @@ Ce document est **autonome et complet** : il documente l'implémentation de bout
 - [x] `vite.config.ts` / `vite.config.exports.ts` (build dédié — **déviation** : un simple ajout au tableau `input` du build principal produit un module ES avec des imports vers des chunks partagés, invalides une fois inliné en `<script>` brut sans URL de base. `vite.config.exports.ts` reste un fichier de config séparé mais réutilise `laravel-vite-plugin` (`buildDirectory: 'build-exports'`) combiné à `build.lib`/IIFE — bundle autonome sans imports, **et** manifest standard lisible via `Vite::content('resources/js/exports/billing-pdf.ts', 'build-exports')` au lieu d'un `file_get_contents(public_path(...))` en dur)
 - [x] CSS compilé inliné dans le Blade (`Vite::content('resources/css/app.css')` — **ajout non prévu au plan initial** : les tokens couleur `--ui-primary`/`--ui-color-*` ne sont jamais définis dans le CSS statique compilé, ils sont injectés à l'exécution par le plugin Vue `@nuxt/ui/vue-plugin`, qui n'est pas un module résolvable hors du pipeline Vite (pas de fichier JS réel derrière `@nuxt/ui/vue-plugin`, juste un module virtuel généré par le plugin `ui()`) — le faire tourner pour de vrai (même juste pour capturer sa sortie) demanderait un harnais SSR Vue dédié, plus de mécanisme que le problème n'en vaut la peine. Deux approches plus lourdes essayées et abandonnées (captures manuelles, puis reconstruction de la formule de dérivation des couleurs) avant de converger sur la plus simple : les ~9 variables `--ui-*` réellement utilisées par le template (`grep` sur les classes Tailwind du Blade) sont définies **à la main, en dur**, dans un petit bloc `<style>` en tête de `billing.blade.php`, avec un commentaire renvoyant à `vite.config.ts` si la couleur primaire de l'app change un jour. Choix explicite de l'utilisateur : préférer un peu de duplication simple et lisible à un mécanisme de régénération automatique.)
 - [x] Design du calendrier finalisé (skills `dataviz` + `frontend-design` activés, cohérent thème `pink`)
-- [ ] **Preview HTML validée par l'utilisateur** (boucle d'itération, possiblement plusieurs allers-retours)
-- [ ] **Export PDF réel validé par l'utilisateur** (glyphes de coverage, montants, sauts de page)
+- [x] **Preview HTML validée par l'utilisateur** (boucle d'itération, possiblement plusieurs allers-retours)
+- [x] **Export PDF réel validé par l'utilisateur** (glyphes de coverage, montants, sauts de page) — correction apportée : le résumé des totaux et le bloc "Bon pour accord" doivent toujours rester sur la même page (regroupés dans un même conteneur `break-inside: avoid`, au lieu de deux blocs indépendants qui pouvaient se retrouver coupés l'un de l'autre)
 
 ### Phase 3 — Refactor & finalisation
 - [ ] Relecture de cohérence des 3 workstreams (nommage, structure, pas de duplication résiduelle)
@@ -446,8 +446,8 @@ Une fois la Phase 0 posée, construire en parallèle (ça peut être 2 agents di
 **Risque connu à surveiller en priorité** : le rendu des glyphes Unicode fraction (`½`, `⅓`, `⅔`...) de `coverageLabel()` dépend des polices installées dans l'environnement Puppeteer du service — non documenté. Premier test PDF réel à regarder en priorité pour ce point (carrés vides = "tofu" = police manquante). Second point à vérifier : le CSS inliné (Tailwind v4 + build Nuxt UI) peut contenir des règles non pertinentes hors du DOM réel de l'app (ex. sélecteurs ciblant des composants absents du template) — sans impact fonctionnel, mais à garder en tête si la taille du HTML envoyé au service devient un problème.
 
 ### Checklist manuelle — validation du design (utilisateur, en boucle)
-- [ ] Preview HTML : structure, hiérarchie visuelle, cohérence avec le thème de l'app (via le CSS compilé inliné)
-- [ ] Export PDF réel : rendu des glyphes de coverage (pas de tofu), montants au format `1 234 €` (pas `€1,234`), calendrier lisible à l'impression, sauts de page corrects par projet
+- [x] Preview HTML : structure, hiérarchie visuelle, cohérence avec le thème de l'app (via le CSS compilé inliné)
+- [x] Export PDF réel : rendu des glyphes de coverage (pas de tofu), montants au format `1 234 €` (pas `€1,234`), calendrier lisible à l'impression, sauts de page corrects par projet
 
 ---
 

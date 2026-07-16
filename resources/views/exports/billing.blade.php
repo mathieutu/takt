@@ -179,48 +179,50 @@
                             </section>
                         @endforeach
 
-                        <footer class="mt-8 rounded-lg border border-default bg-muted/20 p-4">
-                            <dl class="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-4">
-                                <div>
-                                    <dt class="text-[11px] uppercase tracking-wide text-muted">Jours travaillés</dt>
-                                    <dd class="mt-0.5 text-sm font-semibold tabular-nums text-default"><span data-days="{{ $totalDays }}"></span></dd>
-                                </div>
-                                <div>
-                                    <dt class="text-[11px] uppercase tracking-wide text-muted">Total facturable</dt>
-                                    <dd class="mt-0.5 text-sm font-semibold tabular-nums text-default"><span data-currency-cents="{{ $totalWorked }}"></span></dd>
-                                </div>
-                                <div>
-                                    <dt class="text-[11px] uppercase tracking-wide text-muted">Total facturé</dt>
-                                    <dd class="mt-0.5 text-sm font-semibold tabular-nums text-default"><span data-currency-cents="{{ $totalInvoiced }}"></span></dd>
-                                </div>
-                                <div>
-                                    <dt class="text-[11px] uppercase tracking-wide text-muted">
-                                        {{ $openingToInvoice !== 0 ? 'Reste à facturer (période)' : 'Reste à facturer' }}
-                                    </dt>
-                                    <dd class="mt-0.5 text-sm font-semibold tabular-nums {{ $toInvoice < 0 ? 'text-error' : 'text-default' }}">
-                                        <span data-currency-cents="{{ $toInvoice }}"></span>
-                                    </dd>
-                                </div>
-                            </dl>
+                        <div style="break-inside: avoid;">
+                            <footer class="mt-8 rounded-lg border border-default bg-muted/20 p-4">
+                                <dl class="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-4">
+                                    <div>
+                                        <dt class="text-[11px] uppercase tracking-wide text-muted">Jours travaillés</dt>
+                                        <dd class="mt-0.5 text-sm font-semibold tabular-nums text-default"><span data-days="{{ $totalDays }}"></span></dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-[11px] uppercase tracking-wide text-muted">Total facturable</dt>
+                                        <dd class="mt-0.5 text-sm font-semibold tabular-nums text-default"><span data-currency-cents="{{ $totalWorked }}"></span></dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-[11px] uppercase tracking-wide text-muted">Total facturé</dt>
+                                        <dd class="mt-0.5 text-sm font-semibold tabular-nums text-default"><span data-currency-cents="{{ $totalInvoiced }}"></span></dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-[11px] uppercase tracking-wide text-muted">
+                                            {{ $openingToInvoice !== 0 ? 'Reste à facturer (période)' : 'Reste à facturer' }}
+                                        </dt>
+                                        <dd class="mt-0.5 text-sm font-semibold tabular-nums {{ $toInvoice < 0 ? 'text-error' : 'text-default' }}">
+                                            <span data-currency-cents="{{ $toInvoice }}"></span>
+                                        </dd>
+                                    </div>
+                                </dl>
 
-                            @if($openingToInvoice !== 0)
-                                <div class="mt-3 flex items-center justify-between border-t border-default pt-3 text-xs">
-                                    <span class="text-muted">Solde à facturer avant la période : <strong class="text-default" data-currency-cents="{{ $openingToInvoice }}"></strong></span>
-                                    <span class="font-semibold text-default">
-                                        Solde total à facturer :
-                                        <span class="{{ ($openingToInvoice + $toInvoice) < 0 ? 'text-error' : 'text-default' }}" data-currency-cents="{{ $openingToInvoice + $toInvoice }}"></span>
-                                    </span>
-                                </div>
+                                @if($openingToInvoice !== 0)
+                                    <div class="mt-3 flex items-center justify-between border-t border-default pt-3 text-xs">
+                                        <span class="text-muted">Solde à facturer avant la période : <strong class="text-default" data-currency-cents="{{ $openingToInvoice }}"></strong></span>
+                                        <span class="font-semibold text-default">
+                                            Solde total à facturer :
+                                            <span class="{{ ($openingToInvoice + $toInvoice) < 0 ? 'text-error' : 'text-default' }}" data-currency-cents="{{ $openingToInvoice + $toInvoice }}"></span>
+                                        </span>
+                                    </div>
+                                @endif
+                            </footer>
+
+                            @if($loop->last)
+                                <section class="mt-6 rounded-lg border border-default p-4">
+                                    <p class="text-xs font-medium uppercase tracking-wide text-muted">Bon pour accord</p>
+                                    <div class="mt-3 rounded-lg border border-dashed border-default" style="height: 3cm;"></div>
+                                    <p class="mt-2 text-xs text-muted">Nom, date et signature</p>
+                                </section>
                             @endif
-                        </footer>
-
-                        @if($loop->last)
-                            <section class="mt-6 rounded-lg border border-default p-4" style="break-inside: avoid;">
-                                <p class="text-xs font-medium uppercase tracking-wide text-muted">Bon pour accord</p>
-                                <div class="mt-3 rounded-lg border border-dashed border-default" style="height: 3cm;"></div>
-                                <p class="mt-2 text-xs text-muted">Nom, date et signature</p>
-                            </section>
-                        @endif
+                        </div>
                     </td>
                 </tr>
             </tbody>
