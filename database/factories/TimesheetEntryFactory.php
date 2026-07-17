@@ -19,4 +19,9 @@ class TimesheetEntryFactory extends Factory
             'coverage' => 100,
         ];
     }
+
+    public function notBillable(): static
+    {
+        return $this->state(['billable' => false]);
+    }
 }

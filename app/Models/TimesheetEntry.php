@@ -7,6 +7,7 @@ use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Collection;
 use Znck\Eloquent\Relations\BelongsToThrough;
 
 /**
@@ -14,6 +15,7 @@ use Znck\Eloquent\Relations\BelongsToThrough;
  * @property string $project_id
  * @property CarbonImmutable $date
  * @property int $coverage
+ * @property bool $billable
  * @property string|null $title
  * @property string|null $description
  * @property CarbonImmutable|null $created_at
@@ -25,6 +27,7 @@ use Znck\Eloquent\Relations\BelongsToThrough;
  * @method static Builder<static>|TimesheetEntry newModelQuery()
  * @method static Builder<static>|TimesheetEntry newQuery()
  * @method static Builder<static>|TimesheetEntry query()
+ * @method static Builder<static>|TimesheetEntry whereBillable($value)
  * @method static Builder<static>|TimesheetEntry whereCoverage($value)
  * @method static Builder<static>|TimesheetEntry whereCreatedAt($value)
  * @method static Builder<static>|TimesheetEntry whereDate($value)
@@ -43,7 +46,16 @@ class TimesheetEntry extends Model implements HasUser
         return [
             'date' => 'date:Y-m-d',
             'coverage' => 'integer',
+            'billable' => 'boolean',
         ];
+    }
+
+    /**
+     * @param  Collection<int, TimesheetEntry>  $entries
+     */
+    public static function billableCoverageSum(Collection $entries): int
+    {
+        return $entries->where('billable', true)->sum('coverage');
     }
 
     public function user(): BelongsToThrough
