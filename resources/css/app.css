@@ -19,4 +19,8 @@
     mask-position: center;
     mask-repeat: no-repeat;
   }
+
+  .text-warning {
+    color: var(--ui-color-warning-600);
+  }
 }
