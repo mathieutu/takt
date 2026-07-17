@@ -7,7 +7,7 @@ import { coverageLabel, formatDays } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
 import { show as billingShow } from '@/wayfinder/routes/clients/billing'
 
-type EntryData = { coverage: number, title: string, description: string }
+type EntryData = { coverage: number, title: string, description: string, billable: boolean }
 
 export type GridProject = {
   id: string,
@@ -44,6 +44,11 @@ const isActiveOn = (project: GridProject, day: Day): boolean =>
 
 const canQuickEdit = (project: GridProject, day: Day): boolean =>
   isActiveOn(project, day) && !project.is_inactive
+
+const isNonBillable = (project: GridProject, day: Day): boolean => {
+  const entry = project.entries[day.date]
+  return Boolean(entry && entry.coverage > 0 && !entry.billable)
+}
 
 const getCellClasses = (project: GridProject, day: Day): Array<string | boolean> => {
   const coverage = project.entries[day.date]?.coverage ?? 0
@@ -154,6 +159,9 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
             v-if="project.entries[day.date]?.title || project.entries[day.date]?.description"
             class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary/70 transition-opacity group-hover/cell:opacity-0"
           />
+          <UTooltip v-if="isNonBillable(project, day)" text="Non facturable">
+            <span class="absolute left-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-amber-500" />
+          </UTooltip>
           <UTooltip
             v-if="isActiveOn(project, day) || project.entries[day.date]?.title
               || project.entries[day.date]?.description"
