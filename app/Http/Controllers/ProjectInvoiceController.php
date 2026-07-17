@@ -14,6 +14,7 @@ class ProjectInvoiceController
     {
         $project->invoices()->create($request->validate([
             'amount' => ['required', 'integer', 'min:1'],
+            'discount_amount' => ['required', 'integer', 'min:0', 'lte:amount'],
             'paid_at' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'created_at' => ['required', 'date'],
@@ -26,6 +27,7 @@ class ProjectInvoiceController
     {
         $invoice->update($request->validate([
             'amount' => ['required', 'integer', 'min:1'],
+            'discount_amount' => ['required', 'integer', 'min:0', 'lte:amount'],
             'paid_at' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'created_at' => ['required', 'date'],
