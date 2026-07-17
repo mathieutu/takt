@@ -33,6 +33,7 @@ declare module 'vue' {
     UNavigationMenu: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/NavigationMenu.vue')['default']
     UPopover: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Popover.vue')['default']
     USelect: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Select.vue')['default']
+    USwitch: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Switch.vue')['default']
     UTextarea: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Textarea.vue')['default']
     UTooltip: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Tooltip.vue')['default']
   }

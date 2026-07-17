@@ -177,6 +177,7 @@ class ProjectController
                 },
             ],
             'entries.*.coverage' => ['required', 'integer', 'between:0,100'],
+            'entries.*.billable' => ['sometimes', 'boolean'],
             'entries.*.title' => ['nullable', 'string'],
             'entries.*.description' => ['nullable', 'string'],
         ]);

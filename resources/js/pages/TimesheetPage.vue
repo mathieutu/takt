@@ -17,7 +17,7 @@ import { timesheet } from '@/wayfinder/routes'
 import { show as showBilling } from '@/wayfinder/routes/clients/billing'
 import { sync as syncEntries } from '@/wayfinder/routes/projects/entries'
 
-type EntryData = { coverage: number, title: string, description: string }
+type EntryData = { coverage: number, title: string, description: string, billable: boolean }
 type Project = {
   id: string,
   name: string,
@@ -87,8 +87,10 @@ const days = computed(() => daysInMonth(props.current))
 
 const projectsWithStats = computed(() =>
   props.projects.map(p => {
-    const days = Object.values(p.entries).reduce((sum, { coverage }) => sum + coverage / 100, 0)
-    return { ...p, days, revenue: days * p.daily_rate }
+    const entries = Object.values(p.entries)
+    const days = entries.reduce((sum, { coverage }) => sum + coverage / 100, 0)
+    const billableDays = entries.reduce((sum, { coverage, billable }) => sum + (billable ? coverage / 100 : 0), 0)
+    return { ...p, days, revenue: billableDays * p.daily_rate }
   }),
 )
 
@@ -143,6 +145,7 @@ const syncCoverage = (projectId: string, date: string, coverage: number) => {
             coverage,
             title: existing?.title ?? '',
             description: existing?.description ?? '',
+            billable: existing?.billable ?? true,
           },
         },
       }),
@@ -188,9 +191,10 @@ type InertiaOptimisticPage = InertiaPageProps & {
   errors: Errors & ErrorBag,
   deferred?: Record<string, string[] | undefined>,
 }
+type RawEntryData = Omit<EntryData, 'billable'> & { billable?: string }
 const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage> = (rawPage, rawData) => {
   const page = rawPage as InertiaOptimisticPage & { projects: Project[] }
-  const data = (rawData as { entries: EntryData[] }).entries[0]
+  const data = (rawData as { entries: RawEntryData[] }).entries[0]
   return {
     projects: page.projects.map(p => p.id !== editingEntry.value?.projectId ? p : {
       ...p,
@@ -200,6 +204,7 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
           coverage: Number(data.coverage),
           title: data.title ?? '',
           description: data.description ?? '',
+          billable: data.billable === '1',
         },
       },
     }),
@@ -382,6 +387,7 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
             <p class="text-xs font-medium text-muted">Description</p>
             <p class="text-sm whitespace-pre-wrap">{{ editingEntry.description }}</p>
           </div>
+          <UBadge v-if="editingEntry.billable === false" label="Non facturable" color="warning" variant="subtle" size="sm" />
         </div>
       </template>
       <Form
@@ -429,6 +435,13 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
               class="w-full"
             />
           </UFormField>
+          <input type="hidden" name="entries[0][billable]" value="0" />
+          <USwitch
+            name="entries[0][billable]"
+            value="1"
+            :defaultValue="editingEntry.billable ?? true"
+            label="Facturable"
+          />
         </div>
       </Form>
     </template>
