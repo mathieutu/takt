@@ -148,3 +148,75 @@ it('reflects the net amount actually received within the period in kpis.periodPa
             ->where('kpis.periodPaid', 70000)
         );
 });
+
+it('excludes non-billable time from kpis.monthRevenue/periodRevenue/projectedRevenue', function () {
+    $project = Project::factory()->for($this->client)->create(['daily_rate' => 50000]);
+    $pastMonth = today()->subMonth()->startOfMonth();
+
+    // Past month, so monthAdvancement = 1 and projectedRevenue equals monthRevenue exactly.
+    TimesheetEntry::factory()->for($project)->create(['date' => $pastMonth->copy(), 'coverage' => 100]);
+    TimesheetEntry::factory()->for($project)->notBillable()->create(['date' => $pastMonth->copy()->addDay(), 'coverage' => 100]);
+
+    $this->actingAs($this->user)
+        ->get(route('dashboard', ['to' => $pastMonth->format('Y-m')]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('DashboardPage')
+            ->where('kpis.monthRevenue', 50000)
+            ->where('kpis.periodRevenue', 50000)
+            ->where('kpis.projectedRevenue', 50000)
+        );
+});
+
+it('excludes non-billable amounts from projects[].unbilled, kpis.unbilledAmount, and unbilledByClient', function () {
+    $project = Project::factory()->for($this->client)->create(['daily_rate' => 50000]);
+    TimesheetEntry::factory()->for($project)->create(['date' => today(), 'coverage' => 100]);
+    TimesheetEntry::factory()->for($project)->notBillable()->create(['date' => today()->subDay(), 'coverage' => 100]);
+
+    $this->actingAs($this->user)
+        ->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('DashboardPage')
+            ->where('projects.0.unbilled', 50000)
+            ->where('kpis.unbilledAmount', 50000)
+            ->where('unbilledByClient.0.amount', 50000)
+        );
+});
+
+it('excludes non-billable coverage from projects[].workedDaysCount/periodDaysCount/monthDaysCount', function () {
+    $project = Project::factory()->for($this->client)->create();
+    TimesheetEntry::factory()->for($project)->create(['date' => today(), 'coverage' => 100]);
+    TimesheetEntry::factory()->for($project)->notBillable()->create(['date' => today()->subDay(), 'coverage' => 100]);
+
+    $this->actingAs($this->user)
+        ->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('DashboardPage')
+            ->where('projects.0.workedDaysCount', 1)
+            ->where('projects.0.periodDaysCount', 1)
+            ->where('projects.0.monthDaysCount', 1)
+        );
+});
+
+it('still counts non-billable coverage in kpis.monthDays, a pure worked-days tracker', function () {
+    $project = Project::factory()->for($this->client)->create();
+    TimesheetEntry::factory()->for($project)->notBillable()->create(['date' => today(), 'coverage' => 100]);
+
+    $this->actingAs($this->user)
+        ->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('DashboardPage')
+            ->where('kpis.monthDays', 1)
+        );
+});
+
+it('still counts non-billable coverage in chart.projects, an activity chart rather than a revenue one', function () {
+    $project = Project::factory()->for($this->client)->create();
+    TimesheetEntry::factory()->for($project)->notBillable()->create(['date' => today(), 'coverage' => 100]);
+
+    $this->actingAs($this->user)
+        ->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('DashboardPage')
+            ->where('chart.projects.0.data', fn ($data) => collect($data)->last() === 100)
+        );
+});

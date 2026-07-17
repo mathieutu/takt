@@ -67,3 +67,31 @@ it('still counts the full net amount in to_pay when the invoice has no discount'
 
     expect($totals['to_pay'])->toBe(100000);
 });
+
+it('excludes a non-billable entry from days_worked/total_days/worked/to_invoice', function () {
+    $project = Project::factory()->for($this->client)->create(['daily_rate' => 50000]);
+
+    TimesheetEntry::factory()->for($project)->create(['date' => today(), 'coverage' => 100]);
+    TimesheetEntry::factory()->for($project)->notBillable()->create(['date' => today()->subDay(), 'coverage' => 100]);
+
+    $totals = $this->builder->totals($project);
+    $month = collect($totals['months'])->firstWhere('month', today()->format('Y-m'));
+
+    expect($month['days_worked'])->toBe(1.0)
+        ->and($totals['total_days'])->toBe(1.0)
+        ->and($totals['total_worked'])->toBe(50000.0)
+        ->and($totals['to_invoice'])->toBe(50000.0);
+});
+
+it('keeps a non-billable entry in month.entries, flagged as billable: false', function () {
+    $project = Project::factory()->for($this->client)->create();
+
+    TimesheetEntry::factory()->for($project)->notBillable()->create(['date' => today(), 'coverage' => 100]);
+
+    $totals = $this->builder->totals($project);
+    $month = collect($totals['months'])->firstWhere('month', today()->format('Y-m'));
+    $entry = $month['entries']->get(today()->toDateString());
+
+    expect($entry)->not->toBeNull()
+        ->and($entry['billable'])->toBeFalse();
+});
