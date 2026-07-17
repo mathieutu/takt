@@ -3,6 +3,9 @@ export type EntryData = { coverage: number, title: string, description: string }
 export type MonthInvoice = {
   id: string,
   amount: number,
+  discount_amount: number,
+  discount_percent: number | null,
+  net_amount: number,
   paid_at: string | null,
   created_at: string,
   notes: string | null,
@@ -26,4 +29,10 @@ export type ProjectWithBilling = {
   months: MonthRow[],
   months_elapsed: number,
   months_with_entries_count: number,
+  total_days: number,
+  total_worked: number,
+  total_invoiced: number,
+  total_discount: number,
+  to_invoice: number,
+  to_pay: number,
 }
