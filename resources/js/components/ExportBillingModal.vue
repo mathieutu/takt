@@ -20,13 +20,6 @@ const toast = useToast()
 
 // ── Default selection ─────────────────────────────────────────────────────────
 
-const projectToInvoice = (project: ProjectWithBilling): number => {
-  const totalWorked = project.months.reduce((sum, month) => sum + month.days_worked * project.daily_rate, 0)
-  const totalInvoiced = project.months.flatMap(month => month.invoices)
-    .reduce((sum, invoice) => sum + invoice.amount, 0)
-  return totalWorked - totalInvoiced
-}
-
 const lastInvoiceDate = (project: ProjectWithBilling): string | null => {
   const dates = project.months.flatMap(month => month.invoices).map(invoice => invoice.created_at).toSorted()
   return dates.at(-1) ?? null
@@ -38,7 +31,7 @@ const oldestMonthWithData = (projects: ProjectWithBilling[]): string | null => {
 }
 
 const defaultProjectIds = (): string[] => {
-  const projectsToInvoice = props.projects.filter(project => projectToInvoice(project) > 0)
+  const projectsToInvoice = props.projects.filter(project => project.to_invoice > 0)
   return (projectsToInvoice.length > 0 ? projectsToInvoice : props.projects).map(project => project.id)
 }
 
