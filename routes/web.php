@@ -45,6 +45,28 @@ Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
     Route::delete('clients/{client}/share', [ClientController::class, 'destroyShare'])->name('clients.share.destroy');
     Route::get('clients/{client}/billing', [ClientController::class, 'showBilling'])->name('clients.billing.show')->withTrashed();
     Route::get('clients/{client}/billing/export', [ClientController::class, 'exportBilling'])->name('clients.billing.export')->withTrashed()->middleware('throttle:10,1');
+    // TEMP DEBUG — renders the PDF export's Blade view as plain HTML (not through the PDF
+    // service) so it can be inspected directly in a real browser. Remove before merging.
+    Route::get('clients/{client}/billing/debug', function (\App\Models\Client $client, \App\Services\HolidayService $holidays) {
+        $projects = $client->projects()->with(['timesheetEntries', 'invoices'])->get();
+        abort_if($projects->isEmpty(), 404);
+
+        $months = $projects->flatMap->timesheetEntries->pluck('date')->map(fn ($d) => $d->format('Y-m'));
+        $from = $months->min() ?? now()->format('Y-m');
+        $to = $months->max() ?? now()->format('Y-m');
+
+        $builder = new class
+        {
+            use \App\Http\Concerns\BuildsProjectBillingEntry;
+
+            public function build($client, $projects, $from, $to, $holidays)
+            {
+                return $this->buildBillingExportViewData($client, $projects, auth()->user()->name, auth()->user()->email, $from, $to, $holidays);
+            }
+        };
+
+        return view('exports.billing', $builder->build($client, $projects, $from, $to, $holidays));
+    })->withTrashed();
 
     // Projects
     Route::resource('projects', ProjectController::class)->except(['show']);

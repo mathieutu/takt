@@ -98,6 +98,46 @@ describe('syncEntries', function () {
 
         expect($project->timesheetEntries()->where('date', today()->toDateString())->exists())->toBeTrue();
     });
+
+    it('defaults a new entry to billable when the field is omitted', function () {
+        $project = Project::factory()->for($this->client)->create(['start_date' => today(), 'end_date' => null]);
+
+        $this->actingAs($this->user)
+            ->patchJson(route('projects.entries.sync', $project), [
+                'entries' => [['date' => today()->toDateString(), 'coverage' => 100]],
+            ])
+            ->assertSuccessful();
+
+        expect($project->timesheetEntries()->where('date', today()->toDateString())->first()->billable)->toBeTrue();
+    });
+
+    it('persists billable: false when submitted explicitly', function () {
+        $project = Project::factory()->for($this->client)->create(['start_date' => today(), 'end_date' => null]);
+
+        $this->actingAs($this->user)
+            ->patchJson(route('projects.entries.sync', $project), [
+                'entries' => [['date' => today()->toDateString(), 'coverage' => 100, 'billable' => false]],
+            ])
+            ->assertSuccessful();
+
+        expect($project->timesheetEntries()->where('date', today()->toDateString())->first()->billable)->toBeFalse();
+    });
+
+    it('leaves billable untouched on a partial patch that omits it', function () {
+        $project = Project::factory()->for($this->client)->create(['start_date' => today(), 'end_date' => null]);
+        TimesheetEntry::factory()->for($project)->notBillable()->create(['date' => today()->toDateString(), 'coverage' => 50]);
+
+        $this->actingAs($this->user)
+            ->patchJson(route('projects.entries.sync', $project), [
+                'entries' => [['date' => today()->toDateString(), 'coverage' => 100]],
+            ])
+            ->assertSuccessful();
+
+        $entry = $project->timesheetEntries()->where('date', today()->toDateString())->first();
+
+        expect($entry->coverage)->toBe(100)
+            ->and($entry->billable)->toBeFalse();
+    });
 });
 
 describe('duplicate', function () {

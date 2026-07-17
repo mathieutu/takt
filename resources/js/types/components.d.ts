@@ -20,7 +20,6 @@ declare module 'vue' {
     UCheckboxGroup: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/CheckboxGroup.vue')['default']
     UCommandPalette: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/CommandPalette.vue')['default']
     UDropdownMenu: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/DropdownMenu.vue')['default']
-    UFieldGroup: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/FieldGroup.vue')['default']
     UFooter: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Footer.vue')['default']
     UForm: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Form.vue')['default']
     UFormField: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/FormField.vue')['default']
@@ -33,6 +32,7 @@ declare module 'vue' {
     UNavigationMenu: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/NavigationMenu.vue')['default']
     UPopover: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Popover.vue')['default']
     USelect: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Select.vue')['default']
+    USwitch: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Switch.vue')['default']
     UTextarea: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Textarea.vue')['default']
     UTooltip: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Tooltip.vue')['default']
   }

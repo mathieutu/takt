@@ -76,6 +76,9 @@ class ShowHomeHandler
             ? round($workingDaysPassed / $workingDaysInMonth, 4)
             : 0;
 
+        // monthDays includes non-billable entries on purpose — it's a pure worked-days counter, never
+        // multiplied by a rate, and is exactly the tracking billable=false is meant to preserve
+        // (see TimesheetEntry::billable).
         $monthDays = round(
             $allEntries->filter(fn ($e) => $e->date->year === $to->year && $e->date->month === $to->month)
                 ->sum('coverage') / 100,
@@ -163,6 +166,9 @@ class ShowHomeHandler
         $months = collect(range($periodMonths - 1, 0))->map(fn ($i) => $to->subMonths($i)->startOfMonth());
         $chartLabels = $months->map(fn ($m) => $m->format('M'))->all();
 
+        // chartProjects includes non-billable entries on purpose — it's an activity chart, not a
+        // revenue one (the Facturé line already comes from real invoices), so filtering it out would
+        // silently hide time that was actually worked (see TimesheetEntry::billable).
         $chartProjects = $projects->map(fn ($p) => [
             'name' => $p->name,
             'data' => $months->map(fn ($m) => $p->timesheetEntries
@@ -188,20 +194,23 @@ class ShowHomeHandler
                 ->contains(fn ($e) => $e->date->gte($rollingYearStart) && $e->date->lte($windowEnd))
             )
             ->map(function ($p) use ($to, $currentMonthStart, $rollingYearStart, $windowEnd) {
-                $workedDaysCount = round($p->timesheetEntries->sum('coverage') / 100, 2);
+                // workedDaysCount/periodDaysCount/monthDaysCount/totalWorkedAmount are consumed as
+                // dailyRate × count (budget bars, unbilled), so they must exclude non-billable coverage.
+                $workedDaysCount = round(TimesheetEntry::billableCoverageSum($p->timesheetEntries) / 100, 2);
                 $periodDaysCount = round(
-                    $p->timesheetEntries
-                        ->filter(fn ($e) => $e->date->gte($rollingYearStart) && $e->date->lte($windowEnd))
-                        ->sum('coverage') / 100,
+                    TimesheetEntry::billableCoverageSum(
+                        $p->timesheetEntries->filter(fn ($e) => $e->date->gte($rollingYearStart) && $e->date->lte($windowEnd))
+                    ) / 100,
                     2
                 );
                 $monthDaysCount = round(
-                    $p->timesheetEntries
-                        ->filter(fn ($e) => $e->date->year === $to->year && $e->date->month === $to->month)
-                        ->sum('coverage') / 100,
+                    TimesheetEntry::billableCoverageSum(
+                        $p->timesheetEntries->filter(fn ($e) => $e->date->year === $to->year && $e->date->month === $to->month)
+                    ) / 100,
                     2
                 );
                 $totalWorkedAmount = $p->timesheetEntries
+                    ->filter(fn ($e) => $e->billable)
                     ->sum(fn ($e) => (int) round($e->coverage / 100 * $p->daily_rate));
                 $firstEntry = $p->timesheetEntries->sortBy('date')->first();
                 $projectStart = $firstEntry ? $firstEntry->date : $p->start_date;
@@ -301,7 +310,7 @@ class ShowHomeHandler
     private function revenueForMonth(Collection $projects, CarbonImmutable $month): int
     {
         return $projects->sum(fn ($p) => $p->timesheetEntries
-            ->filter(fn ($e) => $e->date->year === $month->year && $e->date->month === $month->month)
+            ->filter(fn ($e) => $e->date->year === $month->year && $e->date->month === $month->month && $e->billable)
             ->sum(fn ($e) => (int) round($e->coverage / 100 * $p->daily_rate))
         );
     }
@@ -309,7 +318,7 @@ class ShowHomeHandler
     private function revenueInRange(Collection $projects, CarbonImmutable $from, CarbonImmutable $to): int
     {
         return $projects->sum(fn ($p) => $p->timesheetEntries
-            ->filter(fn ($e) => $e->date->gte($from) && $e->date->lte($to))
+            ->filter(fn ($e) => $e->date->gte($from) && $e->date->lte($to) && $e->billable)
             ->sum(fn ($e) => (int) round($e->coverage / 100 * $p->daily_rate))
         );
     }

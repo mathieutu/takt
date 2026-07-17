@@ -1,4 +1,4 @@
-export type EntryData = { coverage: number, title: string, description: string }
+export type EntryData = { coverage: number, title: string, description: string, billable: boolean }
 
 export type MonthInvoice = {
   id: string,

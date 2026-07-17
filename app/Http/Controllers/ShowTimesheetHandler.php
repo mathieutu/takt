@@ -64,6 +64,7 @@ class ShowTimesheetHandler
                     ->keyBy(fn (TimesheetEntry $e) => $e->date->toDateString())
                     ->map(fn (TimesheetEntry $e) => $e->export([
                         'coverage',
+                        'billable',
                         'title',
                         'description',
                     ])),

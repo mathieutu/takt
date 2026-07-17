@@ -7,7 +7,7 @@ import { coverageLabel, formatDays } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
 import { show as billingShow } from '@/wayfinder/routes/clients/billing'
 
-type EntryData = { coverage: number, title: string, description: string }
+type EntryData = { coverage: number, title: string, description: string, billable: boolean }
 
 export type GridProject = {
   id: string,
@@ -45,6 +45,11 @@ const isActiveOn = (project: GridProject, day: Day): boolean =>
 const canQuickEdit = (project: GridProject, day: Day): boolean =>
   isActiveOn(project, day) && !project.is_inactive
 
+const isNonBillable = (project: GridProject, day: Day): boolean => {
+  const entry = project.entries[day.date]
+  return Boolean(entry && entry.coverage > 0 && !entry.billable)
+}
+
 const getCellClasses = (project: GridProject, day: Day): Array<string | boolean> => {
   const coverage = project.entries[day.date]?.coverage ?? 0
   const isHolidayOrWeekend = holidays.has(day.date) || day.isWeekend
@@ -55,6 +60,7 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
     isTodayDay && 'border-primary/50',
   ]
 
+  if (isNonBillable(project, day)) return [...base, 'bg-violet-100 hover:bg-violet-200 dark:bg-violet-500/10 dark:hover:bg-violet-500/15']
   if (coverage >= 100) return [...base, 'bg-primary/25 hover:bg-primary/30']
   if (coverage > 0) return [...base, 'bg-primary/10 hover:bg-primary/15']
 
@@ -146,7 +152,8 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
         >
           <span
             v-if="project.entries[day.date]?.coverage"
-            class="absolute inset-0 flex justify-center items-center text-sm font-bold text-primary"
+            class="absolute inset-0 flex justify-center items-center text-sm font-bold"
+            :class="isNonBillable(project, day) ? 'text-violet-600/60 dark:text-violet-400' : 'text-primary'"
           >
             {{ coverageLabel(project.entries[day.date]!.coverage) }}
           </span>

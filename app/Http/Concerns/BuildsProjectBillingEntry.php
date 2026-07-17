@@ -6,6 +6,7 @@ use App\Http\Requests\ExportBillingRequest;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Project;
+use App\Models\TimesheetEntry;
 use App\Services\HolidayService;
 use App\Services\PdfGenerator;
 use Carbon\CarbonImmutable;
@@ -46,11 +47,15 @@ trait BuildsProjectBillingEntry
 
             return [
                 'month' => $month,
-                'days_worked' => round($entries->sum('coverage') / 100, 2),
+                // `entries` below keeps every entry (billable or not) for calendar/PDF display, but
+                // `days_worked` — and every total derived from it (total_days, worked, to_invoice, to_pay) —
+                // excludes non-billable entries, since it feeds days × rate money calculations.
+                'days_worked' => round(TimesheetEntry::billableCoverageSum($entries) / 100, 2),
                 'entries' => $entries
                     ->keyBy(fn ($e) => $e->date->toDateString())
                     ->map(fn ($e) => [
                         'coverage' => $e->coverage,
+                        'billable' => (bool) $e->billable,
                         'title' => $e->title ?? '',
                         'description' => $e->description ?? '',
                     ]),

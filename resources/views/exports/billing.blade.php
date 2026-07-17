@@ -97,6 +97,13 @@
                                 $monthStart = \Carbon\Carbon::createFromFormat('Y-m-d', $month['month'].'-01');
                                 $entries = collect($month['entries'] ?? []);
                                 $notedDays = $entries->filter(fn ($entry) => trim($entry['title'] ?? '') !== '' || trim($entry['description'] ?? '') !== '');
+                                // Tracks which cell states actually occur this month, so the legend only lists
+                                // states present in the calendar below (e.g. no "Partielle" swatch if nothing
+                                // was a partial day this month).
+                                $hasFullDay = false;
+                                $hasPartialDay = false;
+                                $hasOffDay = false;
+                                $hasNonBillable = false;
                             @endphp
 
                             <section class="month mb-7">
@@ -110,11 +117,24 @@
                                             $entry = $entries->get($dateString);
                                             $coverage = $entry['coverage'] ?? 0;
                                             $isOff = $date->isWeekend() || array_key_exists($dateString, $holidays ?? []);
+                                            // A worked day (coverage > 0) whose entry is billable=false gets a
+                                            // distinct solid color — it must stay visible on the calendar for
+                                            // client transparency, but must read differently from billable days
+                                            // since it's excluded from days_worked/the footer totals below.
+                                            $isNonBillable = $coverage > 0 && ! ($entry['billable'] ?? true);
                                             $cellClass = match(true) {
+                                                $isNonBillable => 'bg-violet-100 text-violet-600/60',
                                                 $coverage >= 100 => 'bg-primary/25 text-primary',
                                                 $coverage > 0 => 'bg-primary/10 text-primary',
                                                 $isOff => 'bg-elevated/80 text-muted',
                                                 default => 'text-muted',
+                                            };
+                                            match(true) {
+                                                $isNonBillable => $hasNonBillable = true,
+                                                $coverage >= 100 => $hasFullDay = true,
+                                                $coverage > 0 => $hasPartialDay = true,
+                                                $isOff => $hasOffDay = true,
+                                                default => null,
                                             };
                                         @endphp
                                         <div class="flex w-9 flex-col items-center gap-0.5">
@@ -130,10 +150,16 @@
                                 </div>
 
                                 <div class="mb-3 flex items-center gap-3 text-[11px] text-muted">
-                                    <span class="flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-sm bg-primary/25"></span> Journée pleine</span>
-                                    <span class="flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-sm bg-primary/10"></span> Partielle</span>
-                                    <span class="flex items-center gap-1"><span class="inline-block h-2.5 w-2.5 rounded-sm bg-elevated/80"></span> Week-end / férié</span>
-                                    <span class="ml-auto text-default">Jours travaillés : <strong data-days="{{ $month['days_worked'] }}"></strong></span>
+                                    @if($hasFullDay || $hasPartialDay)
+                                        <div class="flex items-baseline gap-1"><span class="size-2.5 rounded-sm bg-primary/50"></span><span>Jours facturés</span></div>
+                                    @endif
+                                    @if($hasOffDay)
+                                        <div class="flex items-baseline gap-1"><span class="size-2.5 rounded-sm bg-elevated border border-default"></span><span>Week-ends / fériés</span></div>
+                                    @endif
+                                    @if($hasNonBillable)
+                                        <div class="flex items-baseline gap-1"><span class="size-2.5 rounded-sm bg-violet-600/50"></span><span>Non facturés</span></div>
+                                    @endif
+                                    <span class="ml-auto whitespace-nowrap text-default">{{ $month['days_worked'] <= 1 ? 'Jour facturé' : 'Jours facturés' }} : <strong data-days="{{ $month['days_worked'] }}"></strong></span>
                                 </div>
 
                                 @if($notedDays->isNotEmpty())
@@ -219,7 +245,7 @@
                                         @endif
                                         <tr>
                                             <td class="py-1.5 text-muted">
-                                                <span data-days="{{ $totalDays }}"></span> travaillés × <span data-currency-cents="{{ $dailyRate }}"></span>/j
+                                                <span data-days="{{ $totalDays }}"></span> {{ $totalDays <= 1 ? 'facturé' : 'facturés' }} × <span data-currency-cents="{{ $dailyRate }}"></span>/j
                                             </td>
                                             <td class="py-1.5 text-right font-medium text-default">−</td>
                                             <td class="py-1.5 pl-1 text-right font-medium tabular-nums text-default" data-currency-cents="{{ $totalWorked }}"></td>
