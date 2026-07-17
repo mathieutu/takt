@@ -10,26 +10,36 @@ const props = defineProps<{
   holidays: Map<string, string>,
 }>()
 
-const days = computed(() => daysInMonth(parseMonth(props.month)))
+// Precomputed once per day so the template reads plain fields instead of repeatedly
+// re-deriving coverage/status from entries+holidays for each cell.
+const days = computed(() => daysInMonth(parseMonth(props.month)).map(day => {
+  const entry = props.entries[day.date]
+  const coverage = entry?.coverage ?? 0
+  const nonBillable = coverage > 0 && entry?.billable === false
+  const holidayName = props.holidays.get(day.date)
 
-const isOff = (date: string, isWeekend: boolean): boolean => isWeekend || props.holidays.has(date)
+  // Coverage-based status (billable/non-billable) takes priority over the plain day-off
+  // status, same as cellClass below — a worked weekend/holiday reads as "facturé"/"non
+  // facturé", not "Week-end". The holiday name itself is shown separately (see holidayName),
+  // regardless of coverage, since "worked on a holiday" is worth surfacing on its own.
+  const status = nonBillable
+    ? { label: 'non facturé', class: 'text-violet-600/60 dark:text-violet-400' }
+    : coverage > 0
+      ? { label: 'facturé', class: 'text-primary' }
+      : day.isWeekend
+        ? { label: 'Week-end', class: 'text-muted' }
+        : null
 
-const isNonBillable = (date: string): boolean => {
-  const entry = props.entries[date]
-  return Boolean(entry && entry.coverage > 0 && !entry.billable)
-}
+  const cellClass = nonBillable
+    ? 'bg-violet-100 text-violet-600/60 dark:bg-violet-500/10 dark:text-violet-400'
+    : coverage >= 100
+      ? 'bg-primary/25 text-primary'
+      : coverage > 0
+        ? 'bg-primary/10 text-primary'
+        : (day.isWeekend || holidayName) ? 'bg-elevated/80 text-muted' : 'text-muted'
 
-const cellClasses = (date: string, isWeekend: boolean): string => {
-  const coverage = props.entries[date]?.coverage ?? 0
-  if (isNonBillable(date)) return 'bg-amber-500/15 text-amber-600 dark:text-amber-500'
-  if (coverage >= 100) return 'bg-primary/25 text-primary'
-  if (coverage > 0) return 'bg-primary/10 text-primary'
-  return isOff(date, isWeekend) ? 'bg-elevated/80 text-muted' : 'text-muted'
-}
-
-const hasTooltip = (date: string): boolean => Boolean(
-  props.entries[date]?.title || props.entries[date]?.description || props.holidays.has(date) || isNonBillable(date),
-)
+  return { ...day, entry, coverage, holidayName, status, cellClass }
+}))
 </script>
 
 <template>
@@ -37,25 +47,21 @@ const hasTooltip = (date: string): boolean => Boolean(
     <div v-for="day in days" :key="day.date" class="flex min-w-6 flex-1 flex-col items-center gap-0.5">
       <span class="text-[9px] leading-none text-muted">{{ day.letter }}</span>
       <span class="text-[10px] font-medium leading-none">{{ day.n }}</span>
-      <UTooltip :disabled="!hasTooltip(day.date)" :ui="{ content: 'flex-col items-start h-auto py-2 max-w-64' }">
-        <div
-          class="flex h-7 w-full items-center justify-center rounded text-[10px] font-semibold"
-          :class="cellClasses(day.date, day.isWeekend)"
-        >
-          {{ entries[day.date]?.coverage ? coverageLabel(entries[day.date]!.coverage) : '' }}
+      <UTooltip :delayDuration="0" :ui="{ content: 'flex-col items-start h-auto py-2 max-w-64' }">
+        <div class="flex h-7 w-full items-center justify-center rounded text-[10px] font-semibold" :class="day.cellClass">
+          {{ day.coverage ? coverageLabel(day.coverage) : '' }}
         </div>
         <template #content>
           <p class="text-xs font-medium">
             {{ formatDate(day.date) }}
-            <template v-if="entries[day.date]?.coverage">
-              · {{ coverageLabel(entries[day.date]!.coverage) }} j
-            </template>
           </p>
-          <p v-if="isNonBillable(day.date)" class="mt-1 text-xs font-medium text-amber-600 dark:text-amber-500">Non facturable</p>
-          <p v-if="holidays.get(day.date)" class="mt-1 text-xs text-muted">{{ holidays.get(day.date) }}</p>
-          <p v-if="entries[day.date]?.title" class="mt-1 text-xs">{{ entries[day.date]!.title }}</p>
-          <p v-if="entries[day.date]?.description" class="mt-0.5 text-xs text-muted whitespace-pre-line">
-            {{ entries[day.date]!.description }}
+          <p v-if="day.status" class="mt-1 text-xs" :class="day.status.class">
+            <template v-if="day.coverage">{{ coverageLabel(day.coverage) }} j </template>{{ day.status.label }}
+          </p>
+          <p v-if="day.holidayName" class="mt-1 text-xs text-muted">Férié · {{ day.holidayName }}</p>
+          <p v-if="day.entry?.title" class="mt-1 text-xs">{{ day.entry.title }}</p>
+          <p v-if="day.entry?.description" class="mt-0.5 text-xs text-muted whitespace-pre-line">
+            {{ day.entry.description }}
           </p>
         </template>
       </UTooltip>

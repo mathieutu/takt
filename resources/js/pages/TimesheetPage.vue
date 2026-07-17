@@ -271,8 +271,16 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
         <div class="pt-3 hidden items-center justify-between sm:flex">
           <div class="flex items-center gap-5">
             <div class="flex items-center gap-1.5">
+              <span class="h-3 w-3 rounded-sm bg-primary/50" />
+              <span class="text-xs text-muted">Jours facturés</span>
+            </div>
+            <div class="flex items-center gap-1.5">
               <span class="h-3 w-3 rounded-sm border border-default bg-elevated" />
-              <span class="text-xs text-muted">Week-ends et jours fériés</span>
+              <span class="text-xs text-muted">Week-ends et fériés</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="h-3 w-3 rounded-sm bg-violet-600/50 dark:bg-violet-400/50" />
+              <span class="text-xs text-muted">Non facturés</span>
             </div>
           </div>
           <UPopover :content="{ align: 'end' }">

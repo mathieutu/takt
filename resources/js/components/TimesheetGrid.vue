@@ -60,6 +60,7 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
     isTodayDay && 'border-primary/50',
   ]
 
+  if (isNonBillable(project, day)) return [...base, 'bg-violet-100 hover:bg-violet-200 dark:bg-violet-500/10 dark:hover:bg-violet-500/15']
   if (coverage >= 100) return [...base, 'bg-primary/25 hover:bg-primary/30']
   if (coverage > 0) return [...base, 'bg-primary/10 hover:bg-primary/15']
 
@@ -151,7 +152,8 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
         >
           <span
             v-if="project.entries[day.date]?.coverage"
-            class="absolute inset-0 flex justify-center items-center text-sm font-bold text-primary"
+            class="absolute inset-0 flex justify-center items-center text-sm font-bold"
+            :class="isNonBillable(project, day) ? 'text-violet-600/60 dark:text-violet-400' : 'text-primary'"
           >
             {{ coverageLabel(project.entries[day.date]!.coverage) }}
           </span>
@@ -159,9 +161,6 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
             v-if="project.entries[day.date]?.title || project.entries[day.date]?.description"
             class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary/70 transition-opacity group-hover/cell:opacity-0"
           />
-          <UTooltip v-if="isNonBillable(project, day)" text="Non facturable">
-            <span class="absolute left-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-amber-500" />
-          </UTooltip>
           <UTooltip
             v-if="isActiveOn(project, day) || project.entries[day.date]?.title
               || project.entries[day.date]?.description"

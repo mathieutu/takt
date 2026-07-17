@@ -20,7 +20,6 @@ declare module 'vue' {
     UCheckboxGroup: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/CheckboxGroup.vue')['default']
     UCommandPalette: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/CommandPalette.vue')['default']
     UDropdownMenu: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/DropdownMenu.vue')['default']
-    UFieldGroup: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/FieldGroup.vue')['default']
     UFooter: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Footer.vue')['default']
     UForm: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/Form.vue')['default']
     UFormField: typeof import('./../../../node_modules/@nuxt/ui/dist/runtime/components/FormField.vue')['default']
