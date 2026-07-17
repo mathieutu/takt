@@ -83,7 +83,7 @@ class ClientController
 
         $projects->load(['timesheetEntries', 'invoices']);
 
-        $builtProjects = $projects->map(fn (Project $p) => $this->buildProjectBillingEntry($p, $client->name))->values();
+        $builtProjects = $projects->map(fn (Project $p) => $this->buildProjectBillingEntryWithTotals($p, $client->name))->values();
 
         return Inertia::render('ProjectBillingPage', [
             'projects' => $builtProjects,

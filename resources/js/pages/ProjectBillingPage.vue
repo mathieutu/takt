@@ -77,26 +77,29 @@ const isExpanded = (projectId: string, month: string) => expandedMonths.value.ha
 // ── Totals ─────────────────────────────────────────────────────────────────────
 
 const projectTotals = (project: ProjectWithBilling) => {
-  const totalDays = project.months.reduce((sum, m) => sum + m.days_worked, 0)
-  const totalWorked = project.months.reduce((sum, m) => sum + m.days_worked * project.daily_rate, 0)
-  const allInvoices = project.months.flatMap(m => m.invoices)
-  const totalInvoiced = allInvoices.reduce((sum, inv) => sum + inv.amount, 0)
-  const toPay = allInvoices.filter(inv => !inv.paid_at).reduce((sum, inv) => sum + inv.amount, 0)
-
   const totalBudgetAllocated = project.max_total_budget !== null
     ? project.max_total_budget
     : project.max_month_budget !== null
       ? project.max_month_budget * project.months_elapsed
       : null
 
+  const unpaidDiscount = project.months
+    .flatMap(m => m.invoices)
+    .filter(inv => !inv.paid_at)
+    .reduce((sum, inv) => sum + inv.discount_amount, 0)
+
   return {
-    totalDays,
-    totalWorked,
-    totalInvoiced,
+    totalDays: project.total_days,
+    totalWorked: project.total_worked,
+    totalInvoiced: project.total_invoiced,
+    totalDiscount: project.total_discount,
+    unpaidDiscount,
     totalBudgetAllocated,
-    toPay,
-    toInvoice: totalWorked - totalInvoiced,
-    remainingToConsume: totalBudgetAllocated !== null ? totalBudgetAllocated - totalWorked : null,
+    toPay: project.to_pay,
+    toInvoice: project.to_invoice,
+    remainingToConsume: totalBudgetAllocated !== null
+      ? totalBudgetAllocated - (project.total_worked - project.total_discount)
+      : null,
   }
 }
 
@@ -149,6 +152,16 @@ const getCumulativeWorked = (project: ProjectWithBilling, monthIndex: number): n
     .slice(0, monthIndex + 1)
     .reduce((sum, m) => sum + m.days_worked * project.daily_rate, 0)
 
+// Discounts write off part of an already-invoiced amount, so they reduce how much of the
+// budget envelope is actually consumed — even though "worked" itself stays théorique.
+const getCumulativeDiscount = (project: ProjectWithBilling, monthIndex: number): number =>
+  project.months
+    .slice(0, monthIndex + 1)
+    .reduce((sum, m) => sum + m.invoices.reduce((s, i) => s + i.discount_amount, 0), 0)
+
+const getCumulativeConsumed = (project: ProjectWithBilling, monthIndex: number): number =>
+  getCumulativeWorked(project, monthIndex) - getCumulativeDiscount(project, monthIndex)
+
 const cumulativeBudgetAmount = (project: ProjectWithBilling, monthIndex: number): number | null => {
   if (project.max_total_budget !== null) return project.max_total_budget
   if (project.max_month_budget !== null) {
@@ -160,25 +173,25 @@ const cumulativeBudgetAmount = (project: ProjectWithBilling, monthIndex: number)
 
 const isCumulativeOverBudget = (project: ProjectWithBilling, monthIndex: number): boolean => {
   const budget = cumulativeBudgetAmount(project, monthIndex)
-  return budget !== null && getCumulativeWorked(project, monthIndex) > budget
+  return budget !== null && getCumulativeConsumed(project, monthIndex) > budget
 }
 
 const cumulativeRemainingToConsume = (project: ProjectWithBilling, monthIndex: number): number | null => {
   const budget = cumulativeBudgetAmount(project, monthIndex)
   if (budget === null) return null
-  return budget - getCumulativeWorked(project, monthIndex)
+  return budget - getCumulativeConsumed(project, monthIndex)
 }
 
 const cumulativeConsumptionPercent = (project: ProjectWithBilling, monthIndex: number): number | null => {
   const budget = cumulativeBudgetAmount(project, monthIndex)
   if (budget === null || budget === 0) return null
-  return Math.round(getCumulativeWorked(project, monthIndex) / budget * 100)
+  return Math.round(getCumulativeConsumed(project, monthIndex) / budget * 100)
 }
 
 const totalConsumptionPercent = (project: ProjectWithBilling): number | null => {
-  const { totalWorked, totalBudgetAllocated } = projectTotals(project)
+  const { totalWorked, totalDiscount, totalBudgetAllocated } = projectTotals(project)
   if (totalBudgetAllocated === null || totalBudgetAllocated === 0) return null
-  return Math.round(totalWorked / totalBudgetAllocated * 100)
+  return Math.round((totalWorked - totalDiscount) / totalBudgetAllocated * 100)
 }
 
 const consumptionColorClass = (percent: number) => {
@@ -229,6 +242,15 @@ const chartMonthLabel = (ym: string): string => {
   return new Date(year, month - 1).toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' })
 }
 
+const monthNetInvoiced = (m: MonthRow) => m.invoices.reduce((s, i) => s + i.net_amount, 0)
+
+// Non-cumulative, one value per chartMonths entry — the tooltip needs this exact source
+// (not the cumulative line data below) to report a given month's actual net invoiced amount.
+const monthlyNetInvoiced = computed(() => chartMonths.value.map(ym => visibleProjects.value.reduce((sum, project) => {
+  const m = project.months.find(mm => mm.month === ym)
+  return m ? sum + monthNetInvoiced(m) : sum
+}, 0)))
+
 const barChartData = computed(() => ({
   labels: chartMonths.value.map(chartMonthLabel),
   datasets: [
@@ -243,25 +265,19 @@ const barChartData = computed(() => ({
         order: 2,
       } satisfies ChartDataset<'bar', number[]>
     }),
-    (() => {
-      const monthlyAmounts = chartMonths.value.map(ym => visibleProjects.value.reduce((sum, project) => {
-        const m = project.months.find(mm => mm.month === ym)
-        return m ? sum + monthInvoiced(m) : sum
-      }, 0))
-      return {
-        type: 'line',
-        label: 'Facturé',
-        data: monthlyAmounts.reduce<number[]>((acc, v) => [...acc, (acc.at(-1) ?? 0) + v / 100], []),
-        borderColor: getCssColor('--color-green-500'),
-        backgroundColor: 'transparent',
-        cubicInterpolationMode: 'monotone' as const,
-        pointRadius: monthlyAmounts.map(v => v > 0 ? 3 : 0),
-        pointHoverRadius: monthlyAmounts.map(v => v > 0 ? 5 : 0),
-        borderWidth: 2,
-        yAxisID: 'y1',
-        order: 1,
-      } satisfies ChartDataset<'line', number[]>
-    })(),
+    {
+      type: 'line',
+      label: 'Facturé',
+      data: monthlyNetInvoiced.value.reduce<number[]>((acc, v) => [...acc, (acc.at(-1) ?? 0) + v / 100], []),
+      borderColor: getCssColor('--color-green-500'),
+      backgroundColor: 'transparent',
+      cubicInterpolationMode: 'monotone' as const,
+      pointRadius: monthlyNetInvoiced.value.map(v => v > 0 ? 3 : 0),
+      pointHoverRadius: monthlyNetInvoiced.value.map(v => v > 0 ? 5 : 0),
+      borderWidth: 2,
+      yAxisID: 'y1',
+      order: 1,
+    } satisfies ChartDataset<'line', number[]>,
   ],
 })) as ComputedRef<ChartData<'bar', number[]>>
 
@@ -312,7 +328,7 @@ const barChartOptions = {
     tooltip: {
       callbacks: {
         label: (ctx: TooltipItem<'bar'>) => ctx.dataset.label === 'Facturé'
-          ? ` Facturé (cumulé) : ${formatCurrency(Math.round((ctx.parsed.y ?? 0) * 100))}`
+          ? ` Facturé (net) : ${formatCurrency(monthlyNetInvoiced.value[ctx.dataIndex] ?? 0)}`
           : ` ${ctx.dataset.label} : ${formatDays(ctx.parsed.y ?? 0)}`,
       },
     },
@@ -342,6 +358,17 @@ const barChartOptions = {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
+const discountPercent = (grossTotal: number, discountTotal: number): number =>
+  grossTotal > 0 ? Math.round(discountTotal / grossTotal * 100) : 0
+
+const totalDiscountPercent = (project: ProjectWithBilling): number =>
+  discountPercent(projectTotals(project).totalInvoiced, projectTotals(project).totalDiscount)
+
+const unpaidDiscountPercent = (project: ProjectWithBilling): number => {
+  const { toPay, unpaidDiscount } = projectTotals(project)
+  return discountPercent(toPay + unpaidDiscount, unpaidDiscount)
+}
+
 const fmtDays = (amount: number, dailyRate: number): string | null =>
   dailyRate > 0 ? formatDays(amount / dailyRate) : null
 
@@ -350,7 +377,44 @@ const fmtDays = (amount: number, dailyRate: number): string | null =>
 const invoiceOpen = ref(false)
 const editingInvoiceId = ref<string | null>(null)
 const invoiceProjectId = ref<string | null>(null)
-const form = useForm({ amount: '', paid_at: '', notes: '', created_at: '', project_id: '' })
+const form = useForm({ amount: '', discount_amount: '0', paid_at: '', notes: '', created_at: '', project_id: '' })
+
+// Local-only convenience field: lets the discount be entered as a percentage.
+// Not submitted — kept in sync with form.discount_amount via two dedicated
+// handlers (never a watch, to avoid a feedback loop between the two fields).
+const discountPercentInput = ref('0')
+
+const amountCents = (value: string): number => Math.round((Number.parseFloat(value) || 0) * 100)
+
+const syncDiscountPercentFromAmount = () => {
+  const grossCents = amountCents(form.amount)
+  const discountCents = amountCents(form.discount_amount)
+  discountPercentInput.value = grossCents > 0 ? String(Math.round(discountCents / grossCents * 100)) : '0'
+}
+
+const syncDiscountAmountFromPercent = () => {
+  const grossCents = amountCents(form.amount)
+  const percent = Number.parseFloat(discountPercentInput.value) || 0
+  form.discount_amount = String(Math.round(grossCents * percent / 100) / 100)
+}
+
+const discountAmountModel = computed<string>({
+  get: () => form.discount_amount,
+  set: value => {
+    form.discount_amount = value
+    syncDiscountPercentFromAmount()
+  },
+})
+
+const discountPercentModel = computed<string>({
+  get: () => discountPercentInput.value,
+  set: value => {
+    discountPercentInput.value = value
+    syncDiscountAmountFromPercent()
+  },
+})
+
+const netAmountPreview = computed(() => amountCents(form.amount) - amountCents(form.discount_amount))
 
 const projectSelectItems = computed(() =>
   props.projects.map(p => ({
@@ -363,6 +427,8 @@ const openAddInvoice = (project: ProjectWithBilling) => {
   invoiceProjectId.value = project.id
   editingInvoiceId.value = null
   form.reset()
+  form.discount_amount = '0'
+  discountPercentInput.value = '0'
   form.created_at = today.toString()
   form.project_id = project.id
   form.clearErrors()
@@ -372,6 +438,8 @@ const openAddInvoice = (project: ProjectWithBilling) => {
 const openEditInvoice = (inv: MonthInvoice, project: ProjectWithBilling) => {
   editingInvoiceId.value = inv.id
   form.amount = String(inv.amount / 100)
+  form.discount_amount = String(inv.discount_amount / 100)
+  discountPercentInput.value = inv.discount_percent !== null ? String(inv.discount_percent) : '0'
   form.paid_at = inv.paid_at ?? ''
   form.created_at = inv.created_at
   form.notes = inv.notes ?? ''
@@ -388,6 +456,7 @@ const submitInvoice = () => {
   form
     .transform(data => ({
       amount: Math.round(Number.parseFloat(data.amount) * 100) || 0,
+      discount_amount: Math.round(Number.parseFloat(data.discount_amount) * 100) || 0,
       paid_at: data.paid_at || null,
       created_at: data.created_at || null,
       notes: data.notes || null,
@@ -466,12 +535,11 @@ const monthLabel = (ym: string): string => {
                   <span class="ml-2 font-semibold tabular-nums">{{ formatDays(clientTotals.totalDays) }}</span>
                 </div>
                 <div>
-                  <span class="text-muted">Rémunération</span>
+                  <span class="text-muted">Montant travaillé</span>
                   <span class="ml-2 font-semibold tabular-nums">{{ formatCurrency(clientTotals.totalWorked) }}</span>
-                </div>
-                <div v-if="clientTotals.averageDailyRate !== null">
-                  <span class="text-muted">TJ moyen</span>
-                  <span class="ml-2 font-semibold tabular-nums">{{ formatCurrency(clientTotals.averageDailyRate) }}/j</span>
+                  <span v-if="clientTotals.averageDailyRate !== null" class="ml-1 text-xs font-normal text-muted">
+                    ({{ formatDays(clientTotals.totalDays) }} × {{ formatCurrency(clientTotals.averageDailyRate) }}/j)
+                  </span>
                 </div>
               </div>
             </div>
@@ -620,11 +688,20 @@ const monthLabel = (ym: string): string => {
                                   <span class="w-28 shrink-0 text-muted">
                                     {{ inv.paid_at ? formatDate(inv.paid_at) : 'Non payé' }}
                                   </span>
+                                  <template v-if="inv.discount_percent !== null">
+                                    <span class="line-through text-muted font-normal tabular-nums">{{ formatCurrency(inv.amount) }}</span>
+                                    <span
+                                      class="font-medium tabular-nums"
+                                      :class="inv.paid_at ? 'text-success' : 'text-amber-500'"
+                                    >{{ formatCurrency(inv.net_amount) }}</span>
+                                    <span class="text-xs text-muted">−{{ inv.discount_percent }}%</span>
+                                  </template>
                                   <span
+                                    v-else
                                     class="font-medium tabular-nums"
                                     :class="inv.paid_at ? 'text-success' : 'text-amber-500'"
                                   >{{ formatCurrency(inv.amount) }}</span>
-                                  <span v-if="inv.notes" class="text-muted truncate flex-1">{{ inv.notes }}</span>
+                                  <span v-if="inv.notes" class="text-muted truncate min-w-0 flex-1">{{ inv.notes }}</span>
                                   <div v-if="!is_shared" class="ml-auto flex items-center gap-1" @click.stop>
                                     <UButton icon="i-lucide-pencil" color="neutral" variant="ghost" size="2xs" @click="openEditInvoice(inv, project)" />
                                     <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="2xs" :to="destroyInvoice(inv)" preserveScroll />
@@ -651,9 +728,18 @@ const monthLabel = (ym: string): string => {
                         {{ formatCurrency(projectTotals(project).totalWorked) }}
                         ({{ formatDays(projectTotals(project).totalDays) }})
                       </td>
-                      <td class="px-4 py-3 text-right tabular-nums text-success">
-                        {{ formatCurrency(projectTotals(project).totalInvoiced) }}
-                        <span v-if="fmtDays(projectTotals(project).totalInvoiced, project.daily_rate)" class="font-normal text-muted">({{ fmtDays(projectTotals(project).totalInvoiced, project.daily_rate) }})</span>
+                      <td class="px-4 py-3 text-right tabular-nums">
+                        <span class="inline-flex items-center justify-end gap-1.5">
+                          <template v-if="projectTotals(project).totalDiscount > 0">
+                            <span class="font-normal text-muted line-through">{{ formatCurrency(projectTotals(project).totalInvoiced) }}</span>
+                            <span class="text-success">{{ formatCurrency(projectTotals(project).totalInvoiced - projectTotals(project).totalDiscount) }}</span>
+                          </template>
+                          <span v-else class="text-success">{{ formatCurrency(projectTotals(project).totalInvoiced) }}</span>
+                          <span v-if="fmtDays(projectTotals(project).totalInvoiced, project.daily_rate)" class="font-normal text-muted">({{ fmtDays(projectTotals(project).totalInvoiced, project.daily_rate) }})</span>
+                        </span>
+                        <p v-if="projectTotals(project).totalDiscount > 0" class="text-xs font-normal text-muted">
+                          − {{ totalDiscountPercent(project) }} % de remise
+                        </p>
                       </td>
                       <td class="px-4 py-3 text-right tabular-nums">
                         <template v-if="projectTotals(project).remainingToConsume !== null">
@@ -691,9 +777,16 @@ const monthLabel = (ym: string): string => {
                   </div>
                   <div v-if="projectTotals(project).toPay > 0" class="text-right">
                     <p class="text-xs text-muted mb-0.5">À payer</p>
+                    <p v-if="projectTotals(project).unpaidDiscount > 0" class="text-sm font-normal text-muted line-through tabular-nums">
+                      {{ formatCurrency(projectTotals(project).toPay + projectTotals(project).unpaidDiscount) }}
+                    </p>
                     <p class="text-base font-semibold tabular-nums text-amber-500">
                       {{ formatCurrency(projectTotals(project).toPay) }}
                       <span v-if="fmtDays(projectTotals(project).toPay, project.daily_rate)" class="text-sm font-normal text-muted">({{ fmtDays(projectTotals(project).toPay, project.daily_rate) }})</span>
+                    </p>
+                    <p v-if="projectTotals(project).unpaidDiscount > 0" class="text-xs text-muted">
+                      − {{ unpaidDiscountPercent(project) }} %
+                      de remise sur facture(s) non payée(s)
                     </p>
                     <p v-if="oldestUnpaidInvoiceDate(project)" class="text-xs mt-0.5" :class="daysSince(oldestUnpaidInvoiceDate(project)!) > 30 ? 'text-error' : 'text-muted'">
                       Depuis {{ formatDuration(daysSince(oldestUnpaidInvoiceDate(project)!)) }}
@@ -758,6 +851,32 @@ const monthLabel = (ym: string): string => {
               class="w-full"
             />
           </UFormField>
+          <div class="grid grid-cols-2 gap-4">
+            <UFormField label="Remise (%)">
+              <UInput
+                v-model="discountPercentModel"
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                placeholder="0"
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField label="Remise (€)" :error="form.errors.discount_amount">
+              <UInput
+                v-model="discountAmountModel"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                class="w-full"
+              />
+            </UFormField>
+          </div>
+          <p class="text-xs text-muted">
+            Montant net perçu : <span class="font-medium text-default">{{ formatCurrency(netAmountPreview) }}</span>
+          </p>
           <UFormField label="Facturé le" required :error="form.errors.created_at">
             <DateInput v-model="form.created_at" />
           </UFormField>

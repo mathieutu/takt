@@ -167,7 +167,15 @@
                                                 <tr class="border-b border-default last:border-b-0">
                                                     <td class="px-3 py-1.5">{{ \Carbon\Carbon::parse($invoice['created_at'])->translatedFormat('d/m/Y') }}</td>
                                                     <td class="px-3 py-1.5 text-right font-medium tabular-nums {{ $invoice['paid_at'] ? 'text-success' : 'text-amber-500' }}">
-                                                        <span data-currency-cents="{{ $invoice['amount'] }}"></span>
+                                                        @if(($invoice['discount_percent'] ?? null) !== null)
+                                                            <span class="inline-flex items-center justify-end gap-1.5">
+                                                                <span class="font-normal text-muted line-through" data-currency-cents="{{ $invoice['amount'] }}"></span>
+                                                                <span data-currency-cents="{{ $invoice['net_amount'] }}"></span>
+                                                                <span class="text-[10px] font-normal leading-none text-muted">−{{ $invoice['discount_percent'] }}%</span>
+                                                            </span>
+                                                        @else
+                                                            <span data-currency-cents="{{ $invoice['amount'] }}"></span>
+                                                        @endif
                                                     </td>
                                                     <td class="px-3 py-1.5">
                                                         {{ $invoice['paid_at'] ? 'Payée le '.\Carbon\Carbon::parse($invoice['paid_at'])->translatedFormat('d/m/Y') : 'Non payée' }}
@@ -217,9 +225,21 @@
                                             <td class="py-1.5 pl-1 text-right font-medium tabular-nums text-default" data-currency-cents="{{ $totalWorked }}"></td>
                                         </tr>
                                         <tr>
-                                            <td class="py-1.5 text-muted">Montant facturé</td>
-                                            <td class="py-1.5 text-right font-medium text-default">+</td>
-                                            <td class="py-1.5 pl-1 text-right font-medium tabular-nums text-default" data-currency-cents="{{ $totalInvoiced }}"></td>
+                                            <td class="py-1.5 text-muted" style="vertical-align: top;">
+                                                Montant facturé
+                                                @if(($project['total_discount'] ?? 0) > 0)
+                                                    <span class="text-xs text-muted">(−{{ $totalInvoiced > 0 ? round($project['total_discount'] / $totalInvoiced * 100) : 0 }} %)</span>
+                                                @endif
+                                            </td>
+                                            <td class="py-1.5 text-right font-medium text-default" style="vertical-align: top;">+</td>
+                                            <td class="py-1.5 pl-1 text-right font-medium tabular-nums text-default" style="vertical-align: top;">
+                                                @if(($project['total_discount'] ?? 0) > 0)
+                                                    <span class="font-normal text-muted line-through" data-currency-cents="{{ $totalInvoiced }}"></span>
+                                                    <span data-currency-cents="{{ $totalInvoiced - $project['total_discount'] }}"></span>
+                                                @else
+                                                    <span data-currency-cents="{{ $totalInvoiced }}"></span>
+                                                @endif
+                                            </td>
                                         </tr>
                                         <tr style="border-top: 2px solid var(--ui-border);">
                                             <td class="pt-2 text-sm font-semibold text-default">Solde actuel</td>

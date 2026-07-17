@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Client;
+use App\Models\Invoice;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Http\Client\ConnectionException;
@@ -117,6 +118,39 @@ describe('clients.billing.export', function () {
             ->get(route('clients.billing.export', $this->client).'?'.billingExportQuery([$this->project->id], '2026-01', '2026-06'))
             ->assertStatus(502)
             ->assertJson(['message' => 'La génération du PDF a échoué. Réessaie dans quelques instants.']);
+    });
+
+    it('generates successfully for a discounted invoice, rendering both the struck-through gross amount and the net amount', function () {
+        Invoice::factory()->for($this->project)->create([
+            'amount' => 100000,
+            'discount_amount' => 20000,
+            'created_at' => '2026-03-15',
+        ]);
+
+        Http::fake([
+            // The month-grouped invoice makes buildHolidaysForPeriod() call the (otherwise unfaked
+            // elsewhere in this file) holidays API, since $months is no longer empty for this project.
+            'calendrier.api.gouv.fr/*' => Http::response([]),
+            config('services.pdf.api_url') => Http::response('%PDF-1.4 fake-pdf-content'),
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('clients.billing.export', $this->client).'?'.billingExportQuery([$this->project->id], '2026-01', '2026-06'))
+            ->assertSuccessful();
+
+        Http::assertSent(function ($request) {
+            if (! str_contains($request->url(), config('services.pdf.api_url'))) {
+                return false;
+            }
+
+            $html = $request->data()['html'];
+
+            expect($html)->toContain('data-currency-cents="100000"')
+                ->toContain('data-currency-cents="80000"')
+                ->toContain('−20%');
+
+            return true;
+        });
     });
 });
 

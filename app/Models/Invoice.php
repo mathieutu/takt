@@ -11,6 +11,7 @@ use Znck\Eloquent\Relations\BelongsToThrough;
  * @property string $id
  * @property string $project_id
  * @property int $amount
+ * @property int $discount_amount
  * @property CarbonImmutable|null $paid_at
  * @property string|null $notes
  * @property CarbonImmutable|null $created_at
@@ -23,6 +24,7 @@ use Znck\Eloquent\Relations\BelongsToThrough;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invoice query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invoice whereAmount($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invoice whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Invoice whereDiscountAmount($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invoice whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invoice whereNotes($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invoice wherePaidAt($value)
@@ -37,6 +39,7 @@ class Invoice extends Model implements HasUser
     {
         return [
             'amount' => 'integer',
+            'discount_amount' => 'integer',
             'paid_at' => 'date',
         ];
     }
@@ -50,5 +53,19 @@ class Invoice extends Model implements HasUser
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function netAmount(): int
+    {
+        return $this->amount - $this->discount_amount;
+    }
+
+    public function discountPercentForDisplay(): ?int
+    {
+        if ($this->discount_amount <= 0) {
+            return null;
+        }
+
+        return (int) round($this->discount_amount / $this->amount * 100);
     }
 }

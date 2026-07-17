@@ -57,6 +57,9 @@ trait BuildsProjectBillingEntry
                 'invoices' => $invoicesByMonth->get($month, collect())->map(fn (Invoice $i) => [
                     'id' => $i->id,
                     'amount' => $i->amount,
+                    'discount_amount' => $i->discount_amount,
+                    'discount_percent' => $i->discountPercentForDisplay(),
+                    'net_amount' => $i->netAmount(),
                     'paid_at' => $i->paid_at?->toDateString(),
                     'created_at' => $i->created_at->toDateString(),
                     'notes' => $i->notes,
@@ -80,6 +83,70 @@ trait BuildsProjectBillingEntry
             'months' => $months->values(),
             'months_elapsed' => $monthsElapsed,
             'months_with_entries_count' => $timesheetMonths->count(),
+        ];
+    }
+
+    /**
+     * @return array{
+     *     id: string,
+     *     name: string,
+     *     daily_rate: int,
+     *     max_month_budget: ?int,
+     *     max_total_budget: ?int,
+     *     is_inactive: bool,
+     *     client: array{id: string, name: string},
+     *     months: Collection<int, array<string, mixed>>,
+     *     months_elapsed: int,
+     *     months_with_entries_count: int,
+     *     total_days: float,
+     *     total_worked: float,
+     *     total_invoiced: int,
+     *     total_discount: int,
+     *     to_invoice: float,
+     *     to_pay: int,
+     * }
+     */
+    protected function buildProjectBillingEntryWithTotals(Project $project, ?string $clientNameOverride = null): array
+    {
+        $entry = $this->buildProjectBillingEntry($project, $clientNameOverride);
+
+        $totals = $this->computeTotals(collect($entry['months']), $entry['daily_rate']);
+
+        return [
+            ...$entry,
+            'total_days' => $totals['days'],
+            'total_worked' => $totals['worked'],
+            'total_invoiced' => $totals['invoiced'],
+            'total_discount' => $totals['discount'],
+            'to_invoice' => $totals['to_invoice'],
+            'to_pay' => $totals['to_pay'],
+        ];
+    }
+
+    /**
+     * Aggregates gross worked/invoiced amounts, discount, and net cash still owed over a set of months.
+     *
+     * `to_invoice` stays on the gross `amount` (worked − invoiced): a discount is a deliberate write-off
+     * on already-invoiced work, not unbilled work. `to_pay` uses `net_amount` on unpaid invoices, since
+     * it represents real cash still expected.
+     *
+     * @param  Collection<int, array{days_worked: float, invoices: Collection<int, array{amount: int, discount_amount: int, net_amount: int, paid_at: ?string}>}>  $months
+     * @return array{days: float, worked: float, invoiced: int, discount: int, to_invoice: float, to_pay: int}
+     */
+    private function computeTotals(Collection $months, int $dailyRate): array
+    {
+        $invoices = $months->flatMap(fn (array $m) => $m['invoices']);
+
+        $worked = $months->sum(fn (array $m) => $m['days_worked'] * $dailyRate);
+        $invoiced = $invoices->sum('amount');
+
+        return [
+            'days' => $months->sum('days_worked'),
+            'worked' => $worked,
+            'invoiced' => $invoiced,
+            'discount' => $invoices->sum('discount_amount'),
+            'to_invoice' => $worked - $invoiced,
+            'to_pay' => $invoices->where('paid_at', null)->sum('net_amount'),
         ];
     }
 
@@ -131,20 +198,18 @@ trait BuildsProjectBillingEntry
                 $priorMonths = $allMonths->filter(fn ($m) => $m['month'] < $from);
                 $periodMonths = $allMonths->filter(fn ($m) => $m['month'] >= $from && $m['month'] <= $to)->values();
 
-                $priorWorked = $priorMonths->sum(fn ($m) => $m['days_worked'] * $entry['daily_rate']);
-                $priorInvoiced = $priorMonths->flatMap(fn ($m) => $m['invoices'])->sum('amount');
-
-                $totalWorked = $periodMonths->sum(fn ($m) => $m['days_worked'] * $entry['daily_rate']);
-                $totalInvoiced = $periodMonths->flatMap(fn ($m) => $m['invoices'])->sum('amount');
+                $priorTotals = $this->computeTotals($priorMonths, $entry['daily_rate']);
+                $periodTotals = $this->computeTotals($periodMonths, $entry['daily_rate']);
 
                 return [
                     ...$entry,
-                    'opening_to_invoice' => $priorWorked - $priorInvoiced,
+                    'opening_to_invoice' => $priorTotals['to_invoice'],
                     'months' => $periodMonths,
-                    'total_days' => $periodMonths->sum('days_worked'),
-                    'total_worked' => $totalWorked,
-                    'total_invoiced' => $totalInvoiced,
-                    'to_invoice' => $totalWorked - $totalInvoiced,
+                    'total_days' => $periodTotals['days'],
+                    'total_worked' => $periodTotals['worked'],
+                    'total_invoiced' => $periodTotals['invoiced'],
+                    'total_discount' => $periodTotals['discount'],
+                    'to_invoice' => $periodTotals['to_invoice'],
                 ];
             });
 
