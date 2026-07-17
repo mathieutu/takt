@@ -20,6 +20,7 @@ import {
 } from 'chart.js'
 import { computed, type ComputedRef } from 'vue'
 import { Bar } from 'vue-chartjs'
+import ClientAmountTooltip from '@/components/ClientAmountTooltip.vue'
 import { useMonthRangePicker } from '@/composables/useMonthRangePicker'
 import { formatDays } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
@@ -45,25 +46,23 @@ type DashboardProps = {
   to: string,
   kpis: {
     monthDays: number,
-    workingDays: number,
-    fillRate: number,
     monthRevenue: number,
     projectedRevenue: number,
     periodRevenue: number,
+    periodNetInvoiced: number,
+    periodGrossInvoiced: number,
+    periodPaid: number,
     outstandingAmount: number,
-    outstandingCount: number,
-    overdueCount: number,
+    outstandingDiscount: number,
+    unbilledAmount: number,
     periodWorkingDays: number,
-    trendDays: number,
-    trendRevenue: number,
     trendPeriod: number,
     prevPeriodRevenue: number,
-    prevMonthRevenue: number,
   },
   chart: {
     labels: string[],
     projects: Array<{ name: string, data: number[] }>,
-    billed: number[],
+    net: number[],
     workingDays: number[],
   },
   projects: Array<{
@@ -84,13 +83,30 @@ type DashboardProps = {
   }>,
   monthAdvancement: number,
   outstandingInvoices: Array<{
+    clientId: string,
     clientName: string,
     amount: number,
+    discountAmount: number,
+    discountPercent: number | null,
     daysWaiting: number,
+  }>,
+  unbilledByClient: Array<{
+    clientId: string,
+    clientName: string,
+    amount: number,
+    daysSinceLastInvoice: number | null,
   }>,
   periodRevenueByClient: Array<{
     clientName: string,
     revenue: number,
+  }>,
+  periodInvoicedByClient: Array<{
+    clientName: string,
+    amount: number,
+  }>,
+  periodPaidByClient: Array<{
+    clientName: string,
+    amount: number,
   }>,
   firstEntryMonth: string | null,
 }
@@ -181,6 +197,9 @@ const getCssColor = (varName: string): string => (
 
 const withAlpha = (color: string, alpha: number): string => color.replace(/\)$/, ` / ${alpha})`)
 
+const cumulative = (values: number[]): number[] =>
+  values.reduce<number[]>((acc, v) => [...acc, (acc.at(-1) ?? 0) + v / 100], [])
+
 // ── Computed ──────────────────────────────────────────────────────────────────
 
 const projectsWithStats = computed(() => {
@@ -224,31 +243,21 @@ const tooltipUi = {
   content: 'flex-col items-start h-auto py-2',
 }
 
-const monthRevenueBreakdown = computed(() =>
-  props.projects
-    .filter(p => p.monthDaysCount > 0 && p.dailyRate > 0)
-    .map(p => ({
-      label: `${p.clientName} / ${p.name}`,
-      revenue: Math.round(p.monthDaysCount * p.dailyRate),
-      pct: props.kpis.monthRevenue > 0
-        ? Math.round(p.monthDaysCount * p.dailyRate / props.kpis.monthRevenue * 100)
-        : 0,
-    }))
-    .sort((a, b) => b.revenue - a.revenue),
-)
-
-const monthProjectsBreakdown = computed(() =>
-  props.projects
-    .filter(p => p.monthDaysCount > 0)
-    .map(p => ({
-      label: `${p.clientName} / ${p.name}`,
-      days: p.monthDaysCount,
-      pct: props.kpis.monthDays > 0
-        ? Math.round(p.monthDaysCount / props.kpis.monthDays * 100)
-        : 0,
-    }))
-    .sort((a, b) => b.days - a.days),
-)
+const monthBreakdown = computed(() => {
+  const byClient = new Map<string, { label: string, days: number, revenue: number }>()
+  for (const p of props.projects) {
+    if (p.monthDaysCount <= 0) continue
+    const revenue = Math.round(p.monthDaysCount * p.dailyRate)
+    const existing = byClient.get(p.clientName)
+    if (existing) {
+      existing.days += p.monthDaysCount
+      existing.revenue += revenue
+      continue
+    }
+    byClient.set(p.clientName, { label: p.clientName, days: p.monthDaysCount, revenue })
+  }
+  return [...byClient.values()].sort((a, b) => b.days - a.days)
+})
 
 const barChartData = computed(() => ({
   labels: props.chart.labels,
@@ -276,12 +285,12 @@ const barChartData = computed(() => ({
     {
       type: 'line',
       label: 'Facturé',
-      data: props.chart.billed.reduce<number[]>((acc, v) => [...acc, (acc.at(-1) ?? 0) + v / 100], []),
+      data: cumulative(props.chart.net),
       borderColor: getCssColor('--color-green-500'),
       backgroundColor: 'transparent',
       cubicInterpolationMode: 'monotone' as const,
-      pointRadius: props.chart.billed.map(v => v > 0 ? 3 : 0),
-      pointHoverRadius: props.chart.billed.map(v => v > 0 ? 5 : 0),
+      pointRadius: props.chart.net.map(v => v > 0 ? 3 : 0),
+      pointHoverRadius: props.chart.net.map(v => v > 0 ? 5 : 0),
       borderWidth: 2,
       yAxisID: 'y1',
       order: 1,
@@ -343,7 +352,7 @@ const barChartOptions = {
     },
     tooltip: {
       filter: (ctx: TooltipItem<'bar'>) => ctx.dataset.label === 'Facturé'
-        ? (props.chart.billed[ctx.dataIndex] ?? 0) > 0
+        ? (props.chart.net[ctx.dataIndex] ?? 0) > 0
         : (ctx.parsed.y ?? 0) > 0,
       callbacks: {
         title: (items: TooltipItem<'bar'>[]) => {
@@ -359,7 +368,7 @@ const barChartOptions = {
         },
         label: (ctx: TooltipItem<'bar'>) => {
           if (ctx.dataset.label === 'Facturé') {
-            return ` Facturé : ${formatCurrency(props.chart.billed[ctx.dataIndex]!)}`
+            return ` Facturé (net) : ${formatCurrency(props.chart.net[ctx.dataIndex]!)}`
           }
           return ` ${ctx.dataset.label} : ${formatDays(ctx.parsed.y ?? 0)}`
         },
@@ -367,7 +376,10 @@ const barChartOptions = {
           if (!items.length) return ''
           const i = items[0]!.dataIndex
           const total = props.chart.projects.reduce((sum, p) => sum + (p.data[i] ?? 0), 0) / 100
-          return total > 0 ? `Total : ${formatDays(total)}` : ''
+          if (total <= 0) return ''
+          const workingDays = props.chart.workingDays[i]
+          const occupation = workingDays ? ` (${Math.round(total / workingDays * 100)}% d'occupation)` : ''
+          return `Total : ${formatDays(total)}${occupation}`
         },
       },
     },
@@ -413,6 +425,35 @@ const periodFillRate = computed(() =>
   props.kpis.periodWorkingDays > 0 ? Math.round((totalPeriodDays.value / props.kpis.periodWorkingDays) * 100) : 0,
 )
 
+const periodInvoicedRatio = computed(() => {
+  if (props.kpis.periodRevenue <= 0) return 0
+  return Math.min(100, Math.round(props.kpis.periodNetInvoiced / props.kpis.periodRevenue * 100))
+})
+
+const periodPaidRatio = computed(() =>
+  props.kpis.periodRevenue > 0 ? Math.min(100, Math.round(props.kpis.periodPaid / props.kpis.periodRevenue * 100)) : 0,
+)
+
+// The bar is 3 adjacent (non-overlapping) hoverable segments — perçu, then the rest of
+// facturé, then the untouched remainder up to travaillé — rather than 2 stacked overlays.
+const periodInvoicedRemainderRatio = computed(() => Math.max(0, periodInvoicedRatio.value - periodPaidRatio.value))
+const periodRemainingRatio = computed(() => Math.max(0, 100 - periodInvoicedRatio.value))
+
+const periodGrossInvoicedRatio = computed(() =>
+  props.kpis.periodRevenue > 0 ? Math.round(props.kpis.periodGrossInvoiced / props.kpis.periodRevenue * 100) : 0,
+)
+
+const periodPaidOnInvoicedRatio = computed(() =>
+  props.kpis.periodNetInvoiced > 0 ? Math.round(props.kpis.periodPaid / props.kpis.periodNetInvoiced * 100) : 0,
+)
+
+const periodActivitySummary = computed(() => {
+  const days = formatDays(totalPeriodDays.value)
+  const rate = formatCurrency(periodDailyRate.value)
+  const workingDays = formatDays(props.kpis.periodWorkingDays)
+  return `${days} travaillés · ${rate}/j moy. · ${periodFillRate.value}% d'occupation sur ${workingDays}`
+})
+
 const progressBarClass = (percent: number) => {
   if (percent > 100) return 'bg-error'
   if (percent >= 80) return 'bg-warning'
@@ -423,6 +464,12 @@ const progressTextClass = (percent: number) => {
   if (percent > 100) return 'text-error font-semibold'
   if (percent >= 80) return 'text-warning font-medium'
   return 'text-muted'
+}
+
+const ratioColorClass = (percent: number): string => {
+  if (percent < 60) return 'text-error'
+  if (percent < 80) return 'text-warning'
+  return 'text-success'
 }
 </script>
 
@@ -492,160 +539,246 @@ const progressTextClass = (percent: number) => {
         </div>
 
         <!-- KPIs -->
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <UTooltip :disabled="monthProjectsBreakdown.length === 0" :delayDuration="300" :ui="tooltipUi">
-            <UCard>
-              <template #header>
-                <div class="flex items-center justify-between">
-                  <p class="truncate text-sm font-semibold">Jours en {{ selectedMonthLabel }}</p>
-                  <UIcon name="i-lucide-calendar-days" class="text-muted" />
-                </div>
-              </template>
-              <p class="text-2xl font-bold">{{ formatDays(kpis.monthDays) }}</p>
-              <p class="mt-1 text-xs text-muted">sur {{ kpis.workingDays }} jours ouvrés</p>
-              <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-elevated">
-                <div
-                  class="h-1.5 rounded-full bg-primary transition-all"
-                  :style="{ width: `${Math.min(kpis.fillRate, 100)}%` }"
-                />
-              </div>
-              <div class="mt-1 flex items-center justify-between">
-                <p class="text-xs text-muted">{{ kpis.fillRate }}% d'occupation</p>
-                <span
-                  class="flex items-center gap-0.5 text-xs"
-                  :class="kpis.trendDays >= 0 ? 'text-success' : 'text-error'"
-                >
-                  <UIcon :name="kpis.trendDays >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'" class="size-3" />
-                  {{ kpis.trendDays >= 0 ? '+' : '' }}{{ kpis.trendDays }}%
-                </span>
-              </div>
-            </UCard>
-            <template #content>
-              <div class="min-w-52 space-y-1 text-xs">
-                <div v-for="item in monthProjectsBreakdown" :key="item.label" class="flex justify-between gap-4">
-                  <span class="truncate text-muted">{{ item.label }}</span>
-                  <span class="shrink-0 font-medium">{{ formatDays(item.days) }} <span class="font-normal text-muted">({{ item.pct }}%)</span></span>
-                </div>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_1.3fr_1fr]">
+          <UCard>
+            <template #header>
+              <div class="flex items-center justify-between">
+                <p class="truncate text-sm font-semibold">Travaillé en {{ selectedMonthLabel }}</p>
+                <UIcon name="i-lucide-briefcase-business" class="text-muted" />
               </div>
             </template>
-          </UTooltip>
+            <div class="flex flex-col gap-2">
+              <UTooltip :disabled="monthBreakdown.length === 0" :delayDuration="300" :ui="tooltipUi">
+                <div class="flex items-end justify-between gap-2">
+                  <div>
+                    <p class="text-2xl font-bold">{{ formatDays(kpis.monthDays) }}</p>
+                    <p class="text-xs text-muted">Travaillé</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-2xl font-bold">{{ formatCurrency(kpis.monthRevenue) }}</p>
+                    <p class="text-xs text-muted">Théorique</p>
+                  </div>
+                </div>
+                <template #content>
+                  <div class="min-w-56 space-y-1 text-xs">
+                    <div v-for="item in monthBreakdown" :key="item.label" class="flex justify-between gap-4">
+                      <span class="truncate text-muted">{{ item.label }}</span>
+                      <span class="shrink-0 font-medium">{{ formatDays(item.days) }} · {{ formatCurrency(item.revenue) }}</span>
+                    </div>
+                    <div class="border-t border-default pt-1.5 text-muted">
+                      Projeté : {{ formatCurrency(kpis.projectedRevenue) }} —
+                      basé sur {{ Math.round(monthAdvancement * 100) }}% du mois écoulé
+                    </div>
+                    <UButton
+                      :href="timesheet({ query: { month: props.to } })"
+                      color="neutral"
+                      variant="soft"
+                      size="xs"
+                      icon="i-lucide-calendar-days"
+                      label="Voir la timesheet du mois"
+                      block
+                      class="mt-1"
+                    />
+                  </div>
+                </template>
+              </UTooltip>
+            </div>
+          </UCard>
 
-          <UTooltip :disabled="monthRevenueBreakdown.length === 0" :delayDuration="300" :ui="tooltipUi">
-            <UCard>
-              <template #header>
-                <div class="flex items-center justify-between">
-                  <p class="truncate text-sm font-semibold">Revenus en {{ selectedMonthLabel }}</p>
-                  <UIcon name="i-lucide-euro" class="text-muted" />
-                </div>
-              </template>
-              <p class="text-2xl font-bold">{{ formatCurrency(kpis.monthRevenue) }}</p>
-              <p class="mt-1 text-xs text-muted">
-                proj. <span class="font-medium text-primary">{{ formatCurrency(kpis.projectedRevenue) }}</span> fin de mois
-              </p>
-              <p
-                class="mt-1 flex items-center gap-0.5 text-xs"
-                :class="kpis.trendRevenue >= 0 ? 'text-success' : 'text-error'"
-              >
-                <UIcon :name="kpis.trendRevenue >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'" class="size-3 shrink-0" />
-                <span>{{ kpis.trendRevenue >= 0 ? '+' : '' }}{{ kpis.trendRevenue }}% vs mois précédent ({{ formatCurrency(kpis.prevMonthRevenue) }})</span>
-              </p>
-            </UCard>
-            <template #content>
-              <div class="min-w-52 space-y-1.5 text-xs">
-                <div v-for="item in monthRevenueBreakdown" :key="item.label" class="flex justify-between gap-4">
-                  <span class="truncate text-muted">{{ item.label }}</span>
-                  <span class="shrink-0 font-medium">{{ formatCurrency(item.revenue) }} <span class="font-normal text-muted">({{ item.pct }}%)</span></span>
-                </div>
-                <div class="border-t border-default pt-1.5 text-muted">
-                  Projeté : {{ formatCurrency(kpis.projectedRevenue) }} —
-                  basé sur {{ Math.round(monthAdvancement * 100) }}% du mois écoulé
-                </div>
+          <UCard>
+            <template #header>
+              <div class="flex items-center justify-between">
+                <p class="truncate text-sm font-semibold">{{ periodMonths > 1 ? `Sur les ${periodMonths} mois` : 'Sur le mois' }}</p>
+                <UIcon name="i-lucide-bar-chart-2" class="text-muted" />
               </div>
             </template>
-          </UTooltip>
+            <div class="flex flex-col gap-2">
+              <div class="flex items-end justify-between gap-2">
+                <UTooltip :disabled="periodPaidByClient.length === 0" :delayDuration="300" :ui="tooltipUi">
+                  <div>
+                    <p class="text-sm font-semibold">{{ formatCurrency(kpis.periodPaid) }}</p>
+                    <p class="text-xs text-muted">Perçu</p>
+                  </div>
+                  <template #content>
+                    <ClientAmountTooltip title="Perçu par client" :items="periodPaidByClient">
+                      <template #footer>
+                        <span :class="ratioColorClass(periodPaidOnInvoicedRatio)">
+                          {{ periodPaidOnInvoicedRatio }}%
+                        </span>
+                        du facturé
+                      </template>
+                    </ClientAmountTooltip>
+                  </template>
+                </UTooltip>
 
-          <UTooltip :disabled="outstandingInvoices.length === 0" :delayDuration="300" :ui="tooltipUi">
-            <UCard>
-              <template #header>
-                <div class="flex items-center justify-between">
-                  <p class="truncate text-sm font-semibold">Factures impayées</p>
-                  <UIcon name="i-lucide-clock" class="text-muted" />
-                </div>
-              </template>
-              <p class="text-2xl font-bold">{{ formatCurrency(kpis.outstandingAmount) }}</p>
-              <p class="mt-1 text-xs text-muted">
-                {{ kpis.outstandingCount }} facture{{ kpis.outstandingCount > 1 ? 's' : '' }} impayée{{ kpis.outstandingCount > 1 ? 's' : '' }}
-              </p>
-              <p v-if="kpis.overdueCount > 0" class="mt-1 flex items-center gap-1 text-xs text-error">
-                <UIcon name="i-lucide-alert-circle" class="size-3" />
-                {{ kpis.overdueCount }} en retard
-              </p>
-              <p v-else class="mt-1 flex items-center gap-1 text-xs text-success">
-                <UIcon name="i-lucide-check-circle" class="size-3" />
-                Aucun retard
-              </p>
-            </UCard>
-            <template #content>
-              <div class="min-w-56 space-y-1 text-xs">
-                <div v-for="(inv, i) in outstandingInvoices" :key="i" class="flex justify-between gap-4">
-                  <span class="truncate" :class="inv.daysWaiting > 30 ? 'text-error' : 'text-muted'">{{ inv.clientName }}</span>
-                  <span class="shrink-0 font-medium" :class="inv.daysWaiting > 30 ? 'text-error' : ''">
-                    {{ formatCurrency(inv.amount) }}
-                    <span class="font-normal text-muted"> depuis {{ formatDays(inv.daysWaiting) }}</span>
-                  </span>
-                </div>
-              </div>
-            </template>
-          </UTooltip>
+                <UTooltip :disabled="periodInvoicedByClient.length === 0" :delayDuration="300" :ui="tooltipUi">
+                  <div class="text-center">
+                    <p class="text-2xl font-bold">{{ formatCurrency(kpis.periodNetInvoiced) }}</p>
+                    <p class="text-xs text-muted">Facturé</p>
+                  </div>
+                  <template #content>
+                    <ClientAmountTooltip title="Facturé par client" :items="periodInvoicedByClient">
+                      <template #footer>
+                        <span :class="ratioColorClass(periodGrossInvoicedRatio)">{{ periodGrossInvoicedRatio }}%</span>
+                        du théorique
+                      </template>
+                    </ClientAmountTooltip>
+                  </template>
+                </UTooltip>
 
-          <UTooltip :disabled="periodRevenueByClient.length === 0" :delayDuration="300" :ui="tooltipUi">
-            <UCard>
-              <template #header>
-                <div class="flex items-center justify-between">
-                  <p class="truncate text-sm font-semibold">{{ periodMonths > 1 ? `Sur les ${periodMonths} mois` : 'Sur le mois' }}</p>
-                  <UIcon name="i-lucide-bar-chart-2" class="text-muted" />
-                </div>
-              </template>
-              <p class="text-2xl font-bold">{{ formatCurrency(kpis.periodRevenue) }}</p>
-              <p class="mt-1 text-xs text-muted">
-                <span class="font-medium">{{ formatDays(totalPeriodDays) }}</span> · <span class="font-medium">{{ formatCurrency(periodDailyRate) }}/j</span> · <span class="font-medium">{{ formatCurrency(Math.round(kpis.periodRevenue / periodMonths)) }}/mois</span>
-              </p>
-              <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-elevated">
-                <div
-                  class="h-1.5 rounded-full bg-primary transition-all"
-                  :style="{ width: `${Math.min(periodFillRate, 100)}%` }"
-                />
+                <UTooltip :disabled="periodRevenueByClient.length === 0" :delayDuration="300" :ui="tooltipUi">
+                  <div class="text-right">
+                    <p class="text-sm font-semibold">{{ formatCurrency(kpis.periodRevenue) }}</p>
+                    <p class="text-xs text-muted">Théorique</p>
+                  </div>
+                  <template #content>
+                    <ClientAmountTooltip title="Travaillé par client" :items="periodRevenueByClient.map(i => ({ clientName: i.clientName, amount: i.revenue }))">
+                      <template #footer>
+                        <span :class="kpis.trendPeriod >= 0 ? 'text-success' : 'text-error'">
+                          {{ kpis.trendPeriod >= 0 ? '+' : '' }}{{ kpis.trendPeriod }}%
+                        </span>
+                        {{ periodMonths > 1 ? `vs les ${periodMonths} précédents` : 'vs le mois précédent' }}
+                        ({{ formatCurrency(kpis.prevPeriodRevenue) }})
+                      </template>
+                    </ClientAmountTooltip>
+                  </template>
+                </UTooltip>
               </div>
-              <div class="mt-1 flex items-center justify-between">
-                <p class="text-xs text-muted">{{ periodFillRate }}% d'occupation</p>
-                <span
-                  class="flex items-center gap-0.5 text-xs"
-                  :class="kpis.trendPeriod >= 0 ? 'text-success' : 'text-error'"
-                >
-                  <UIcon :name="kpis.trendPeriod >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'" class="size-3" />
-                  {{ kpis.trendPeriod >= 0 ? '+' : '' }}{{ kpis.trendPeriod }}%
-                </span>
+
+              <div class="flex h-2 w-full overflow-hidden rounded-sm bg-elevated">
+                <UTooltip :disabled="periodPaidByClient.length === 0" :delayDuration="300" :ui="tooltipUi">
+                  <div class="h-full bg-primary" :style="{ width: `${periodPaidRatio}%` }" />
+                  <template #content>
+                    <ClientAmountTooltip title="Perçu par client" :items="periodPaidByClient">
+                      <template #footer>
+                        <span :class="ratioColorClass(periodPaidOnInvoicedRatio)">
+                          {{ periodPaidOnInvoicedRatio }}%
+                        </span>
+                        du facturé
+                      </template>
+                    </ClientAmountTooltip>
+                  </template>
+                </UTooltip>
+                <UTooltip :disabled="periodInvoicedByClient.length === 0" :delayDuration="300" :ui="tooltipUi">
+                  <div class="h-full bg-primary/40" :style="{ width: `${periodInvoicedRemainderRatio}%` }" />
+                  <template #content>
+                    <ClientAmountTooltip title="Facturé par client" :items="periodInvoicedByClient">
+                      <template #footer>
+                        <span :class="ratioColorClass(periodGrossInvoicedRatio)">{{ periodGrossInvoicedRatio }}%</span>
+                        du théorique
+                      </template>
+                    </ClientAmountTooltip>
+                  </template>
+                </UTooltip>
+                <UTooltip :disabled="periodRevenueByClient.length === 0" :delayDuration="300" :ui="tooltipUi">
+                  <div class="h-full" :style="{ width: `${periodRemainingRatio}%` }" />
+                  <template #content>
+                    <ClientAmountTooltip title="Travaillé par client" :items="periodRevenueByClient.map(i => ({ clientName: i.clientName, amount: i.revenue }))">
+                      <template #footer>
+                        <span :class="kpis.trendPeriod >= 0 ? 'text-success' : 'text-error'">
+                          {{ kpis.trendPeriod >= 0 ? '+' : '' }}{{ kpis.trendPeriod }}%
+                        </span>
+                        {{ periodMonths > 1 ? `vs les ${periodMonths} précédents` : 'vs le mois précédent' }}
+                        ({{ formatCurrency(kpis.prevPeriodRevenue) }})
+                      </template>
+                    </ClientAmountTooltip>
+                  </template>
+                </UTooltip>
               </div>
-            </UCard>
-            <template #content>
-              <div class="min-w-52 space-y-1 text-xs">
-                <div v-for="item in periodRevenueByClient" :key="item.clientName" class="flex justify-between gap-4">
-                  <span class="truncate text-muted">{{ item.clientName }}</span>
-                  <span class="shrink-0 font-medium">{{ formatCurrency(item.revenue) }}</span>
-                </div>
-                <div class="border-t border-default pt-1.5 text-muted">
-                  <div>{{ periodFillRate }}% d'occupation sur {{ kpis.periodWorkingDays }} j. ouvrés</div>
-                  <div>{{ kpis.trendPeriod >= 0 ? '+' : '' }}{{ kpis.trendPeriod }}% {{ periodMonths > 1 ? `vs les ${periodMonths} précédents` : 'vs le mois précédent' }} ({{ formatCurrency(kpis.prevPeriodRevenue) }})</div>
-                </div>
+            </div>
+          </UCard>
+
+          <UCard>
+            <template #header>
+              <div class="flex items-center justify-between">
+                <p class="truncate text-sm font-semibold">Facturation</p>
+                <UIcon name="i-lucide-clock" class="text-muted" />
               </div>
             </template>
-          </UTooltip>
+            <div class="flex flex-col gap-2">
+              <div class="flex items-end justify-between gap-2">
+                <UTooltip :disabled="unbilledByClient.length === 0" :delayDuration="300" :ui="tooltipUi">
+                  <div>
+                    <p class="text-2xl font-bold">{{ formatCurrency(kpis.unbilledAmount) }}</p>
+                    <p class="text-xs text-muted">À facturer</p>
+                  </div>
+                  <template #content>
+                    <div class="min-w-52 space-y-1 text-xs">
+                      <p class="font-medium text-muted uppercase tracking-wide text-[10px]">À facturer par client</p>
+                      <UButton
+                        v-for="item in unbilledByClient"
+                        :key="item.clientName"
+                        :href="showBilling({ id: item.clientId })"
+                        color="neutral"
+                        variant="link"
+                        class="flex w-full items-center justify-between gap-4 p-0 text-xs font-normal"
+                      >
+                        <span class="truncate text-muted">{{ item.clientName }}</span>
+                        <span class="shrink-0">
+                          <span
+                            class="font-medium tabular-nums"
+                            :class="item.amount > 10_000_00 ? 'text-error' : ''"
+                          >
+                            {{ formatCurrency(item.amount) }}
+                          </span>
+                          <span class="font-normal text-muted">
+                            {{ item.daysSinceLastInvoice !== null ? `· depuis ${formatDays(item.daysSinceLastInvoice)}` : '· jamais facturé' }}
+                          </span>
+                        </span>
+                      </UButton>
+                    </div>
+                  </template>
+                </UTooltip>
+
+                <UTooltip :disabled="outstandingInvoices.length === 0" :delayDuration="300" :ui="tooltipUi">
+                  <div class="text-right">
+                    <template v-if="kpis.outstandingDiscount > 0">
+                      <p class="text-xs font-normal text-muted line-through tabular-nums">{{ formatCurrency(kpis.outstandingAmount + kpis.outstandingDiscount) }}</p>
+                    </template>
+                    <p class="text-2xl font-bold">{{ formatCurrency(kpis.outstandingAmount) }}</p>
+                    <p class="text-xs text-muted">Impayé</p>
+                  </div>
+                  <template #content>
+                    <div class="min-w-56 space-y-1 text-xs">
+                      <p class="font-medium text-muted uppercase tracking-wide text-[10px]">Factures en attente</p>
+                      <UButton
+                        v-for="(inv, i) in outstandingInvoices"
+                        :key="i"
+                        :href="showBilling({ id: inv.clientId })"
+                        color="neutral"
+                        variant="link"
+                        class="flex w-full items-center justify-between gap-4 p-0 text-xs font-normal"
+                      >
+                        <span class="truncate" :class="inv.daysWaiting > 30 ? 'text-error' : 'text-muted'">{{ inv.clientName }}</span>
+                        <span class="shrink-0 font-medium" :class="inv.daysWaiting > 30 ? 'text-error' : ''">
+                          <template v-if="inv.discountPercent !== null">
+                            <span class="line-through text-muted font-normal tabular-nums">{{ formatCurrency(inv.amount) }}</span>
+                            {{ formatCurrency(inv.amount - inv.discountAmount) }}
+                            <span class="text-xs font-normal text-muted">−{{ inv.discountPercent }}%</span>
+                          </template>
+                          <template v-else>
+                            {{ formatCurrency(inv.amount) }}
+                          </template>
+                          <span class="font-normal text-muted"> depuis {{ formatDays(inv.daysWaiting) }}</span>
+                        </span>
+                      </UButton>
+                    </div>
+                  </template>
+                </UTooltip>
+              </div>
+            </div>
+          </UCard>
         </div>
 
         <!-- Chart -->
         <UCard>
           <template #header>
-            <p class="text-sm font-semibold">Activité sur la période</p>
+            <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+              <p class="text-sm font-semibold">Activité sur la période</p>
+              <div class="text-right text-xs text-muted">
+                <p>{{ periodActivitySummary }}</p>
+              </div>
+            </div>
           </template>
           <div class="h-72 cursor-pointer">
             <Bar :data="barChartData" :options="barChartOptions" :plugins="[workingDaysMarkerPlugin]" />

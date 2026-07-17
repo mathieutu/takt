@@ -38,7 +38,6 @@ class ShowHomeHandler
         $rollingYearStart = $from;
         $periodMonths = $from->diffInMonths($to) + 1;
         $prevYearStart = $from->subMonths($periodMonths);
-        $prevMonthStart = $to->subMonth();
 
         $userClientIds = $request->user()->clients()->withTrashed()->pluck('id');
 
@@ -82,35 +81,44 @@ class ShowHomeHandler
                 ->sum('coverage') / 100,
             2
         );
-        $prevMonthDays = round(
-            $allEntries->filter(fn ($e) => $e->date->year === $prevMonthStart->year && $e->date->month === $prevMonthStart->month)
-                ->sum('coverage') / 100,
-            2
-        );
 
+        // monthRevenue/periodRevenue/projectedRevenue are derived from TimesheetEntry (worked time),
+        // never from Invoice::amount — they are not affected by invoice discounts.
         $monthRevenue = $this->revenueForMonth($projects, $to);
-        $prevMonthRevenue = $this->revenueForMonth($projects, $prevMonthStart);
         $periodRevenue = $this->revenueInRange($projects, $rollingYearStart, $windowEnd);
         $prevPeriodRevenue = $this->revenueInRange($projects, $prevYearStart, $rollingYearStart->subDay());
+
+        // periodNetInvoiced mirrors the chart's Facturé line (net amount grouped by invoice issue
+        // month), summed over the whole selected period, for the "Sur la période" KPI card.
+        $periodInvoices = $allInvoices
+            ->filter(fn ($i) => $i->created_at->gte($rollingYearStart) && $i->created_at->lte($windowEnd));
+        $periodNetInvoiced = $periodInvoices->sum(fn ($i) => $i->netAmount());
+        $periodGrossInvoiced = $periodInvoices->sum('amount');
+
+        // periodPaid = net amount actually received within the period, grouped by payment date
+        // (unlike periodNetInvoiced/chart.net, which group by invoice issue date).
+        $periodPaid = $allInvoices
+            ->filter(fn ($i) => $i->paid_at !== null && $i->paid_at->gte($rollingYearStart) && $i->paid_at->lte($windowEnd))
+            ->sum(fn ($i) => $i->netAmount());
 
         $projectedRevenue = $monthAdvancement > 0
             ? (int) round($monthRevenue / $monthAdvancement)
             : 0;
 
-        $trendDays = $prevMonthDays > 0 ? (int) round(($monthDays - $prevMonthDays) / $prevMonthDays * 100) : 0;
-        $trendRevenue = $prevMonthRevenue > 0 ? (int) round(($projectedRevenue - $prevMonthRevenue) / $prevMonthRevenue * 100) : 0;
         $trendPeriod = $prevPeriodRevenue > 0 ? (int) round(($periodRevenue - $prevPeriodRevenue) / $prevPeriodRevenue * 100) : 0;
 
         $outstanding = $allInvoices->whereNull('paid_at');
-        $outstandingAmount = $outstanding->sum('amount');
-        $outstandingCount = $outstanding->count();
-        $overdueCount = $outstanding->filter(fn ($i) => $i->created_at->lt($now->subDays(30)))->count();
+        $outstandingAmount = $outstanding->sum(fn ($i) => $i->netAmount());
+        $outstandingDiscount = $outstanding->sum('discount_amount');
 
         $outstandingInvoices = $projects->flatMap(fn ($p) => $p->invoices
             ->filter(fn ($i) => $i->paid_at === null)
             ->map(fn ($i) => [
+                'clientId' => $p->client_id,
                 'clientName' => $p->client->name,
                 'amount' => $i->amount,
+                'discountAmount' => $i->discount_amount,
+                'discountPercent' => $i->discountPercentForDisplay(),
                 'daysWaiting' => (int) $i->created_at->diffInDays($now),
             ])
         )->sortByDesc('daysWaiting')->values()->all();
@@ -126,6 +134,32 @@ class ShowHomeHandler
             ->values()
             ->all();
 
+        $periodInvoicedByClient = $projects
+            ->groupBy(fn ($p) => $p->client->name)
+            ->map(fn ($clientProjects, $clientName) => [
+                'clientName' => $clientName,
+                'amount' => $clientProjects->flatMap->invoices
+                    ->filter(fn ($i) => $i->created_at->gte($rollingYearStart) && $i->created_at->lte($windowEnd))
+                    ->sum(fn ($i) => $i->netAmount()),
+            ])
+            ->filter(fn ($item) => $item['amount'] > 0)
+            ->sortByDesc('amount')
+            ->values()
+            ->all();
+
+        $periodPaidByClient = $projects
+            ->groupBy(fn ($p) => $p->client->name)
+            ->map(fn ($clientProjects, $clientName) => [
+                'clientName' => $clientName,
+                'amount' => $clientProjects->flatMap->invoices
+                    ->filter(fn ($i) => $i->paid_at !== null && $i->paid_at->gte($rollingYearStart) && $i->paid_at->lte($windowEnd))
+                    ->sum(fn ($i) => $i->netAmount()),
+            ])
+            ->filter(fn ($item) => $item['amount'] > 0)
+            ->sortByDesc('amount')
+            ->values()
+            ->all();
+
         $months = collect(range($periodMonths - 1, 0))->map(fn ($i) => $to->subMonths($i)->startOfMonth());
         $chartLabels = $months->map(fn ($m) => $m->format('M'))->all();
 
@@ -137,9 +171,10 @@ class ShowHomeHandler
             )->values()->all(),
         ])->values()->all();
 
-        $chartBilled = $months->map(fn ($m) => $allInvoices
+        // Facturé = net amount (after discount) grouped by invoice issue month.
+        $chartNet = $months->map(fn ($m) => $allInvoices
             ->filter(fn ($i) => $i->created_at->year === $m->year && $i->created_at->month === $m->month)
-            ->sum('amount')
+            ->sum(fn ($i) => $i->netAmount())
         )->values()->all();
 
         $chartWorkingDays = $months->map(fn ($m) => $this->countWorkingDays(
@@ -195,37 +230,64 @@ class ShowHomeHandler
                 ];
             })->values()->all();
 
+        // Worked but not yet invoiced, across all projects — gross, mirroring to_invoice's
+        // deliberate gross-amount design (see projects[].unbilled, same underlying figure).
+        $unbilledAmount = collect($projectsData)->sum('unbilled');
+
+        $unbilledByClient = collect($projectsData)
+            ->groupBy('clientName')
+            ->map(function ($clientProjects, $clientName) use ($projects, $now) {
+                $clientId = $clientProjects->first()['clientId'];
+                $lastInvoiceDate = $projects
+                    ->where('client_id', $clientId)
+                    ->flatMap->invoices
+                    ->sortByDesc('created_at')
+                    ->first()?->created_at;
+
+                return [
+                    'clientId' => $clientId,
+                    'clientName' => $clientName,
+                    'amount' => $clientProjects->sum('unbilled'),
+                    'daysSinceLastInvoice' => $lastInvoiceDate ? (int) $lastInvoiceDate->diffInDays($now) : null,
+                ];
+            })
+            ->filter(fn ($item) => $item['amount'] > 0)
+            ->sortByDesc('amount')
+            ->values()
+            ->all();
+
         return Inertia::render('DashboardPage', [
             'from' => $from->format('Y-m'),
             'to' => $to->format('Y-m'),
             'firstEntryMonth' => $firstEntryMonth,
             'kpis' => [
                 'monthDays' => $monthDays,
-                'workingDays' => $workingDaysInMonth,
-                'fillRate' => $workingDaysInMonth > 0 ? (int) round($monthDays / $workingDaysInMonth * 100) : 0,
                 'monthRevenue' => $monthRevenue,
                 'projectedRevenue' => $projectedRevenue,
                 'periodRevenue' => $periodRevenue,
+                'periodNetInvoiced' => $periodNetInvoiced,
+                'periodGrossInvoiced' => $periodGrossInvoiced,
+                'periodPaid' => $periodPaid,
                 'outstandingAmount' => $outstandingAmount,
-                'outstandingCount' => $outstandingCount,
-                'overdueCount' => $overdueCount,
+                'outstandingDiscount' => $outstandingDiscount,
+                'unbilledAmount' => $unbilledAmount,
                 'periodWorkingDays' => $periodWorkingDays,
-                'trendDays' => $trendDays,
-                'trendRevenue' => $trendRevenue,
                 'trendPeriod' => $trendPeriod,
                 'prevPeriodRevenue' => $prevPeriodRevenue,
-                'prevMonthRevenue' => $prevMonthRevenue,
             ],
             'chart' => [
                 'labels' => $chartLabels,
                 'projects' => $chartProjects,
-                'billed' => $chartBilled,
+                'net' => $chartNet,
                 'workingDays' => $chartWorkingDays,
             ],
             'projects' => $projectsData,
             'monthAdvancement' => $monthAdvancement,
             'outstandingInvoices' => $outstandingInvoices,
+            'unbilledByClient' => $unbilledByClient,
             'periodRevenueByClient' => $periodRevenueByClient,
+            'periodInvoicedByClient' => $periodInvoicedByClient,
+            'periodPaidByClient' => $periodPaidByClient,
         ]);
     }
 
