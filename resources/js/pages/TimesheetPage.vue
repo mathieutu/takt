@@ -234,6 +234,8 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
               color="neutral"
               variant="outline"
               size="sm"
+              class="w-36 justify-center"
+              :ui="{ label: 'truncate' }"
             />
             <template #content>
               <UCalendar

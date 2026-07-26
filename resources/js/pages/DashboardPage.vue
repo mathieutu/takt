@@ -499,6 +499,8 @@ const ratioColorClass = (percent: number): string => {
                 color="neutral"
                 variant="outline"
                 size="sm"
+                class="w-44 justify-center"
+                :ui="{ label: 'truncate' }"
               />
               <template #content>
                 <div class="flex items-center">
