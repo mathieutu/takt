@@ -77,7 +77,7 @@ class ClientController
 
     public function showBilling(Request $request, Client $client, HolidayService $holidays): Response
     {
-        $projects = $client->projects()->orderBy('created_at')->get();
+        $projects = $client->projects()->orderedByEndDateThenName()->get();
 
         abort_if($projects->isEmpty(), 404);
 

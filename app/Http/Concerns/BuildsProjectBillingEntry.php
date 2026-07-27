@@ -22,7 +22,8 @@ trait BuildsProjectBillingEntry
     protected function resolveExportProjects(Client $client, ExportBillingRequest $request): Collection
     {
         $projectIds = $request->validated('project_ids');
-        $projects = $client->projects()->whereIn('id', $projectIds)->with(['timesheetEntries', 'invoices'])->get();
+        $projects = $client->projects()->whereIn('id', $projectIds)->orderedByEndDateThenName()
+            ->with(['timesheetEntries', 'invoices'])->get();
         abort_if($projects->count() !== count($projectIds), 404);
 
         return $projects;

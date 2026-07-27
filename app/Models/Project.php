@@ -84,6 +84,17 @@ class Project extends Model implements HasUser
         return ! $this->isActiveOn(today());
     }
 
+    /**
+     * Ended projects first (earliest end_date first), then ongoing ones (no end_date), each group
+     * tie-broken alphabetically — used everywhere a client's projects are listed for billing.
+     * `end_date IS NULL` evaluates to 0/1 in Postgres, MySQL, and SQLite alike, giving a portable
+     * "NULLS LAST" without a driver-specific clause.
+     */
+    public function scopeOrderedByEndDateThenName(Builder $query): void
+    {
+        $query->orderByRaw('end_date is null')->orderBy('end_date')->orderBy('name');
+    }
+
     public function isActiveOn(CarbonInterface|string $date): bool
     {
         $date = CarbonImmutable::parse($date)->startOfDay();
