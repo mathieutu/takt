@@ -153,7 +153,7 @@ const getCumulativeWorked = (project: ProjectWithBilling, monthIndex: number): n
     .reduce((sum, m) => sum + m.days_worked * project.daily_rate, 0)
 
 // Discounts write off part of an already-invoiced amount, so they reduce how much of the
-// budget envelope is actually consumed — even though "worked" itself stays théorique.
+// budget envelope is actually consumed — even though "worked" itself stays theoretical.
 const getCumulativeDiscount = (project: ProjectWithBilling, monthIndex: number): number =>
   project.months
     .slice(0, monthIndex + 1)

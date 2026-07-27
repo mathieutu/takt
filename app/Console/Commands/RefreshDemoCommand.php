@@ -27,7 +27,7 @@ class RefreshDemoCommand extends Command
             $createDemoData();
         });
 
-        $this->info('Compte de démo recréé avec succès.');
+        $this->info('Demo account recreated successfully.');
     }
 
     private function removeExistingDemoData(): void

@@ -91,8 +91,8 @@ class ShowHomeHandler
         $periodRevenue = $this->revenueInRange($projects, $rollingYearStart, $windowEnd);
         $prevPeriodRevenue = $this->revenueInRange($projects, $prevYearStart, $rollingYearStart->subDay());
 
-        // periodNetInvoiced mirrors the chart's Facturé line (net amount grouped by invoice issue
-        // month), summed over the whole selected period, for the "Sur la période" KPI card.
+        // periodNetInvoiced mirrors the chart's invoiced line (net amount grouped by invoice issue
+        // month), summed over the whole selected period, for the "Period" KPI card.
         $periodInvoices = $allInvoices
             ->filter(fn ($i) => $i->created_at->gte($rollingYearStart) && $i->created_at->lte($windowEnd));
         $periodNetInvoiced = $periodInvoices->sum(fn ($i) => $i->netAmount());
@@ -167,7 +167,7 @@ class ShowHomeHandler
         $chartLabels = $months->map(fn ($m) => $m->format('M'))->all();
 
         // chartProjects includes non-billable entries on purpose — it's an activity chart, not a
-        // revenue one (the Facturé line already comes from real invoices), so filtering it out would
+        // revenue one (the invoiced line already comes from real invoices), so filtering it out would
         // silently hide time that was actually worked (see TimesheetEntry::billable).
         $chartProjects = $projects->map(fn ($p) => [
             'name' => $p->name,
@@ -177,7 +177,7 @@ class ShowHomeHandler
             )->values()->all(),
         ])->values()->all();
 
-        // Facturé = net amount (after discount) grouped by invoice issue month.
+        // Invoiced = net amount (after discount) grouped by invoice issue month.
         $chartNet = $months->map(fn ($m) => $allInvoices
             ->filter(fn ($i) => $i->created_at->year === $m->year && $i->created_at->month === $m->month)
             ->sum(fn ($i) => $i->netAmount())

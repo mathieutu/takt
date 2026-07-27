@@ -175,7 +175,7 @@ trait BuildsProjectBillingEntry
     }
 
     /**
-     * @param  Collection<int, Project>  $projects  déjà filtrée sur project_ids, avec timesheetEntries+invoices chargées
+     * @param  Collection<int, Project>  $projects  Already filtered on project_ids, with timesheetEntries+invoices loaded
      * @return array{
      *     projects: Collection<int, array<string, mixed>>,
      *     clientName: string,
@@ -231,7 +231,7 @@ trait BuildsProjectBillingEntry
     }
 
     /**
-     * @param  Collection<int, Project>  $projects  déjà filtrée sur project_ids, avec timesheetEntries+invoices chargées
+     * @param  Collection<int, Project>  $projects  Already filtered on project_ids, with timesheetEntries+invoices loaded
      */
     protected function buildBillingExportResponse(
         Client $client,

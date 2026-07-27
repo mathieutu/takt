@@ -434,8 +434,8 @@ const periodPaidRatio = computed(() =>
   props.kpis.periodRevenue > 0 ? Math.min(100, Math.round(props.kpis.periodPaid / props.kpis.periodRevenue * 100)) : 0,
 )
 
-// The bar is 3 adjacent (non-overlapping) hoverable segments — perçu, then the rest of
-// facturé, then the untouched remainder up to travaillé — rather than 2 stacked overlays.
+// The bar is 3 adjacent (non-overlapping) hoverable segments — received, then the rest of
+// invoiced, then the untouched remainder up to worked — rather than 2 stacked overlays.
 const periodInvoicedRemainderRatio = computed(() => Math.max(0, periodInvoicedRatio.value - periodPaidRatio.value))
 const periodRemainingRatio = computed(() => Math.max(0, 100 - periodInvoicedRatio.value))
 
