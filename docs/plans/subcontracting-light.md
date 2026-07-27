@@ -32,17 +32,17 @@ dans l'application, plutôt que d'ajouter un nouveau sous-système.
 |---|---|
 | Lien de délégation | Réutiliser le mécanisme de partage en lecture déjà en place sur `Client` (`share_token` + `findByShareTokenOrFail`), plutôt qu'un nouveau modèle de lien avec state machine |
 | Import | Garder `BuildSubcontractingImportDiff` (protection contre l'écrasement d'éditions locales — la vraie valeur), mais simplifier l'UI : import global en un clic plutôt qu'une sélection jour par jour |
-| Généralisation | Les tokens de partage reçus d'autres comptes sont enregistrés comme des **favoris** personnels (nouvelle entrée de menu) — un carnet d'adresses générique, pas spécifique à la sous-traitance |
+| Généralisation | Les tokens de partage reçus d'autres comptes sont enregistrés comme des `SavedShare` personnels (nouvelle entrée de menu "Partages") — un carnet d'adresses générique, pas spécifique à la sous-traitance. Détails complets (modèle, contrôleur, page, flux de sauvegarde) dans `docs/plans/shares.md` |
 | Mémorisation de la source | Un projet délégué garde `source_project_id` en base après le premier rattachement, pour dériver le TJM de coût et exclure ce temps de l'activité personnelle sans avoir à le reconfirmer à chaque import |
-| Création | Un projet délégué se crée **directement depuis un favori** (source posée à la création) — pas de flow séparé « créer puis importer » |
+| Création | Un projet délégué se crée **directement depuis un partage reçu** (source posée à la création) — pas de flow séparé « créer puis importer » |
 | Branche de départ | Repartir de `main`, pas de `feat/subcontracting` : le diff est devenu trop différent pour que partir de la feature branche apporte quoi que ce soit |
 | Réutilisation UI | En cas de divergence de choix d'implémentation, réutiliser l'UI déjà écrite sur `feat/subcontracting` (section « Sous-traitance » de `ProjectForm.vue`, `ImportEntriesModal.vue`, modale de partage de `ProjectPage.vue`) plutôt que la réinventer, tant que ça ne complexifie pas la version allégée à terme |
-| Sécurité de l'import | `isImportable()` doit rester distinct de `isDelegated()` et revérifier en direct qu'un favori valide (même token que le `share_token` courant du client source) existe encore — un simple `share_token !== null` ne suffit pas : après révocation **puis régénération** d'un nouveau token, l'ancien favori ne doit pas continuer à autoriser l'import silencieusement |
+| Sécurité de l'import | `isImportable()` doit rester distinct de `isDelegated()` et revérifier en direct qu'un `SavedShare` valide (même token que le `share_token` courant du client source) existe encore — un simple `share_token !== null` ne suffit pas : après révocation **puis régénération** d'un nouveau token, l'ancien partage ne doit pas continuer à autoriser l'import silencieusement |
 
 Résultat : plus de modèle `SubcontractingLink`, plus de state machine, plus de contrat d'autorisation dédié,
 plus de contrôleur d'invitation à 6 actions, plus d'écrans dédiés à l'invitation/l'acceptation. Ne reste comme
-brique « métier » que : les favoris (générique, réutilisable), et le diff d'import (seule complexité
-volontairement gardée, avec une UI simplifiée).
+brique « métier » que : les partages (`SavedShare`, générique, réutilisable — voir `docs/plans/shares.md`), et
+le diff d'import (seule complexité volontairement gardée, avec une UI simplifiée).
 
 ---
 
@@ -55,60 +55,16 @@ merge/cherry-pick de la branche entière — le modèle de données change trop.
 
 ---
 
-## 2. Favoris — nouvelle brique générique
+## 2. Partages — nouvelle brique générique
 
-**Migration** `..._create_favorites_table.php` :
+> Cette section a été extraite, retravaillée et déplacée dans **`docs/plans/shares.md`**, qui en est
+> désormais la seule source de vérité (modèle `SavedShare`, table `shares`, `ShareController`, page
+> `SharesPage.vue`, flux de sauvegarde via bandeau public + connexion). Voir aussi `CONTEXT.md` (glossaire
+> `Share`/`SavedShare`) et `docs/adr/0001-explicit-consent-for-saved-shares.md`.
 
-```php
-Schema::create('favorites', function (Blueprint $table) {
-    $table->uuid('id')->primary();
-    $table->foreignUuid('user_id')->constrained('users')->cascadeOnDelete();
-    $table->foreignUuid('client_id')->constrained('clients')->cascadeOnDelete();
-    $table->uuid('token'); // le share_token du client au moment où le favori a été ajouté
-    $table->unique(['user_id', 'client_id']);
-    $table->timestamps();
-});
-```
-
-Un vrai FK sur `client_id` (intégrité référentielle, cascade au moment où le client est supprimé) plutôt
-qu'un simple `token` en l'air : le `token` capturé sert uniquement à détecter une révocation/régénération.
-
-**`app/Models/Favorite.php`** : `belongsTo(User)`, `belongsTo(Client)`, implémente `HasUser` (propriétaire =
-`user_id` direct, pas besoin d'`AccessibleByUser`).
-
-```php
-public function isValid(): bool
-{
-    return $this->client->share_token === $this->token;
-}
-```
-
-Un favori devient invalide si le propriétaire du client a révoqué (`share_token` à `null`) ou régénéré
-(nouveau token) son partage depuis — affiché comme tel dans `FavoritesPage.vue`, avec juste un bouton
-supprimer (pas de tentative de « réparation » automatique : il faut un nouveau lien explicite du
-propriétaire).
-
-**`app/Http/Controllers/FavoriteController.php`** (3 actions, ressource) :
-
-```php
-public function index(Request $request): Response // liste des favoris + leurs projets (pour les pickers)
-public function store(Request $request): RedirectResponse // valide `token`, résout le Client, firstOrCreate
-public function destroy(Favorite $favorite): RedirectResponse
-```
-
-`store` : `$client = Client::findByShareTokenOrFail($data['token'])`, puis
-`$request->user()->favorites()->firstOrCreate(['client_id' => $client->id], ['token' => $data['token']])`.
-
-`index` : pour chaque favori valide, charge `client.projects` (id/name/daily_rate) — c'est cette même
-réponse qui alimente le picker « projet source » au moment de créer un projet délégué (§4), pas besoin d'un
-endpoint séparé.
-
-**Route** : `Route::resource('favorites', FavoriteController::class)->only(['index', 'store', 'destroy'])`,
-dans le groupe `auth + EnsureUserOwnsResource` habituel (aucun cas particulier : propriétaire direct).
-
-**Nouvelle page** `resources/js/pages/FavoritesPage.vue` + entrée de menu dans `AppHeader.vue` (« Favoris ») :
-liste des favoris (nom du client, nom du propriétaire, ou « lien invalide » si `!is_valid`), formulaire
-« Ajouter un favori » (coller un token/URL reçu), bouton supprimer par ligne.
+Résumé pour la suite de ce document (sections 3-9, qui référencent cette brique) : `Favorite` devient
+`SavedShare`, `$user->favorites()` devient `$user->shares()`, `Favorite::isValid()` devient
+`SavedShare::isValid()`.
 
 ---
 
@@ -143,10 +99,10 @@ public function isDelegated(): bool
  * affiché, ce temps reste exclu de l'activité personnelle, même après révocation — l'historique importé
  * ne doit pas changer de sens rétroactivement). `isImportable()` en revanche revérifie en direct
  * l'autorisation qui a servi à poser cette source : un simple `share_token !== null` ne suffit pas — si le
- * prestataire révoque puis régénère un nouveau token, l'ancien favori (capturé avec l'ancien token) ne doit
- * pas continuer à autoriser l'import silencieusement avec le nouveau. Il faut donc qu'un favori du
+ * prestataire révoque puis régénère un nouveau token, l'ancien partage (capturé avec l'ancien token) ne doit
+ * pas continuer à autoriser l'import silencieusement avec le nouveau. Il faut donc qu'un `SavedShare` du
  * propriétaire de ce projet, sur le client du projet source, soit toujours valide (même token que
- * `client.share_token` aujourd'hui) — exactement `Favorite::isValid()`.
+ * `client.share_token` aujourd'hui) — exactement `SavedShare::isValid()`.
  */
 public function isImportable(): bool
 {
@@ -156,10 +112,10 @@ public function isImportable(): bool
 
     $sourceClient = $this->sourceProject->client;
 
-    return $this->user->favorites()
+    return $this->user->shares()
         ->where('client_id', $sourceClient->id)
         ->get()
-        ->contains(fn (Favorite $favorite) => $favorite->isValid());
+        ->contains(fn (SavedShare $share) => $share->isValid());
 }
 
 /** The only real cost of a delegated project: what the subcontractor charges on their own source project. */
@@ -175,7 +131,7 @@ accès qui continuerait indéfiniment après révocation d'un partage.)
 
 ---
 
-## 4. Créer un projet délégué directement depuis un favori
+## 4. Créer un projet délégué directement depuis un partage reçu
 
 Pas de flow séparé « créer puis attacher/importer » : `source_project_id` est posé **à la création**.
 
@@ -186,7 +142,7 @@ après coup) — ajouter un champ optionnel validé :
 'source_project_id' => [
     'nullable', 'uuid',
     Rule::exists('projects', 'id')->where(fn ($q) => $q
-        ->whereIn('client_id', $user->favorites()->pluck('client_id'))
+        ->whereIn('client_id', $user->shares()->pluck('client_id'))
         ->whereNull('source_project_id')), // pas de chaîne : le projet source ne doit pas être lui-même délégué
 ],
 ```
@@ -197,9 +153,10 @@ d'`AcceptSubcontractingLink` ni d'action dédiée).
 
 **`resources/js/pages/ProjectForm.vue`** — section « Sous-traitance », réutilisée/adaptée depuis
 `feat/subcontracting` :
-- **Mode création** : une bascule « Ce projet est délégué » → affiche un picker favori (liste de
-  `page.favorites`, déjà chargée) puis un picker projet (projets du favori choisi, déjà présents dans la
-  liste des favoris) → pose `source_project_id` dans le payload de `projects.store`.
+- **Mode création** : une bascule « Ce projet est délégué » → affiche un picker de partage reçu (liste de
+  `page.received_shares`, filtrée aux entrées valides — voir `docs/plans/shares.md` §5) puis un picker projet
+  (projets du partage choisi, déjà présents dans la liste) → pose `source_project_id` dans le payload de
+  `projects.store`.
 - **Mode édition, pas de source** : même picker pour lier une source a posteriori (reste possible même après
   création, via `projects.update`).
 - **Mode édition, source liée** : nom du projet source + TJM de coût dérivé (affichage repris tel quel de
@@ -283,7 +240,7 @@ change pas, seule la source de la donnée change).
 ## 7. Données de démo
 
 `CreateDemoData::seedSubcontracting()` : créer les deux comptes prestataires et leurs projets sources comme
-aujourd'hui, un `Favorite` pour le compte démo par prestataire (`client_id` + `token` = leur `share_token`),
+aujourd'hui, un `SavedShare` pour le compte démo par prestataire (`client_id` + `token` = leur `share_token`),
 et poser directement `source_project_id` sur les projets délégués à la création (plus de lien intermédiaire
 avec timestamps à seeder).
 
@@ -293,11 +250,13 @@ avec timestamps à seeder).
 
 - Ne pas reprendre `SubcontractingLinkControllerTest`/`SubcontractingLinkTest`/les cas `AccessibleByUser` de
   `EnsureUserOwnsResourceTest` (le modèle qu'ils testent n'existe plus).
-- Nouveau `FavoriteControllerTest` : ajout (token valide/invalide), idempotence (`firstOrCreate`),
-  suppression, isolation par utilisateur, `isValid()` après révocation/régénération du partage.
-- Nouveau/adapté `ProjectControllerTest` : création avec `source_project_id` valide (favori), rejet si le
-  projet source n'appartient pas à un favori, rejet si le projet source est lui-même délégué (anti-chaîne),
-  rejet si le projet source est déjà utilisé ailleurs (contrainte unique).
+- `ShareControllerTest` : voir `docs/plans/shares.md` §7 pour le détail complet des cas (ajout, garde-fou
+  anti-auto-partage, resynchro, suppression, isolation, `isValid()` après révocation/régénération/suppression
+  du client).
+- Nouveau/adapté `ProjectControllerTest` : création avec `source_project_id` valide (partage reçu valide),
+  rejet si le projet source n'appartient pas à un partage reçu, rejet si le projet source est lui-même
+  délégué (anti-chaîne), rejet si le projet source est déjà utilisé ailleurs (contrainte unique), le picker
+  de création exclut les partages invalides.
 - `ImportSubcontractedEntriesControllerTest` : reprendre les cas new/modified/amended/removed et
   d'idempotence de `feat/subcontracting`, adaptés à la signature simplifiée (plus de sélection de `dates`),
   plus les cas de régression relevés pendant la conception :
@@ -305,30 +264,32 @@ avec timestamps à seeder).
     (`isImportable()` devient faux) alors que `isDelegated()`, le TJM de coût, et l'exclusion d'activité
     personnelle restent inchangés ;
   - après révocation **puis régénération** d'un nouveau `share_token` sur ce client, `isImportable()` reste
-    faux tant que le donneur d'ordre n'a pas explicitement ré-ajouté le favori avec le nouveau token
-    (`Favorite::isValid()` doit rester déterminant, pas juste « un token existe »).
+    faux tant que le donneur d'ordre n'a pas explicitement re-sauvegardé le partage avec le nouveau token
+    (`SavedShare::isValid()` doit rester déterminant, pas juste « un token existe »).
 
 ---
 
 ## 9. Documentation
 
-Réécrire la section « Subcontracting » de `docs/features.md` (favoris + création liée directement, plus
-d'invitation/claim/accept/decline), ajouter `Favorite` à `docs/models.md`, remplacer la section
-`SubcontractingLink` par `Project.source_project_id`. `docs/architecture.md` n'a pas besoin de mention
-`AccessibleByUser` puisqu'il n'est jamais introduit dans cette version. Ce document
-(`docs/plan/subcontracting-light.md`) est supprimé une fois la feature documentée, comme pour
-`docs/plan/subcontracting.md`.
+Réécrire la section « Subcontracting » de `docs/features.md` (partages + création liée directement, plus
+d'invitation/claim/accept/decline), ajouter `SavedShare` et `Client.shares()` à `docs/models.md` (détail dans
+`docs/plans/shares.md` §6), remplacer la section `SubcontractingLink` par `Project.source_project_id`.
+`docs/architecture.md` n'a pas besoin de mention `AccessibleByUser` puisqu'il n'est jamais introduit dans
+cette version. Ce document (`docs/plan/subcontracting-light.md`) est supprimé une fois la feature documentée,
+comme pour `docs/plan/subcontracting.md` — de même pour `docs/plans/shares.md` une fois cette partie
+documentée.
 
 ---
 
 ## 10. Vérification
 
-- `php artisan test --compact --filter=Favorite` et `--filter=ImportSubcontractedEntries` : tous verts.
+- `php artisan test --compact --filter=Share` (voir `docs/plans/shares.md` §8) et
+  `--filter=ImportSubcontractedEntries` : tous verts.
 - `php artisan test --compact` complet (régressions billing/dashboard/timesheet).
 - `vendor/bin/pint --dirty --format agent` après les modifs PHP.
 - `yarn lint:fix && yarn typecheck` après les modifs `.vue`/`.ts`.
 - Test manuel (`composer run dev`) : depuis un projet, copier le lien d'invitation vers
   `projects/create?name=...&daily_rate=...`, l'ouvrir avec un autre compte demo, créer le projet + son
-  client, partager ce client, ajouter le token en favori côté donneur d'ordre, créer un nouveau projet
-  délégué en choisissant ce favori/projet source, importer les jours, vérifier qu'une ligne `amended` n'est
-  jamais écrasée, et que la marge s'affiche sur la page billing.
+  client, partager ce client, sauvegarder ce partage côté donneur d'ordre (bouton sur la page publique du
+  partage), créer un nouveau projet délégué en choisissant ce partage/projet source, importer les jours,
+  vérifier qu'une ligne `amended` n'est jamais écrasée, et que la marge s'affiche sur la page billing.
