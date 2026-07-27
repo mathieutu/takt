@@ -108,6 +108,7 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
     <UModal
       :open="true"
       :title="modal.project ? 'Modifier le projet' : 'Nouveau projet'"
+      :ui="{ content: 'sm:max-w-2xl' }"
       @update:open="(v: boolean) => !v && close()"
     >
       <template #body>
@@ -142,17 +143,19 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
             </div>
           </template>
 
-          <UFormField label="Nom du projet" required :error="form.errors.name">
-            <UInput
-              v-model="form.name"
-              type="text"
-              class="w-full"
-            />
-          </UFormField>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <UFormField label="Nom du projet" required :error="form.errors.name">
+              <UInput
+                v-model="form.name"
+                type="text"
+                class="w-full"
+              />
+            </UFormField>
 
-          <UFormField label="Description" :error="form.errors.description">
-            <UInput v-model="form.description" type="text" class="w-full" />
-          </UFormField>
+            <UFormField label="Description" :error="form.errors.description">
+              <UInput v-model="form.description" type="text" class="w-full" />
+            </UFormField>
+          </div>
 
           <UFormField label="Tarif journalier projet (€/j)" required :error="form.errors.daily_rate">
             <UInput
@@ -165,31 +168,33 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
             />
           </UFormField>
 
-          <UFormField label="Plafond mensuel (€/mois)" :error="form.errors.max_month_budget">
-            <UInput
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="Illimité"
-              :modelValue="form.max_month_budget && form.max_month_budget / 100"
-              class="w-full"
-              @update:modelValue="(val: number | null) => form.max_month_budget = val ? Math.round(val * 100) : null"
-            />
-          </UFormField>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <UFormField label="Plafond mensuel (€/mois)" :error="form.errors.max_month_budget">
+              <UInput
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Illimité"
+                :modelValue="form.max_month_budget && form.max_month_budget / 100"
+                class="w-full"
+                @update:modelValue="(val: number | null) => form.max_month_budget = val ? Math.round(val * 100) : null"
+              />
+            </UFormField>
 
-          <UFormField label="Enveloppe budgétaire totale (€)" :error="form.errors.max_total_budget">
-            <UInput
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="Sans limite"
-              :modelValue="form.max_total_budget && form.max_total_budget / 100"
-              class="w-full"
-              @update:modelValue="(val: number | null) => form.max_total_budget = val ? Math.round(val * 100) : null"
-            />
-          </UFormField>
+            <UFormField label="Enveloppe budgétaire totale (€)" :error="form.errors.max_total_budget">
+              <UInput
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Sans limite"
+                :modelValue="form.max_total_budget && form.max_total_budget / 100"
+                class="w-full"
+                @update:modelValue="(val: number | null) => form.max_total_budget = val ? Math.round(val * 100) : null"
+              />
+            </UFormField>
+          </div>
 
-          <template v-if="modal.project">
+          <div v-if="modal.project" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <UFormField label="Début le" required :error="form.errors.start_date">
               <DateInput v-model="form.start_date" />
             </UFormField>
@@ -197,7 +202,7 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
             <UFormField label="Fin le" :error="form.errors.end_date">
               <DateInput v-model="form.end_date" />
             </UFormField>
-          </template>
+          </div>
         </UForm>
       </template>
       <template #footer>
