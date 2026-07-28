@@ -22,11 +22,12 @@ Route::middleware('guest')->group(function () {
 
     Route::get('login/redirect', [AuthController::class, 'redirect'])->name('login.redirect');
     Route::get('login/callback', [AuthController::class, 'callback'])->name('login.callback');
-
-    if (! config('auth.enabled')) {
-        Route::post('login/disabled', [AuthController::class, 'disabled'])->name('login.disabled');
-    }
 });
+
+// Outside the guest group: also used to switch accounts from the navbar while already authenticated.
+if (! config('auth.enabled')) {
+    Route::post('login/disabled', [AuthController::class, 'disabled'])->name('login.disabled');
+}
 
 Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
     Route::get('logout', [AuthController::class, 'logout'])->name('logout');

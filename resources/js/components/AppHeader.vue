@@ -6,6 +6,7 @@ import { computed, onUnmounted, ref } from 'vue'
 import TaktLogo from '@/components/TaktLogo.vue'
 import { useCommandPalette } from '@/composables/useCommandPalette'
 import { dashboard, login, logout, profile, timesheet } from '@/wayfinder/routes'
+import { disabled as switchUserRoute } from '@/wayfinder/routes/login'
 import projects from '@/wayfinder/routes/projects'
 import { index as sharesIndex } from '@/wayfinder/routes/shares'
 
@@ -13,6 +14,16 @@ const { open } = useCommandPalette()
 
 const page = usePage()
 const user = computed(() => page.props.auth?.user)
+
+const otherDevUsers = computed(() => (page.props.devUsers ?? []).filter(u => u.id !== user.value?.id))
+
+const devUserMenuItems = computed<DropdownMenuItem[][]>(() => [
+  otherDevUsers.value.map(u => ({
+    label: u.name,
+    avatar: u.avatar ? { src: u.avatar, alt: '' } : undefined,
+    onSelect: () => router.visit(switchUserRoute(), { data: { user_id: u.id, redirect: page.url } }),
+  })),
+])
 
 const mobileMenuOpen = ref(false)
 const unsubscribe = router.on('navigate', () => {
@@ -93,6 +104,16 @@ const mobileMenuItems = computed<NavigationMenuItem[]>(() => [
         trailing
         size="sm"
       />
+      <UTooltip v-if="otherDevUsers.length > 0" text="Connexion rapide (dev)">
+        <UDropdownMenu :items="devUserMenuItems">
+          <UButton
+            icon="i-lucide-shuffle"
+            color="neutral"
+            variant="ghost"
+            aria-label="Connexion rapide (dev)"
+          />
+        </UDropdownMenu>
+      </UTooltip>
     </template>
 
     <template v-if="user" #body>

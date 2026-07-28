@@ -43,3 +43,33 @@ describe('redirect-after-login', function () {
         $this->get(route('login.callback'))->assertRedirect($sharedUrl);
     });
 });
+
+describe('quick account switch (dev)', function () {
+    it('switches the authenticated user via the disabled() bypass, even while already logged in', function () {
+        $this->withoutMiddleware(PreventRequestForgery::class);
+        app()->instance('env', 'local');
+
+        $firstUser = User::factory()->create();
+        $secondUser = User::factory()->create();
+
+        $this->actingAs($firstUser)
+            ->post(route('login.disabled'), ['user_id' => $secondUser->id])
+            ->assertRedirect(route('dashboard'));
+
+        expect(auth()->id())->toBe($secondUser->id);
+    });
+
+    it('stays on the current page instead of the dashboard when a redirect is provided', function () {
+        $this->withoutMiddleware(PreventRequestForgery::class);
+        app()->instance('env', 'local');
+
+        $firstUser = User::factory()->create();
+        $secondUser = User::factory()->create();
+
+        $this->actingAs($firstUser)
+            ->post(route('login.disabled'), ['user_id' => $secondUser->id, 'redirect' => route('timesheet')])
+            ->assertRedirect(route('timesheet'));
+
+        expect(auth()->id())->toBe($secondUser->id);
+    });
+});

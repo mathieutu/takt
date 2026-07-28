@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
@@ -37,12 +38,14 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $user ? [
+                    'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
                     'avatar' => $user->avatar,
                 ] : null,
                 'isDemo' => $user?->email === config('auth.demo_email'),
             ],
+            'devUsers' => ! config('auth.enabled') ? User::all(['id', 'name', 'email', 'avatar']) : [],
             'updatedAt' => Inertia::once(function () {
                 $updatedAt = config('app.updated_at');
 

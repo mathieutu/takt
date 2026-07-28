@@ -14,6 +14,7 @@ declare module '@inertiajs/core' {
   export interface InertiaConfig {
     sharedPageProps: {
       auth: { user: { id: string, name: string, email: string, avatar: string } | null, isDemo: boolean },
+      devUsers: Array<{ id: string, name: string, email: string, avatar: string | null }>,
       updatedAt: string,
     },
     flashDataType: Flash,
