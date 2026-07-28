@@ -4,8 +4,8 @@
 import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOptions } from "./../../../index";
 
 /**
- * @see \App\Http\Controllers\ExportSharedBillingHandler::__invoke
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ExportSharedBillingHandler.php:16
+ * @see \App\Http\Controllers\ShareController::export
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php:54
  * @route "/shares/{token}/export"
  */
 export const exportMethod = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -19,8 +19,8 @@ exportMethod.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see \App\Http\Controllers\ExportSharedBillingHandler::__invoke
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ExportSharedBillingHandler.php:16
+ * @see \App\Http\Controllers\ShareController::export
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php:54
  * @route "/shares/{token}/export"
  */
 exportMethod.url = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -46,8 +46,8 @@ exportMethod.url = (args: { token: string | number } | [ token: string | number 
 }
 
 /**
- * @see \App\Http\Controllers\ExportSharedBillingHandler::__invoke
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ExportSharedBillingHandler.php:16
+ * @see \App\Http\Controllers\ShareController::export
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php:54
  * @route "/shares/{token}/export"
  */
 exportMethod.get = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -56,8 +56,8 @@ exportMethod.get = (args: { token: string | number } | [ token: string | number 
 })
 
 /**
- * @see \App\Http\Controllers\ExportSharedBillingHandler::__invoke
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ExportSharedBillingHandler.php:16
+ * @see \App\Http\Controllers\ShareController::export
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php:54
  * @route "/shares/{token}/export"
  */
 exportMethod.head = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"head"> => ({

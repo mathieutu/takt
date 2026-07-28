@@ -4,7 +4,7 @@
 import { queryParams, type RouteDefinition, type RouteQueryOptions } from "./../index";
 
 /**
- * @see /Users/mathieutu/Projects/takt/routes/web.php:68
+ * @see /Users/mathieutu/Projects/takt/routes/web.php:72
  * @route "/up"
  */
 export const up = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -18,7 +18,7 @@ up.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see /Users/mathieutu/Projects/takt/routes/web.php:68
+ * @see /Users/mathieutu/Projects/takt/routes/web.php:72
  * @route "/up"
  */
 up.url = (options?: RouteQueryOptions) => {
@@ -26,7 +26,7 @@ up.url = (options?: RouteQueryOptions) => {
 }
 
 /**
- * @see /Users/mathieutu/Projects/takt/routes/web.php:68
+ * @see /Users/mathieutu/Projects/takt/routes/web.php:72
  * @route "/up"
  */
 up.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -35,7 +35,7 @@ up.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 })
 
 /**
- * @see /Users/mathieutu/Projects/takt/routes/web.php:68
+ * @see /Users/mathieutu/Projects/takt/routes/web.php:72
  * @route "/up"
  */
 up.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -103,7 +103,7 @@ dashboard.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\AuthController::demo
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:65
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:74
  * @route "/demo"
  */
 export const demo = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -118,7 +118,7 @@ demo.definition = {
 
 /**
  * @see \App\Http\Controllers\AuthController::demo
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:65
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:74
  * @route "/demo"
  */
 demo.url = (options?: RouteQueryOptions) => {
@@ -127,7 +127,7 @@ demo.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\AuthController::demo
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:65
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:74
  * @route "/demo"
  */
 demo.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -137,7 +137,7 @@ demo.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\AuthController::demo
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:65
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:74
  * @route "/demo"
  */
 demo.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -205,7 +205,7 @@ login.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
 
 /**
  * @see \App\Http\Controllers\AuthController::logout
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:78
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:87
  * @route "/logout"
  */
 export const logout = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -220,7 +220,7 @@ logout.definition = {
 
 /**
  * @see \App\Http\Controllers\AuthController::logout
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:78
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:87
  * @route "/logout"
  */
 logout.url = (options?: RouteQueryOptions) => {
@@ -229,7 +229,7 @@ logout.url = (options?: RouteQueryOptions) => {
 
 /**
  * @see \App\Http\Controllers\AuthController::logout
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:78
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:87
  * @route "/logout"
  */
 logout.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -239,7 +239,7 @@ logout.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
 
 /**
  * @see \App\Http\Controllers\AuthController::logout
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:78
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php:87
  * @route "/logout"
  */
 logout.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({

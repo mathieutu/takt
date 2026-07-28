@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { MonthInvoice, MonthRow, ProjectWithBilling } from '@/types/billing'
-import { Head, useForm } from '@inertiajs/vue3'
+import { Head, useForm, usePage } from '@inertiajs/vue3'
 import {
   type ActiveElement,
   BarController,
@@ -24,10 +24,11 @@ import DateInput from '@/components/DateInput.vue'
 import ExportBillingModal from '@/components/ExportBillingModal.vue'
 import { formatDate, formatDays, formatDuration, formatMonthName, parseMonth, today } from '@/utils/date'
 import { formatCurrency } from '@/utils/number'
-import { timesheet } from '@/wayfinder/routes'
+import { login, timesheet } from '@/wayfinder/routes'
 import { edit as editClient } from '@/wayfinder/routes/clients'
 import { destroy as destroyInvoice, store as storeInvoice, update as updateInvoice } from '@/wayfinder/routes/invoices'
 import { edit as editProject, index as projectsIndex } from '@/wayfinder/routes/projects'
+import { destroy as destroyShare, store as storeShare } from '@/wayfinder/routes/shares'
 
 const props = defineProps<{
   projects: ProjectWithBilling[],
@@ -35,9 +36,15 @@ const props = defineProps<{
   is_shared: boolean,
   shared_by?: string,
   token?: string,
+  saved_share_id?: string,
 }>()
 
 const holidays = computed(() => new Map(Object.entries(props.holidays)))
+
+const page = usePage()
+const authUser = computed(() => page.props.auth?.user)
+
+const loginToSaveHref = computed(() => login({ query: { redirect: page.url } }))
 
 ChartJS.register(
   BarController,
@@ -489,6 +496,36 @@ const monthLabel = (ym: string): string => {
       <p class="text-sm text-muted">
         Partagé par <span class="font-medium text-default">{{ shared_by }}</span>
       </p>
+      <UButton
+        v-if="!authUser"
+        :href="loginToSaveHref"
+        label="Se connecter pour sauvegarder"
+        icon="i-lucide-log-in"
+        color="neutral"
+        variant="outline"
+        size="sm"
+      />
+      <UButton
+        v-else-if="!saved_share_id"
+        label="Sauvegarder dans mes partages"
+        icon="i-lucide-bookmark-plus"
+        color="neutral"
+        variant="outline"
+        size="sm"
+        :to="storeShare()"
+        :preserveScroll="true"
+        :data="{ token: props.token }"
+      />
+      <UButton
+        v-else
+        label="Retirer"
+        icon="i-lucide-bookmark-minus"
+        color="neutral"
+        variant="ghost"
+        size="sm"
+        :to="destroyShare(props.saved_share_id!)"
+        :preserveScroll="true"
+      />
     </div>
 
     <main class="flex-1 px-4 py-6 md:px-8 md:py-8">

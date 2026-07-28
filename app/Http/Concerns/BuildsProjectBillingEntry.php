@@ -188,7 +188,7 @@ trait BuildsProjectBillingEntry
      */
     // TODO: providerName/providerEmail/from/to/sourceUrl are threaded positionally through this method and
     // buildBillingExportResponse() below — a small DTO (e.g. ExportContext) would remove the risk of mixing
-    // up parameters at the two call sites (ClientController::exportBilling, ExportSharedBillingHandler).
+    // up parameters at the two call sites (ClientController::exportBilling, ShareController::export).
     protected function buildBillingExportViewData(
         Client $client,
         Collection $projects,

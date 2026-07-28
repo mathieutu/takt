@@ -20,6 +20,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property CarbonImmutable|null $updated_at
  * @property-read Collection<int, Project> $projects
  * @property-read int|null $projects_count
+ * @property-read Collection<int, SavedShare> $shares
+ * @property-read int|null $shares_count
  * @property-read User $user
  *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Client newModelQuery()
@@ -58,8 +60,18 @@ class Client extends Model implements HasUser
         return $this->hasMany(Project::class);
     }
 
+    public function shares(): HasMany
+    {
+        return $this->hasMany(SavedShare::class);
+    }
+
     public static function findByShareTokenOrFail(string $token): self
     {
         return static::with('user')->whereShareToken($token)->firstOrFail();
+    }
+
+    public function shareUrl(): ?string
+    {
+        return $this->share_token ? route('shares.show', $this->share_token) : null;
     }
 }

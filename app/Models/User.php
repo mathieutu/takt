@@ -18,17 +18,20 @@ use Illuminate\Foundation\Auth\Access\Authorizable;
  * @property string|null $github_id
  * @property string|null $avatar
  * @property string|null $remember_token
- * @property string|null $api_token
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
+ * @property string|null $api_token
  * @property-read Collection<int, Client> $clients
  * @property-read int|null $clients_count
  * @property-read Collection<int, Project> $projects
  * @property-read int|null $projects_count
+ * @property-read Collection<int, SavedShare> $shares
+ * @property-read int|null $shares_count
  *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereApiToken($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereAvatar($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmail($value)
@@ -61,5 +64,10 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     public function projects(): HasManyThrough
     {
         return $this->hasManyThrough(Project::class, Client::class);
+    }
+
+    public function shares(): HasMany
+    {
+        return $this->hasMany(SavedShare::class);
     }
 }

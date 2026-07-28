@@ -11,12 +11,12 @@ export namespace Inertia {
         /**
          * @see [\App\Http\Controllers\ShowHomeHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowHomeHandler.php)
          */
-        export type DashboardPage = Inertia.SharedData & { from: string, to: string, firstEntryMonth: unknown, kpis: { monthDays: number, workingDays: boolean | null, fillRate: number, monthRevenue: number, projectedRevenue: number, periodRevenue: number, outstandingAmount: unknown, outstandingCount: unknown, overdueCount: unknown, periodWorkingDays: number, trendDays: number, trendRevenue: number, trendPeriod: number, prevPeriodRevenue: number, prevMonthRevenue: number }, chart: { labels: unknown, projects: unknown, billed: unknown, workingDays: unknown }, projects: unknown, monthAdvancement: number, outstandingInvoices: unknown, periodRevenueByClient: unknown }
+        export type DashboardPage = Inertia.SharedData & { from: string, to: string, firstEntryMonth: unknown, kpis: { monthDays: number, monthRevenue: number, projectedRevenue: number, periodRevenue: number, periodNetInvoiced: unknown, periodGrossInvoiced: unknown, periodPaid: unknown, outstandingAmount: unknown, outstandingDiscount: unknown, unbilledAmount: unknown, periodWorkingDays: number, trendPeriod: number, prevPeriodRevenue: number }, chart: { labels: unknown, projects: unknown, net: unknown, workingDays: unknown }, projects: unknown, monthAdvancement: number, outstandingInvoices: unknown, unbilledByClient: unknown, periodRevenueByClient: unknown, periodInvoicedByClient: unknown, periodPaidByClient: unknown }
 
         /**
          * @see [\App\Http\Controllers\AuthController::show](/Users/mathieutu/Projects/takt/app/Http/Controllers/AuthController.php)
          */
-        export type LoginPage = Inertia.SharedData & { users: App.Models.User[] | [] }
+        export type LoginPage = Inertia.SharedData & { users: App.Models.User[] | [], redirect: string | null | [] | null }
 
         /**
          * @see [\App\Http\Controllers\UserController::edit](/Users/mathieutu/Projects/takt/app/Http/Controllers/UserController.php)
@@ -30,9 +30,9 @@ export namespace Inertia {
 
         /**
          * @see [\App\Http\Controllers\ClientController::showBilling](/Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php)
-         * @see [\App\Http\Controllers\ShowSharedHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowSharedHandler.php)
+         * @see [\App\Http\Controllers\ShareController::show](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php)
          */
-        export type ProjectBillingPage = Inertia.SharedData & { projects: unknown, holidays: Record<string, string>, is_shared: false, shared_by?: unknown, token?: string }
+        export type ProjectBillingPage = Inertia.SharedData & { projects: unknown, holidays: Record<string, string>, is_shared: false, shared_by?: unknown, token?: string, saved_share_id?: unknown }
 
         /**
          * @see [\App\Http\Controllers\ProjectController::index](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectController.php)
@@ -54,6 +54,11 @@ export namespace Inertia {
          * @see [\App\Http\Controllers\ShowApiDocHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowApiDocHandler.php)
          */
         export type ApiDocPage = Inertia.SharedData & { base_url: Illuminate.Contracts.Routing.UrlGenerator | string, api_token: string | null, projects: unknown }
+
+        /**
+         * @see [\App\Http\Controllers\ShareController::index](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php)
+         */
+        export type SharesPage = Inertia.SharedData & { received_shares: unknown, my_shares: unknown }
     }
 }
 
@@ -282,6 +287,7 @@ export namespace App {
                     export type Request = {    entries: unknown[];
                         "entries.*.date": string;
                         "entries.*.coverage": number;
+                        "entries.*.billable"?: boolean;
                         "entries.*.title"?: string | null;
                         "entries.*.description"?: string | null;}
                 }
@@ -368,15 +374,51 @@ export namespace App {
                 }
             }
 
-            export namespace ShowSharedHandler {
-                export namespace __invoke {
+            export namespace ShareController {
+                export namespace Index {
                     /**
-                     * @see [\App\Http\Controllers\ShowSharedHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowSharedHandler.php)
+                     * @see [\App\Http\Controllers\ShareController::index](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php)
+                     */
+                    export type Response = Inertia.Pages.SharesPage
+
+                    /**
+                     * @see [\App\Http\Controllers\ShareController::index](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+
+                export namespace Show {
+                    /**
+                     * @see [\App\Http\Controllers\ShareController::show](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php)
                      */
                     export type Response = Inertia.Pages.ProjectBillingPage
 
                     /**
-                     * @see [\App\Http\Controllers\ShowSharedHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShowSharedHandler.php)
+                     * @see [\App\Http\Controllers\ShareController::show](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php)
+                     */
+                    export type Request = Record<string, unknown>
+                }
+
+                export namespace Store {
+                    /**
+                     * @see [\App\Http\Controllers\ShareController::store](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php)
+                     */
+                    export type Request = {    token: string;}
+                }
+
+                export namespace Export {
+                    /**
+                     * @see [\App\Http\Controllers\ShareController::export](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php)
+                     */
+                    export type Request = {    project_ids: unknown[];
+                        "project_ids.*"?: string;
+                        from: string;
+                        to: string;}
+                }
+
+                export namespace Destroy {
+                    /**
+                     * @see [\App\Http\Controllers\ShareController::destroy](/Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php)
                      */
                     export type Request = Record<string, unknown>
                 }
@@ -388,6 +430,7 @@ export namespace App {
                      * @see [\App\Http\Controllers\ProjectInvoiceController::store](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php)
                      */
                     export type Request = {    amount: number;
+                        discount_amount: number;
                         paid_at?: string | null;
                         notes?: string | null;
                         created_at: string;}
@@ -398,6 +441,7 @@ export namespace App {
                      * @see [\App\Http\Controllers\ProjectInvoiceController::update](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php)
                      */
                     export type Request = {    amount: number;
+                        discount_amount: number;
                         paid_at?: string | null;
                         notes?: string | null;
                         created_at: string;
@@ -409,18 +453,6 @@ export namespace App {
                      * @see [\App\Http\Controllers\ProjectInvoiceController::destroy](/Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php)
                      */
                     export type Request = Record<string, unknown>
-                }
-            }
-
-            export namespace ExportSharedBillingHandler {
-                export namespace __invoke {
-                    /**
-                     * @see [\App\Http\Controllers\ExportSharedBillingHandler::__invoke](/Users/mathieutu/Projects/takt/app/Http/Controllers/ExportSharedBillingHandler.php)
-                     */
-                    export type Request = {    project_ids: unknown[];
-                        "project_ids.*"?: string;
-                        from: string;
-                        to: string;}
                 }
             }
         }

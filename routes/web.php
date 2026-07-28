@@ -3,12 +3,11 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\CommandBarController;
-use App\Http\Controllers\ExportSharedBillingHandler;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectInvoiceController;
+use App\Http\Controllers\ShareController;
 use App\Http\Controllers\ShowApiDocHandler;
 use App\Http\Controllers\ShowHomeHandler;
-use App\Http\Controllers\ShowSharedHandler;
 use App\Http\Controllers\ShowTimesheetHandler;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureUserOwnsResource;
@@ -60,10 +59,14 @@ Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
     Route::get('timesheet', ShowTimesheetHandler::class)->name('timesheet');
     Route::get('docs/api', ShowApiDocHandler::class)->name('docs.api');
     Route::get('command-bar', CommandBarController::class)->name('command-bar');
+
+    // Shares
+    Route::resource('shares', ShareController::class)->only(['index', 'store', 'destroy']);
 });
 
-Route::get('shares/{token}', ShowSharedHandler::class)->name('shares.show');
-Route::get('shares/{token}/export', ExportSharedBillingHandler::class)->name('shares.billing.export')->middleware('throttle:10,1');
+Route::get('shares/{token}', [ShareController::class, 'show'])->name('shares.show');
+Route::get('shares/{token}/export', [ShareController::class, 'export'])
+    ->name('shares.billing.export')->middleware('throttle:10,1');
 
 Route::get('up', function () {
     $updatedAt = config('app.updated_at');

@@ -4,6 +4,10 @@
 > `main`) le temps de l'implémentation, puis est supprimé au profit de `docs/features.md`, `docs/models.md`
 > et `docs/architecture.md`, à l'image de ce qui avait été fait pour `feat/subcontracting`.
 
+> **Statut** : §2 (Partages / `SavedShare`) est **implémenté** — voir `docs/plans/shares.md` (détails et
+> écarts par rapport au plan initial) et les commits `✨ Shares`, `💄 Clients`. Les sections 3 à 10 (source de
+> délégation, import, données de démo spécifiques, documentation finale) restent à faire.
+
 ---
 
 ## 0. Contexte
@@ -55,16 +59,29 @@ merge/cherry-pick de la branche entière — le modèle de données change trop.
 
 ---
 
-## 2. Partages — nouvelle brique générique
+## 2. Partages — nouvelle brique générique ✅ Implémenté
 
 > Cette section a été extraite, retravaillée et déplacée dans **`docs/plans/shares.md`**, qui en est
-> désormais la seule source de vérité (modèle `SavedShare`, table `shares`, `ShareController`, page
-> `SharesPage.vue`, flux de sauvegarde via bandeau public + connexion). Voir aussi `CONTEXT.md` (glossaire
-> `Share`/`SavedShare`) et `docs/adr/0001-explicit-consent-for-saved-shares.md`.
+> la source de vérité (modèle `SavedShare`, table `shares`, `ShareController`, page `SharesPage.vue`, flux de
+> sauvegarde via bandeau public + connexion). Voir aussi `CONTEXT.md` (glossaire `Share`/`SavedShare`) et
+> `docs/adr/0001-explicit-consent-for-saved-shares.md`.
 
 Résumé pour la suite de ce document (sections 3-9, qui référencent cette brique) : `Favorite` devient
 `SavedShare`, `$user->favorites()` devient `$user->shares()`, `Favorite::isValid()` devient
 `SavedShare::isValid()`.
+
+Écarts constatés par rapport au plan initial de `docs/plans/shares.md`, actés pendant l'implémentation
+(mis à jour dans ce document également) :
+- **Propriétaire visitant son propre lien** : `ShareController::show` redirige directement vers
+  `clients.billing.show` plutôt que d'afficher la page publique en lecture seule — le prop `is_owner` prévu
+  au départ est devenu inutile et a été retiré.
+- **"Mes partages" — client révoqué avec followers existants** : contrairement à la décision initiale (« un
+  client sans `share_token` disparaît entièrement de la liste »), un client reste listé tant qu'au moins un
+  `SavedShare` le référence encore, marqué « Révoqué » (badge + bouton « Régénérer »), pour que le donneur
+  d'ordre garde une trace de qui avait accès et puisse relancer un lien sans perdre l'historique.
+- **Gestion du lien depuis `ClientForm.vue`** : partager/copier/révoquer est aussi accessible directement
+  depuis la modale d'édition du client (en plus de la modale dédiée sur `ProjectPage.vue`), via
+  `Client::shareUrl()` (nouvelle méthode, factorisant la construction de l'URL utilisée à trois endroits).
 
 ---
 
@@ -239,10 +256,14 @@ change pas, seule la source de la donnée change).
 
 ## 7. Données de démo
 
-`CreateDemoData::seedSubcontracting()` : créer les deux comptes prestataires et leurs projets sources comme
-aujourd'hui, un `SavedShare` pour le compte démo par prestataire (`client_id` + `token` = leur `share_token`),
-et poser directement `source_project_id` sur les projets délégués à la création (plus de lien intermédiaire
-avec timestamps à seeder).
+`CreateDemoData::seedAliceRecoqueSharedProject()` existe déjà (implémenté avec §2) : un second compte
+(« Alice Recoque »), son client et projet partagés, et un `SavedShare` du compte démo dessus — couvre la
+brique générique « Partages » mais pas encore le scénario de sous-traitance proprement dit.
+
+Reste à faire, dans une méthode dédiée (`seedSubcontracting()` ou fusionnée avec la précédente) : poser
+directement `source_project_id` sur un projet délégué du compte démo pointant vers un projet d'Alice Recoque
+(plus de lien intermédiaire avec timestamps à seeder), pour illustrer le TJM de coût et l'import dans le jeu
+de données de démonstration.
 
 ---
 
@@ -250,9 +271,10 @@ avec timestamps à seeder).
 
 - Ne pas reprendre `SubcontractingLinkControllerTest`/`SubcontractingLinkTest`/les cas `AccessibleByUser` de
   `EnsureUserOwnsResourceTest` (le modèle qu'ils testent n'existe plus).
-- `ShareControllerTest` : voir `docs/plans/shares.md` §7 pour le détail complet des cas (ajout, garde-fou
-  anti-auto-partage, resynchro, suppression, isolation, `isValid()` après révocation/régénération/suppression
-  du client).
+- `ShareControllerTest` ✅ implémenté — voir `docs/plans/shares.md` §7 pour le détail complet des cas (ajout,
+  garde-fou anti-auto-partage, resynchro, suppression, isolation, `isValid()` après
+  révocation/régénération/suppression du client, ainsi que la redirection du propriétaire vers sa page de
+  facturation et le maintien d'un client révoqué dans « Mes partages » tant que des `SavedShare` existent).
 - Nouveau/adapté `ProjectControllerTest` : création avec `source_project_id` valide (partage reçu valide),
   rejet si le projet source n'appartient pas à un partage reçu, rejet si le projet source est lui-même
   délégué (anti-chaîne), rejet si le projet source est déjà utilisé ailleurs (contrainte unique), le picker

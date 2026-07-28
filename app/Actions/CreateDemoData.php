@@ -30,6 +30,7 @@ class CreateDemoData
         $this->seedLyceeTechniqueJeanMoulin($demo);
         $this->seedStartupHub($demo);
         $this->seedArchivedClient($demo);
+        $this->seedAliceRecoqueSharedProject($demo);
 
         return $demo;
     }
@@ -355,5 +356,45 @@ class CreateDemoData
 
         $leroux->delete();
         $leroux->update(['deleted_at' => $this->dt(24)]);
+    }
+
+    /** Another account sharing a client with the demo account, already saved on the demo side. */
+    private function seedAliceRecoqueSharedProject(User $demo): void
+    {
+        $alice = User::create([
+            'name' => 'Alice RECOQUE',
+            'email' => 'alice.recoque@example.com',
+            'avatar' => 'https://www.cnil.fr/sites/default/files/inline-images/alice_recoque.png',
+        ]);
+
+        $client = $alice->clients()->create([
+            'name' => 'Commission Nationale de l\'Informatique et Libertés',
+            'daily_rate' => 45000,
+            'share_token' => (string) Str::uuid(),
+        ]);
+
+        $projet = $client->projects()->create([
+            'name' => 'Identité visuelle et site vitrine',
+            'daily_rate' => 45000,
+            'description' => "Création de l'identité de marque et développement du site vitrine.",
+            'start_date' => now()->subMonths(5),
+        ]);
+        $projet->timesheetEntries()->createMany(
+            $this->generateEntries(5, 0, 3, 6, [
+                'Direction artistique',
+                'Développement front-end',
+                'Intégration contenus',
+                'Réunion de suivi',
+            ])
+        );
+        $projet->invoices()->createMany([
+            ['amount' => 225000, 'paid_at' => $this->d(3), 'created_at' => $this->dt(4),         'notes' => 'Facture SK-001 — Identité de marque'],
+            ['amount' => 180000, 'paid_at' => null,         'created_at' => now()->subDays(15), 'notes' => 'Facture SK-002 — Développement site'],
+        ]);
+
+        $demo->shares()->create([
+            'client_id' => $client->id,
+            'token' => $client->share_token,
+        ]);
     }
 }

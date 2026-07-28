@@ -5,8 +5,163 @@ import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOpt
 import billing from "./billing";
 
 /**
- * @see \App\Http\Controllers\ShowSharedHandler::__invoke
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowSharedHandler.php:16
+ * @see \App\Http\Controllers\ShareController::index
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php:64
+ * @route "/shares"
+ */
+export const index = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+    url: index.url(options),
+    method: "get",
+})
+
+index.definition = {
+    methods: ["get","head"],
+    url: "/shares",
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+ * @see \App\Http\Controllers\ShareController::index
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php:64
+ * @route "/shares"
+ */
+index.url = (options?: RouteQueryOptions) => {
+    return index.definition.url + queryParams(options)
+}
+
+/**
+ * @see \App\Http\Controllers\ShareController::index
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php:64
+ * @route "/shares"
+ */
+index.get = (options?: RouteQueryOptions): RouteDefinition<"get"> => ({
+    url: index.url(options),
+    method: "get",
+})
+
+/**
+ * @see \App\Http\Controllers\ShareController::index
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php:64
+ * @route "/shares"
+ */
+index.head = (options?: RouteQueryOptions): RouteDefinition<"head"> => ({
+    url: index.url(options),
+    method: "head",
+})
+
+
+
+
+
+
+
+
+/**
+ * @see \App\Http\Controllers\ShareController::store
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php:100
+ * @route "/shares"
+ */
+export const store = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
+    url: store.url(options),
+    method: "post",
+})
+
+store.definition = {
+    methods: ["post"],
+    url: "/shares",
+} satisfies RouteDefinition<["post"]>
+
+/**
+ * @see \App\Http\Controllers\ShareController::store
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php:100
+ * @route "/shares"
+ */
+store.url = (options?: RouteQueryOptions) => {
+    return store.definition.url + queryParams(options)
+}
+
+/**
+ * @see \App\Http\Controllers\ShareController::store
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php:100
+ * @route "/shares"
+ */
+store.post = (options?: RouteQueryOptions): RouteDefinition<"post"> => ({
+    url: store.url(options),
+    method: "post",
+})
+
+
+
+
+
+
+
+
+/**
+ * @see \App\Http\Controllers\ShareController::destroy
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php:116
+ * @route "/shares/{share}"
+ */
+export const destroy = (args: { share: string | { id: string } } | [ share: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
+    url: destroy.url(args, options),
+    method: "delete",
+})
+
+destroy.definition = {
+    methods: ["delete"],
+    url: "/shares/{share}",
+} satisfies RouteDefinition<["delete"]>
+
+/**
+ * @see \App\Http\Controllers\ShareController::destroy
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php:116
+ * @route "/shares/{share}"
+ */
+destroy.url = (args: { share: string | { id: string } } | [ share: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
+    if (typeof args === "string" || typeof args === "number") {
+        args = { share: args }
+    }
+    
+    if (typeof args === "object" && !Array.isArray(args) && "id" in args) {
+        args = { share: args.id }
+    }
+    
+    if (Array.isArray(args)) {
+        args = {
+        share: args[0],
+    }
+    }
+    
+    args = applyUrlDefaults(args)
+    
+    const parsedArgs = {
+        share: typeof args.share === "object" ? args.share.id : args.share,
+    }
+    
+    return destroy.definition.url
+        .replace("{share}", parsedArgs.share.toString())
+        .replace(/\/+$/, "") + queryParams(options)
+}
+
+/**
+ * @see \App\Http\Controllers\ShareController::destroy
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php:116
+ * @route "/shares/{share}"
+ */
+destroy.delete = (args: { share: string | { id: string } } | [ share: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
+    url: destroy.url(args, options),
+    method: "delete",
+})
+
+
+
+
+
+
+
+
+/**
+ * @see \App\Http\Controllers\ShareController::show
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php:22
  * @route "/shares/{token}"
  */
 export const show = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -20,8 +175,8 @@ show.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
- * @see \App\Http\Controllers\ShowSharedHandler::__invoke
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowSharedHandler.php:16
+ * @see \App\Http\Controllers\ShareController::show
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php:22
  * @route "/shares/{token}"
  */
 show.url = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -47,8 +202,8 @@ show.url = (args: { token: string | number } | [ token: string | number ] | stri
 }
 
 /**
- * @see \App\Http\Controllers\ShowSharedHandler::__invoke
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowSharedHandler.php:16
+ * @see \App\Http\Controllers\ShareController::show
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php:22
  * @route "/shares/{token}"
  */
 show.get = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -57,8 +212,8 @@ show.get = (args: { token: string | number } | [ token: string | number ] | stri
 })
 
 /**
- * @see \App\Http\Controllers\ShowSharedHandler::__invoke
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShowSharedHandler.php:16
+ * @see \App\Http\Controllers\ShareController::show
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ShareController.php:22
  * @route "/shares/{token}"
  */
 show.head = (args: { token: string | number } | [ token: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -75,6 +230,9 @@ show.head = (args: { token: string | number } | [ token: string | number ] | str
 
 
 const shares = {
+    index,
+    store,
+    destroy,
     show,
     billing,
 }

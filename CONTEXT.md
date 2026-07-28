@@ -12,7 +12,7 @@ _Avoid_: Favorite (for emission)
 **SavedShare** (reception):
 A user's record of another account's `Client.share_token`, kept for later reuse (e.g. as the
 source of a delegated project). Distinct from emission: `Client.share_token` is what an owner
-*emits*; `SavedShare` is what the *recipient* stores after receiving it. Always created by an
+_emits_; `SavedShare` is what the _recipient_ stores after receiving it. Always created by an
 explicit action (a click); an existing entry silently resyncs on every revisit of the link
 (viewing alone never creates an entry — only an explicit click does). Table `shares`, route
 prefix `shares/*` (route naming stays generic; the class name stays precise to avoid conflating

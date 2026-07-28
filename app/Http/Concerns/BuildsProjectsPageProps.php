@@ -88,7 +88,7 @@ trait BuildsProjectsPageProps
                     'daily_rate' => $c->daily_rate,
                     'created_at' => $c->created_at,
                     'deleted_at' => $c->deleted_at,
-                    'share_url' => $c->share_token ? route('shares.show', $c->share_token) : null,
+                    'share_url' => $c->shareUrl(),
                 ]);
             },
 

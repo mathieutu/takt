@@ -68,7 +68,7 @@ store.post = (args: { project: string | { id: string } } | [ project: string | {
 
 /**
  * @see \App\Http\Controllers\ProjectInvoiceController::update
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:25
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:26
  * @route "/invoices/{invoice}"
  */
 export const update = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
@@ -83,7 +83,7 @@ update.definition = {
 
 /**
  * @see \App\Http\Controllers\ProjectInvoiceController::update
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:25
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:26
  * @route "/invoices/{invoice}"
  */
 update.url = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -114,7 +114,7 @@ update.url = (args: { invoice: string | { id: string } } | [ invoice: string | {
 
 /**
  * @see \App\Http\Controllers\ProjectInvoiceController::update
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:25
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:26
  * @route "/invoices/{invoice}"
  */
 update.put = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
@@ -131,7 +131,7 @@ update.put = (args: { invoice: string | { id: string } } | [ invoice: string | {
 
 /**
  * @see \App\Http\Controllers\ProjectInvoiceController::destroy
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:38
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:40
  * @route "/invoices/{invoice}"
  */
 export const destroy = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
@@ -146,7 +146,7 @@ destroy.definition = {
 
 /**
  * @see \App\Http\Controllers\ProjectInvoiceController::destroy
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:38
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:40
  * @route "/invoices/{invoice}"
  */
 destroy.url = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -177,7 +177,7 @@ destroy.url = (args: { invoice: string | { id: string } } | [ invoice: string | 
 
 /**
  * @see \App\Http\Controllers\ProjectInvoiceController::destroy
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:38
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ProjectInvoiceController.php:40
  * @route "/invoices/{invoice}"
  */
 destroy.delete = (args: { invoice: string | { id: string } } | [ invoice: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({

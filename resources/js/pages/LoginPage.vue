@@ -7,9 +7,12 @@ import { disabled, redirect } from '@/wayfinder/routes/login'
 
 defineOptions({ layout: () => false })
 
-defineProps<{
+const props = defineProps<{
   users: Array<{ id: string, name: string, email: string }>,
+  redirect: string | null,
 }>()
+
+const redirectQuery = { redirect: props.redirect ?? undefined }
 
 useFlash()
 </script>
@@ -107,7 +110,7 @@ useFlash()
                     v-for="user in users"
                     :key="user.id"
                     :href="disabled()"
-                    :data="{ user_id: user.id }"
+                    :data="{ user_id: user.id, ...redirectQuery }"
                     class="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm transition-colors hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800"
                   >
                     <span class="flex flex-col items-start">
@@ -120,7 +123,7 @@ useFlash()
 
               <UButton
                 v-else
-                :href="redirect().url"
+                :href="redirect({ query: redirectQuery }).url"
                 external
                 label="Se connecter avec GitHub"
                 icon="i-simple-icons:github"

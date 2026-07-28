@@ -26,7 +26,7 @@ here) and was reworked before implementation:
 | Resync | Revisiting the page when a `SavedShare` already exists for that user/client silently resyncs its stored token (`updateOrCreate`) — no click needed, since consent was already given at creation time. This also fixes staleness after the owner regenerates their `share_token`. |
 | Self-share | Blocked server-side: a user cannot save their own client's share link. |
 | Soft-deleted client | Treated identically to a revoked/regenerated share — shown as "invalid link" everywhere, no special-cased filtering. |
-| My shares — history | Full history, including entries that became invalid, each flagged individually. A client that's no longer shared at all (`share_token` back to `null`) disappears from "My shares" entirely (nothing left to manage). |
+| My shares — history | Full history, including entries that became invalid, each flagged individually. A client that's no longer shared at all (`share_token` back to `null`) stays listed as long as at least one `SavedShare` still references it (nothing to manage otherwise) — its followers are then shown as revoked rather than "pending resync", since there's no active link left to resync against. Only a client with `share_token` null **and** no `SavedShare` at all disappears from "My shares" entirely. |
 | My shares — actions | Read-only. The owner can't remove someone else's `SavedShare` directly — only revoke/regenerate their own `share_token` via the existing share modal on `ProjectPage.vue` (unchanged). |
 | Controllers | `ShowSharedHandler` and `ExportSharedBillingHandler` are folded into `ShareController` as `show`/`export`, alongside the authenticated `index`/`store`/`destroy` — one controller for the whole `Share` resource, public and authenticated actions alike. |
 | Picker (delegated project creation) | Invalid `SavedShare` entries are filtered out entirely — only valid ones are selectable. |
@@ -144,13 +144,14 @@ public function index(Request $request): Response
             ->map->export([...]), // includes is_valid via isValid()
 
         'my_shares' => $user->clients()
-            ->whereNotNull('share_token')
+            ->where(fn ($q) => $q->whereNotNull('share_token')->orWhereHas('shares'))
             ->with(['shares' => fn ($q) => $q->with('user:id,name')])
             ->get()
             ->map(fn (Client $c) => [
                 'id' => $c->id,
                 'name' => $c->name,
-                'share_url' => route('shares.show', $c->share_token),
+                'is_shared' => $c->share_token !== null,
+                'share_url' => $c->share_token ? route('shares.show', $c->share_token) : null,
                 'followers' => $c->shares->map(fn (SavedShare $s) => [
                     'id' => $s->id,
                     'user_name' => $s->user->name,

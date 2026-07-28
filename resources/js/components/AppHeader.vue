@@ -7,6 +7,7 @@ import TaktLogo from '@/components/TaktLogo.vue'
 import { useCommandPalette } from '@/composables/useCommandPalette'
 import { dashboard, login, logout, profile, timesheet } from '@/wayfinder/routes'
 import projects from '@/wayfinder/routes/projects'
+import { index as sharesIndex } from '@/wayfinder/routes/shares'
 
 const { open } = useCommandPalette()
 
@@ -25,15 +26,17 @@ const navItems = computed<NavigationMenuItem[]>(() => [
   { label: 'Projets', icon: 'i-lucide-folder-kanban', to: projects.index(), active: page.url.startsWith(projects.index().url), prefetch: true },
 ])
 
-const userMenuItems = computed<DropdownMenuItem[][]>(() => [[
+const accountMenuItems = computed(() => [
+  { label: 'Partages', icon: 'i-lucide-share-2', to: sharesIndex(), active: page.url.startsWith(sharesIndex().url), prefetch: true },
   { label: 'Paramètres', icon: 'i-lucide-settings', to: profile(), active: page.url.startsWith(profile().url), prefetch: true },
   { label: 'Se déconnecter', icon: 'i-lucide-log-out', to: logout() },
-]])
+])
+
+const userMenuItems = computed<DropdownMenuItem[][]>(() => [accountMenuItems.value])
 
 const mobileMenuItems = computed<NavigationMenuItem[]>(() => [
   ...navItems.value,
-  { label: 'Paramètres', icon: 'i-lucide-settings', to: profile(), active: page.url.startsWith(profile().url), prefetch: true },
-  { label: 'Se déconnecter', icon: 'i-lucide-log-out', to: logout() },
+  ...accountMenuItems.value,
 ])
 </script>
 

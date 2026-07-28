@@ -80,7 +80,7 @@ edit.head = (args: { client: string | { id: string } } | [ client: string | { id
 
 /**
  * @see \App\Http\Controllers\ClientController::update
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:39
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:40
  * @route "/clients/{client}"
  */
 export const update = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
@@ -95,7 +95,7 @@ update.definition = {
 
 /**
  * @see \App\Http\Controllers\ClientController::update
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:39
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:40
  * @route "/clients/{client}"
  */
 update.url = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -126,7 +126,7 @@ update.url = (args: { client: string | { id: string } } | [ client: string | { i
 
 /**
  * @see \App\Http\Controllers\ClientController::update
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:39
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:40
  * @route "/clients/{client}"
  */
 update.put = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"put"> => ({
@@ -136,7 +136,7 @@ update.put = (args: { client: string | { id: string } } | [ client: string | { i
 
 /**
  * @see \App\Http\Controllers\ClientController::update
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:39
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:40
  * @route "/clients/{client}"
  */
 update.patch = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"patch"> => ({
@@ -153,7 +153,7 @@ update.patch = (args: { client: string | { id: string } } | [ client: string | {
 
 /**
  * @see \App\Http\Controllers\ClientController::destroy
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:60
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:61
  * @route "/clients/{client}"
  */
 export const destroy = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
@@ -168,7 +168,7 @@ destroy.definition = {
 
 /**
  * @see \App\Http\Controllers\ClientController::destroy
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:60
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:61
  * @route "/clients/{client}"
  */
 destroy.url = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -199,7 +199,7 @@ destroy.url = (args: { client: string | { id: string } } | [ client: string | { 
 
 /**
  * @see \App\Http\Controllers\ClientController::destroy
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:60
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:61
  * @route "/clients/{client}"
  */
 destroy.delete = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"delete"> => ({
@@ -216,7 +216,7 @@ destroy.delete = (args: { client: string | { id: string } } | [ client: string |
 
 /**
  * @see \App\Http\Controllers\ClientController::restore
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:53
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:54
  * @route "/clients/{client}/restore"
  */
 export const restore = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({
@@ -231,7 +231,7 @@ restore.definition = {
 
 /**
  * @see \App\Http\Controllers\ClientController::restore
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:53
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:54
  * @route "/clients/{client}/restore"
  */
 restore.url = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -262,7 +262,7 @@ restore.url = (args: { client: string | { id: string } } | [ client: string | { 
 
 /**
  * @see \App\Http\Controllers\ClientController::restore
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:53
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:54
  * @route "/clients/{client}/restore"
  */
 restore.post = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"post"> => ({

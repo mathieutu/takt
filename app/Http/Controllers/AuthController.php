@@ -13,15 +13,20 @@ use Laravel\Socialite\Facades\Socialite;
 
 class AuthController
 {
-    public function show(): Response
+    public function show(Request $request): Response
     {
         return Inertia::render('LoginPage', [
             'users' => ! config('auth.enabled') ? User::all(['id', 'name', 'email']) : [],
+            'redirect' => $request->query('redirect'),
         ]);
     }
 
-    public function redirect(): RedirectResponse
+    public function redirect(Request $request): RedirectResponse
     {
+        if ($request->filled('redirect')) {
+            session(['url.intended' => $request->input('redirect')]);
+        }
+
         return Socialite::driver('github')->redirect();
     }
 
@@ -54,6 +59,10 @@ class AuthController
     public function disabled(Request $request): RedirectResponse
     {
         abort_unless(app()->isLocal(), 403);
+
+        if ($request->filled('redirect')) {
+            session(['url.intended' => $request->input('redirect')]);
+        }
 
         $user = User::findOrFail($request->input('user_id'));
 

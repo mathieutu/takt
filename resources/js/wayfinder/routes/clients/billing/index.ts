@@ -5,7 +5,7 @@ import { applyUrlDefaults, queryParams, type RouteDefinition, type RouteQueryOpt
 
 /**
  * @see \App\Http\Controllers\ClientController::showBilling
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:78
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:79
  * @route "/clients/{client}/billing"
  */
 export const show = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -20,7 +20,7 @@ show.definition = {
 
 /**
  * @see \App\Http\Controllers\ClientController::showBilling
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:78
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:79
  * @route "/clients/{client}/billing"
  */
 show.url = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -51,7 +51,7 @@ show.url = (args: { client: string | { id: string } } | [ client: string | { id:
 
 /**
  * @see \App\Http\Controllers\ClientController::showBilling
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:78
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:79
  * @route "/clients/{client}/billing"
  */
 show.get = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -61,7 +61,7 @@ show.get = (args: { client: string | { id: string } } | [ client: string | { id:
 
 /**
  * @see \App\Http\Controllers\ClientController::showBilling
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:78
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:79
  * @route "/clients/{client}/billing"
  */
 show.head = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"head"> => ({
@@ -78,7 +78,7 @@ show.head = (args: { client: string | { id: string } } | [ client: string | { id
 
 /**
  * @see \App\Http\Controllers\ClientController::exportBilling
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:95
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:96
  * @route "/clients/{client}/billing/export"
  */
 export const exportMethod = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -93,7 +93,7 @@ exportMethod.definition = {
 
 /**
  * @see \App\Http\Controllers\ClientController::exportBilling
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:95
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:96
  * @route "/clients/{client}/billing/export"
  */
 exportMethod.url = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions) => {
@@ -124,7 +124,7 @@ exportMethod.url = (args: { client: string | { id: string } } | [ client: string
 
 /**
  * @see \App\Http\Controllers\ClientController::exportBilling
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:95
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:96
  * @route "/clients/{client}/billing/export"
  */
 exportMethod.get = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"get"> => ({
@@ -134,7 +134,7 @@ exportMethod.get = (args: { client: string | { id: string } } | [ client: string
 
 /**
  * @see \App\Http\Controllers\ClientController::exportBilling
- * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:95
+ * @see /Users/mathieutu/Projects/takt/app/Http/Controllers/ClientController.php:96
  * @route "/clients/{client}/billing/export"
  */
 exportMethod.head = (args: { client: string | { id: string } } | [ client: string | { id: string } ] | string | { id: string }, options?: RouteQueryOptions): RouteDefinition<"head"> => ({
