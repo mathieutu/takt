@@ -31,6 +31,7 @@ class ClientController
                     'id',
                     'name',
                     'daily_rate',
+                    'shareUrl() as share_url',
                 ]),
             ],
         ]);
