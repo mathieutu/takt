@@ -12,7 +12,8 @@
       "Bash(rtk wc *)",
       "Bash(vendor/bin/pint *)",
       "mcp__nuxt-ui-remote__get-example",
-      "Bash(yarn lint:fix)"
+      "Bash(yarn lint:fix)",
+      "mcp__laravel-boost__search-docs"
     ]
   },
   "enableAllProjectMcpServers": true,
