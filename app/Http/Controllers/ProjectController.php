@@ -104,7 +104,14 @@ class ProjectController
 
     public function edit(Request $request, Project $project): Response
     {
-        $request->session()->put("back_url_project_{$project->id}", $request->header('Referer'));
+        // Guarded against self-reference: after a validation error, Inertia reloads this very edit
+        // page and the browser's Referer header for that reload is the edit page itself — recording
+        // it as the "back" destination would trap every later successful save on this same page.
+        $referer = $request->header('Referer');
+
+        if ($referer && $referer !== $request->url()) {
+            $request->session()->put("back_url_project_{$project->id}", $referer);
+        }
 
         return Inertia::render('ProjectForm', [
             'page' => $this->projectsPageProps($request),
