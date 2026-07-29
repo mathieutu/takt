@@ -28,6 +28,7 @@ use Illuminate\Foundation\Auth\Access\Authorizable;
  * @property-read Collection<int, SavedShare> $shares
  * @property-read int|null $shares_count
  *
+ * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User query()

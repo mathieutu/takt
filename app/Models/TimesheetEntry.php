@@ -15,14 +15,15 @@ use Znck\Eloquent\Relations\BelongsToThrough;
  * @property string $project_id
  * @property CarbonImmutable $date
  * @property int $coverage
- * @property bool $billable
  * @property string|null $title
  * @property string|null $description
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
- * @property-read Project|null $project
+ * @property bool $billable
+ * @property-read Project $project
  * @property-read User|null $user
  *
+ * @method static \Database\Factories\TimesheetEntryFactory factory($count = null, $state = [])
  * @method static Builder<static>|TimesheetEntry inMonth(\Carbon\CarbonInterface $date)
  * @method static Builder<static>|TimesheetEntry newModelQuery()
  * @method static Builder<static>|TimesheetEntry newQuery()

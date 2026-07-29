@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read Client|null $client
  * @property-read User $user
  *
+ * @method static \Database\Factories\SavedShareFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SavedShare newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SavedShare newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|SavedShare query()

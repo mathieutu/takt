@@ -11,14 +11,15 @@ use Znck\Eloquent\Relations\BelongsToThrough;
  * @property string $id
  * @property string $project_id
  * @property int $amount
- * @property int $discount_amount
  * @property CarbonImmutable|null $paid_at
  * @property string|null $notes
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
- * @property-read Project|null $project
+ * @property int $discount_amount
+ * @property-read Project $project
  * @property-read User|null $user
  *
+ * @method static \Database\Factories\InvoiceFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invoice newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invoice newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invoice query()
