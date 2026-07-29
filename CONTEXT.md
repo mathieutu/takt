@@ -25,3 +25,27 @@ A `SavedShare` is valid when its captured `token` still matches the client's cur
 client deletion (even soft-delete) — all treated identically in the UI ("invalid link"), with no
 distinction by cause. An invalid `SavedShare` is excluded from the delegated-project creation
 picker but stays visible (and removable) in "Received shares".
+
+**Subcontracted project**:
+A subcontractor's own `Project`, created from a delegating freelance's invitation link (with a
+suggested name/`daily_rate`). Its `daily_rate` becomes the delegating freelance's cost basis
+(`Project::costDailyRate()`) on the project billing the real end client; its timesheet entries are
+imported — never edited directly — into that billing project. The billing project itself has no
+special name of its own: it's an ordinary `Project` that happens to carry
+`subcontracted_project_id`, `hasSubcontractedProject()`, `isImportable()`.
+_Avoid_: source project, delegated project (ambiguous: reads as "the project handed to someone",
+i.e. the subcontracted one, not the freelance's own billing project)
+
+**Effective date** (daily rate / monthly budget):
+The date from which a newly-submitted daily rate or monthly budget value applies going forward —
+it never changes what was already billed before that date (see ADR-0002). On the project edit
+form, value and effective date are independent: submitting a value without a date applies it from
+today; submitting a date without a value backdates/postdates a value of `0` to that date; submitting
+neither leaves the existing rate/budget completely untouched (so the rest of the project — e.g. its
+name — can be saved without accidentally touching either history).
+
+**Unlimited monthly budget**:
+A monthly budget of exactly `0` is not a genuine zero-euro cap — it's normalized to "no cap"
+(`null`). There is no way to record a project that may bill €0/month; `0` is reserved to mean
+unlimited. This doesn't apply to the daily rate: `0` there is a valid, if unusual, rate (e.g. work
+done for free from that date).

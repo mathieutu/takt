@@ -3,6 +3,7 @@ import { Head, router, useForm } from '@inertiajs/vue3'
 import { computed, watch } from 'vue'
 import DateInput from '@/components/DateInput.vue'
 import ProjectPage from '@/components/ProjectPage.vue'
+import RateHistoryEditor from '@/components/RateHistoryEditor.vue'
 import { index, store, update } from '@/wayfinder/routes/projects'
 
 type FormClient = {
@@ -15,8 +16,10 @@ type ProjectFormData = {
   id: string,
   name: string,
   description: string,
-  daily_rate: number | null,
+  daily_rate: number,
+  daily_rates: Record<string, number>,
   max_month_budget: number | null,
+  monthly_budgets: Record<string, number | null> | null,
   max_total_budget: number | null,
   client_id: string,
   start_date: string,
@@ -65,8 +68,14 @@ const { modal } = defineProps<{
 const form = useForm({
   name: modal.project?.name ?? '',
   description: modal.project?.description ?? '',
-  daily_rate: modal.project?.daily_rate ?? null,
-  max_month_budget: modal.project?.max_month_budget ?? null,
+  // When editing, daily_rate/max_month_budget are the "new value" fields of RateHistoryEditor (the
+  // current one is already shown in the history list above them). Left blank alongside their
+  // effective_date, ProjectController::update leaves that field untouched entirely — the date is
+  // what signals a change was actually intended, not the value alone.
+  daily_rate: null as number | null,
+  daily_rate_effective_date: '',
+  max_month_budget: null as number | null,
+  monthly_budget_effective_date: '',
   max_total_budget: modal.project?.max_total_budget ?? null,
   client_id: modal.project?.client_id ?? modal.clients[0]?.id ?? null,
   client_name: '',
@@ -97,6 +106,10 @@ const clientSelectItems = computed(() => [
   ...(!modal.project ? [{ value: null, label: '+ Nouveau client' }, { type: 'separator' as const }, { type: 'label' as const, label: 'Clients existants' }] : []),
   ...modal.clients.map(c => ({ value: c.id, label: c.name })),
 ])
+
+const setDailyRate = (val: number | null) => form.daily_rate = val == null ? null : Math.round(val * 100)
+const setMaxMonthBudget = (val: number | null) => form.max_month_budget = val ? Math.round(val * 100) : null
+const setMaxTotalBudget = (val: number | null) => form.max_total_budget = val ? Math.round(val * 100) : null
 
 const submit = () => form.submit(modal.project ? update(modal.project) : store())
 const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
@@ -157,18 +170,18 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
             </UFormField>
           </div>
 
-          <UFormField label="Tarif journalier projet (€/j)" required :error="form.errors.daily_rate">
-            <UInput
-              type="number"
-              min="0"
-              step="0.01"
-              :modelValue="form.daily_rate != null ? form.daily_rate / 100 : null"
-              class="w-full"
-              @update:modelValue="(val: number | null) => form.daily_rate = val != null ? Math.round(val * 100) : null"
-            />
-          </UFormField>
+          <template v-if="!modal.project">
+            <UFormField label="Tarif journalier projet (€/j)" required :error="form.errors.daily_rate">
+              <UInput
+                type="number"
+                min="0"
+                step="0.01"
+                :modelValue="form.daily_rate != null ? form.daily_rate / 100 : null"
+                class="w-full"
+                @update:modelValue="setDailyRate"
+              />
+            </UFormField>
 
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <UFormField label="Plafond mensuel (€/mois)" :error="form.errors.max_month_budget">
               <UInput
                 type="number"
@@ -177,22 +190,48 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
                 placeholder="Illimité"
                 :modelValue="form.max_month_budget && form.max_month_budget / 100"
                 class="w-full"
-                @update:modelValue="(val: number | null) => form.max_month_budget = val ? Math.round(val * 100) : null"
+                @update:modelValue="setMaxMonthBudget"
+              />
+            </UFormField>
+          </template>
+
+          <template v-else>
+            <UFormField label="Tarif journalier projet (€/j)" required :error="form.errors.daily_rate">
+              <RateHistoryEditor
+                :history="modal.project.daily_rates"
+                unit="/j"
+                :modelValue="form.daily_rate"
+                :date="form.daily_rate_effective_date"
+                :dateError="form.errors.daily_rate_effective_date"
+                @update:modelValue="(val: number | null) => form.daily_rate = val"
+                @update:date="(val: string) => form.daily_rate_effective_date = val"
               />
             </UFormField>
 
-            <UFormField label="Enveloppe budgétaire totale (€)" :error="form.errors.max_total_budget">
-              <UInput
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="Sans limite"
-                :modelValue="form.max_total_budget && form.max_total_budget / 100"
-                class="w-full"
-                @update:modelValue="(val: number | null) => form.max_total_budget = val ? Math.round(val * 100) : null"
+            <UFormField label="Plafond mensuel (€/mois)" :error="form.errors.max_month_budget">
+              <RateHistoryEditor
+                :history="modal.project.monthly_budgets"
+                unit="/mois"
+                :modelValue="form.max_month_budget"
+                :date="form.monthly_budget_effective_date"
+                :dateError="form.errors.monthly_budget_effective_date"
+                @update:modelValue="(val: number | null) => form.max_month_budget = val"
+                @update:date="(val: string) => form.monthly_budget_effective_date = val"
               />
             </UFormField>
-          </div>
+          </template>
+
+          <UFormField label="Enveloppe budgétaire totale (€)" :error="form.errors.max_total_budget">
+            <UInput
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Sans limite"
+              :modelValue="form.max_total_budget && form.max_total_budget / 100"
+              class="w-full"
+              @update:modelValue="setMaxTotalBudget"
+            />
+          </UFormField>
 
           <div v-if="modal.project" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <UFormField label="Début le" required :error="form.errors.start_date">

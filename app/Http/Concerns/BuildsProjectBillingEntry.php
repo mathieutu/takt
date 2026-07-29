@@ -43,15 +43,28 @@ trait BuildsProjectBillingEntry
             ->sort()
             ->values();
 
-        $months = $allMonths->map(function (string $month) use ($timesheetMonths, $invoicesByMonth) {
+        $firstEntry = $project->timesheetEntries->sortBy('date')->first();
+        $projectStart = $firstEntry ? $firstEntry->date : $project->start_date;
+
+        $months = $allMonths->map(function (string $month) use ($timesheetMonths, $invoicesByMonth, $project, $projectStart) {
             $entries = $timesheetMonths->get($month, collect());
+            $monthDate = CarbonImmutable::createFromFormat('Y-m', $month)->startOfMonth();
+            // `entries` below keeps every entry (billable or not) for calendar/PDF display, but
+            // `days_worked` — and `worked` — excludes non-billable entries, since it feeds days ×
+            // rate money calculations.
+            $daysWorked = round(TimesheetEntry::billableCoverageSum($entries) / 100, 2);
+            // Summed per entry (not `daysWorked * a single month rate`) so a rate change effective
+            // mid-month still bills each day at the rate that was actually in force that day.
+            $worked = $entries->where('billable', true)
+                ->sum(fn (TimesheetEntry $e) => (int) round($e->coverage / 100 * $project->getDailyRateForDate($e->date)));
 
             return [
                 'month' => $month,
-                // `entries` below keeps every entry (billable or not) for calendar/PDF display, but
-                // `days_worked` — and every total derived from it (total_days, worked, to_invoice, to_pay) —
-                // excludes non-billable entries, since it feeds days × rate money calculations.
-                'days_worked' => round(TimesheetEntry::billableCoverageSum($entries) / 100, 2),
+                'daily_rate' => $project->getDailyRateForDate($monthDate),
+                'monthly_budget' => $project->getMonthlyBudgetForDate($monthDate),
+                'cumulative_budget' => $project->theoreticalBudgetThrough($projectStart, $monthDate),
+                'days_worked' => $daysWorked,
+                'worked' => $worked,
                 'entries' => $entries
                     ->keyBy(fn ($e) => $e->date->toDateString())
                     ->map(fn ($e) => [
@@ -73,11 +86,6 @@ trait BuildsProjectBillingEntry
             ];
         });
 
-        $now = CarbonImmutable::now();
-        $firstEntry = $project->timesheetEntries->sortBy('date')->first();
-        $projectStart = $firstEntry ? $firstEntry->date : $project->start_date;
-        $monthsElapsed = max(1, $projectStart->startOfMonth()->diffInMonths($now->startOfMonth()) + 1);
-
         return [
             'id' => $project->id,
             'name' => $project->name,
@@ -87,7 +95,6 @@ trait BuildsProjectBillingEntry
             'is_inactive' => $project->isInactive(),
             'client' => ['id' => $project->client_id, 'name' => $clientNameOverride ?? $project->client->name],
             'months' => $months->values(),
-            'months_elapsed' => $monthsElapsed,
             'months_with_entries_count' => $timesheetMonths->count(),
         ];
     }
@@ -101,31 +108,36 @@ trait BuildsProjectBillingEntry
      *     max_total_budget: ?int,
      *     is_inactive: bool,
      *     client: array{id: string, name: string},
-     *     months: Collection<int, array<string, mixed>>,
-     *     months_elapsed: int,
+     *     months: Collection<int, array{month: string, daily_rate: int, monthly_budget: ?int, cumulative_budget: ?int, days_worked: float, worked: int, entries: Collection, invoices: Collection}>,
      *     months_with_entries_count: int,
      *     total_days: float,
-     *     total_worked: float,
+     *     total_worked: int,
      *     total_invoiced: int,
+     *     total_invoiced_days: float,
      *     total_discount: int,
-     *     to_invoice: float,
+     *     to_invoice: int,
+     *     to_invoice_days: float,
      *     to_pay: int,
+     *     to_pay_days: float,
      * }
      */
     protected function buildProjectBillingEntryWithTotals(Project $project, ?string $clientNameOverride = null): array
     {
         $entry = $this->buildProjectBillingEntry($project, $clientNameOverride);
 
-        $totals = $this->computeTotals(collect($entry['months']), $entry['daily_rate']);
+        $totals = $this->computeTotals(collect($entry['months']));
 
         return [
             ...$entry,
             'total_days' => $totals['days'],
             'total_worked' => $totals['worked'],
             'total_invoiced' => $totals['invoiced'],
+            'total_invoiced_days' => $totals['invoiced_days'],
             'total_discount' => $totals['discount'],
             'to_invoice' => $totals['to_invoice'],
+            'to_invoice_days' => $totals['to_invoice_days'],
             'to_pay' => $totals['to_pay'],
+            'to_pay_days' => $totals['to_pay_days'],
         ];
     }
 
@@ -136,23 +148,46 @@ trait BuildsProjectBillingEntry
      * on already-invoiced work, not unbilled work. `to_pay` uses `net_amount` on unpaid invoices, since
      * it represents real cash still expected.
      *
-     * @param  Collection<int, array{days_worked: float, invoices: Collection<int, array{amount: int, discount_amount: int, net_amount: int, paid_at: ?string}>}>  $months
-     * @return array{days: float, worked: float, invoiced: int, discount: int, to_invoice: float, to_pay: int}
+     * Each month's `worked` already summed each entry at the daily rate effective on its own date
+     * (see buildProjectBillingEntry), so summing it here stays correct even if the project's rate
+     * changed mid-month or over time — no phantom delta on days that were worked under an older rate.
+     *
+     * The `_days` figures are day-equivalents of already-realized amounts (invoiced, still to invoice,
+     * still to pay) — there's no literal "days this invoice covers" tracked anywhere (an invoice is a
+     * negotiated amount, not days × rate), so each is estimated by dividing by that month's own rate
+     * and summing, rather than dividing the aggregate amount by a single (e.g. current) rate — which
+     * would misrepresent months invoiced under a different rate.
+     *
+     * @param  Collection<int, array{daily_rate: int, worked: int, days_worked: float, invoices: Collection<int, array{amount: int, discount_amount: int, net_amount: int, paid_at: ?string}>}>  $months
+     * @return array{days: float, worked: int, invoiced: int, invoiced_days: float, discount: int, to_invoice: int, to_invoice_days: float, to_pay: int, to_pay_days: float}
      */
-    private function computeTotals(Collection $months, int $dailyRate): array
+    private function computeTotals(Collection $months): array
     {
         $invoices = $months->flatMap(fn (array $m) => $m['invoices']);
 
-        $worked = $months->sum(fn (array $m) => $m['days_worked'] * $dailyRate);
+        $worked = $months->sum('worked');
         $invoiced = $invoices->sum('amount');
+        $days = $months->sum('days_worked');
+
+        // Cast to float: PHP's `/` returns an int on an evenly-divisible pair, which would otherwise
+        // make this figure's type flip between int and float depending on the numbers involved.
+        $invoicedDays = (float) $months->sum(fn (array $m) => $m['daily_rate'] > 0
+            ? collect($m['invoices'])->sum('amount') / $m['daily_rate']
+            : 0);
+        $unpaidDays = (float) $months->sum(fn (array $m) => $m['daily_rate'] > 0
+            ? collect($m['invoices'])->where('paid_at', null)->sum('net_amount') / $m['daily_rate']
+            : 0);
 
         return [
-            'days' => $months->sum('days_worked'),
+            'days' => $days,
             'worked' => $worked,
             'invoiced' => $invoiced,
+            'invoiced_days' => $invoicedDays,
             'discount' => $invoices->sum('discount_amount'),
             'to_invoice' => $worked - $invoiced,
+            'to_invoice_days' => $days - $invoicedDays,
             'to_pay' => $invoices->where('paid_at', null)->sum('net_amount'),
+            'to_pay_days' => $unpaidDays,
         ];
     }
 
@@ -204,8 +239,8 @@ trait BuildsProjectBillingEntry
                 $priorMonths = $allMonths->filter(fn ($m) => $m['month'] < $from);
                 $periodMonths = $allMonths->filter(fn ($m) => $m['month'] >= $from && $m['month'] <= $to)->values();
 
-                $priorTotals = $this->computeTotals($priorMonths, $entry['daily_rate']);
-                $periodTotals = $this->computeTotals($periodMonths, $entry['daily_rate']);
+                $priorTotals = $this->computeTotals($priorMonths);
+                $periodTotals = $this->computeTotals($periodMonths);
 
                 return [
                     ...$entry,

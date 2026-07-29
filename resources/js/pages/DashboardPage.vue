@@ -77,6 +77,8 @@ type DashboardProps = {
     workedDaysCount: number,
     periodDaysCount: number,
     monthDaysCount: number,
+    workedAmount: number,
+    monthAmount: number,
     isInactive: boolean,
     lastActivity: string | null,
     unbilled: number,
@@ -208,13 +210,11 @@ const projectsWithStats = computed(() => {
 
   return props.projects
     .map(p => {
-      const workedAmount = p.dailyRate * p.workedDaysCount
-      const monthAmount = p.dailyRate * p.monthDaysCount
       const cumulativePercent = p.theoreticalBudget
-        ? Math.round((workedAmount / p.theoreticalBudget) * 100)
+        ? Math.round((p.workedAmount / p.theoreticalBudget) * 100)
         : 0
       const monthlyPercent = p.maxMonthBudget
-        ? Math.round((monthAmount / p.maxMonthBudget) * 100)
+        ? Math.round((p.monthAmount / p.maxMonthBudget) * 100)
         : 0
       const isMonthOverrun = monthlyPercent > 100
       const isMonthWarning = !isMonthOverrun && monthlyPercent > props.monthAdvancement * 100 * 1.1
@@ -224,8 +224,6 @@ const projectsWithStats = computed(() => {
         : null
       return {
         ...p,
-        workedAmount,
-        monthAmount,
         cumulativePercent,
         monthlyPercent,
         isMonthOverrun,
@@ -247,7 +245,7 @@ const monthBreakdown = computed(() => {
   const byClient = new Map<string, { label: string, days: number, revenue: number }>()
   for (const p of props.projects) {
     if (p.monthDaysCount <= 0) continue
-    const revenue = Math.round(p.monthDaysCount * p.dailyRate)
+    const revenue = p.monthAmount
     const existing = byClient.get(p.clientName)
     if (existing) {
       existing.days += p.monthDaysCount

@@ -58,7 +58,7 @@ class ProjectController
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:255'],
             'daily_rate' => ['integer', 'min:0'],
-            'max_month_budget' => ['nullable', 'integer', 'min:1'],
+            'max_month_budget' => ['nullable', 'integer', 'min:0'],
             'max_total_budget' => ['nullable', 'integer', 'min:1'],
             ...(! $isNewClient ? [
                 'client_id' => ['required', 'uuid', Rule::exists('clients', 'id')->where('user_id', $user->id)],
@@ -114,7 +114,9 @@ class ProjectController
                     'name',
                     'description',
                     'daily_rate',
+                    'daily_rates',
                     'max_month_budget',
+                    'monthly_budgets',
                     'max_total_budget',
                     'client_id',
                 ])->merge([
@@ -131,15 +133,30 @@ class ProjectController
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:255'],
-            'daily_rate' => ['integer', 'min:0'],
-            'max_month_budget' => ['nullable', 'integer', 'min:1'],
+            'daily_rate' => ['nullable', 'integer', 'min:0'],
+            'daily_rate_effective_date' => ['nullable', 'date'],
+            'max_month_budget' => ['nullable', 'integer', 'min:0'],
+            'monthly_budget_effective_date' => ['nullable', 'date'],
             'max_total_budget' => ['nullable', 'integer', 'min:1'],
             'client_id' => ['required', Rule::exists('clients', 'id')->where('user_id', $request->user()->id)],
             'start_date' => ['required', 'date'],
             'end_date' => ['nullable', 'date'],
         ]);
 
-        $project->update($data);
+        // A value defaults its effective date to today when left blank, and a date alone defaults its
+        // value to 0 (a valid, if unusual, daily rate) — for the budget specifically, 0 is normalized
+        // to "unlimited" instead (see setMonthlyBudgetFrom).
+        if (($data['daily_rate'] ?? null) !== null || ($data['daily_rate_effective_date'] ?? null) !== null) {
+            $project->setDailyRateFrom($data['daily_rate'] ?? 0, $data['daily_rate_effective_date'] ?? today());
+        }
+
+        if (($data['max_month_budget'] ?? null) !== null || ($data['monthly_budget_effective_date'] ?? null) !== null) {
+            $project->setMonthlyBudgetFrom($data['max_month_budget'] ?? 0, $data['monthly_budget_effective_date'] ?? today());
+        }
+
+        $project->update(Arr::only($data, [
+            'name', 'description', 'client_id', 'start_date', 'end_date', 'max_total_budget',
+        ]));
 
         $backUrl = $request->session()->pull('back_url_project_'.$project->id, route('projects.index'));
 

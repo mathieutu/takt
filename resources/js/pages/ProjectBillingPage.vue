@@ -84,11 +84,7 @@ const isExpanded = (projectId: string, month: string) => expandedMonths.value.ha
 // ── Totals ─────────────────────────────────────────────────────────────────────
 
 const projectTotals = (project: ProjectWithBilling) => {
-  const totalBudgetAllocated = project.max_total_budget !== null
-    ? project.max_total_budget
-    : project.max_month_budget !== null
-      ? project.max_month_budget * project.months_elapsed
-      : null
+  const totalBudgetAllocated = project.months.at(-1)?.cumulative_budget ?? null
 
   const unpaidDiscount = project.months
     .flatMap(m => m.invoices)
@@ -99,18 +95,21 @@ const projectTotals = (project: ProjectWithBilling) => {
     totalDays: project.total_days,
     totalWorked: project.total_worked,
     totalInvoiced: project.total_invoiced,
+    totalInvoicedDays: project.total_invoiced_days,
     totalDiscount: project.total_discount,
     unpaidDiscount,
     totalBudgetAllocated,
     toPay: project.to_pay,
+    toPayDays: project.to_pay_days,
     toInvoice: project.to_invoice,
+    toInvoiceDays: project.to_invoice_days,
     remainingToConsume: totalBudgetAllocated !== null
       ? totalBudgetAllocated - (project.total_worked - project.total_discount)
       : null,
   }
 }
 
-const monthWorked = (m: MonthRow, dailyRate: number) => m.days_worked * dailyRate
+const monthWorked = (m: MonthRow) => m.worked
 const monthInvoiced = (m: MonthRow) => m.invoices.reduce((s, i) => s + i.amount, 0)
 
 const projectMaxDays = (project: ProjectWithBilling): number =>
@@ -148,16 +147,10 @@ const oldestUnpaidInvoiceDate = (project: ProjectWithBilling): string | null => 
   return dates[0] ?? null
 }
 
-const calendarMonthsBetween = (from: string, to: string): number => {
-  const [fromYear, fromMonth] = from.split('-').map(Number)
-  const [toYear, toMonth] = to.split('-').map(Number)
-  return (toYear! - fromYear!) * 12 + (toMonth! - fromMonth!) + 1
-}
-
 const getCumulativeWorked = (project: ProjectWithBilling, monthIndex: number): number =>
   project.months
     .slice(0, monthIndex + 1)
-    .reduce((sum, m) => sum + m.days_worked * project.daily_rate, 0)
+    .reduce((sum, m) => sum + m.worked, 0)
 
 // Discounts write off part of an already-invoiced amount, so they reduce how much of the
 // budget envelope is actually consumed — even though "worked" itself stays theoretical.
@@ -169,14 +162,8 @@ const getCumulativeDiscount = (project: ProjectWithBilling, monthIndex: number):
 const getCumulativeConsumed = (project: ProjectWithBilling, monthIndex: number): number =>
   getCumulativeWorked(project, monthIndex) - getCumulativeDiscount(project, monthIndex)
 
-const cumulativeBudgetAmount = (project: ProjectWithBilling, monthIndex: number): number | null => {
-  if (project.max_total_budget !== null) return project.max_total_budget
-  if (project.max_month_budget !== null) {
-    const elapsed = calendarMonthsBetween(project.months[0]!.month, project.months[monthIndex]!.month)
-    return project.max_month_budget * elapsed
-  }
-  return null
-}
+const cumulativeBudgetAmount = (project: ProjectWithBilling, monthIndex: number): number | null =>
+  project.months[monthIndex]!.cumulative_budget
 
 const isCumulativeOverBudget = (project: ProjectWithBilling, monthIndex: number): boolean => {
   const budget = cumulativeBudgetAmount(project, monthIndex)
@@ -378,6 +365,12 @@ const unpaidDiscountPercent = (project: ProjectWithBilling): number => {
 
 const fmtDays = (amount: number, dailyRate: number): string | null =>
   dailyRate > 0 ? formatDays(amount / dailyRate) : null
+
+// For day-equivalents already computed server-side (see BuildsProjectBillingEntry::computeTotals) —
+// e.g. invoiced/to-invoice/to-pay days, weighted per month at each month's own rate rather than
+// divided from the aggregate amount by a single rate.
+const fmtExactDays = (days: number): string | null =>
+  Math.round(days * 100) !== 0 ? formatDays(days) : null
 
 // ── Invoice form ───────────────────────────────────────────────────────────────
 
@@ -674,12 +667,12 @@ const monthLabel = (ym: string): string => {
                           class="px-4 py-2.5 text-right tabular-nums"
                           :class="isCumulativeOverBudget(project, monthIndex) ? 'text-error font-medium' : 'text-muted'"
                         >
-                          {{ formatCurrency(monthWorked(m, project.daily_rate)) }} ({{ formatDays(m.days_worked) }})
+                          {{ formatCurrency(monthWorked(m)) }} ({{ formatDays(m.days_worked) }})
                         </td>
                         <td class="px-4 py-2.5 text-right tabular-nums">
                           <template v-if="monthInvoiced(m) > 0">
                             <span class="font-medium" :class="m.invoices.some(inv => !inv.paid_at) ? 'text-amber-500' : 'text-success'">{{ formatCurrency(monthInvoiced(m)) }}</span>
-                            <span v-if="fmtDays(monthInvoiced(m), project.daily_rate)" class="text-muted"> ({{ fmtDays(monthInvoiced(m), project.daily_rate) }})</span>
+                            <span v-if="fmtDays(monthInvoiced(m), m.daily_rate)" class="text-muted"> ({{ fmtDays(monthInvoiced(m), m.daily_rate) }})</span>
                           </template>
                           <span v-else class="text-muted">—</span>
                         </td>
@@ -688,7 +681,7 @@ const monthLabel = (ym: string): string => {
                             <span :class="cumulativeRemainingToConsume(project, monthIndex)! < 0 ? 'text-error' : 'text-default'">
                               {{ formatCurrency(cumulativeRemainingToConsume(project, monthIndex)!) }}
                             </span>
-                            <span v-if="fmtDays(cumulativeRemainingToConsume(project, monthIndex)!, project.daily_rate)" class="text-muted"> ({{ fmtDays(cumulativeRemainingToConsume(project, monthIndex)!, project.daily_rate) }})</span>
+                            <span v-if="fmtDays(cumulativeRemainingToConsume(project, monthIndex)!, m.daily_rate)" class="text-muted"> ({{ fmtDays(cumulativeRemainingToConsume(project, monthIndex)!, m.daily_rate) }})</span>
                             <span class="text-muted"> · {{ 100 - cumulativeConsumptionPercent(project, monthIndex)! }}%</span>
                           </template>
                           <span v-else class="text-muted">—</span>
@@ -772,7 +765,7 @@ const monthLabel = (ym: string): string => {
                             <span class="text-success">{{ formatCurrency(projectTotals(project).totalInvoiced - projectTotals(project).totalDiscount) }}</span>
                           </template>
                           <span v-else class="text-success">{{ formatCurrency(projectTotals(project).totalInvoiced) }}</span>
-                          <span v-if="fmtDays(projectTotals(project).totalInvoiced, project.daily_rate)" class="font-normal text-muted">({{ fmtDays(projectTotals(project).totalInvoiced, project.daily_rate) }})</span>
+                          <span v-if="fmtExactDays(projectTotals(project).totalInvoicedDays)" class="font-normal text-muted">({{ fmtExactDays(projectTotals(project).totalInvoicedDays) }})</span>
                         </span>
                         <p v-if="projectTotals(project).totalDiscount > 0" class="text-xs font-normal text-muted">
                           − {{ totalDiscountPercent(project) }} % de remise
@@ -806,7 +799,7 @@ const monthLabel = (ym: string): string => {
                       :class="projectTotals(project).toInvoice > 0 ? 'text-amber-500' : 'text-success'"
                     >
                       {{ formatCurrency(projectTotals(project).toInvoice) }}
-                      <span v-if="fmtDays(projectTotals(project).toInvoice, project.daily_rate)" class="text-sm font-normal text-muted">({{ fmtDays(projectTotals(project).toInvoice, project.daily_rate) }})</span>
+                      <span v-if="fmtExactDays(projectTotals(project).toInvoiceDays)" class="text-sm font-normal text-muted">({{ fmtExactDays(projectTotals(project).toInvoiceDays) }})</span>
                     </p>
                     <p v-if="projectTotals(project).toInvoice > 0 && lastInvoiceDate(project)" class="text-xs mt-0.5" :class="daysSince(lastInvoiceDate(project)!) > 30 ? 'text-error' : 'text-muted'">
                       Depuis {{ formatDuration(daysSince(lastInvoiceDate(project)!)) }}
@@ -819,7 +812,7 @@ const monthLabel = (ym: string): string => {
                     </p>
                     <p class="text-base font-semibold tabular-nums text-amber-500">
                       {{ formatCurrency(projectTotals(project).toPay) }}
-                      <span v-if="fmtDays(projectTotals(project).toPay, project.daily_rate)" class="text-sm font-normal text-muted">({{ fmtDays(projectTotals(project).toPay, project.daily_rate) }})</span>
+                      <span v-if="fmtExactDays(projectTotals(project).toPayDays)" class="text-sm font-normal text-muted">({{ fmtExactDays(projectTotals(project).toPayDays) }})</span>
                     </p>
                     <p v-if="projectTotals(project).unpaidDiscount > 0" class="text-xs text-muted">
                       − {{ unpaidDiscountPercent(project) }} %

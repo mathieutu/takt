@@ -225,7 +225,10 @@
                                 $openingBalance = -$openingToInvoice;
                                 $periodBalance = -$toInvoice;
                                 $currentBalance = $openingBalance + $periodBalance;
-                                $dailyRate = $project['daily_rate'];
+                                // Average rate actually applied over the period, not the project's current
+                                // rate — so this label × $totalDays still reconciles with $totalWorked even
+                                // when the daily rate changed mid-period.
+                                $dailyRate = $totalDays > 0 ? (int) round($totalWorked / $totalDays) : $project['daily_rate'];
                             @endphp
 
                             <footer class="mt-8 rounded-lg border border-default p-4">

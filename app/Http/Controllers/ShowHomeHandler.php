@@ -211,15 +211,13 @@ class ShowHomeHandler
                 );
                 $totalWorkedAmount = $p->timesheetEntries
                     ->filter(fn ($e) => $e->billable)
-                    ->sum(fn ($e) => (int) round($e->coverage / 100 * $p->daily_rate));
+                    ->sum(fn ($e) => (int) round($e->coverage / 100 * $p->getDailyRateForDate($e->date)));
+                $monthAmount = $p->timesheetEntries
+                    ->filter(fn ($e) => $e->billable && $e->date->year === $to->year && $e->date->month === $to->month)
+                    ->sum(fn ($e) => (int) round($e->coverage / 100 * $p->getDailyRateForDate($e->date)));
                 $firstEntry = $p->timesheetEntries->sortBy('date')->first();
                 $projectStart = $firstEntry ? $firstEntry->date : $p->start_date;
-                $monthsElapsed = max(1, $projectStart->startOfMonth()->diffInMonths($currentMonthStart) + 1);
-                $theoreticalBudget = match (true) {
-                    $p->max_total_budget !== null => $p->max_total_budget,
-                    $p->max_month_budget !== null => $p->max_month_budget * $monthsElapsed,
-                    default => 0,
-                };
+                $theoreticalBudget = $p->theoreticalBudgetThrough($projectStart, $currentMonthStart) ?? 0;
 
                 return [
                     'id' => $p->id,
@@ -233,6 +231,8 @@ class ShowHomeHandler
                     'workedDaysCount' => $workedDaysCount,
                     'periodDaysCount' => $periodDaysCount,
                     'monthDaysCount' => $monthDaysCount,
+                    'workedAmount' => $totalWorkedAmount,
+                    'monthAmount' => $monthAmount,
                     'isInactive' => $p->isInactive(),
                     'lastActivity' => $p->timesheetEntries->sortByDesc('date')->first()?->date->toDateString(),
                     'unbilled' => max(0, $totalWorkedAmount - $p->invoices->sum('amount')),
@@ -311,7 +311,7 @@ class ShowHomeHandler
     {
         return $projects->sum(fn ($p) => $p->timesheetEntries
             ->filter(fn ($e) => $e->date->year === $month->year && $e->date->month === $month->month && $e->billable)
-            ->sum(fn ($e) => (int) round($e->coverage / 100 * $p->daily_rate))
+            ->sum(fn ($e) => (int) round($e->coverage / 100 * $p->getDailyRateForDate($e->date)))
         );
     }
 
@@ -319,7 +319,7 @@ class ShowHomeHandler
     {
         return $projects->sum(fn ($p) => $p->timesheetEntries
             ->filter(fn ($e) => $e->date->gte($from) && $e->date->lte($to) && $e->billable)
-            ->sum(fn ($e) => (int) round($e->coverage / 100 * $p->daily_rate))
+            ->sum(fn ($e) => (int) round($e->coverage / 100 * $p->getDailyRateForDate($e->date)))
         );
     }
 }

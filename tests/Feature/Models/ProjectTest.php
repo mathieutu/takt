@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Project;
+use Carbon\CarbonImmutable;
 
 describe('isInactive', function () {
     it('is not inactive without an end date', function () {
@@ -109,5 +110,185 @@ describe('isActiveOn', function () {
         ]);
 
         expect($project->isActiveOn(today()))->toBeFalse();
+    });
+});
+
+describe('getDailyRateForDate', function () {
+    it('falls back to 0 when no rate was ever set', function () {
+        $project = Project::factory()->create();
+        $project->update(['daily_rates' => []]);
+
+        expect($project->getDailyRateForDate(today()))->toBe(0);
+    });
+
+    it('returns the only known rate regardless of date, when there is a single entry', function () {
+        $project = Project::factory()->create();
+        $project->update(['daily_rates' => ['2026-01-01' => 50000]]);
+
+        expect($project->getDailyRateForDate('2020-01-01'))->toBe(50000)
+            ->and($project->getDailyRateForDate('2030-01-01'))->toBe(50000);
+    });
+
+    it('picks the latest rate effective on or before the given date', function () {
+        $project = Project::factory()->create();
+        $project->update(['daily_rates' => [
+            '2026-01-01' => 50000,
+            '2026-03-01' => 60000,
+        ]]);
+
+        expect($project->getDailyRateForDate('2026-02-15'))->toBe(50000)
+            ->and($project->getDailyRateForDate('2026-03-01'))->toBe(60000)
+            ->and($project->getDailyRateForDate('2026-12-31'))->toBe(60000);
+    });
+
+    it('falls back to the earliest known rate for a date before any history', function () {
+        $project = Project::factory()->create();
+        $project->update(['daily_rates' => ['2026-03-01' => 60000]]);
+
+        expect($project->getDailyRateForDate('2020-01-01'))->toBe(60000);
+    });
+});
+
+describe('getMonthlyBudgetForDate', function () {
+    it('returns null when no budget was ever set', function () {
+        $project = Project::factory()->create();
+        $project->update(['monthly_budgets' => []]);
+
+        expect($project->getMonthlyBudgetForDate(today()))->toBeNull();
+    });
+
+    it('returns null before a budget was introduced, then the budget once effective', function () {
+        $project = Project::factory()->create();
+        $project->update(['monthly_budgets' => ['2026-03-01' => 495000]]);
+
+        expect($project->getMonthlyBudgetForDate('2026-01-01'))->toBeNull()
+            ->and($project->getMonthlyBudgetForDate('2026-03-01'))->toBe(495000)
+            ->and($project->getMonthlyBudgetForDate('2026-06-01'))->toBe(495000);
+    });
+});
+
+describe('theoreticalBudgetThrough', function () {
+    it('returns the flat max_total_budget when set, ignoring monthly_budgets', function () {
+        $project = Project::factory()->create();
+        $project->update([
+            'max_total_budget' => 1000000,
+            'monthly_budgets' => ['2026-01-01' => 495000],
+        ]);
+
+        expect($project->theoreticalBudgetThrough(CarbonImmutable::parse('2026-01-01'), CarbonImmutable::parse('2026-06-01')))
+            ->toBe(1000000);
+    });
+
+    it('returns null when no monthly budget was ever set', function () {
+        $project = Project::factory()->create();
+        $project->update(['max_total_budget' => null, 'monthly_budgets' => []]);
+
+        expect($project->theoreticalBudgetThrough(CarbonImmutable::parse('2026-01-01'), CarbonImmutable::parse('2026-06-01')))
+            ->toBeNull();
+    });
+
+    it('only accrues the budget from the month it was introduced', function () {
+        $project = Project::factory()->create();
+        $project->update([
+            'max_total_budget' => null,
+            'monthly_budgets' => ['2026-03-01' => 495000],
+        ]);
+
+        // January and February had no budget yet, so they contribute nothing.
+        expect($project->theoreticalBudgetThrough(CarbonImmutable::parse('2026-01-01'), CarbonImmutable::parse('2026-04-01')))
+            ->toBe(495000 * 2);
+    });
+});
+
+describe('setDailyRateFrom/setMonthlyBudgetFrom', function () {
+    it('drops a later entry that becomes redundant once a matching value is inserted before it', function () {
+        $project = Project::factory()->create();
+        $project->update(['daily_rates' => [
+            '2026-01-01' => 50000,
+            '2026-06-01' => 60000,
+        ]]);
+
+        // Backdating a 60000 rate to March makes the June entry (same value) redundant.
+        $project->setDailyRateFrom(60000, '2026-03-01');
+
+        expect($project->daily_rates->all())->toBe([
+            '2026-01-01' => 50000,
+            '2026-03-01' => 60000,
+        ]);
+    });
+
+    it('keeps entries whose value differs from the one right before them', function () {
+        $project = Project::factory()->create();
+        $project->update(['daily_rates' => ['2026-01-01' => 50000]]);
+
+        $project->setDailyRateFrom(60000, '2026-06-01');
+
+        expect($project->daily_rates->all())->toBe([
+            '2026-01-01' => 50000,
+            '2026-06-01' => 60000,
+        ]);
+    });
+
+    it('applies the same pruning to monthly_budgets', function () {
+        $project = Project::factory()->create();
+        $project->update(['monthly_budgets' => [
+            '2026-01-01' => 495000,
+            '2026-06-01' => 660000,
+        ]]);
+
+        $project->setMonthlyBudgetFrom(660000, '2026-03-01');
+
+        expect($project->monthly_budgets->all())->toBe([
+            '2026-01-01' => 495000,
+            '2026-03-01' => 660000,
+        ]);
+    });
+
+    it('normalizes a monthly budget of 0 to unlimited', function () {
+        $project = Project::factory()->create();
+        $project->update(['monthly_budgets' => ['2026-01-01' => 495000]]);
+
+        $project->setMonthlyBudgetFrom(0, '2026-03-01');
+
+        expect($project->getMonthlyBudgetForDate('2026-03-01'))->toBeNull()
+            ->and($project->monthly_budgets->get('2026-03-01'))->toBeNull();
+    });
+
+    it('still records a rate backdated before all known history, even if it matches the earliest entry', function () {
+        $project = Project::factory()->create();
+        $project->update(['daily_rates' => ['2026-03-01' => 50000]]);
+
+        // Before this call, getDailyRateForDate('2026-01-01') already falls back to 50000 (the
+        // earliest known rate) — the new entry must still be recorded, not treated as a no-op. It then
+        // makes the March entry redundant (same value, no longer marks an actual change), so pruning
+        // collapses the history down to just the new, earlier entry.
+        $project->setDailyRateFrom(50000, '2026-01-01');
+
+        expect($project->daily_rates->all())->toBe(['2026-01-01' => 50000])
+            ->and($project->getDailyRateForDate('2026-03-01'))->toBe(50000);
+    });
+
+    it('collapses monthly_budgets to null when the only remaining entry is unlimited', function () {
+        $project = Project::factory()->create();
+        $project->update(['monthly_budgets' => ['2026-01-01' => 495000]]);
+
+        $project->setMonthlyBudgetFrom(0, '2026-01-01');
+
+        expect($project->monthly_budgets)->toBeNull();
+    });
+
+    it('does not collapse monthly_budgets to null when other dated entries remain', function () {
+        $project = Project::factory()->create();
+        $project->update(['monthly_budgets' => [
+            '2026-01-01' => 495000,
+            '2026-03-01' => 660000,
+        ]]);
+
+        $project->setMonthlyBudgetFrom(0, '2026-01-01');
+
+        expect($project->monthly_budgets->all())->toBe([
+            '2026-01-01' => null,
+            '2026-03-01' => 660000,
+        ]);
     });
 });

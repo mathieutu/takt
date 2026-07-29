@@ -67,7 +67,7 @@ class ShareController
 
         return Inertia::render('SharesPage', [
             'received_shares' => $user->shares()
-                ->with('client.user', 'client.projects:id,client_id,name,daily_rate')
+                ->with('client.user', 'client.projects:id,client_id,name')
                 ->get()
                 ->map->export([
                     'id',

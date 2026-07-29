@@ -49,15 +49,15 @@ class ShowTimesheetHandler
                 'project_name' => $i->project->name,
                 'client_name' => $i->project->client->name,
                 'client_id' => $i->project->client_id,
-                'daily_rate' => $i->project->daily_rate,
+                'daily_rate' => $i->project->getDailyRateForDate($i->created_at),
             ])->values()->all(),
             'projects' => $projects->map(fn (Project $p) => $p->export([
                 'id',
                 'name',
                 'client' => ['id', 'name'],
-                'daily_rate',
                 'isInactive() as is_inactive',
             ])->merge([
+                'daily_rate' => $p->getDailyRateForDate($date),
                 'start_date' => $p->start_date->toDateString(),
                 'end_date' => $p->end_date?->toDateString(),
                 'entries' => $p->timesheetEntries

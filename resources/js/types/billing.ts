@@ -13,7 +13,11 @@ export type MonthInvoice = {
 
 export type MonthRow = {
   month: string,
+  daily_rate: number,
+  monthly_budget: number | null,
+  cumulative_budget: number | null,
   days_worked: number,
+  worked: number,
   entries: Record<string, EntryData>,
   invoices: MonthInvoice[],
 }
@@ -27,12 +31,14 @@ export type ProjectWithBilling = {
   is_inactive: boolean,
   client: { id: string, name: string },
   months: MonthRow[],
-  months_elapsed: number,
   months_with_entries_count: number,
   total_days: number,
   total_worked: number,
   total_invoiced: number,
+  total_invoiced_days: number,
   total_discount: number,
   to_invoice: number,
+  to_invoice_days: number,
   to_pay: number,
+  to_pay_days: number,
 }

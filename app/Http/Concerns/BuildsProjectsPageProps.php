@@ -47,12 +47,22 @@ trait BuildsProjectsPageProps
                     $query->where('client_id', $clientId);
                 }
 
-                $query->orderBy(
-                    str_starts_with($sort, 'rate') ? 'projects.daily_rate' : 'projects.start_date',
-                    str_ends_with($sort, 'asc') ? 'asc' : 'desc',
-                );
+                $isRateSort = str_starts_with($sort, 'rate');
+                $descending = str_ends_with($sort, 'asc') === false;
 
-                return $query->get()->map->export([
+                if (! $isRateSort) {
+                    $query->orderBy('projects.start_date', $descending ? 'desc' : 'asc');
+                }
+
+                $projects = $query->get();
+
+                // `daily_rate` is a virtual attribute (see Project::dailyRate()) derived from the
+                // `daily_rates` history JSON column, so it can't be sorted in SQL.
+                if ($isRateSort) {
+                    $projects = $projects->sortBy(fn (Project $p) => $p->daily_rate, descending: $descending)->values();
+                }
+
+                return $projects->map->export([
                     'id',
                     'name',
                     'description',

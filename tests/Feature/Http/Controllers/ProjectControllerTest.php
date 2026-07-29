@@ -171,4 +171,135 @@ describe('update', function () {
             ])
             ->assertInvalid(['start_date']);
     });
+
+    it('leaves daily_rate and max_month_budget untouched when neither value nor date is given', function () {
+        // Saving the form for an unrelated reason (e.g. renaming the project) without touching the
+        // rate/budget fields at all must never silently change the rate or clear the budget.
+        $project = Project::factory()->for($this->client)->create(['daily_rate' => 50000]);
+        $project->update(['monthly_budgets' => [today()->toDateString() => 495000]]);
+
+        $this->actingAs($this->user)
+            ->put(route('projects.update', $project), [
+                'name' => $project->name,
+                'client_id' => $this->client->id,
+                'start_date' => $project->start_date->toDateString(),
+            ])
+            ->assertRedirect();
+
+        $project->refresh();
+
+        expect($project->daily_rate)->toBe(50000)
+            ->and($project->max_month_budget)->toBe(495000);
+    });
+
+    it('dates the new daily_rate and max_month_budget entries independently', function () {
+        $project = Project::factory()->for($this->client)->create();
+        $originalRate = $project->daily_rate;
+        $rateEffectiveDate = today()->subMonth()->toDateString();
+        $budgetEffectiveDate = today()->subMonths(2)->toDateString();
+
+        $this->actingAs($this->user)
+            ->put(route('projects.update', $project), [
+                'name' => $project->name,
+                'daily_rate' => 70000,
+                'daily_rate_effective_date' => $rateEffectiveDate,
+                'max_month_budget' => 495000,
+                'monthly_budget_effective_date' => $budgetEffectiveDate,
+                'client_id' => $this->client->id,
+                'start_date' => $project->start_date->toDateString(),
+            ])
+            ->assertRedirect();
+
+        $project->refresh();
+
+        // Backdating a rate doesn't retroactively change what was already effective today (the
+        // project's creation-time rate, still in place — updating in the past isn't the same as
+        // updating from today), and each field keeps its own effective date.
+        expect($project->getDailyRateForDate($rateEffectiveDate))->toBe(70000)
+            ->and($project->getMonthlyBudgetForDate($budgetEffectiveDate))->toBe(495000)
+            ->and($project->daily_rates->has($budgetEffectiveDate))->toBeFalse()
+            ->and($project->getDailyRateForDate(today()))->toBe($originalRate);
+    });
+
+    it('does not add a new history entry when the submitted rate matches what was already effective on that date', function () {
+        $project = Project::factory()->for($this->client)->create(['daily_rate' => 50000]);
+
+        $this->actingAs($this->user)
+            ->put(route('projects.update', $project), [
+                'name' => $project->name,
+                'daily_rate' => 50000,
+                'daily_rate_effective_date' => today()->toDateString(),
+                'client_id' => $this->client->id,
+                'start_date' => $project->start_date->toDateString(),
+            ])
+            ->assertRedirect();
+
+        expect($project->fresh()->daily_rates)->toHaveCount(1);
+    });
+
+    it('defaults daily_rate to 0 when a daily_rate_effective_date is given without one', function () {
+        $project = Project::factory()->for($this->client)->create(['daily_rate' => 50000]);
+        $effectiveDate = today()->toDateString();
+
+        $this->actingAs($this->user)
+            ->put(route('projects.update', $project), [
+                'name' => $project->name,
+                'daily_rate_effective_date' => $effectiveDate,
+                'client_id' => $this->client->id,
+                'start_date' => $project->start_date->toDateString(),
+            ])
+            ->assertRedirect();
+
+        expect($project->fresh()->getDailyRateForDate($effectiveDate))->toBe(0);
+    });
+
+    it('defaults daily_rate_effective_date to today when a daily_rate is given without one', function () {
+        $project = Project::factory()->for($this->client)->create();
+
+        $this->actingAs($this->user)
+            ->put(route('projects.update', $project), [
+                'name' => $project->name,
+                'daily_rate' => 70000,
+                'client_id' => $this->client->id,
+                'start_date' => $project->start_date->toDateString(),
+            ])
+            ->assertRedirect();
+
+        $project->refresh();
+
+        expect($project->daily_rates->get(today()->toDateString()))->toBe(70000)
+            ->and($project->daily_rate)->toBe(70000);
+    });
+
+    it('defaults monthly_budget_effective_date to today when a max_month_budget is given without one', function () {
+        $project = Project::factory()->for($this->client)->create();
+
+        $this->actingAs($this->user)
+            ->put(route('projects.update', $project), [
+                'name' => $project->name,
+                'max_month_budget' => 495000,
+                'client_id' => $this->client->id,
+                'start_date' => $project->start_date->toDateString(),
+            ])
+            ->assertRedirect();
+
+        expect($project->fresh()->getMonthlyBudgetForDate(today()))->toBe(495000);
+    });
+
+    it('sets the monthly budget to unlimited from the given date when max_month_budget is left empty', function () {
+        $project = Project::factory()->for($this->client)->create();
+        $project->update(['monthly_budgets' => [today()->subMonths(2)->toDateString() => 495000]]);
+        $effectiveDate = today()->toDateString();
+
+        $this->actingAs($this->user)
+            ->put(route('projects.update', $project), [
+                'name' => $project->name,
+                'monthly_budget_effective_date' => $effectiveDate,
+                'client_id' => $this->client->id,
+                'start_date' => $project->start_date->toDateString(),
+            ])
+            ->assertRedirect();
+
+        expect($project->fresh()->getMonthlyBudgetForDate($effectiveDate))->toBeNull();
+    });
 });
