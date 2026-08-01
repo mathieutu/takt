@@ -80,7 +80,10 @@ class Project extends Model implements HasUser
     {
         return Attribute::make(
             get: fn () => $this->getDailyRateForDate(today()),
-            set: fn (int $value) => $value === $this->daily_rate ? [] : [
+            // Compared against historicalValueAt(), not the daily_rate getter: the latter falls back to
+            // the earliest known rate (or 0) when history is empty, which would wrongly look like a
+            // match — and silently skip setting daily_rates — for a brand new project.
+            set: fn (int $value) => $this->historicalValueAt($this->daily_rates ?? collect(), today()) === $value ? [] : [
                 'daily_rates' => ($this->daily_rates ?? collect())->merge([today()->toDateString() => $value]),
             ],
         );
@@ -93,7 +96,8 @@ class Project extends Model implements HasUser
     {
         return Attribute::make(
             get: fn () => $this->getMonthlyBudgetForDate(today()),
-            set: fn (?int $value) => $value === $this->max_month_budget ? [] : [
+            // See dailyRate() for why this is checked against historicalValueAt(), not the getter.
+            set: fn (?int $value) => $this->historicalValueAt($this->monthly_budgets ?? collect(), today()) === $value ? [] : [
                 'monthly_budgets' => ($this->monthly_budgets ?? collect())->merge([today()->toDateString() => $value]),
             ],
         );

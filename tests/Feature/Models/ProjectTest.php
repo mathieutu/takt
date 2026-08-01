@@ -292,3 +292,14 @@ describe('setDailyRateFrom/setMonthlyBudgetFrom', function () {
         ]);
     });
 });
+
+describe('dailyRate setter', function () {
+    it('records a rate of 0 on a brand new project instead of leaving daily_rates empty', function () {
+        // On a project with no history yet, the daily_rate getter falls back to 0 — setting a rate of
+        // 0 must not be mistaken for "no change" and skip recording it, or daily_rates stays null and
+        // violates the not-null constraint on save.
+        $project = Project::factory()->create(['daily_rate' => 0]);
+
+        expect($project->daily_rates->all())->toBe([today()->toDateString() => 0]);
+    });
+});
