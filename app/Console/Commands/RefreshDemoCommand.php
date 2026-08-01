@@ -23,16 +23,17 @@ class RefreshDemoCommand extends Command
     public function handle(CreateDemoData $createDemoData): void
     {
         DB::transaction(function () use ($createDemoData) {
-            $this->removeExistingDemoData();
+            $this->removeExistingDemoData(CreateDemoData::DEMO_EMAIL);
+            $this->removeExistingDemoData(CreateDemoData::ALICE_EMAIL);
             $createDemoData();
         });
 
         $this->info('Demo account recreated successfully.');
     }
 
-    private function removeExistingDemoData(): void
+    private function removeExistingDemoData(string $email): void
     {
-        $user = User::where('email', CreateDemoData::DEMO_EMAIL)->first();
+        $user = User::where('email', $email)->first();
 
         if (! $user) {
             return;

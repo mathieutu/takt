@@ -10,6 +10,8 @@ class CreateDemoData
 {
     public const string DEMO_EMAIL = 'contact+takt@mathieutu.dev';
 
+    public const string ALICE_EMAIL = 'alice.recoque@example.com';
+
     private CarbonImmutable $now;
 
     /** Shared pool of available days per month, consumed across all projects. */
@@ -363,7 +365,7 @@ class CreateDemoData
     {
         $alice = User::create([
             'name' => 'Alice RECOQUE',
-            'email' => 'alice.recoque@example.com',
+            'email' => self::ALICE_EMAIL,
             'avatar' => 'https://www.cnil.fr/sites/default/files/inline-images/alice_recoque.png',
         ]);
 
