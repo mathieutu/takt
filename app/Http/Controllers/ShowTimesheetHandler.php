@@ -21,7 +21,7 @@ class ShowTimesheetHandler
         $projects = $request->user()->projects()
             ->where('projects.start_date', '<=', $date->endOfMonth())
             ->where(fn ($q) => $q->whereNull('projects.end_date')->orWhere('projects.end_date', '>=', $date->startOfMonth()))
-            ->with(['timesheetEntries' => fn (HasMany $query) => $query->whereBetween('date', [$date->startOfMonth(), $date->endOfMonth()])])
+            ->with(['timesheetEntries' => fn (HasMany $query) => $query->whereBetween('date', [$date->startOfMonth()->toDateString(), $date->endOfMonth()->toDateString()])])
             ->orderBy('projects.name')
             ->get();
 
