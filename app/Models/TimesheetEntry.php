@@ -2,13 +2,10 @@
 
 namespace App\Models;
 
-use App\Contracts\HasUser;
 use Carbon\CarbonImmutable;
-use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Collection;
-use Znck\Eloquent\Relations\BelongsToThrough;
 
 /**
  * @property string $id
@@ -21,10 +18,8 @@ use Znck\Eloquent\Relations\BelongsToThrough;
  * @property CarbonImmutable|null $updated_at
  * @property bool $billable
  * @property-read Project $project
- * @property-read User|null $user
  *
  * @method static \Database\Factories\TimesheetEntryFactory factory($count = null, $state = [])
- * @method static Builder<static>|TimesheetEntry inMonth(\Carbon\CarbonInterface $date)
  * @method static Builder<static>|TimesheetEntry newModelQuery()
  * @method static Builder<static>|TimesheetEntry newQuery()
  * @method static Builder<static>|TimesheetEntry query()
@@ -40,7 +35,7 @@ use Znck\Eloquent\Relations\BelongsToThrough;
  *
  * @mixin \Eloquent
  */
-class TimesheetEntry extends Model implements HasUser
+class TimesheetEntry extends Model
 {
     protected function casts(): array
     {
@@ -59,21 +54,8 @@ class TimesheetEntry extends Model implements HasUser
         return $entries->where('billable', true)->sum('coverage');
     }
 
-    public function user(): BelongsToThrough
-    {
-        return $this->belongsToThrough(User::class, [Project::class, Client::class])
-            ->withTrashed(['clients.deleted_at']);
-    }
-
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
-    }
-
-    protected function scopeInMonth(Builder $query, CarbonInterface $date): Builder
-    {
-        return $query
-            ->whereYear('date', $date->year)
-            ->whereMonth('date', $date->month);
     }
 }
