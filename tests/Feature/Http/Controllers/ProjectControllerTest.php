@@ -32,6 +32,119 @@ describe('index', function () {
             ->get(route('projects.index'))
             ->assertRedirect(route('projects.index', ['with_trashed' => true]));
     });
+
+    it('filters projects by name search', function () {
+        $matching = Project::factory()->for($this->client)->create(['name' => 'Website Redesign', 'end_date' => null]);
+        $other = Project::factory()->for($this->client)->create(['name' => 'Mobile App', 'end_date' => null]);
+
+        $response = $this->actingAs($this->user)->get(route('projects.index', ['search' => 'redesign']));
+
+        $response->assertInertia(function ($page) use ($matching, $other) {
+            $ids = collect($page->toArray()['props']['projects'])->pluck('id');
+
+            expect($ids)->toContain($matching->id)->not->toContain($other->id);
+        });
+    });
+
+    it('filters projects by client_id', function () {
+        $otherClient = Client::factory()->for($this->user)->create();
+        $matching = Project::factory()->for($this->client)->create(['end_date' => null]);
+        $other = Project::factory()->for($otherClient)->create(['end_date' => null]);
+
+        $response = $this->actingAs($this->user)->get(route('projects.index', ['client_id' => $this->client->id]));
+
+        $response->assertInertia(function ($page) use ($matching, $other) {
+            $ids = collect($page->toArray()['props']['projects'])->pluck('id');
+
+            expect($ids)->toContain($matching->id)->not->toContain($other->id);
+        });
+    });
+
+    it('sorts projects by daily_rate ascending', function () {
+        $cheap = Project::factory()->for($this->client)->create(['daily_rate' => 10000, 'end_date' => null]);
+        $expensive = Project::factory()->for($this->client)->create(['daily_rate' => 90000, 'end_date' => null]);
+
+        $response = $this->actingAs($this->user)->get(route('projects.index', ['sort' => 'rate_asc']));
+
+        $response->assertInertia(function ($page) use ($cheap, $expensive) {
+            $ids = collect($page->toArray()['props']['projects'])->pluck('id')->all();
+
+            expect(array_search($cheap->id, $ids))->toBeLessThan(array_search($expensive->id, $ids));
+        });
+    });
+
+    it('filters clients by name search', function () {
+        $matching = Client::factory()->for($this->user)->create(['name' => 'Acme Corp']);
+        $other = Client::factory()->for($this->user)->create(['name' => 'Globex']);
+        Project::factory()->for($this->client)->create(['end_date' => null]);
+
+        $response = $this->actingAs($this->user)->get(route('projects.index', ['search' => 'acme']));
+
+        $response->assertInertia(function ($page) use ($matching, $other) {
+            $ids = collect($page->toArray()['props']['clients'])->pluck('id');
+
+            expect($ids)->toContain($matching->id)->not->toContain($other->id);
+        });
+    });
+
+    it('combines with_trashed and search to find an archived project under an archived client', function () {
+        $archivedClient = Client::factory()->for($this->user)->create(['name' => 'Old Client']);
+        $matching = Project::factory()->for($archivedClient)->create(['name' => 'Legacy Project', 'end_date' => today()]);
+        $archivedClient->delete();
+        Project::factory()->for($this->client)->create(['end_date' => null]);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('projects.index', ['with_trashed' => true, 'search' => 'legacy']));
+
+        $response->assertInertia(function ($page) use ($matching) {
+            $ids = collect($page->toArray()['props']['projects'])->pluck('id');
+
+            expect($ids->all())->toBe([$matching->id]);
+        });
+    });
+
+    it('lists soft-deleted clients when with_trashed is set', function () {
+        $trashedClient = Client::factory()->for($this->user)->create();
+        $trashedClient->delete();
+        Project::factory()->for($this->client)->create(['end_date' => null]);
+
+        $response = $this->actingAs($this->user)->get(route('projects.index', ['with_trashed' => true]));
+
+        $response->assertInertia(function ($page) use ($trashedClient) {
+            $ids = collect($page->toArray()['props']['clients'])->pluck('id');
+
+            expect($ids)->toContain($trashedClient->id);
+        });
+    });
+});
+
+describe('create', function () {
+    it('renders the project form', function () {
+        $this->actingAs($this->user)
+            ->get(route('projects.create'))
+            ->assertOk();
+    });
+});
+
+describe('edit', function () {
+    it('renders the project form', function () {
+        $project = Project::factory()->for($this->client)->create();
+
+        $this->actingAs($this->user)
+            ->get(route('projects.edit', $project))
+            ->assertOk();
+    });
+
+    it('records the referer as the back destination when it differs from the edit page itself', function () {
+        $project = Project::factory()->for($this->client)->create();
+
+        $this->actingAs($this->user)
+            ->withHeader('Referer', route('projects.index'))
+            ->get(route('projects.edit', $project))
+            ->assertOk();
+
+        expect(session("back_url_project_{$project->id}"))->toBe(route('projects.index'));
+    });
 });
 
 describe('store', function () {
@@ -128,6 +241,16 @@ describe('destroy', function () {
 });
 
 describe('syncEntries', function () {
+    it('redirects back for a plain (non-JSON) request', function () {
+        $project = Project::factory()->for($this->client)->create(['start_date' => today(), 'end_date' => null]);
+
+        $this->actingAs($this->user)
+            ->patch(route('projects.entries.sync', $project), [
+                'entries' => [['date' => today()->toDateString(), 'coverage' => 100]],
+            ])
+            ->assertRedirect();
+    });
+
     it('rejects an entry dated before the start date', function () {
         $project = Project::factory()->for($this->client)->create(['start_date' => today(), 'end_date' => null]);
 
@@ -210,6 +333,19 @@ describe('syncEntries', function () {
 
         expect($entry->coverage)->toBe(100)
             ->and($entry->billable)->toBeFalse();
+    });
+
+    it('deletes an existing entry when submitted with zero coverage and no title or description', function () {
+        $project = Project::factory()->for($this->client)->create(['start_date' => today(), 'end_date' => null]);
+        TimesheetEntry::factory()->for($project)->create(['date' => today()->toDateString(), 'coverage' => 50]);
+
+        $this->actingAs($this->user)
+            ->patchJson(route('projects.entries.sync', $project), [
+                'entries' => [['date' => today()->toDateString(), 'coverage' => 0]],
+            ])
+            ->assertSuccessful();
+
+        expect($project->timesheetEntries()->where('date', today()->toDateString())->exists())->toBeFalse();
     });
 });
 

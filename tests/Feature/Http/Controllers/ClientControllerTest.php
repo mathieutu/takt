@@ -57,6 +57,38 @@ describe('showBilling', function () {
     });
 });
 
+describe('storeShare', function () {
+    it('generates a share_token when the client has none', function () {
+        $this->actingAs($this->user)
+            ->post(route('clients.share.store', $this->client))
+            ->assertRedirect();
+
+        expect($this->client->fresh()->share_token)->not->toBeNull();
+    });
+
+    it('keeps the existing share_token when one is already set', function () {
+        $this->client->update(['share_token' => 'existing-token']);
+
+        $this->actingAs($this->user)
+            ->post(route('clients.share.store', $this->client))
+            ->assertRedirect();
+
+        expect($this->client->fresh()->share_token)->toBe('existing-token');
+    });
+});
+
+describe('destroyShare', function () {
+    it('clears the share_token', function () {
+        $this->client->update(['share_token' => 'existing-token']);
+
+        $this->actingAs($this->user)
+            ->delete(route('clients.share.destroy', $this->client))
+            ->assertRedirect();
+
+        expect($this->client->fresh()->share_token)->toBeNull();
+    });
+});
+
 describe('destroy', function () {
     it('archives all of a client projects, without deleting them', function () {
         $project = Project::factory()->for($this->client)->create(['end_date' => null]);

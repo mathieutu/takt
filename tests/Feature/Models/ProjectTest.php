@@ -277,6 +277,15 @@ describe('setDailyRateFrom/setMonthlyBudgetFrom', function () {
         expect($project->monthly_budgets)->toBeNull();
     });
 
+    it('does not add a new history entry when the submitted budget matches what was already effective on that date', function () {
+        $project = Project::factory()->create();
+        $project->update(['monthly_budgets' => ['2026-01-01' => 495000]]);
+
+        $project->setMonthlyBudgetFrom(495000, '2026-03-01');
+
+        expect($project->monthly_budgets->all())->toBe(['2026-01-01' => 495000]);
+    });
+
     it('does not collapse monthly_budgets to null when other dated entries remain', function () {
         $project = Project::factory()->create();
         $project->update(['monthly_budgets' => [

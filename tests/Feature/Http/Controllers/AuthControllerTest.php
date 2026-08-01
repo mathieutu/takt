@@ -44,7 +44,70 @@ describe('redirect-after-login', function () {
     });
 });
 
+describe('callback', function () {
+    it('updates the github_id and avatar of an existing user matched by email', function () {
+        $existingUser = User::factory()->create(['email' => 'ghuser@example.com', 'github_id' => null]);
+
+        $githubUser = new SocialiteUser;
+        $githubUser->map([
+            'id' => 'gh-456',
+            'name' => 'GitHub User',
+            'nickname' => 'ghuser',
+            'email' => 'ghuser@example.com',
+            'avatar' => 'https://example.com/new-avatar.png',
+        ]);
+
+        Socialite::shouldReceive('driver->user')->andReturn($githubUser);
+
+        $this->get(route('login.callback'))->assertRedirect(route('dashboard'));
+
+        expect($existingUser->fresh())
+            ->github_id->toBe('gh-456')
+            ->avatar->toBe('https://example.com/new-avatar.png');
+
+        expect(auth()->id())->toBe($existingUser->id);
+    });
+});
+
+describe('demo', function () {
+    it('creates the demo account and logs in when it does not exist yet', function () {
+        $this->get(route('demo'))->assertRedirect(route('dashboard'));
+
+        expect(auth()->user()->email)->toBe(config('auth.demo_email'));
+    });
+
+    it('logs into the existing demo account without recreating it', function () {
+        $demoUser = User::factory()->create(['email' => config('auth.demo_email')]);
+
+        $this->get(route('demo'))->assertRedirect(route('dashboard'));
+
+        expect(auth()->id())->toBe($demoUser->id)
+            ->and(User::where('email', config('auth.demo_email'))->count())->toBe(1);
+    });
+});
+
+describe('logout', function () {
+    it('logs the user out and redirects home', function () {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('logout'))
+            ->assertRedirect('/');
+
+        expect(auth()->check())->toBeFalse();
+    });
+});
+
 describe('quick account switch (dev)', function () {
+    it('is forbidden outside the local environment', function () {
+        $this->withoutMiddleware(PreventRequestForgery::class);
+
+        $user = User::factory()->create();
+
+        $this->post(route('login.disabled'), ['user_id' => $user->id])
+            ->assertForbidden();
+    });
+
     it('switches the authenticated user via the disabled() bypass, even while already logged in', function () {
         $this->withoutMiddleware(PreventRequestForgery::class);
         app()->instance('env', 'local');

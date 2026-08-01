@@ -10,6 +10,15 @@ beforeEach(function () {
     $this->user = User::factory()->create();
 });
 
+describe('edit', function () {
+    it('renders the profile page with the user data', function () {
+        $response = $this->actingAs($this->user)->get(route('profile'));
+
+        $response->assertOk();
+        $response->assertInertia(fn ($page) => $page->where('user.email', $this->user->email));
+    });
+});
+
 describe('update', function () {
     it('updates the name and email', function () {
         $this->actingAs($this->user)

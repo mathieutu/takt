@@ -18,6 +18,28 @@ beforeEach(function () {
     $this->client = Client::factory()->for($this->user)->create();
 });
 
+it('renders the landing page for a guest', function () {
+    $this->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->component('LandingPage'));
+});
+
+it('redirects to projects.index when the user has no project matching the selected period', function () {
+    $this->actingAs($this->user)
+        ->get(route('dashboard'))
+        ->assertRedirect(route('projects.index'));
+});
+
+it('honors an explicit from query param instead of the default 11-month lookback', function () {
+    $project = Project::factory()->for($this->client)->create(['start_date' => '2020-01-01', 'end_date' => null]);
+    TimesheetEntry::factory()->for($project)->create(['date' => '2020-02-15', 'coverage' => 100]);
+
+    $response = $this->actingAs($this->user)->get(route('dashboard', ['from' => '2020-01']));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page->where('from', '2020-01'));
+});
+
 it('reflects the net amount (not gross) in kpis.outstandingAmount for a discounted unpaid invoice', function () {
     $project = Project::factory()->for($this->client)->create();
     TimesheetEntry::factory()->for($project)->create(['date' => today(), 'coverage' => 100]);
