@@ -106,3 +106,15 @@ describe('update', function () {
             ->assertInvalid(['discount_amount']);
     });
 });
+
+describe('destroy', function () {
+    it('deletes the invoice', function () {
+        $invoice = Invoice::factory()->for($this->project)->create();
+
+        $this->actingAs($this->user)
+            ->delete(route('invoices.destroy', $invoice))
+            ->assertRedirect();
+
+        expect(Invoice::find($invoice->id))->toBeNull();
+    });
+});

@@ -10,6 +10,79 @@ beforeEach(function () {
     $this->client = Client::factory()->for($this->user)->create();
 });
 
+describe('index', function () {
+    it('redirects to project creation when the user has no active project and nothing hidden', function () {
+        $this->actingAs($this->user)
+            ->get(route('projects.index'))
+            ->assertRedirect(route('projects.create'));
+    });
+
+    it('renders the projects page when an active project exists', function () {
+        Project::factory()->for($this->client)->create(['end_date' => null]);
+
+        $this->actingAs($this->user)
+            ->get(route('projects.index'))
+            ->assertOk();
+    });
+
+    it('redirects with_trashed instead of creation when an inactive project is hidden', function () {
+        Project::factory()->for($this->client)->inactive()->create();
+
+        $this->actingAs($this->user)
+            ->get(route('projects.index'))
+            ->assertRedirect(route('projects.index', ['with_trashed' => true]));
+    });
+});
+
+describe('store', function () {
+    it('creates a project for an existing client', function () {
+        $this->actingAs($this->user)
+            ->post(route('projects.store'), [
+                'name' => 'New Project',
+                'description' => null,
+                'max_month_budget' => null,
+                'max_total_budget' => null,
+                'daily_rate' => 50000,
+                'client_id' => $this->client->id,
+            ])
+            ->assertRedirect(route('projects.index'));
+
+        expect(Project::where('client_id', $this->client->id)->where('name', 'New Project')->exists())->toBeTrue();
+    });
+
+    it('creates a new client inline when no client_id is given', function () {
+        $this->actingAs($this->user)
+            ->post(route('projects.store'), [
+                'name' => 'New Project',
+                'description' => null,
+                'max_month_budget' => null,
+                'max_total_budget' => null,
+                'daily_rate' => 50000,
+                'client_name' => 'Brand New Client',
+                'client_rate' => 60000,
+            ])
+            ->assertRedirect(route('projects.index'));
+
+        $client = Client::where('user_id', $this->user->id)->where('name', 'Brand New Client')->firstOrFail();
+        expect(Project::where('client_id', $client->id)->where('name', 'New Project')->exists())->toBeTrue();
+    });
+
+    it('rejects a client_id belonging to another user', function () {
+        $otherClient = Client::factory()->create();
+
+        $this->actingAs($this->user)
+            ->post(route('projects.store'), [
+                'name' => 'New Project',
+                'description' => null,
+                'max_month_budget' => null,
+                'max_total_budget' => null,
+                'daily_rate' => 50000,
+                'client_id' => $otherClient->id,
+            ])
+            ->assertInvalid(['client_id']);
+    });
+});
+
 describe('destroy', function () {
     it('permanently deletes an active project without entries', function () {
         $project = Project::factory()->for($this->client)->create(['end_date' => null]);
