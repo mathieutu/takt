@@ -63,6 +63,11 @@ class UserController
     {
         $user = $request->user();
 
+        // Logging out before deleting matters: Auth::logout() cycles the remember_token via
+        // $user->save(), and calling that on an already-deleted (exists: false) model instance
+        // would re-insert the row Eloquent just deleted.
+        Auth::logout();
+
         $clientIds = Client::withTrashed()->where('user_id', $user->id)->pluck('id');
         $projectIds = Project::query()->whereIn('client_id', $clientIds)->pluck('id');
 
@@ -73,7 +78,6 @@ class UserController
 
         $user->delete();
 
-        Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
