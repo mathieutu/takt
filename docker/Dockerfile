@@ -11,7 +11,8 @@ ENV SERVER_NAME=:80 \
     APP_ENV=production \
     APP_DEBUG=false \
     LOG_CHANNEL=stderr \
-    COMPOSER_ALLOW_SUPERUSER=1
+    COMPOSER_ALLOW_SUPERUSER=1 \
+    INERTIA_SSR_ENABLED=true
 
 # Install PHP dependencies with cache mount
 COPY --link composer.json composer.lock ./
