@@ -23,6 +23,11 @@ export default defineConfig({
         dts: 'resources/js/types/components.d.ts',
       },
       router: 'inertia',
+      icon: {
+        clientBundle: {
+          scan: true,
+        },
+      },
       ui: {
         colors: {
           primary: 'pink',

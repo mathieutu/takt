@@ -740,6 +740,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@iconify-json/lucide@npm:^1.2.123":
+  version: 1.2.123
+  resolution: "@iconify-json/lucide@npm:1.2.123"
+  dependencies:
+    "@iconify/types": "npm:*"
+  checksum: 10c0/47ed855809b3d0e017f10bc80362fdb5b6fc23a8af0fe16d752df6ae5deade1ef0979136fdbd499ba0f8ceccc257ad50e2e5184bcb185a44e576cf3d03851f2a
+  languageName: node
+  linkType: hard
+
+"@iconify-json/simple-icons@npm:^1.2.93":
+  version: 1.2.93
+  resolution: "@iconify-json/simple-icons@npm:1.2.93"
+  dependencies:
+    "@iconify/types": "npm:*"
+  checksum: 10c0/46ec09a6e64e0e1e8eb7a345f58ada831560af146c394b10edc0baf96e9d7baa516b73398e21e655cc57bdf46cb6977e0e3504ce7f85aad4619cceb91ebf5003
+  languageName: node
+  linkType: hard
+
 "@iconify/collections@npm:^1.0.702":
   version: 1.0.710
   resolution: "@iconify/collections@npm:1.0.710"
@@ -7079,6 +7097,8 @@ __metadata:
   resolution: "root-workspace-0b6124@workspace:."
   dependencies:
     "@antfu/eslint-config": "npm:^9.3.0"
+    "@iconify-json/lucide": "npm:^1.2.123"
+    "@iconify-json/simple-icons": "npm:^1.2.93"
     "@inertiajs/vite": "npm:^3.6.1"
     "@inertiajs/vue3": "npm:^3.6.1"
     "@internationalized/date": "npm:^3.12.3"

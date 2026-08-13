@@ -22,6 +22,8 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.3.0",
+    "@iconify-json/lucide": "^1.2.123",
+    "@iconify-json/simple-icons": "^1.2.93",
     "@inertiajs/vite": "^3.6.1",
     "@laravel/vite-plugin-wayfinder": "^0.1.7",
     "@tailwindcss/vite": "^4.3.3",

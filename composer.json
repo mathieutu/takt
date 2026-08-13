@@ -1,106 +1,106 @@
 {
-    "$schema": "https://getcomposer.org/schema.json",
-    "name": "mathieutu/cra",
-    "type": "project",
-    "description": "Application de gestion de projets, clients et temps d'activit\u00e9.",
-    "keywords": [
-        "laravel",
-        "inertia",
-        "vue",
-        "time-tracking"
+  "$schema": "https://getcomposer.org/schema.json",
+  "name": "mathieutu/cra",
+  "type": "project",
+  "description": "Application de gestion de projets, clients et temps d'activit\u00e9.",
+  "keywords": [
+    "laravel",
+    "inertia",
+    "vue",
+    "time-tracking"
+  ],
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Mathieu TUDISCO",
+      "email": "mathieu@tudisco.fr"
+    }
+  ],
+  "require": {
+    "php": "^8.3",
+    "inertiajs/inertia-laravel": "^3.3.1",
+    "laravel/framework": "^13.25.0",
+    "laravel/socialite": "^5.29.0",
+    "laravel/tinker": "^3.0.2",
+    "mathieutu/exporter": "^3.4.0",
+    "staudenmeir/belongs-to-through": "^2.18.0"
+  },
+  "require-dev": {
+    "barryvdh/laravel-ide-helper": "^3.7.0",
+    "fakerphp/faker": "^1.24.1",
+    "laravel/boost": "^2.5.3",
+    "laravel/pail": "^1.2.7",
+    "laravel/pao": "^1.1.4",
+    "laravel/pint": "^1.30.5",
+    "laravel/wayfinder": "dev-next",
+    "mockery/mockery": "^1.6.12",
+    "nunomaduro/collision": "^8.9.5",
+    "pestphp/pest": "^5.1.1",
+    "pestphp/pest-plugin-browser": "^5.0.1",
+    "pestphp/pest-plugin-laravel": "^5.0.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/",
+      "Database\\Factories\\": "database/factories/",
+      "Database\\Seeders\\": "database/seeders/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "setup": [
+      "composer install",
+      "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+      "@php artisan key:generate",
+      "@php artisan migrate --force",
+      "yarn install",
+      "yarn run build"
     ],
-    "license": "proprietary",
-    "authors": [
-        {
-            "name": "Mathieu TUDISCO",
-            "email": "mathieu@tudisco.fr"
-        }
+    "dev": [
+      "Composer\\Config::disableProcessTimeout",
+      "docker compose -f docker-compose.yml up -d",
+      "XDEBUG_MODE=debug php artisan serve --port 8084 --ansi"
     ],
-    "require": {
-        "php": "^8.3",
-        "inertiajs/inertia-laravel": "^3.3.1",
-        "laravel/framework": "^13.25.0",
-        "laravel/socialite": "^5.29.0",
-        "laravel/tinker": "^3.0.2",
-        "mathieutu/exporter": "^3.4.0",
-        "staudenmeir/belongs-to-through": "^2.18.0"
-    },
-    "require-dev": {
-        "barryvdh/laravel-ide-helper": "^3.7.0",
-        "fakerphp/faker": "^1.24.1",
-        "laravel/boost": "^2.5.3",
-        "laravel/pail": "^1.2.7",
-        "laravel/pao": "^1.1.4",
-        "laravel/pint": "^1.30.5",
-        "laravel/wayfinder": "dev-next",
-        "mockery/mockery": "^1.6.12",
-        "nunomaduro/collision": "^8.9.5",
-        "pestphp/pest": "^5.1.1",
-        "pestphp/pest-plugin-browser": "^5.0.1",
-        "pestphp/pest-plugin-laravel": "^5.0.1"
-    },
-    "autoload": {
-        "psr-4": {
-            "App\\": "app/",
-            "Database\\Factories\\": "database/factories/",
-            "Database\\Seeders\\": "database/seeders/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Tests\\": "tests/"
-        }
-    },
-    "scripts": {
-        "setup": [
-            "composer install",
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
-            "@php artisan key:generate",
-            "@php artisan migrate --force",
-            "yarn install",
-            "yarn run build"
-        ],
-        "dev": [
-            "Composer\\Config::disableProcessTimeout",
-            "docker compose -f docker-compose.yml up -d",
-            "XDEBUG_MODE=debug php artisan serve --port 8084 --ansi"
-        ],
-        "test": [
-            "@php artisan config:clear --ansi",
-            "@php artisan test"
-        ],
-        "post-autoload-dump": [
-            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi"
-        ],
-        "post-update-cmd": [
-            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
-        ],
-        "post-root-package-install": [
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
-        ],
-        "post-create-project-cmd": [
-            "@php artisan key:generate --ansi",
-            "@php artisan migrate --graceful --ansi"
-        ],
-        "pre-package-uninstall": [
-            "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
-        ]
-    },
-    "extra": {
-        "laravel": {
-            "dont-discover": []
-        }
-    },
-    "config": {
-        "optimize-autoloader": true,
-        "preferred-install": "dist",
-        "sort-packages": true,
-        "allow-plugins": {
-            "pestphp/pest-plugin": true,
-            "php-http/discovery": true
-        }
-    },
-    "minimum-stability": "stable",
-    "prefer-stable": true
+    "test": [
+      "@php artisan config:clear --ansi",
+      "@php artisan test"
+    ],
+    "post-autoload-dump": [
+      "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+      "@php artisan package:discover --ansi"
+    ],
+    "post-update-cmd": [
+      "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+    ],
+    "post-root-package-install": [
+      "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+    ],
+    "post-create-project-cmd": [
+      "@php artisan key:generate --ansi",
+      "@php artisan migrate --graceful --ansi"
+    ],
+    "pre-package-uninstall": [
+      "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+    ]
+  },
+  "extra": {
+    "laravel": {
+      "dont-discover": []
+    }
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "preferred-install": "dist",
+    "sort-packages": true,
+    "allow-plugins": {
+      "pestphp/pest-plugin": true,
+      "php-http/discovery": true
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
 }
