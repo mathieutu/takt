@@ -1,0 +1,66 @@
+name: Database Backup
+
+on:
+  schedule:
+    - cron: '0 1 * * *' # Runs daily at 01:00
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - run: ssh-keyscan -H takt.mathieutu.dev >> ~/.ssh/known_hosts
+
+      - name: Create database backup on the VPS
+        id: backup
+        run: |
+          filename=$(ssh root@takt.mathieutu.dev '
+            source ~/.bash_aliases
+            db_backup takt >&2
+            cd "$SERVICES_DIRECTORY/takt" && ls -t backup_*.dump | head -1
+          ')
+          echo "filename=$filename" >> "$GITHUB_OUTPUT"
+
+      - name: Download backup
+        run: |
+          mkdir -p backups
+          scp "root@takt.mathieutu.dev:services/takt/${{ steps.backup.outputs.filename }}" backups/backup.dump
+
+      - name: Prune old backups on the VPS (keep last 5)
+        if: always()
+        run: |
+          ssh root@takt.mathieutu.dev '
+            cd services/takt
+            ls -t backup_*.dump | tail -n +6 | xargs -r rm -f
+          '
+
+      - name: Get current date
+        id: date
+        run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Setup rclone
+        uses: AnimMouse/setup-rclone@v1
+
+      - name: Upload backup to Google Drive
+        env:
+          RCLONE_CONFIG_DRIVE_TYPE: drive
+          RCLONE_CONFIG_DRIVE_SCOPE: drive
+          # TODO: add a GOOGLE_DRIVE_CREDENTIALS repo secret (Google service account JSON
+          # key) before enabling this workflow.
+          RCLONE_CONFIG_DRIVE_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.GOOGLE_DRIVE_CREDENTIALS }}
+          # If the Drive account is on a Google Workspace domain with domain-wide
+          # delegation configured, add RCLONE_CONFIG_DRIVE_IMPERSONATE to act as a real
+          # user's Drive instead of the service account's own storage.
+          # Otherwise, share the destination folder with the service account's email
+          # (the "client_email" field inside the GOOGLE_DRIVE_CREDENTIALS JSON secret)
+          # with Editor access, and skip RCLONE_CONFIG_DRIVE_IMPERSONATE.
+          # RCLONE_CONFIG_DRIVE_ROOT_FOLDER_ID: get it from the destination folder's URL
+          # in the browser: https://drive.google.com/drive/folders/<THIS_IS_THE_ID>
+          RCLONE_CONFIG_DRIVE_ROOT_FOLDER_ID: '' # TODO: fill in
+        run: rclone copyto backups/backup.dump "drive:backup_${{ steps.date.outputs.CURRENT_DATE }}.dump" --progress
