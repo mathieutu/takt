@@ -12,10 +12,11 @@ class EnsureUserOwnsResource
 {
     public function handle(Request $request, Closure $next): Response
     {
-        foreach ($request->route()->parameters() as $model) {
-            if (! $model instanceof HasUser || ! $model->user->is($request->user())) {
-                throw new AccessDeniedHttpException;
-            }
+        $isUnauthorized = collect($request->route()->parameters())
+            ->contains(fn ($model) => ! $model instanceof HasUser || ! $model->user->is($request->user()));
+
+        if ($isUnauthorized) {
+            throw new AccessDeniedHttpException;
         }
 
         return $next($request);

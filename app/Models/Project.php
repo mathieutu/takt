@@ -159,22 +159,12 @@ class Project extends Model implements HasUser
      */
     private function pruneRedundantEntries(BaseCollection $history): BaseCollection
     {
-        $sorted = $history->sortKeys();
-        $pruned = collect();
-        $previousValue = null;
-        $hasPrevious = false;
-
-        foreach ($sorted as $date => $value) {
-            if ($hasPrevious && $value === $previousValue) {
-                continue;
-            }
-
-            $pruned->put($date, $value);
-            $previousValue = $value;
-            $hasPrevious = true;
-        }
-
-        return $pruned;
+        return $history->sortKeys()->reduce(
+            fn (BaseCollection $pruned, $value, $date) => $pruned->isNotEmpty() && $pruned->last() === $value
+                ? $pruned
+                : $pruned->put($date, $value),
+            collect(),
+        );
     }
 
     public function getDailyRateForDate(CarbonInterface|string $date): int
