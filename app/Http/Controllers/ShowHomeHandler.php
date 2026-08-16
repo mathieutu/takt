@@ -63,6 +63,23 @@ class ShowHomeHandler
             return redirect()->route('projects.index');
         }
 
+        $projectOptions = $projects->map(fn (Project $p) => [
+            'id' => $p->id,
+            'name' => $p->name,
+            'clientId' => $p->client_id,
+            'clientName' => $p->client->name,
+        ])->values()->all();
+
+        $clientId = $request->string('client_id')->toString();
+        $projectId = $request->string('project_id')->toString();
+        $sort = $request->string('sort', 'activity_desc')->toString();
+
+        if ($projectId) {
+            $projects = $projects->where('id', $projectId)->values();
+        } elseif ($clientId) {
+            $projects = $projects->where('client_id', $clientId)->values();
+        }
+
         $allEntries = $projects->flatMap->timesheetEntries;
         $allInvoices = $projects->flatMap->invoices;
 
@@ -241,6 +258,22 @@ class ShowHomeHandler
                 ];
             })->values()->all();
 
+        $sortableColumns = [
+            'name' => fn (array $p) => $p['name'],
+            'rate' => fn (array $p) => $p['dailyRate'],
+            'budget' => fn (array $p) => [$p['monthAmount'], $p['workedAmount']],
+            'activity' => fn (array $p) => $p['lastActivity'] ?? '',
+            'unbilled' => fn (array $p) => $p['unbilled'],
+        ];
+        [$sortColumn, $sortDirection] = array_pad(explode('_', $sort, 2), 2, 'desc');
+
+        if (isset($sortableColumns[$sortColumn])) {
+            $projectsData = collect($projectsData)
+                ->sortBy($sortableColumns[$sortColumn], SORT_REGULAR, $sortDirection === 'desc')
+                ->values()
+                ->all();
+        }
+
         // Worked but not yet invoiced, across all projects — gross, mirroring to_invoice's
         // deliberate gross-amount design (see projects[].unbilled, same underlying figure).
         $unbilledAmount = collect($projectsData)->sum('unbilled');
@@ -270,6 +303,10 @@ class ShowHomeHandler
             'from' => $from->format('Y-m'),
             'to' => $to->format('Y-m'),
             'firstEntryMonth' => $firstEntryMonth,
+            'clientId' => $clientId,
+            'projectId' => $projectId,
+            'projectOptions' => $projectOptions,
+            'sort' => $sort,
             'kpis' => [
                 'monthDays' => $monthDays,
                 'monthRevenue' => $monthRevenue,

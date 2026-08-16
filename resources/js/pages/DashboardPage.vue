@@ -111,6 +111,15 @@ type DashboardProps = {
     amount: number,
   }>,
   firstEntryMonth: string | null,
+  clientId: string,
+  projectId: string,
+  sort: string,
+  projectOptions: Array<{
+    id: string,
+    name: string,
+    clientId: string,
+    clientName: string,
+  }>,
 }
 
 const parseYearMonth = (yearMonth: string) => {
@@ -140,8 +149,45 @@ const {
 } = useMonthRangePicker(
   computed(() => props.from),
   computed(() => props.to),
-  range => router.visit(dashboard({ query: range }), { preserveScroll: true }),
+  range => router.visit(dashboard({ mergeQuery: range }), { preserveScroll: true }),
 )
+
+const filterItems = computed(() => {
+  const clients = new Map<string, { id: string, name: string }>()
+  for (const p of props.projectOptions) clients.set(p.clientId, { id: p.clientId, name: p.clientName })
+
+  return [...clients.values()].flatMap(client => [
+    { type: 'label' as const, label: client.name },
+    { label: client.name, value: `client:${client.id}`, icon: 'i-lucide-building-2' },
+    ...props.projectOptions
+      .filter(p => p.clientId === client.id)
+      .map(p => ({ label: p.name, value: `project:${p.id}`, icon: 'i-lucide-folder' })),
+  ])
+})
+
+const selectedFilter = computed(() =>
+  props.projectId ? `project:${props.projectId}` : props.clientId ? `client:${props.clientId}` : null,
+)
+
+const onFilterSelect = (value: string | null | undefined) => {
+  const [type, id] = value?.split(':') ?? []
+  router.visit(dashboard({
+    mergeQuery: {
+      client_id: type === 'client' ? id : null,
+      project_id: type === 'project' ? id : null,
+    },
+  }), { preserveState: true, preserveScroll: true, replace: true })
+}
+
+const currentSort = computed(() => {
+  const [column, direction] = (props.sort || 'activity_desc').split('_')
+  return { column, direction }
+})
+
+const toggleSort = (column: string) => {
+  const direction = currentSort.value.column === column && currentSort.value.direction === 'desc' ? 'asc' : 'desc'
+  router.visit(dashboard({ mergeQuery: { sort: `${column}_${direction}` } }), { preserveState: true, preserveScroll: true, replace: true })
+}
 
 const selectedMonthLabel = computed(() => formatMonthLabel(props.to, 'long'))
 
@@ -784,16 +830,43 @@ const ratioColorClass = (percent: number): string => {
         <!-- Projects -->
         <UCard>
           <template #header>
-            <p class="text-sm font-semibold">Projets</p>
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <p class="text-sm font-semibold">Projets</p>
+              <UInputMenu
+                :modelValue="selectedFilter"
+                valueKey="value"
+                clear
+                :items="filterItems"
+                placeholder="Filtrer par client ou projet..."
+                icon="i-lucide-search"
+                class="w-full sm:w-72"
+                @update:modelValue="onFilterSelect"
+              />
+            </div>
           </template>
 
           <div class="overflow-x-auto">
             <div class="min-w-240 grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,3fr)_auto_auto] gap-x-4 lg:gap-x-6">
-              <span class="pb-2 text-xs text-muted">Projet</span>
-              <span class="pb-2 text-xs text-muted">Taux <span class="opacity-60">(taux jour. · temps)</span></span>
-              <span class="pb-2 text-xs text-muted">Budget <span class="opacity-60">(total · ce mois)</span></span>
-              <span class="pb-2 text-xs text-muted">Dern. activité</span>
-              <span class="pb-2 text-center text-xs text-muted">À facturer</span>
+              <button type="button" class="pb-2 flex items-center gap-1 text-left text-xs text-muted hover:text-default" @click="toggleSort('name')">
+                Projet
+                <UIcon v-if="currentSort.column === 'name'" :name="currentSort.direction === 'asc' ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3" />
+              </button>
+              <button type="button" class="pb-2 flex items-center gap-1 text-left text-xs text-muted hover:text-default" @click="toggleSort('rate')">
+                Taux <span class="opacity-60">(taux jour. · temps)</span>
+                <UIcon v-if="currentSort.column === 'rate'" :name="currentSort.direction === 'asc' ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3" />
+              </button>
+              <button type="button" class="pb-2 flex items-center gap-1 text-left text-xs text-muted hover:text-default" @click="toggleSort('budget')">
+                Budget <span class="opacity-60">(total · ce mois)</span>
+                <UIcon v-if="currentSort.column === 'budget'" :name="currentSort.direction === 'asc' ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3" />
+              </button>
+              <button type="button" class="pb-2 flex items-center gap-1 text-left text-xs text-muted hover:text-default" @click="toggleSort('activity')">
+                Dern. activité
+                <UIcon v-if="currentSort.column === 'activity'" :name="currentSort.direction === 'asc' ? 'i-lucide-chevron-down' : 'i-lucide-chevron-up'" class="size-3" />
+              </button>
+              <button type="button" class="pb-2 flex items-center justify-center gap-1 text-xs text-muted hover:text-default" @click="toggleSort('unbilled')">
+                À facturer
+                <UIcon v-if="currentSort.column === 'unbilled'" :name="currentSort.direction === 'asc' ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-3" />
+              </button>
 
               <div
                 v-for="p in projectsWithStats"
@@ -829,7 +902,7 @@ const ratioColorClass = (percent: number): string => {
                   </div>
                 </div>
 
-                <div class="grid gap-1.5">
+                <div class="grid gap-1.5 self-start">
                   <div class="flex justify-between text-xs">
                     <span v-if="p.workedAmount > 0" class="flex items-baseline gap-1">
                       <span class="font-semibold">{{ formatCurrency(p.workedAmount) }}</span>

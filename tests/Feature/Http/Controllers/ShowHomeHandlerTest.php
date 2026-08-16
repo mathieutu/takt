@@ -260,3 +260,95 @@ it('orders both projects[] and chart.projects[] by last timesheet entry date, mo
             ->where('chart.projects.1.name', 'Stale')
         );
 });
+
+it('filters kpis, chart and projects[] down to a single project when project_id is set, without touching projectOptions', function () {
+    $projectA = Project::factory()->for($this->client)->create(['name' => 'A', 'daily_rate' => 50000]);
+    TimesheetEntry::factory()->for($projectA)->create(['date' => today(), 'coverage' => 100]);
+
+    $projectB = Project::factory()->for($this->client)->create(['name' => 'B', 'daily_rate' => 100000]);
+    TimesheetEntry::factory()->for($projectB)->create(['date' => today(), 'coverage' => 100]);
+
+    $this->actingAs($this->user)
+        ->get(route('dashboard', ['project_id' => $projectA->id]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('DashboardPage')
+            ->where('kpis.monthRevenue', 50000)
+            ->where('projects', fn ($projects) => $projects->count() === 1 && $projects->first()['name'] === 'A')
+            ->where('chart.projects', fn ($chartProjects) => $chartProjects->count() === 1 && $chartProjects->first()['name'] === 'A')
+            ->where('projectOptions', fn ($options) => $options->count() === 2)
+        );
+});
+
+it('filters kpis, chart and projects[] down to a single client when client_id is set', function () {
+    $otherClient = Client::factory()->for($this->user)->create();
+
+    $project = Project::factory()->for($this->client)->create(['daily_rate' => 50000]);
+    TimesheetEntry::factory()->for($project)->create(['date' => today(), 'coverage' => 100]);
+
+    $otherProject = Project::factory()->for($otherClient)->create(['daily_rate' => 100000]);
+    TimesheetEntry::factory()->for($otherProject)->create(['date' => today(), 'coverage' => 100]);
+
+    $this->actingAs($this->user)
+        ->get(route('dashboard', ['client_id' => $this->client->id]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('DashboardPage')
+            ->where('kpis.monthRevenue', 50000)
+            ->where('projects', fn ($projects) => $projects->count() === 1)
+        );
+});
+
+it('sorts projects[] by name when sort=name_asc, without affecting the default activity-based order otherwise', function () {
+    $stale = Project::factory()->for($this->client)->create(['name' => 'Zebra']);
+    TimesheetEntry::factory()->for($stale)->create(['date' => today()->subDays(10), 'coverage' => 100]);
+
+    $fresh = Project::factory()->for($this->client)->create(['name' => 'Alpha']);
+    TimesheetEntry::factory()->for($fresh)->create(['date' => today(), 'coverage' => 100]);
+
+    $this->actingAs($this->user)
+        ->get(route('dashboard', ['sort' => 'name_asc']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('DashboardPage')
+            ->where('projects.0.name', 'Alpha')
+            ->where('projects.1.name', 'Zebra')
+        );
+});
+
+it('sorts projects[] by daily rate when sort=rate_desc', function () {
+    $cheap = Project::factory()->for($this->client)->create(['name' => 'Cheap', 'daily_rate' => 10000]);
+    TimesheetEntry::factory()->for($cheap)->create(['date' => today(), 'coverage' => 100]);
+
+    $expensive = Project::factory()->for($this->client)->create(['name' => 'Expensive', 'daily_rate' => 90000]);
+    TimesheetEntry::factory()->for($expensive)->create(['date' => today(), 'coverage' => 100]);
+
+    $this->actingAs($this->user)
+        ->get(route('dashboard', ['sort' => 'rate_desc']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('DashboardPage')
+            ->where('projects.0.name', 'Expensive')
+            ->where('projects.1.name', 'Cheap')
+        );
+});
+
+it('sorts projects[] by month amount when sort=budget_desc, falling back to total worked amount on a tie', function () {
+    $pastMonth = today()->subMonth()->startOfMonth();
+
+    // Same month amount (0, no entry this month) for both — tie broken by total worked amount.
+    $moreWorkedOverall = Project::factory()->for($this->client)->create(['name' => 'MoreWorkedOverall', 'daily_rate' => 50000]);
+    TimesheetEntry::factory()->for($moreWorkedOverall)->create(['date' => $pastMonth->copy(), 'coverage' => 200]);
+
+    $lessWorkedOverall = Project::factory()->for($this->client)->create(['name' => 'LessWorkedOverall', 'daily_rate' => 50000]);
+    TimesheetEntry::factory()->for($lessWorkedOverall)->create(['date' => $pastMonth->copy(), 'coverage' => 100]);
+
+    // Highest month amount this month — must rank first regardless of the above.
+    $activeThisMonth = Project::factory()->for($this->client)->create(['name' => 'ActiveThisMonth', 'daily_rate' => 50000]);
+    TimesheetEntry::factory()->for($activeThisMonth)->create(['date' => today(), 'coverage' => 100]);
+
+    $this->actingAs($this->user)
+        ->get(route('dashboard', ['sort' => 'budget_desc']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('DashboardPage')
+            ->where('projects.0.name', 'ActiveThisMonth')
+            ->where('projects.1.name', 'MoreWorkedOverall')
+            ->where('projects.2.name', 'LessWorkedOverall')
+        );
+});
