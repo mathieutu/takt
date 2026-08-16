@@ -12,6 +12,9 @@ router.on('navigate', () => router.flushAll())
 createInertiaApp({
   title: title => (title && title !== appTitle) ? `${title} - ${appTitle}` : appTitle,
   layout: () => AppLayout,
+  progress: {
+    color: 'var(--ui-primary)',
+  },
   withApp(app) {
     app.use(ui)
   },
