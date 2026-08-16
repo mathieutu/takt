@@ -55,7 +55,9 @@ class ShowHomeHandler
                 'timesheetEntries',
                 'invoices',
             ])
-            ->get();
+            ->get()
+            ->sortByDesc(fn (Project $p) => $p->timesheetEntries->max('date') ?? CarbonImmutable::createFromTimestamp(0))
+            ->values();
 
         if ($projects->isEmpty()) {
             return redirect()->route('projects.index');

@@ -208,33 +208,29 @@ const projectsWithStats = computed(() => {
   const now = new Date()
   const totalDays = props.projects.reduce((sum, p) => sum + p.periodDaysCount, 0)
 
-  return props.projects
-    .map(p => {
-      const cumulativePercent = p.theoreticalBudget
-        ? Math.round((p.workedAmount / p.theoreticalBudget) * 100)
-        : 0
-      const monthlyPercent = p.maxMonthBudget
-        ? Math.round((p.monthAmount / p.maxMonthBudget) * 100)
-        : 0
-      const isMonthOverrun = monthlyPercent > 100
-      const isMonthWarning = !isMonthOverrun && monthlyPercent > props.monthAdvancement * 100 * 1.1
-      const timeShare = totalDays ? Math.round((p.periodDaysCount / totalDays) * 100) : 0
-      const daysSince = p.lastActivity
-        ? Math.floor((now.getTime() - new Date(p.lastActivity).getTime()) / 86_400_000)
-        : null
-      return {
-        ...p,
-        cumulativePercent,
-        monthlyPercent,
-        isMonthOverrun,
-        isMonthWarning,
-        timeShare,
-        daysSince,
-      }
-    })
-    .toSorted((a, b) =>
-      a.clientName.localeCompare(b.clientName, 'fr') || a.name.localeCompare(b.name, 'fr'),
-    )
+  return props.projects.map(p => {
+    const cumulativePercent = p.theoreticalBudget
+      ? Math.round((p.workedAmount / p.theoreticalBudget) * 100)
+      : 0
+    const monthlyPercent = p.maxMonthBudget
+      ? Math.round((p.monthAmount / p.maxMonthBudget) * 100)
+      : 0
+    const isMonthOverrun = monthlyPercent > 100
+    const isMonthWarning = !isMonthOverrun && monthlyPercent > props.monthAdvancement * 100 * 1.1
+    const timeShare = totalDays ? Math.round((p.periodDaysCount / totalDays) * 100) : 0
+    const daysSince = p.lastActivity
+      ? Math.floor((now.getTime() - new Date(p.lastActivity).getTime()) / 86_400_000)
+      : null
+    return {
+      ...p,
+      cumulativePercent,
+      monthlyPercent,
+      isMonthOverrun,
+      isMonthWarning,
+      timeShare,
+      daysSince,
+    }
+  })
 })
 
 const tooltipUi = {

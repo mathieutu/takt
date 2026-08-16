@@ -242,3 +242,21 @@ it('still counts non-billable coverage in chart.projects, an activity chart rath
             ->where('chart.projects.0.data', fn ($data) => collect($data)->last() === 100)
         );
 });
+
+it('orders both projects[] and chart.projects[] by last timesheet entry date, most recent first', function () {
+    $stale = Project::factory()->for($this->client)->create(['name' => 'Stale']);
+    TimesheetEntry::factory()->for($stale)->create(['date' => today()->subDays(10), 'coverage' => 100]);
+
+    $fresh = Project::factory()->for($this->client)->create(['name' => 'Fresh']);
+    TimesheetEntry::factory()->for($fresh)->create(['date' => today(), 'coverage' => 100]);
+
+    $this->actingAs($this->user)
+        ->get(route('dashboard'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('DashboardPage')
+            ->where('projects.0.name', 'Fresh')
+            ->where('projects.1.name', 'Stale')
+            ->where('chart.projects.0.name', 'Fresh')
+            ->where('chart.projects.1.name', 'Stale')
+        );
+});
