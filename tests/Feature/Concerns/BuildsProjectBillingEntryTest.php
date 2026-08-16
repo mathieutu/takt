@@ -159,3 +159,46 @@ it('weights invoiced days by each month\'s own rate rather than the current rate
 
     expect($totals['total_invoiced_days'])->toBe(2.0);
 });
+
+it('anchors unbilled_since on the balance crossing back into debt, not on an old advance invoice', function () {
+    $project = Project::factory()->for($this->client)->create(['daily_rate' => 50000]);
+
+    // A single day worked, then an invoice paid in advance of any further work: the balance goes
+    // negative (client has credit), not just to zero.
+    TimesheetEntry::factory()->for($project)->create(['date' => '2025-01-10', 'coverage' => 100]);
+    Invoice::factory()->for($project)->create(['amount' => 100000, 'created_at' => '2025-01-15']);
+
+    // Months later, new work finally eats through the advance and tips the balance positive again.
+    TimesheetEntry::factory()->for($project)->create(['date' => '2025-06-01', 'coverage' => 100]);
+    TimesheetEntry::factory()->for($project)->create(['date' => '2025-06-02', 'coverage' => 100]);
+
+    $totals = $this->builder->totals($project->fresh());
+
+    expect($totals['unbilled_since'])->toBe('2025-06-02');
+});
+
+it('anchors unbilled_since on a recent isolated entry, not on a stale last invoice date', function () {
+    $project = Project::factory()->for($this->client)->create(['daily_rate' => 50000]);
+
+    // Fully settled long ago: one day worked, one invoice that covers it exactly.
+    TimesheetEntry::factory()->for($project)->create(['date' => '2025-01-10', 'coverage' => 100]);
+    Invoice::factory()->for($project)->create(['amount' => 50000, 'created_at' => '2025-01-15']);
+
+    // A single, recent day of work on an otherwise dormant project.
+    TimesheetEntry::factory()->for($project)->create(['date' => today()->subDay(), 'coverage' => 100]);
+
+    $totals = $this->builder->totals($project->fresh());
+
+    expect($totals['unbilled_since'])->toBe(today()->subDay()->toDateString());
+});
+
+it('reports unbilled_since as null when the project is currently paid up or in advance', function () {
+    $project = Project::factory()->for($this->client)->create(['daily_rate' => 50000]);
+
+    TimesheetEntry::factory()->for($project)->create(['date' => '2025-01-10', 'coverage' => 100]);
+    Invoice::factory()->for($project)->create(['amount' => 100000, 'created_at' => '2025-01-15']);
+
+    $totals = $this->builder->totals($project->fresh());
+
+    expect($totals['unbilled_since'])->toBeNull();
+});

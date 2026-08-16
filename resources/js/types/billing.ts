@@ -41,4 +41,5 @@ export type ProjectWithBilling = {
   to_invoice_days: number,
   to_pay: number,
   to_pay_days: number,
+  unbilled_since: string | null,
 }

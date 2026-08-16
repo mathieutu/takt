@@ -119,6 +119,7 @@ trait BuildsProjectBillingEntry
      *     to_invoice_days: float,
      *     to_pay: int,
      *     to_pay_days: float,
+     *     unbilled_since: ?string,
      * }
      */
     protected function buildProjectBillingEntryWithTotals(Project $project, ?string $clientNameOverride = null): array
@@ -138,6 +139,7 @@ trait BuildsProjectBillingEntry
             'to_invoice_days' => $totals['to_invoice_days'],
             'to_pay' => $totals['to_pay'],
             'to_pay_days' => $totals['to_pay_days'],
+            'unbilled_since' => $project->unbilledSince()?->toDateString(),
         ];
     }
 

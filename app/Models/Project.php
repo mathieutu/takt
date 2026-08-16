@@ -254,6 +254,47 @@ class Project extends Model implements HasUser
     }
 
     /**
+     * Date since which the project has had an uninterrupted, currently-still-open debt (worked minus
+     * invoiced kept strictly positive) — the last time the running balance crossed from ≤0 up to >0.
+     * Null when there's currently nothing owed, even if there was in the past.
+     */
+    public function unbilledSince(): ?CarbonImmutable
+    {
+        $workEvents = $this->timesheetEntries
+            ->where('billable', true)
+            ->map(fn (TimesheetEntry $e) => [
+                'date' => CarbonImmutable::parse($e->date),
+                'order' => 0, // same-day: work lands before that day's invoices
+                'delta' => (int) round($e->coverage / 100 * $this->getDailyRateForDate($e->date)),
+            ])
+            ->toBase();
+
+        $invoiceEvents = $this->invoices->map(fn (Invoice $i) => [
+            'date' => CarbonImmutable::parse($i->created_at)->startOfDay(),
+            'order' => 1,
+            'delta' => -$i->amount,
+        ])->toBase();
+
+        $run = $workEvents->merge($invoiceEvents)
+            ->sortBy([['date', 'asc'], ['order', 'asc']])
+            ->reduce(function (array $run, array $event) {
+                $wasPositive = $run['balance'] > 0;
+                $balance = $run['balance'] + $event['delta'];
+
+                return [
+                    'balance' => $balance,
+                    'since' => match (true) {
+                        $balance > 0 && ! $wasPositive => $event['date'],
+                        $balance <= 0 => null,
+                        default => $run['since'],
+                    },
+                ];
+            }, ['balance' => 0, 'since' => null]);
+
+        return $run['since'];
+    }
+
+    /**
      * Ended projects first (earliest end_date first), then ongoing ones (no end_date), each group
      * tie-broken alphabetically — used everywhere a client's projects are listed for billing.
      * `end_date IS NULL` evaluates to 0/1 in Postgres, MySQL, and SQLite alike, giving a portable

@@ -130,14 +130,6 @@ const daysSince = (dateStr: string): number => {
   return Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
 }
 
-const lastInvoiceDate = (project: ProjectWithBilling): string | null => {
-  const dates = project.months
-    .flatMap(m => m.invoices)
-    .map(inv => inv.created_at)
-    .toSorted()
-  return dates.at(-1) ?? null
-}
-
 const oldestUnpaidInvoiceDate = (project: ProjectWithBilling): string | null => {
   const dates = project.months
     .flatMap(m => m.invoices)
@@ -801,8 +793,8 @@ const monthLabel = (ym: string): string => {
                       {{ formatCurrency(projectTotals(project).toInvoice) }}
                       <span v-if="fmtExactDays(projectTotals(project).toInvoiceDays)" class="text-sm font-normal text-muted">({{ fmtExactDays(projectTotals(project).toInvoiceDays) }})</span>
                     </p>
-                    <p v-if="projectTotals(project).toInvoice > 0 && lastInvoiceDate(project)" class="text-xs mt-0.5" :class="daysSince(lastInvoiceDate(project)!) > 30 ? 'text-error' : 'text-muted'">
-                      Depuis {{ formatDuration(daysSince(lastInvoiceDate(project)!)) }}
+                    <p v-if="project.unbilled_since" class="text-xs mt-0.5" :class="daysSince(project.unbilled_since) > 30 ? 'text-error' : 'text-muted'">
+                      Depuis {{ formatDuration(daysSince(project.unbilled_since)) }}
                     </p>
                   </div>
                   <div v-if="projectTotals(project).toPay > 0" class="text-right">

@@ -247,17 +247,16 @@ class ShowHomeHandler
             ->groupBy('clientName')
             ->map(function ($clientProjects, $clientName) use ($projects, $now) {
                 $clientId = $clientProjects->first()['clientId'];
-                $lastInvoiceDate = $projects
+                $unbilledSinceDates = $projects
                     ->where('client_id', $clientId)
-                    ->flatMap->invoices
-                    ->sortByDesc('created_at')
-                    ->first()?->created_at;
+                    ->map(fn (Project $p) => $p->unbilledSince())
+                    ->filter();
 
                 return [
                     'clientId' => $clientId,
                     'clientName' => $clientName,
                     'amount' => $clientProjects->sum('unbilled'),
-                    'daysSinceLastInvoice' => $lastInvoiceDate ? (int) $lastInvoiceDate->diffInDays($now) : null,
+                    'unbilledSinceDays' => $unbilledSinceDates->isNotEmpty() ? (int) $unbilledSinceDates->min()->diffInDays($now) : null,
                 ];
             })
             ->filter(fn ($item) => $item['amount'] > 0)

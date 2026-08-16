@@ -96,7 +96,7 @@ type DashboardProps = {
     clientId: string,
     clientName: string,
     amount: number,
-    daysSinceLastInvoice: number | null,
+    unbilledSinceDays: number | null,
   }>,
   periodRevenueByClient: Array<{
     clientName: string,
@@ -722,7 +722,7 @@ const ratioColorClass = (percent: number): string => {
                             {{ formatCurrency(item.amount) }}
                           </span>
                           <span class="font-normal text-muted">
-                            {{ item.daysSinceLastInvoice !== null ? `· depuis ${formatDays(item.daysSinceLastInvoice)}` : '· jamais facturé' }}
+                            {{ item.unbilledSinceDays !== null ? `· depuis ${formatDays(item.unbilledSinceDays)}` : '· jamais facturé' }}
                           </span>
                         </span>
                       </UButton>
