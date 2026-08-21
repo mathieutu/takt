@@ -3,7 +3,7 @@ import ui from '@nuxt/ui/vite'
 import vue from '@vitejs/plugin-vue'
 import laravel from 'laravel-vite-plugin'
 import { defineConfig } from 'vite'
-import { inertiaSsg } from './vite-plugin-inertia-ssg'
+import { inertiaSsg } from './vite-plugin-inertia-ssg.ts'
 
 export default defineConfig({
   ssr: {
