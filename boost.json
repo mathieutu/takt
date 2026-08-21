@@ -8,6 +8,9 @@
     "guidelines": true,
     "mcp": true,
     "nightwatch": false,
+    "packages": [
+        "pestphp/pest-plugin-agent"
+    ],
     "sail": false,
     "skills": [
         "infer-conventions",
@@ -17,6 +20,7 @@
         "pest-testing",
         "inertia-vue-development",
         "tailwindcss-development",
+        "pest-plugin-agent",
         "laravel-eloquent-queries",
         "vuejs"
     ]
