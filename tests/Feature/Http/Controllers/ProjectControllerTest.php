@@ -276,7 +276,7 @@ describe('syncEntries', function () {
             ->patchJson(route('projects.entries.sync', $project), [
                 'entries' => [['date' => today()->subDay()->toDateString(), 'coverage' => 100]],
             ])
-            ->assertStatus(422);
+            ->assertUnprocessable();
     });
 
     it('rejects an entry dated after the end date', function () {
@@ -286,7 +286,7 @@ describe('syncEntries', function () {
             ->patchJson(route('projects.entries.sync', $project), [
                 'entries' => [['date' => today()->toDateString(), 'coverage' => 100]],
             ])
-            ->assertStatus(422);
+            ->assertUnprocessable();
     });
 
     it('accepts an entry dated on the end date, even for an already inactive project', function () {
