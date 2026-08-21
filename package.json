@@ -13,7 +13,7 @@
   "dependencies": {
     "@inertiajs/vue3": "^3.7.0",
     "@internationalized/date": "^3.12.3",
-    "@nuxt/ui": "^4.10.0",
+    "@nuxt/ui": "^4.11.0",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vueuse/core": "^14.4.0",
     "chart.js": "^4.5.1",

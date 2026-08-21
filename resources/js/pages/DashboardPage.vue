@@ -494,10 +494,10 @@ const periodActivitySummary = computed(() => {
   return `${days} travaillés · ${rate}/j moy. · ${periodFillRate.value}% d'occupation sur ${workingDays}`
 })
 
-const progressBarClass = (percent: number) => {
-  if (percent > 100) return 'bg-error'
-  if (percent >= 80) return 'bg-warning'
-  return 'bg-success'
+const progressColor = (percent: number) => {
+  if (percent > 100) return 'error'
+  if (percent >= 80) return 'warning'
+  return 'success'
 }
 
 const progressTextClass = (percent: number) => {
@@ -891,12 +891,7 @@ const ratioColorClass = (percent: number): string => {
                     </div>
                     <span v-if="p.dailyRate > 0">=</span>
                   </div>
-                  <div class="h-1.5 w-full overflow-hidden rounded-full bg-elevated">
-                    <div
-                      class="h-1.5 rounded-full bg-primary transition-all duration-500"
-                      :style="{ width: `${p.timeShare}%` }"
-                    />
-                  </div>
+                  <UProgress :modelValue="p.timeShare" :ui="{ base: 'h-1.5 bg-elevated' }" />
                   <div class="text-xs text-muted">
                     {{ p.timeShare }}% du temps travaillé sur la période
                   </div>
@@ -912,16 +907,12 @@ const ratioColorClass = (percent: number): string => {
                       {{ p.cumulativePercent }}% of {{ formatCurrency(p.theoreticalBudget) }}
                     </span>
                   </div>
-                  <div
+                  <UProgress
                     v-if="p.cumulativePercent"
-                    class="h-2 w-full overflow-hidden rounded-full bg-elevated"
-                  >
-                    <div
-                      class="h-full rounded-full transition-all duration-500"
-                      :class="progressBarClass(p.cumulativePercent)"
-                      :style="{ width: `${Math.min(p.cumulativePercent, 100)}%` }"
-                    />
-                  </div>
+                    :modelValue="Math.min(p.cumulativePercent, 100)"
+                    :color="progressColor(p.cumulativePercent)"
+                    :ui="{ base: 'bg-elevated' }"
+                  />
                   <div
                     v-if="p.monthAmount > 0"
                     class="flex items-center gap-1 text-xs"

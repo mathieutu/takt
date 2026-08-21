@@ -22,6 +22,9 @@ export default defineConfig({
       components: {
         dts: 'resources/js/types/components.d.ts',
       },
+      experimental: {
+        componentDetection: true,
+      },
       router: 'inertia',
       icon: {
         clientBundle: {
