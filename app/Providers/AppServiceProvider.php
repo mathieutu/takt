@@ -8,6 +8,7 @@ use App\Ssr\SSGGateway;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Foundation\DevCommands;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -52,5 +53,9 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
             DB::prohibitDestructiveCommands();
         }
+
+        DevCommands::register('docker compose -f docker-compose.yml up', 'db')->blue();
+        DevCommands::register('XDEBUG_MODE=debug php artisan serve --port 8084 --ansi', 'server');
+        DevCommands::except('queue');
     }
 }
