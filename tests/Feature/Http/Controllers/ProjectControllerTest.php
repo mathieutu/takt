@@ -143,7 +143,25 @@ describe('edit', function () {
             ->get(route('projects.edit', $project))
             ->assertOk();
 
-        expect(session("back_url_project_{$project->id}"))->toBe(route('projects.index'));
+        expect(session("back_url_project_{$project->id}"))->toBe(route('projects.index', [], false));
+    });
+
+    it('exposes the recorded back destination as a relative path, for Cancel to return there', function () {
+        $project = Project::factory()->for($this->client)->create();
+        $billingUrl = route('clients.billing.show', $this->client);
+
+        $this->actingAs($this->user)
+            ->withHeader('Referer', $billingUrl)
+            ->get(route('projects.edit', $project))
+            ->assertInertia(fn ($page) => $page->where('back_url', route('clients.billing.show', $this->client, false)));
+    });
+
+    it('exposes no back_url when none has been recorded yet', function () {
+        $project = Project::factory()->for($this->client)->create();
+
+        $this->actingAs($this->user)
+            ->get(route('projects.edit', $project))
+            ->assertInertia(fn ($page) => $page->where('back_url', null));
     });
 });
 

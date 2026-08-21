@@ -22,7 +22,17 @@ class ClientController
 
     public function edit(Request $request, Client $client): Response
     {
-        $request->session()->put("back_url_client_{$client->id}", $request->header('Referer'));
+        // Guarded against self-reference: after a validation error, Inertia reloads this very edit
+        // page and the browser's Referer header for that reload is the edit page itself — recording
+        // it as the "back" destination would trap every later successful save on this same page.
+        $referer = $request->header('Referer');
+
+        if ($referer && $referer !== $request->url()) {
+            $request->session()->put(
+                "back_url_client_{$client->id}",
+                Str::after($referer, $request->getSchemeAndHttpHost()),
+            );
+        }
 
         return Inertia::render('ClientForm', [
             'page' => $this->projectsPageProps($request),
@@ -34,6 +44,7 @@ class ClientController
                     'shareUrl() as share_url',
                 ]),
             ],
+            'back_url' => $request->session()->get("back_url_client_{$client->id}"),
         ]);
     }
 

@@ -15,6 +15,30 @@ describe('edit', function () {
             ->get(route('clients.edit', $this->client))
             ->assertOk();
     });
+
+    it('records the referer as the back destination when it differs from the edit page itself', function () {
+        $this->actingAs($this->user)
+            ->withHeader('Referer', route('projects.index'))
+            ->get(route('clients.edit', $this->client))
+            ->assertOk();
+
+        expect(session("back_url_client_{$this->client->id}"))->toBe(route('projects.index', [], false));
+    });
+
+    it('exposes the recorded back destination as a relative path, for Cancel to return there', function () {
+        $billingUrl = route('clients.billing.show', $this->client);
+
+        $this->actingAs($this->user)
+            ->withHeader('Referer', $billingUrl)
+            ->get(route('clients.edit', $this->client))
+            ->assertInertia(fn ($page) => $page->where('back_url', route('clients.billing.show', $this->client, false)));
+    });
+
+    it('exposes no back_url when none has been recorded yet', function () {
+        $this->actingAs($this->user)
+            ->get(route('clients.edit', $this->client))
+            ->assertInertia(fn ($page) => $page->where('back_url', null));
+    });
 });
 
 describe('update', function () {

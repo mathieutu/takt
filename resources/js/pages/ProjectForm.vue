@@ -48,7 +48,7 @@ type BackgroundProject = {
   is_inactive: boolean,
 }
 
-const { modal } = defineProps<{
+const { modal, back_url: backUrl } = defineProps<{
   modal: {
     project?: ProjectFormData | null,
     clients: FormClient[],
@@ -63,7 +63,10 @@ const { modal } = defineProps<{
     has_trashed?: boolean,
     has_active?: boolean,
   },
+  back_url?: string | null,
 }>()
+
+const isBackToProjectsIndex = !backUrl || backUrl.split('?')[0] === index.url()
 
 const form = useForm({
   name: modal.project?.name ?? '',
@@ -112,7 +115,9 @@ const setMaxMonthBudget = (val: number | null) => form.max_month_budget = val ? 
 const setMaxTotalBudget = (val: number | null) => form.max_total_budget = val ? Math.round(val * 100) : null
 
 const submit = () => form.submit(modal.project ? update(modal.project) : store())
-const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
+const close = () => isBackToProjectsIndex
+  ? router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
+  : router.visit(backUrl!)
 </script>
 
 <template>
@@ -246,7 +251,7 @@ const close = () => router.visit(index({ mergeQuery: {} }), { only: ['modal'] })
       </template>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <UButton :href="index()" label="Annuler" color="neutral" variant="outline" />
+          <UButton :href="isBackToProjectsIndex ? index() : backUrl!" label="Annuler" color="neutral" variant="outline" />
           <UButton
             type="submit"
             form="project-form"

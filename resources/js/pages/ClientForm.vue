@@ -36,7 +36,7 @@ type BackgroundProject = {
   is_inactive: boolean,
 }
 
-const { modal } = defineProps<{
+const { modal, back_url: backUrl } = defineProps<{
   modal: {
     client: ClientFormData,
   },
@@ -50,6 +50,7 @@ const { modal } = defineProps<{
     has_trashed?: boolean,
     has_active?: boolean,
   },
+  back_url?: string | null,
 }>()
 
 const form = useForm({
@@ -57,8 +58,10 @@ const form = useForm({
   daily_rate: modal.client.daily_rate,
 })
 
+const isBackToProjectsIndex = !backUrl || backUrl.split('?')[0] === index.url()
+
 const submit = () => form.submit(update(modal.client))
-const close = () => router.visit(index({ mergeQuery: {} }))
+const close = () => router.visit(isBackToProjectsIndex ? index({ mergeQuery: {} }) : backUrl!)
 
 const copied = ref(false)
 
@@ -157,7 +160,7 @@ const revokeShare = () => {
       </template>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <UButton :href="index()" label="Annuler" color="neutral" variant="outline" />
+          <UButton :href="isBackToProjectsIndex ? index() : backUrl!" label="Annuler" color="neutral" variant="outline" />
           <UButton label="Enregistrer" :loading="form.processing" type="submit" form="client-form" />
         </div>
       </template>

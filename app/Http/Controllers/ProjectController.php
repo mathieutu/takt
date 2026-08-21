@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -110,7 +111,10 @@ class ProjectController
         $referer = $request->header('Referer');
 
         if ($referer && $referer !== $request->url()) {
-            $request->session()->put("back_url_project_{$project->id}", $referer);
+            $request->session()->put(
+                "back_url_project_{$project->id}",
+                Str::after($referer, $request->getSchemeAndHttpHost()),
+            );
         }
 
         return Inertia::render('ProjectForm', [
@@ -132,6 +136,7 @@ class ProjectController
                 ]),
                 'clients' => $request->user()->clients()->get()->map->export(['id', 'name', 'daily_rate']),
             ],
+            'back_url' => $request->session()->get("back_url_project_{$project->id}"),
         ]);
     }
 
