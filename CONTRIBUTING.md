@@ -26,7 +26,7 @@ Before opening a PR:
 Commits follow a [Gitmoji](https://gitmoji.dev) style: `<emoji> [Scope — ]Message`.
 
 - **Emoji** first, summarizing the type of change (✨ feature, 🐛 fix, ♻️ refactor, ✅ tests, 🔥 removal, 🗃️ database, 💄 UI, 🚸 UX, ⚡️ perf, 📝 docs, ⬆️ deps, 🔨 tooling, 💚 CI/build, 🚑️ hotfix, ♿️ accessibility, 🌐 i18n, 🧑‍💻 DX, ...).
-- **Scope** (optional): the feature/module name, capitalized, followed by ` — ` (e.g. `Timesheet —`).
+- **Scope** (optional): the feature/module name, capitalized, followed by `—` (e.g. `Timesheet —`).
 - **Message**: imperative mood, capitalized, in English.
 
 Example: `🐛 Users — fix account deletion silently undoing itself`
