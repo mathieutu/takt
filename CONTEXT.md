@@ -38,7 +38,7 @@ i.e. the subcontracted one, not the freelance's own billing project)
 
 **Effective date** (daily rate / monthly budget):
 The date from which a newly-submitted daily rate or monthly budget value applies going forward —
-it never changes what was already billed before that date (see ADR-0002). On the project edit
+it never changes what was already billed before that date (see ADR-0009). On the project edit
 form, value and effective date are independent: submitting a value without a date applies it from
 today; submitting a date without a value backdates/postdates a value of `0` to that date; submitting
 neither leaves the existing rate/budget completely untouched (so the rest of the project — e.g. its

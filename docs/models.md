@@ -93,20 +93,3 @@ A billing record for a project: amount invoiced, payment date, and notes.
 
 **Relations:**
 - `belongsTo(Project)`
-
----
-
-## View
-
-A saved filtered view over a project (date range). Currently unused in the UI.
-
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| `title` | string | View title |
-| `project_id` | id | Associated project |
-| `start_date` | date | Start of range |
-| `end_date` | date | End of range |
-| `comments` | string\|null | Notes |
-
-**Relations:**
-- `belongsTo(Project)`
