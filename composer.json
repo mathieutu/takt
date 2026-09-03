@@ -1,15 +1,16 @@
 {
   "$schema": "https://getcomposer.org/schema.json",
-  "name": "mathieutu/cra",
+  "name": "mathieutu/takt",
   "type": "project",
-  "description": "Application de gestion de projets, clients et temps d'activit\u00e9.",
+  "description": "Time-tracking and billing application for freelancers.",
   "keywords": [
     "laravel",
     "inertia",
     "vue",
-    "time-tracking"
+    "time-tracking",
+    "freelancers"
   ],
-  "license": "proprietary",
+  "license": "AGPL-3.0-only",
   "authors": [
     {
       "name": "Mathieu TUDISCO",

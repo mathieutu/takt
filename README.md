@@ -74,3 +74,11 @@ php artisan test --compact
 - [Features & routes](docs/features.md)
 - [Data models](docs/models.md)
 - [Technical architecture](docs/architecture.md)
+
+## Contributing
+
+Issues and pull requests are welcome. For anything beyond a small fix, please open an issue to discuss the change before submitting a new feature PR — see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+Takt is open-source software licensed under the [GNU Affero General Public License v3.0](LICENSE).
