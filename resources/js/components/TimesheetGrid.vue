@@ -21,10 +21,11 @@ export type GridProject = {
   end_date?: string | null,
 }
 
-const { holidays, days, projects } = defineProps<{
+const { holidays, days, projects, focusedDay } = defineProps<{
   days: Day[],
   holidays: Map<string, string>,
   projects: GridProject[],
+  focusedDay?: string | null,
 }>()
 
 const emit = defineEmits<{
@@ -38,6 +39,10 @@ const emit = defineEmits<{
 const tableRef = useTemplateRef<HTMLTableElement>('table-ref')
 useTimesheetKeyboard(tableRef, () => days, () => projects, emit)
 const { isToday } = useToday()
+
+// Reuses the "today" styling for the day requested via the `focusedDay` prop (e.g. deep-linked
+// from the billing page's duplicate-day alert), so there's a single visual language for "look here".
+const isMarked = (date: string | undefined): boolean => isToday(date) || date === focusedDay
 
 const isActiveOn = (project: GridProject, day: Day): boolean =>
   day.date >= project.start_date && (!project.end_date || day.date <= project.end_date)
@@ -53,11 +58,10 @@ const isNonBillable = (project: GridProject, day: Day): boolean => {
 const getCellClasses = (project: GridProject, day: Day): Array<string | boolean> => {
   const coverage = project.entries[day.date]?.coverage ?? 0
   const isHolidayOrWeekend = holidays.has(day.date) || day.isWeekend
-  const isTodayDay = isToday(day.date)
 
   const base = [
     isActiveOn(project, day) ? 'cursor-pointer' : 'cursor-disabled',
-    isTodayDay && 'border-primary/50',
+    isMarked(day.date) && 'border-primary/50',
   ]
 
   if (isNonBillable(project, day)) return [...base, 'bg-violet-100 hover:bg-violet-200 dark:bg-violet-500/10 dark:hover:bg-violet-500/15']
@@ -90,15 +94,15 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
           class="sticky top-0 z-10 border-b border-r border-t border-default px-0 py-1.5 text-center"
           :class="[
             holidays.has(day.date) || day.isWeekend ? 'bg-elevated' : 'bg-default',
-            isToday(day.date) ? 'border-primary/50' : '',
-            isToday(days[index + 1]?.date) ? 'border-r-primary/50' : '',
+            isMarked(day.date) ? 'border-primary/50' : '',
+            isMarked(days[index + 1]?.date) ? 'border-r-primary/50' : '',
           ]"
           :title="holidays.get(day.date)"
         >
-          <div class="text-xs font-semibold leading-none" :class="isToday(day.date) ? 'text-primary' : 'text-default'">
+          <div class="text-xs font-semibold leading-none" :class="isMarked(day.date) ? 'text-primary' : 'text-default'">
             {{ day.n }}
           </div>
-          <div class="mt-0.5 text-[10px] leading-none" :class="isToday(day.date) ? 'text-primary' : 'text-muted'">
+          <div class="mt-0.5 text-[10px] leading-none" :class="isMarked(day.date) ? 'text-primary' : 'text-muted'">
             {{ day.letter }}
           </div>
         </th>
@@ -145,7 +149,7 @@ const getCellClasses = (project: GridProject, day: Day): Array<string | boolean>
           :data-date="day.date"
           :data-quick-edit-disabled="!canQuickEdit(project, day) ? true : undefined"
           class="group/cell h-13 relative border-b border-r border-default transition-colors select-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary/50"
-          :class="[getCellClasses(project, day), isToday(days[index + 1]?.date) ? 'border-r-primary/50' : '']"
+          :class="[getCellClasses(project, day), isMarked(days[index + 1]?.date) ? 'border-r-primary/50' : '']"
           @mouseenter="($event.target as HTMLElement).focus()"
           @click="canQuickEdit(project, day) ? emit('cellClick', project.id, day.date) : undefined"
           @contextmenu.prevent="canQuickEdit(project, day) ? emit('setCoverage', project.id, day.date, 0) : undefined"

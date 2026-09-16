@@ -60,3 +60,18 @@ it('embeds the timesheet entries of the requested month keyed by date', function
         expect($projectData['entries'])->toHaveKey($entry->date->toDateString());
     });
 });
+
+it('flags whether a project had entries in the previous month', function () {
+    $withPreviousActivity = Project::factory()->for($this->client)->create(['start_date' => today()->subYear(), 'end_date' => null]);
+    TimesheetEntry::factory()->for($withPreviousActivity)->create(['date' => today()->subMonth()->toDateString()]);
+    $withoutPreviousActivity = Project::factory()->for($this->client)->create(['start_date' => today()->subYear(), 'end_date' => null]);
+
+    $response = $this->actingAs($this->user)->get(route('timesheet'));
+
+    $response->assertInertia(function ($page) use ($withPreviousActivity, $withoutPreviousActivity) {
+        $projects = collect($page->toArray()['props']['projects']);
+
+        expect($projects->firstWhere('id', $withPreviousActivity->id)['has_previous_month_entries'])->toBeTrue()
+            ->and($projects->firstWhere('id', $withoutPreviousActivity->id)['has_previous_month_entries'])->toBeFalse();
+    });
+});

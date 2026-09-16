@@ -18,9 +18,13 @@ class ShowTimesheetHandler
     public function __invoke(Request $request, HolidayService $holidays): Response
     {
         $date = $request->date('month', 'Y-m') ?? now()->startOfMonth();
+        $previousMonthStart = $date->clone()->subMonth()->startOfMonth();
+        $previousMonthEnd = $date->clone()->subMonth()->endOfMonth();
+
         $projects = $request->user()->projects()
             ->where('projects.start_date', '<=', $date->endOfMonth())
             ->where(fn ($q) => $q->whereNull('projects.end_date')->orWhere('projects.end_date', '>=', $date->startOfMonth()))
+            ->withExists(['timesheetEntries as has_previous_month_entries' => fn ($q) => $q->whereBetween('date', [$previousMonthStart->toDateString(), $previousMonthEnd->toDateString()])])
             ->with(['timesheetEntries' => fn (HasMany $query) => $query->whereBetween('date', [$date->startOfMonth()->toDateString(), $date->endOfMonth()->toDateString()])])
             ->orderBy('projects.name')
             ->get();
@@ -35,6 +39,7 @@ class ShowTimesheetHandler
 
         return Inertia::render('TimesheetPage', [
             'current' => ['year' => $date->year, 'month' => $date->month],
+            'day' => $request->query('day'),
             'urls' => [
                 'nextMonth' => action(self::class, ['month' => $date->addMonth()->format('Y-m')], false),
                 'prevMonth' => action(self::class, ['month' => $date->subMonth()->format('Y-m')], false),
@@ -60,6 +65,7 @@ class ShowTimesheetHandler
                 'daily_rate' => $p->getDailyRateForDate($date),
                 'start_date' => $p->start_date->toDateString(),
                 'end_date' => $p->end_date?->toDateString(),
+                'has_previous_month_entries' => (bool) $p->has_previous_month_entries,
                 'entries' => $p->timesheetEntries
                     ->keyBy(fn (TimesheetEntry $e) => $e->date->toDateString())
                     ->map(fn (TimesheetEntry $e) => $e->export([

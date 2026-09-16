@@ -27,6 +27,7 @@ type Project = {
   is_inactive?: boolean,
   start_date: string,
   end_date?: string | null,
+  has_previous_month_entries: boolean,
 }
 type EditingEntry = { projectId: string, date: string, isReadOnly: boolean } & EntryData
 
@@ -48,6 +49,7 @@ type Props = {
   projects: Project[],
   holidays: Record<string, string>,
   invoices: Invoice[],
+  day: string | null,
 }
 const props = defineProps<Props>()
 
@@ -67,14 +69,21 @@ const onMonthSelect = (value: DateValue | { start?: DateValue, end?: DateValue }
   router.visit(timesheet({ query: { month: value.toString().slice(0, 7) } }))
 }
 
+// Deep-linking to a specific day (e.g. from the billing page's duplicate-day alert): the
+// `day` prop, when it falls in the displayed month, is scrolled to instead of today.
+const focusedDay = computed(() =>
+  props.day && isInMonth(props.day, props.current.year, props.current.month) ? props.day : null,
+)
+
 const centerTodayColumn = (behavior: ScrollBehavior = 'auto') => {
   const isCurrentMonth =
     props.current.year === today.value.year
     && props.current.month === today.value.month
 
-  if (!isCurrentMonth || !tableScrollRef.value) return
+  const targetDay = focusedDay.value ?? (isCurrentMonth ? today.value.toString() : null)
+  if (!targetDay || !tableScrollRef.value) return
 
-  tableScrollRef.value.querySelector<HTMLElement>(`#day-col-${today.value.toString()}`)
+  tableScrollRef.value.querySelector<HTMLElement>(`#day-col-${targetDay}`)
     ?.scrollIntoView({ behavior, block: 'nearest', inline: 'center' })
 }
 
@@ -96,6 +105,43 @@ const projectsWithStats = computed(() =>
 
 const totalDays = computed(() => projectsWithStats.value.reduce((sum, { days }) => sum + days, 0))
 const totalRevenue = computed(() => projectsWithStats.value.reduce((sum, { revenue }) => sum + revenue, 0))
+
+// Background projects worked on only occasionally shouldn't clutter the grid: they're hidden by
+// default and surfaced as buttons below until either this month or the previous one has activity.
+const manuallyRevealedProjectIds = ref<Set<string>>(new Set())
+
+const hasActivityThisMonth = (p: Project) => Object.keys(p.entries).length > 0
+
+const isProjectVisible = (p: Project) =>
+  hasActivityThisMonth(p) || p.has_previous_month_entries || manuallyRevealedProjectIds.value.has(p.id)
+
+const visibleProjects = computed(() => projectsWithStats.value.filter(isProjectVisible))
+const hiddenProjects = computed(() => projectsWithStats.value.filter(p => !isProjectVisible(p)))
+
+const revealProject = (projectId: string) => manuallyRevealedProjectIds.value.add(projectId)
+
+// Nothing prevents billing more than one day to the same client on the same date (e.g. two
+// projects for the same client), so flag it instead of blocking it.
+type DuplicateBillingDay = { clientId: string, clientName: string, date: string, totalCoverage: number }
+const duplicateBillingDays = computed<DuplicateBillingDay[]>(() => {
+  const totals = new Map<string, DuplicateBillingDay>()
+  for (const project of props.projects) {
+    for (const [date, entry] of Object.entries(project.entries)) {
+      if (!entry.billable || entry.coverage <= 0) continue
+      const key = `${project.client.id}:${date}`
+      const existing = totals.get(key)
+      totals.set(key, {
+        clientId: project.client.id,
+        clientName: project.client.name,
+        date,
+        totalCoverage: (existing?.totalCoverage ?? 0) + entry.coverage,
+      })
+    }
+  }
+  return [...totals.values()]
+    .filter(d => d.totalCoverage > 100)
+    .sort((a, b) => a.date.localeCompare(b.date))
+})
 
 const inCurrentMonth = (date: string | null | undefined) => isInMonth(date, props.current.year, props.current.month)
 
@@ -254,12 +300,30 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
         </div>
       </div>
 
+      <UAlert
+        v-if="duplicateBillingDays.length > 0"
+        class="mb-3 shrink-0"
+        color="warning"
+        variant="subtle"
+        icon="i-lucide-triangle-alert"
+        title="Journées facturées en double"
+      >
+        <template #description>
+          <ul class="space-y-0.5">
+            <li v-for="d in duplicateBillingDays" :key="`${d.clientId}-${d.date}`">
+              {{ formatDate(d.date, true) }} — {{ d.clientName }} : {{ formatDays(d.totalCoverage / 100) }} facturés
+            </li>
+          </ul>
+        </template>
+      </UAlert>
+
       <div class="min-h-0">
         <div ref="tableScrollRef" class="overflow-auto max-h-full">
           <TimesheetGrid
             :days="days"
             :holidays="holidays"
-            :projects="projectsWithStats"
+            :projects="visibleProjects"
+            :focusedDay="focusedDay"
             @cellClick="onCellClick"
             @actionClick="openEntry"
             @setCoverage="syncCoverage"
@@ -267,6 +331,19 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
             @prevMonth="router.get(urls.prevMonth)"
           />
         </div>
+      </div>
+
+      <div v-if="hiddenProjects.length > 0" class="mt-3 flex flex-wrap gap-2">
+        <UButton
+          v-for="p in hiddenProjects"
+          :key="p.id"
+          :label="`${p.name} · ${p.client.name}`"
+          icon="i-lucide-plus"
+          color="neutral"
+          variant="outline"
+          size="xs"
+          @click="revealProject(p.id)"
+        />
       </div>
 
       <div class="">

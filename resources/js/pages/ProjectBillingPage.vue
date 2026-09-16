@@ -57,6 +57,25 @@ ChartJS.register(
   ChartTooltip,
 )
 
+// Nothing prevents billing more than one day to this client on the same date across
+// several projects, so flag it instead of blocking it, with a link back to the concerned month.
+type DuplicateBillingDay = { date: string, month: string, totalCoverage: number }
+const duplicateBillingDays = computed<DuplicateBillingDay[]>(() => {
+  const totals = new Map<string, number>()
+  for (const project of props.projects) {
+    for (const m of project.months) {
+      for (const [date, entry] of Object.entries(m.entries)) {
+        if (!entry.billable || entry.coverage <= 0) continue
+        totals.set(date, (totals.get(date) ?? 0) + entry.coverage)
+      }
+    }
+  }
+  return [...totals.entries()]
+    .filter(([, totalCoverage]) => totalCoverage > 100)
+    .map(([date, totalCoverage]) => ({ date, month: date.slice(0, 7), totalCoverage }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+})
+
 const inactiveProjects = computed(() => props.projects.filter(p => p.is_inactive))
 const showInactive = ref(inactiveProjects.value.length === props.projects.length)
 
@@ -545,6 +564,29 @@ const monthLabel = (ym: string): string => {
             />
           </div>
         </div>
+
+        <UAlert
+          v-if="!is_shared && duplicateBillingDays.length > 0"
+          color="warning"
+          variant="subtle"
+          icon="i-lucide-triangle-alert"
+          title="Journées facturées en double"
+        >
+          <template #description>
+            <ul class="space-y-0.5">
+              <li v-for="d in duplicateBillingDays" :key="d.date">
+                <ULink
+                  :to="timesheet({ query: { month: d.month, day: d.date } }).url"
+                  target="_blank"
+                  class="-mx-2 flex items-center justify-between gap-2 rounded-md px-2 py-1 transition-colors hover:bg-elevated"
+                >
+                  <span>{{ formatDate(d.date, true) }} — {{ formatDays(d.totalCoverage / 100) }} facturés</span>
+                  <UIcon name="i-lucide-arrow-up-right" class="h-3.5 w-3.5 shrink-0" />
+                </ULink>
+              </li>
+            </ul>
+          </template>
+        </UAlert>
 
         <!-- Activity chart -->
         <UCard v-if="visibleProjects.length > 0">
