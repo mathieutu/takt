@@ -119,7 +119,7 @@ describe('destroy', function () {
 
         $this->actingAs($this->user)
             ->delete(route('clients.destroy', $this->client))
-            ->assertRedirect();
+            ->assertRedirect(route('projects.index'));
 
         expect(Project::find($project->id)->end_date->toDateString())->toBe(today()->toDateString());
     });
@@ -129,7 +129,7 @@ describe('destroy', function () {
 
         $this->actingAs($this->user)
             ->delete(route('clients.destroy', $this->client))
-            ->assertRedirect();
+            ->assertRedirect(route('projects.index'));
 
         expect(Client::withTrashed()->find($this->client->id))->toBeNull();
     });
@@ -144,5 +144,14 @@ describe('destroy', function () {
 
         expect(Client::withTrashed()->find($this->client->id))->not->toBeNull()
             ->and(Project::find($project->id))->not->toBeNull();
+    });
+
+    it('drops the client filter instead of returning to the now-empty filtered projects page', function () {
+        $this->client->delete();
+
+        $this->actingAs($this->user)
+            ->from(route('projects.index', ['client_id' => $this->client->id]))
+            ->delete(route('clients.destroy', $this->client))
+            ->assertRedirect(route('projects.index'));
     });
 });

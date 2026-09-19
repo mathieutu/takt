@@ -75,7 +75,7 @@ class ClientController
             $client->projects()->update(['end_date' => today()]);
             $client->delete();
 
-            return redirect()->back()->with('success', 'Client et ses projets archivés avec succès.');
+            return redirect()->route('projects.index')->with('success', 'Client et ses projets archivés avec succès.');
         }
 
         if ($client->projects()->exists()) {
@@ -84,7 +84,7 @@ class ClientController
 
         $client->forceDelete();
 
-        return redirect()->back()->with('success', 'Client supprimé avec succès.');
+        return redirect()->route('projects.index')->with('success', 'Client supprimé avec succès.');
     }
 
     public function showBilling(Request $request, Client $client, HolidayService $holidays): Response
