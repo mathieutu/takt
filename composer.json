@@ -21,6 +21,7 @@
     "php": "^8.3",
     "inertiajs/inertia-laravel": "^3.3.1",
     "laravel/framework": "^13.26.1",
+    "laravel/mcp": "^0.9.6",
     "laravel/socialite": "^5.30.0",
     "laravel/tinker": "^3.0.2",
     "mathieutu/exporter": "^3.4.0",

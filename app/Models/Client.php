@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection as BaseCollection;
 
 /**
  * @property string $id
@@ -64,6 +65,50 @@ class Client extends Model implements HasUser
     public function shares(): HasMany
     {
         return $this->hasMany(SavedShare::class);
+    }
+
+    /**
+     * Billable coverage booked on this client's projects, one row per project and day, optionally
+     * restricted to the `$from`..`$to` dates (Y-m-d, inclusive).
+     *
+     * @return BaseCollection<int, array{date: string, project_id: string, project: string, coverage: int}>
+     */
+    public function billableCoverageRows(?string $from = null, ?string $to = null): BaseCollection
+    {
+        return TimesheetEntry::query()
+            ->with('project')
+            ->whereIn('project_id', $this->projects()->select('projects.id'))
+            ->where('billable', true)
+            ->where('coverage', '>', 0)
+            ->when($from, fn ($query, $from) => $query->whereDate('date', '>=', $from))
+            ->when($to, fn ($query, $to) => $query->whereDate('date', '<=', $to))
+            ->get()
+            ->map(fn (TimesheetEntry $entry) => [
+                'date' => $entry->date->toDateString(),
+                'project_id' => $entry->project_id,
+                'project' => $entry->project->name,
+                'coverage' => $entry->coverage,
+            ]);
+    }
+
+    /**
+     * Days where more than one full day (100%) is billed to the same client across its projects, the
+     * same rule as the duplicate-days alert of the billing page. Nothing prevents it, so it is only reported.
+     *
+     * @param  BaseCollection<int, array{date: string, project_id: string, project: string, coverage: int}>  $rows
+     * @return BaseCollection<int, array{date: string, total_coverage: int, projects: array<string, int>}>
+     */
+    public static function overbookedDays(BaseCollection $rows): BaseCollection
+    {
+        return $rows->groupBy('date')
+            ->filter(fn (BaseCollection $day) => $day->sum('coverage') > 100)
+            ->map(fn (BaseCollection $day, string $date) => [
+                'date' => $date,
+                'total_coverage' => $day->sum('coverage'),
+                'projects' => $day->groupBy('project')->map->sum('coverage')->all(),
+            ])
+            ->sortKeys()
+            ->values();
     }
 
     public static function findByShareTokenOrFail(string $token): self

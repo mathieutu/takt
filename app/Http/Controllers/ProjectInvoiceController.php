@@ -2,37 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\SaveInvoice;
 use App\Models\Invoice;
 use App\Models\Project;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class ProjectInvoiceController
 {
-    public function store(Request $request, Project $project): RedirectResponse
+    public function store(Request $request, Project $project, SaveInvoice $saveInvoice): RedirectResponse
     {
-        $project->invoices()->create($request->validate([
-            'amount' => ['required', 'integer', 'min:1'],
-            'discount_amount' => ['required', 'integer', 'min:0', 'lte:amount'],
-            'paid_at' => ['nullable', 'date'],
-            'notes' => ['nullable', 'string', 'max:1000'],
-            'created_at' => ['required', 'date'],
-        ]));
+        $saveInvoice($project, $request->all());
 
         return redirect()->back();
     }
 
-    public function update(Request $request, Invoice $invoice): RedirectResponse
+    public function update(Request $request, Invoice $invoice, SaveInvoice $saveInvoice): RedirectResponse
     {
-        $invoice->update($request->validate([
-            'amount' => ['required', 'integer', 'min:1'],
-            'discount_amount' => ['required', 'integer', 'min:0', 'lte:amount'],
-            'paid_at' => ['nullable', 'date'],
-            'notes' => ['nullable', 'string', 'max:1000'],
-            'created_at' => ['required', 'date'],
-            'project_id' => ['sometimes', 'string', Rule::exists('projects', 'id')->where('client_id', $invoice->project->client_id)],
-        ]));
+        $saveInvoice($invoice->project, $request->all(), $invoice);
 
         return redirect()->back();
     }

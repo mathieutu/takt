@@ -9,6 +9,7 @@ use App\Http\Controllers\ShareController;
 use App\Http\Controllers\ShowApiDocHandler;
 use App\Http\Controllers\ShowHomeHandler;
 use App\Http\Controllers\ShowTimesheetHandler;
+use App\Http\Controllers\SignedBillingExportHandler;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureUserOwnsResource;
 use Illuminate\Support\Facades\Date;
@@ -68,6 +69,9 @@ Route::middleware(['auth', EnsureUserOwnsResource::class])->group(function () {
 Route::get('shares/{token}', [ShareController::class, 'show'])->name('shares.show');
 Route::get('shares/{token}/export', [ShareController::class, 'export'])
     ->name('shares.billing.export')->middleware('throttle:10,1');
+
+Route::get('exports/billing/{client}', SignedBillingExportHandler::class)
+    ->name('exports.billing.signed')->withTrashed()->middleware(['signed', 'throttle:10,1']);
 
 Route::get('up', function () {
     $updatedAt = config('app.updated_at');

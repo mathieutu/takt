@@ -24,6 +24,22 @@ const curlExample = computed(() => `curl -X PATCH "${apiBase.value}/projects/${e
       { "date": "2026-01-16", "coverage": 50 }
     ]
   }'`)
+
+const mcpUrl = computed(() => `${props.base_url}/mcp`)
+
+const claudeCodeCommand = computed(() => `claude mcp add --transport http takt ${mcpUrl.value} \\
+  --header "Authorization: Bearer ${exampleToken.value}"`)
+
+const claudeDesktopConfig = computed(() => JSON.stringify({
+  mcpServers: {
+    takt: {
+      command: 'npx',
+      // eslint-disable-next-line no-template-curly-in-string -- expanded by mcp-remote, not by JS
+      args: ['-y', 'mcp-remote', mcpUrl.value, '--header', 'Authorization:${TAKT_TOKEN}'],
+      env: { TAKT_TOKEN: `Bearer ${exampleToken.value}` },
+    },
+  },
+}, null, 2))
 </script>
 
 <template>
@@ -43,6 +59,23 @@ const curlExample = computed(() => `curl -X PATCH "${apiBase.value}/projects/${e
           <p>Toutes les requêtes doivent inclure un header <code class="rounded bg-neutral-100 px-1 py-0.5 font-mono text-xs dark:bg-neutral-800">Authorization</code> avec votre token API.</p>
           <pre class="overflow-x-auto rounded-lg bg-neutral-100 p-3 font-mono text-xs dark:bg-neutral-800">Authorization: Bearer {{ exampleToken }}</pre>
           <p class="text-muted">Générez votre token depuis votre <ULink href="/profile" class="font-medium underline">page de profil</ULink>.</p>
+        </div>
+      </UCard>
+
+      <UCard>
+        <template #header>
+          <h2 class="text-sm font-semibold">Serveur MCP</h2>
+        </template>
+        <div class="space-y-3 text-sm">
+          <p>
+            Permet à un agent (Claude…) de gérer clients, projets, entrées, factures et récapitulatifs de facturation,
+            avec le même token API.
+          </p>
+          <p class="text-xs font-medium uppercase tracking-wide text-muted">Claude Code</p>
+          <pre class="overflow-x-auto rounded-lg bg-neutral-100 p-3 font-mono text-xs dark:bg-neutral-800 whitespace-pre-wrap break-all">{{ claudeCodeCommand }}</pre>
+          <p class="text-xs font-medium uppercase tracking-wide text-muted">Claude Desktop (claude_desktop_config.json)</p>
+          <pre class="overflow-x-auto rounded-lg bg-neutral-100 p-3 font-mono text-xs dark:bg-neutral-800 whitespace-pre-wrap break-all">{{ claudeDesktopConfig }}</pre>
+          <p class="text-muted">Les connecteurs personnalisés de claude.ai exigent OAuth, non pris en charge pour l'instant.</p>
         </div>
       </UCard>
 

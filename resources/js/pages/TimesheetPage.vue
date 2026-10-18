@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ErrorBag, Errors, FormComponentOptimisticCallback, PageProps as InertiaPageProps } from '@inertiajs/core'
+import type { DuplicateBillingDay } from '@/types/billing'
 import { Form, Head, router } from '@inertiajs/vue3'
 import { CalendarDate, type DateValue } from '@internationalized/date'
 import { computed, nextTick, ref, watch } from 'vue'
@@ -48,6 +49,7 @@ type Props = {
   urls: { nextMonth: string, prevMonth: string },
   projects: Project[],
   holidays: Record<string, string>,
+  duplicate_billing_days: (DuplicateBillingDay & { client_id: string, client_name: string })[],
   invoices: Invoice[],
   day: string | null,
 }
@@ -120,29 +122,6 @@ const hiddenProjects = computed(() => projectsWithStats.value.filter(p => !isPro
 
 const revealProject = (projectId: string) => manuallyRevealedProjectIds.value.add(projectId)
 
-// Nothing prevents billing more than one day to the same client on the same date (e.g. two
-// projects for the same client), so flag it instead of blocking it.
-type DuplicateBillingDay = { clientId: string, clientName: string, date: string, totalCoverage: number }
-const duplicateBillingDays = computed<DuplicateBillingDay[]>(() => {
-  const totals = new Map<string, DuplicateBillingDay>()
-  for (const project of props.projects) {
-    for (const [date, entry] of Object.entries(project.entries)) {
-      if (!entry.billable || entry.coverage <= 0) continue
-      const key = `${project.client.id}:${date}`
-      const existing = totals.get(key)
-      totals.set(key, {
-        clientId: project.client.id,
-        clientName: project.client.name,
-        date,
-        totalCoverage: (existing?.totalCoverage ?? 0) + entry.coverage,
-      })
-    }
-  }
-  return [...totals.values()]
-    .filter(d => d.totalCoverage > 100)
-    .sort((a, b) => a.date.localeCompare(b.date))
-})
-
 const inCurrentMonth = (date: string | null | undefined) => isInMonth(date, props.current.year, props.current.month)
 
 const billedTotal = computed(() =>
@@ -176,7 +155,7 @@ const syncCoverage = (projectId: string, date: string, coverage: number) => {
 
   return router.visit(syncEntries({ project }), {
     data: { entries: [{ date, coverage }] },
-    only: ['projects'],
+    only: ['projects', 'duplicate_billing_days'],
     preserveState: true,
     preserveScroll: true,
     onCancelToken: token => pendingCancelTokens.set(key, token),
@@ -301,7 +280,7 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
       </div>
 
       <UAlert
-        v-if="duplicateBillingDays.length > 0"
+        v-if="duplicate_billing_days.length > 0"
         class="mb-3 shrink-0"
         color="warning"
         variant="subtle"
@@ -310,8 +289,8 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
       >
         <template #description>
           <ul class="space-y-0.5">
-            <li v-for="d in duplicateBillingDays" :key="`${d.clientId}-${d.date}`">
-              {{ formatDate(d.date, true) }} — {{ d.clientName }} : {{ formatDays(d.totalCoverage / 100) }} facturés
+            <li v-for="d in duplicate_billing_days" :key="`${d.client_id}-${d.date}`">
+              {{ formatDate(d.date, true) }} — {{ d.client_name }} : {{ formatDays(d.total_coverage / 100) }} facturés
             </li>
           </ul>
         </template>
@@ -483,7 +462,7 @@ const entryFormOptimistic: FormComponentOptimisticCallback<InertiaOptimisticPage
         :key="`${editingEntry.projectId}:${editingEntry.date}`"
         :action="syncEntries(editingEntry.projectId)"
         method="patch"
-        :only="['projects']"
+        :only="['projects', 'duplicate_billing_days']"
         :preserveState="true"
         :preserveScroll="true"
         :optimistic="entryFormOptimistic"

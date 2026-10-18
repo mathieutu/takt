@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Project;
 use App\Models\TimesheetEntry;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -45,6 +47,7 @@ class ShowTimesheetHandler
                 'prevMonth' => action(self::class, ['month' => $date->subMonth()->format('Y-m')], false),
             ],
             'holidays' => $holidays->forMonth($date),
+            'duplicate_billing_days' => $this->duplicateBillingDays($projects),
             'invoices' => $monthInvoices->map(fn (Invoice $i) => [
                 'id' => $i->id,
                 'amount' => $i->amount,
@@ -76,5 +79,35 @@ class ShowTimesheetHandler
                     ])),
             ])),
         ]);
+    }
+
+    /**
+     * Days of the displayed month where more than one day is billed to the same client across its
+     * projects, computed from the already loaded entries (see Client::overbookedDays()).
+     *
+     * @param  Collection<int, Project>  $projects  With the month's timesheetEntries loaded
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function duplicateBillingDays(Collection $projects): Collection
+    {
+        return $projects
+            ->flatMap(fn (Project $p) => $p->timesheetEntries
+                ->filter(fn (TimesheetEntry $e) => $e->billable && $e->coverage > 0)
+                ->map(fn (TimesheetEntry $e) => [
+                    'date' => $e->date->toDateString(),
+                    'client_id' => $p->client_id,
+                    'client_name' => $p->client?->name,
+                    'project_id' => $p->id,
+                    'project' => $p->name,
+                    'coverage' => $e->coverage,
+                ]))
+            ->groupBy('client_id')
+            ->flatMap(fn (Collection $rows) => Client::overbookedDays($rows)->map(fn (array $day) => [
+                ...$day,
+                'client_id' => $rows->first()['client_id'],
+                'client_name' => $rows->first()['client_name'],
+            ]))
+            ->sortBy('date')
+            ->values();
     }
 }

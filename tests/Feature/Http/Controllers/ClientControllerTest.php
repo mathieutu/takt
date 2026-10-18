@@ -2,7 +2,9 @@
 
 use App\Models\Client;
 use App\Models\Project;
+use App\Models\TimesheetEntry;
 use App\Models\User;
+use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -72,6 +74,23 @@ describe('showBilling', function () {
         $this->actingAs($this->user)
             ->get(route('clients.billing.show', $this->client))
             ->assertOk();
+    });
+
+    it('flags the days billed more than once across the client projects', function () {
+        Http::fake(['calendrier.api.gouv.fr/*' => Http::response([])]);
+
+        $a = Project::factory()->for($this->client)->create(['name' => 'A', 'start_date' => '2026-01-01']);
+        $b = Project::factory()->for($this->client)->create(['name' => 'B', 'start_date' => '2026-01-01']);
+        TimesheetEntry::factory()->for($a)->create(['date' => '2026-01-12', 'coverage' => 100]);
+        TimesheetEntry::factory()->for($b)->create(['date' => '2026-01-12', 'coverage' => 50]);
+        TimesheetEntry::factory()->for($a)->create(['date' => '2026-01-13', 'coverage' => 100]);
+        TimesheetEntry::factory()->for($b)->create(['date' => '2026-01-13', 'coverage' => 100, 'billable' => false]);
+
+        $this->actingAs($this->user)
+            ->get(route('clients.billing.show', $this->client))
+            ->assertInertia(fn ($page) => $page->where('duplicate_billing_days', [
+                ['date' => '2026-01-12', 'total_coverage' => 150, 'projects' => ['A' => 100, 'B' => 50]],
+            ]));
     });
 
     it('returns a 404 when the client has no projects', function () {

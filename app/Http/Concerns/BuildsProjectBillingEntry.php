@@ -212,6 +212,37 @@ trait BuildsProjectBillingEntry
     }
 
     /**
+     * Billing entries of each project restricted to the `from`..`to` months (Y-m), with the amount
+     * still to invoice before the period as `opening_to_invoice`.
+     *
+     * @param  Collection<int, Project>  $projects  With timesheetEntries+invoices loaded
+     * @return Collection<int, array<string, mixed>>
+     */
+    protected function buildBillingPeriodEntries(Client $client, Collection $projects, string $from, string $to): Collection
+    {
+        return $projects->map(fn (Project $p) => $this->buildProjectBillingEntry($p, $client->name))
+            ->map(function (array $entry) use ($from, $to) {
+                $allMonths = collect($entry['months']);
+                $priorMonths = $allMonths->filter(fn ($m) => $m['month'] < $from);
+                $periodMonths = $allMonths->filter(fn ($m) => $m['month'] >= $from && $m['month'] <= $to)->values();
+
+                $priorTotals = $this->computeTotals($priorMonths);
+                $periodTotals = $this->computeTotals($periodMonths);
+
+                return [
+                    ...$entry,
+                    'opening_to_invoice' => $priorTotals['to_invoice'],
+                    'months' => $periodMonths,
+                    'total_days' => $periodTotals['days'],
+                    'total_worked' => $periodTotals['worked'],
+                    'total_invoiced' => $periodTotals['invoiced'],
+                    'total_discount' => $periodTotals['discount'],
+                    'to_invoice' => $periodTotals['to_invoice'],
+                ];
+            });
+    }
+
+    /**
      * @param  Collection<int, Project>  $projects  Already filtered on project_ids, with timesheetEntries+invoices loaded
      * @return array{
      *     projects: Collection<int, array<string, mixed>>,
@@ -235,26 +266,7 @@ trait BuildsProjectBillingEntry
         string $to,
         HolidayService $holidays,
     ): array {
-        $built = $projects->map(fn (Project $p) => $this->buildProjectBillingEntry($p, $client->name))
-            ->map(function (array $entry) use ($from, $to) {
-                $allMonths = collect($entry['months']);
-                $priorMonths = $allMonths->filter(fn ($m) => $m['month'] < $from);
-                $periodMonths = $allMonths->filter(fn ($m) => $m['month'] >= $from && $m['month'] <= $to)->values();
-
-                $priorTotals = $this->computeTotals($priorMonths);
-                $periodTotals = $this->computeTotals($periodMonths);
-
-                return [
-                    ...$entry,
-                    'opening_to_invoice' => $priorTotals['to_invoice'],
-                    'months' => $periodMonths,
-                    'total_days' => $periodTotals['days'],
-                    'total_worked' => $periodTotals['worked'],
-                    'total_invoiced' => $periodTotals['invoiced'],
-                    'total_discount' => $periodTotals['discount'],
-                    'to_invoice' => $periodTotals['to_invoice'],
-                ];
-            });
+        $built = $this->buildBillingPeriodEntries($client, $projects, $from, $to);
 
         return [
             'projects' => $built,

@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\CreateProject;
+use App\Actions\UpdateProject;
+use App\Actions\UpsertEntries;
 use App\Http\Concerns\BuildsProjectsPageProps;
 use App\Models\Project;
-use App\Models\TimesheetEntry;
-use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -50,44 +49,9 @@ class ProjectController
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, CreateProject $createProject): RedirectResponse
     {
-        $user = $request->user();
-        $isNewClient = ! $request->input('client_id');
-
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:255'],
-            'daily_rate' => ['integer', 'min:0'],
-            'max_month_budget' => ['nullable', 'integer', 'min:0'],
-            'max_total_budget' => ['nullable', 'integer', 'min:1'],
-            ...(! $isNewClient ? [
-                'client_id' => ['required', 'uuid', Rule::exists('clients', 'id')->where('user_id', $user->id)],
-            ] : [
-                // Used when creating a new client inline
-                'client_name' => ['required', 'string', 'max:255'],
-                'client_rate' => ['required', 'numeric', 'min:0'],
-            ]),
-        ]);
-
-        if ($isNewClient) {
-            $client = $user->clients()->create([
-                'name' => $data['client_name'],
-                'daily_rate' => $data['client_rate'],
-            ]);
-
-            $data['client_id'] = $client->id;
-        }
-
-        Project::create([
-            'name' => $data['name'],
-            'description' => $data['description'],
-            'daily_rate' => $data['daily_rate'],
-            'max_month_budget' => $data['max_month_budget'],
-            'max_total_budget' => $data['max_total_budget'],
-            'client_id' => $data['client_id'],
-            'start_date' => today(),
-        ]);
+        $createProject($request->user(), $request->all());
 
         return redirect()
             ->route('projects.index')
@@ -140,35 +104,9 @@ class ProjectController
         ]);
     }
 
-    public function update(Request $request, Project $project): RedirectResponse
+    public function update(Request $request, Project $project, UpdateProject $updateProject): RedirectResponse
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:255'],
-            'daily_rate' => ['nullable', 'integer', 'min:0'],
-            'daily_rate_effective_date' => ['nullable', 'date'],
-            'max_month_budget' => ['nullable', 'integer', 'min:0'],
-            'monthly_budget_effective_date' => ['nullable', 'date'],
-            'max_total_budget' => ['nullable', 'integer', 'min:1'],
-            'client_id' => ['required', Rule::exists('clients', 'id')->where('user_id', $request->user()->id)],
-            'start_date' => ['required', 'date'],
-            'end_date' => ['nullable', 'date'],
-        ]);
-
-        // A value defaults its effective date to today when left blank, and a date alone defaults its
-        // value to 0 (a valid, if unusual, daily rate) — for the budget specifically, 0 is normalized
-        // to "unlimited" instead (see setMonthlyBudgetFrom).
-        if (($data['daily_rate'] ?? null) !== null || ($data['daily_rate_effective_date'] ?? null) !== null) {
-            $project->setDailyRateFrom($data['daily_rate'] ?? 0, $data['daily_rate_effective_date'] ?? today());
-        }
-
-        if (($data['max_month_budget'] ?? null) !== null || ($data['monthly_budget_effective_date'] ?? null) !== null) {
-            $project->setMonthlyBudgetFrom($data['max_month_budget'] ?? 0, $data['monthly_budget_effective_date'] ?? today());
-        }
-
-        $project->update(Arr::only($data, [
-            'name', 'description', 'client_id', 'start_date', 'end_date', 'max_total_budget',
-        ]));
+        $updateProject($project, $request->all());
 
         $backUrl = $request->session()->pull('back_url_project_'.$project->id, route('projects.index'));
 
@@ -192,42 +130,9 @@ class ProjectController
             ->with('success', 'Projet supprimé définitivement.');
     }
 
-    public function syncEntries(Request $request, Project $project): RedirectResponse|JsonResponse
+    public function syncEntries(Request $request, Project $project, UpsertEntries $upsertEntries): RedirectResponse|JsonResponse
     {
-        $validated = $request->validate([
-            'entries' => ['required', 'array'],
-            'entries.*.date' => [
-                'required',
-                'date',
-                function (string $attribute, mixed $value, Closure $fail) use ($project) {
-                    if (! $project->isActiveOn($value)) {
-                        $fail('Ce projet ne peut pas recevoir de coverage à cette date.');
-                    }
-                },
-            ],
-            'entries.*.coverage' => ['required', 'integer', 'between:0,100'],
-            'entries.*.billable' => ['sometimes', 'boolean'],
-            'entries.*.title' => ['nullable', 'string'],
-            'entries.*.description' => ['nullable', 'string'],
-        ]);
-
-        foreach ($validated['entries'] as $entry) {
-            $data = Arr::except($entry, 'date');
-            $isEmpty = ($data['coverage'] ?? 0) === 0
-                && blank($data['title'] ?? null)
-                && blank($data['description'] ?? null);
-
-            if ($isEmpty) {
-                TimesheetEntry::where(['project_id' => $project->id, 'date' => $entry['date']])->delete();
-
-                continue;
-            }
-
-            TimesheetEntry::updateOrCreate(
-                ['project_id' => $project->id, 'date' => $entry['date']],
-                $data,
-            );
-        }
+        $upsertEntries($project, $request->all());
 
         if ($request->wantsJson()) {
             return response()->json(['message' => 'Entries synchronized.']);

@@ -75,3 +75,24 @@ it('flags whether a project had entries in the previous month', function () {
             ->and($projects->firstWhere('id', $withoutPreviousActivity->id)['has_previous_month_entries'])->toBeFalse();
     });
 });
+
+it('flags, per client, the days billed more than once in the displayed month', function () {
+    $a = Project::factory()->for($this->client)->create(['name' => 'A', 'start_date' => '2026-01-01']);
+    $b = Project::factory()->for($this->client)->create(['name' => 'B', 'start_date' => '2026-01-01']);
+    $otherClientProject = Project::factory()->for(Client::factory()->for($this->user))->create(['start_date' => '2026-01-01']);
+    TimesheetEntry::factory()->for($a)->create(['date' => '2026-01-12', 'coverage' => 100]);
+    TimesheetEntry::factory()->for($b)->create(['date' => '2026-01-12', 'coverage' => 100]);
+    TimesheetEntry::factory()->for($otherClientProject)->create(['date' => '2026-01-12', 'coverage' => 100]);
+    TimesheetEntry::factory()->for($a)->create(['date' => '2026-02-02', 'coverage' => 100]);
+    TimesheetEntry::factory()->for($b)->create(['date' => '2026-02-02', 'coverage' => 100]);
+
+    $this->actingAs($this->user)
+        ->get(route('timesheet', ['month' => '2026-01']))
+        ->assertInertia(fn ($page) => $page->where('duplicate_billing_days', [[
+            'date' => '2026-01-12',
+            'total_coverage' => 200,
+            'projects' => ['A' => 100, 'B' => 100],
+            'client_id' => $this->client->id,
+            'client_name' => $this->client->name,
+        ]]));
+});

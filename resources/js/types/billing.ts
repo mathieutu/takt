@@ -43,3 +43,7 @@ export type ProjectWithBilling = {
   to_pay_days: number,
   unbilled_since: string | null,
 }
+
+// Days where more than one day is billed to the same client across its projects (server-computed,
+// see Client::overbookedDays()): `total_coverage` is in percent of a day, `projects` the split by project.
+export type DuplicateBillingDay = { date: string, total_coverage: number, projects: Record<string, number> }

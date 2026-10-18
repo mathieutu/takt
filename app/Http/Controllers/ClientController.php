@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\UpdateClient;
 use App\Http\Concerns\BuildsProjectBillingEntry;
 use App\Http\Concerns\BuildsProjectsPageProps;
 use App\Http\Requests\ExportBillingRequest;
@@ -48,14 +49,9 @@ class ClientController
         ]);
     }
 
-    public function update(Request $request, Client $client): RedirectResponse
+    public function update(Request $request, Client $client, UpdateClient $updateClient): RedirectResponse
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'daily_rate' => ['required', 'integer', 'min:0'],
-        ]);
-
-        $client->update($data);
+        $updateClient($client, $request->all());
 
         $backUrl = $request->session()->pull('back_url_client_'.$client->id, route('projects.index'));
 
@@ -100,6 +96,7 @@ class ClientController
         return Inertia::render('ProjectBillingPage', [
             'projects' => $builtProjects,
             'holidays' => $this->buildHolidaysForPeriod($holidays, $builtProjects),
+            'duplicate_billing_days' => Client::overbookedDays($client->billableCoverageRows()),
             'is_shared' => false,
         ]);
     }
