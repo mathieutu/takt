@@ -3,6 +3,7 @@
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Project;
+use App\Models\TimesheetEntry;
 use App\Models\User;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
@@ -148,6 +149,71 @@ describe('clients.billing.export', function () {
             expect($html)->toContain('data-currency-cents="100000"')
                 ->toContain('data-currency-cents="80000"')
                 ->toContain('−20%');
+
+            return true;
+        });
+    });
+
+    it('counts non-billable days as worked, flags them, and keeps only the worked-days recap of a fully donated project', function () {
+        TimesheetEntry::factory()->for($this->project)->notBillable()->create([
+            'date' => '2026-03-16',
+            'coverage' => 100,
+            'title' => 'Atelier bénévole',
+        ]);
+
+        Http::fake([
+            'calendrier.api.gouv.fr/*' => Http::response([]),
+            config('services.pdf.api_url') => Http::response('%PDF-1.4 fake-pdf-content'),
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('clients.billing.export', $this->client).'?'.billingExportQuery([$this->project->id], '2026-01', '2026-06'))
+            ->assertSuccessful();
+
+        Http::assertSent(function ($request) {
+            if (! str_contains($request->url(), config('services.pdf.api_url'))) {
+                return false;
+            }
+
+            $html = $request->data()['html'];
+
+            expect($html)->toContain('<span class="font-semibold" data-days="1"></span> travaillé</span>')
+                ->toContain('Atelier bénévole')
+                ->toContain('Offert</span>')
+                ->toContain('<span class="font-semibold" data-days="1"></span> offert</span>')
+                ->toContain('<span data-days="1"></span> travaillé')
+                ->toContain('<span data-days="1"></span> offert')
+                ->not->toContain('Reste à facturer')
+                ->not->toContain('Montant déjà facturé');
+
+            return true;
+        });
+    });
+
+    it('keeps the money block when the period also has billed days', function () {
+        TimesheetEntry::factory()->for($this->project)->create(['date' => '2026-03-16', 'coverage' => 100]);
+        TimesheetEntry::factory()->for($this->project)->notBillable()->create(['date' => '2026-03-17', 'coverage' => 100]);
+
+        Http::fake([
+            'calendrier.api.gouv.fr/*' => Http::response([]),
+            config('services.pdf.api_url') => Http::response('%PDF-1.4 fake-pdf-content'),
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('clients.billing.export', $this->client).'?'.billingExportQuery([$this->project->id], '2026-01', '2026-06'))
+            ->assertSuccessful();
+
+        Http::assertSent(function ($request) {
+            if (! str_contains($request->url(), config('services.pdf.api_url'))) {
+                return false;
+            }
+
+            expect($request->data()['html'])->toContain('Reste à facturer')
+                ->toContain('<span class="font-semibold" data-days="2"></span> travaillés</span>')
+                ->toContain('<span data-days="2"></span> travaillés')
+                ->toContain('<span data-days="1"></span> offert')
+                ->toContain('Montant déjà facturé')
+                ->toContain('<span data-days="1"></span> × <span data-currency-cents');
 
             return true;
         });

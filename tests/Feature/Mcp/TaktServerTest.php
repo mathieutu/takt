@@ -341,7 +341,7 @@ describe('billing recap', function () {
         TaktServer::actingAs($this->user)
             ->tool(BillingRecap::class, ['client_id' => $this->client->id, 'from' => '2026-02', 'to' => '2026-02'])
             ->assertOk()
-            ->assertSee(['"opening_to_invoice":50000', '"total_worked":50000', '"to_invoice":50000', 'pdf_url', route('clients.billing.show', $this->client)]);
+            ->assertSee(['"opening_to_invoice":50000', '"total_worked":50000', '"to_invoice":50000', '"total_worked_days":2', '"total_billable_days":1', 'pdf_url', route('clients.billing.show', $this->client)]);
     });
 
     it('refuses the recap of a client of another user', function () {

@@ -98,7 +98,8 @@ const projectTotals = (project: ProjectWithBilling) => {
     .reduce((sum, inv) => sum + inv.discount_amount, 0)
 
   return {
-    totalDays: project.total_days,
+    totalDays: project.total_worked_days,
+    totalBillableDays: project.total_billable_days,
     totalWorked: project.total_worked,
     totalInvoiced: project.total_invoiced,
     totalInvoicedDays: project.total_invoiced_days,
@@ -115,15 +116,25 @@ const projectTotals = (project: ProjectWithBilling) => {
   }
 }
 
+// Offered days are worked days without an amount: shown as a part of the worked days, never apart.
+const offeredDaysLabel = (workedDays: number, billableDays: number): string | null => {
+  const offeredDays = Math.round((workedDays - billableDays) * 100) / 100
+  if (offeredDays <= 0) return null
+  return `dont ${formatDays(offeredDays)} ${offeredDays <= 1 ? 'offert' : 'offerts'}`
+}
+
+const projectOfferedDaysLabel = (project: ProjectWithBilling): string | null =>
+  offeredDaysLabel(project.total_worked_days, project.total_billable_days)
+
 const monthWorked = (m: MonthRow) => m.worked
 const monthInvoiced = (m: MonthRow) => m.invoices.reduce((s, i) => s + i.amount, 0)
 
 const projectMaxDays = (project: ProjectWithBilling): number =>
-  Math.max(...project.months.map(m => m.days_worked), 1)
+  Math.max(...project.months.map(m => m.worked_days), 1)
 
 const monthIntensityClass = (m: MonthRow, project: ProjectWithBilling): string => {
-  if (m.days_worked <= 0) return 'bg-muted'
-  const ratio = m.days_worked / projectMaxDays(project)
+  if (m.worked_days <= 0) return 'bg-muted'
+  const ratio = m.worked_days / projectMaxDays(project)
   if (ratio <= 0.25) return 'bg-primary/25'
   if (ratio <= 0.5) return 'bg-primary/45'
   if (ratio <= 0.75) return 'bg-primary/70'
@@ -202,9 +213,11 @@ const consumptionBarClass = (percent: number) => {
 
 const clientTotals = computed(() => {
   const totalDays = visibleProjects.value.reduce((sum, p) => sum + projectTotals(p).totalDays, 0)
+  const totalBillableDays = visibleProjects.value.reduce((sum, p) => sum + projectTotals(p).totalBillableDays, 0)
   const totalWorked = visibleProjects.value.reduce((sum, p) => sum + projectTotals(p).totalWorked, 0)
-  const averageDailyRate = totalDays > 0 ? Math.round(totalWorked / totalDays) : null
-  return { totalDays, totalWorked, averageDailyRate }
+  // Only billable days carry an amount: the average rate is over them, so days × rate = amount.
+  const averageDailyRate = totalBillableDays > 0 ? Math.round(totalWorked / totalBillableDays) : null
+  return { totalDays, totalBillableDays, totalWorked, averageDailyRate }
 })
 
 // ── Activity chart ─────────────────────────────────────────────────────────────
@@ -247,7 +260,7 @@ const barChartData = computed(() => ({
   labels: chartMonths.value.map(chartMonthLabel),
   datasets: [
     ...visibleProjects.value.map((project, pi) => {
-      const daysByMonth = new Map(project.months.map(m => [m.month, m.days_worked]))
+      const daysByMonth = new Map(project.months.map(m => [m.month, m.worked_days]))
       return {
         type: 'bar',
         label: project.name,
@@ -584,12 +597,17 @@ const monthLabel = (ym: string): string => {
                 <div>
                   <span class="text-muted">Jours travaillés</span>
                   <span class="ml-2 font-semibold tabular-nums">{{ formatDays(clientTotals.totalDays) }}</span>
+                  <span
+                    v-if="offeredDaysLabel(clientTotals.totalDays, clientTotals.totalBillableDays)"
+                    class="ml-1 text-xs text-violet-600 dark:text-violet-400"
+                  >({{ offeredDaysLabel(clientTotals.totalDays, clientTotals.totalBillableDays) }})</span>
                 </div>
                 <div>
-                  <span class="text-muted">Montant travaillé</span>
+                  <span class="text-muted">Prestations</span>
                   <span class="ml-2 font-semibold tabular-nums">{{ formatCurrency(clientTotals.totalWorked) }}</span>
                   <span v-if="clientTotals.averageDailyRate !== null" class="ml-1 text-xs font-normal text-muted">
-                    ({{ formatDays(clientTotals.totalDays) }} × {{ formatCurrency(clientTotals.averageDailyRate) }}/j)
+                    ({{ formatDays(clientTotals.totalBillableDays) }}
+                    × {{ formatCurrency(clientTotals.averageDailyRate) }}/j)
                   </span>
                 </div>
               </div>
@@ -660,7 +678,7 @@ const monthLabel = (ym: string): string => {
                   <thead>
                     <tr class="border-b border-default bg-muted/40 text-xs text-muted">
                       <th class="px-4 py-2.5 text-left font-medium">Mois</th>
-                      <th class="px-4 py-2.5 text-right font-medium">Travaillé</th>
+                      <th class="px-4 py-2.5 text-right font-medium">Prestations</th>
                       <th class="px-4 py-2.5 text-right font-medium">Facturé</th>
                       <th class="px-4 py-2.5 text-right font-medium">À consommer</th>
                       <th v-if="!is_shared" class="w-8 px-2" />
@@ -688,7 +706,10 @@ const monthLabel = (ym: string): string => {
                           class="px-4 py-2.5 text-right tabular-nums"
                           :class="isCumulativeOverBudget(project, monthIndex) ? 'text-error font-medium' : 'text-muted'"
                         >
-                          {{ formatCurrency(monthWorked(m)) }} ({{ formatDays(m.days_worked) }})
+                          {{ formatCurrency(monthWorked(m)) }} ({{ formatDays(m.worked_days) }})
+                          <span v-if="offeredDaysLabel(m.worked_days, m.billable_days)" class="block text-xs text-violet-600 dark:text-violet-400">
+                            {{ offeredDaysLabel(m.worked_days, m.billable_days) }}
+                          </span>
                         </td>
                         <td class="px-4 py-2.5 text-right tabular-nums">
                           <template v-if="monthInvoiced(m) > 0">
@@ -778,6 +799,12 @@ const monthLabel = (ym: string): string => {
                       <td class="px-4 py-3 text-right tabular-nums text-muted">
                         {{ formatCurrency(projectTotals(project).totalWorked) }}
                         ({{ formatDays(projectTotals(project).totalDays) }})
+                        <span
+                          v-if="projectOfferedDaysLabel(project)"
+                          class="block text-xs font-normal text-violet-600 dark:text-violet-400"
+                        >
+                          {{ projectOfferedDaysLabel(project) }}
+                        </span>
                       </td>
                       <td class="px-4 py-3 text-right tabular-nums">
                         <span class="inline-flex items-center justify-end gap-1.5">

@@ -69,7 +69,7 @@ it('still counts the full net amount in to_pay when the invoice has no discount'
     expect($totals['to_pay'])->toBe(100000);
 });
 
-it('excludes a non-billable entry from days_worked/total_days/worked/to_invoice', function () {
+it('excludes a non-billable entry from billable_days/total_billable_days/worked/to_invoice', function () {
     $project = Project::factory()->for($this->client)->create(['daily_rate' => 50000]);
 
     TimesheetEntry::factory()->for($project)->create(['date' => today(), 'coverage' => 100]);
@@ -78,8 +78,28 @@ it('excludes a non-billable entry from days_worked/total_days/worked/to_invoice'
     $totals = $this->builder->totals($project);
     $month = collect($totals['months'])->firstWhere('month', today()->format('Y-m'));
 
-    expect($month['days_worked'])->toBe(1.0)
-        ->and($totals['total_days'])->toBe(1.0)
+    expect($month['billable_days'])->toBe(1.0)
+        ->and($totals['total_billable_days'])->toBe(1.0)
+        ->and($totals['total_worked'])->toBe(50000)
+        ->and($totals['to_invoice'])->toBe(50000);
+});
+
+it('counts non-billable days as worked days, without valuing them', function () {
+    $project = Project::factory()->for($this->client)->create(['daily_rate' => 50000]);
+
+    TimesheetEntry::factory()->for($project)->create(['date' => '2026-03-02', 'coverage' => 100]);
+    TimesheetEntry::factory()->for($project)->notBillable()->create(['date' => '2026-03-03', 'coverage' => 50]);
+    TimesheetEntry::factory()->for($project)->notBillable()->create(['date' => '2026-04-01', 'coverage' => 100]);
+
+    $totals = $this->builder->totals($project);
+    $months = collect($totals['months'])->keyBy('month');
+
+    expect($months['2026-03']['worked_days'])->toBe(1.5)
+        ->and($months['2026-03']['billable_days'])->toBe(1.0)
+        ->and($months['2026-04']['worked_days'])->toBe(1.0)
+        ->and($months['2026-04']['billable_days'])->toBe(0.0)
+        ->and($totals['total_worked_days'])->toBe(2.5)
+        ->and($totals['total_billable_days'])->toBe(1.0)
         ->and($totals['total_worked'])->toBe(50000)
         ->and($totals['to_invoice'])->toBe(50000);
 });

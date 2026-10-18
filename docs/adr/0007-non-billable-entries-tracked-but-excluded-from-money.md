@@ -26,7 +26,7 @@ dashboard's `monthDays` worked-days counter and the revenue chart's `chartProjec
 both include them, since they're pure "time actually worked" trackers, never multiplied by a rate.
 Money-shaped figures exclude them: `TimesheetEntry::billableCoverageSum()` and every
 `coverage × getDailyRateForDate()` computation (`buildProjectBillingEntry()`'s
-`days_worked`/`worked`, `ShowHomeHandler`'s `workedDaysCount`/`totalWorkedAmount` and friends) filter
+`billable_days`/`worked`, `ShowHomeHandler`'s `workedDaysCount`/`totalWorkedAmount` and friends) filter
 on `billable` first.
 
 ### Consequences
@@ -39,3 +39,5 @@ on `billable` first.
   `TimesheetEntry` (worked time × rate), never from `Invoice::amount` — so they reflect what was
   worked, unaffected by invoice discounts (see [ADR-0006](0006-to-invoice-stays-gross-to-pay-is-net.md)
   for why invoice-based totals do split on gross vs. net).
+* Related: billing day counts (`worked_days`) now include non-billable days, while amounts stay on
+  `billable_days` — see [ADR-0016](0016-billing-day-counts-include-non-billable-days.md).

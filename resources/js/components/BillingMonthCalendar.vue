@@ -19,13 +19,13 @@ const days = computed(() => daysInMonth(parseMonth(props.month)).map(day => {
   const holidayName = props.holidays.get(day.date)
 
   // Coverage-based status (billable/non-billable) takes priority over the plain day-off
-  // status, same as cellClass below — a worked weekend/holiday reads as "billable"/"non-billable",
+  // status, same as cellClass below — a worked weekend/holiday reads as "travaillé"/"travaillé, offert",
   // not "Week-end". The holiday name itself is shown separately (see holidayName),
   // regardless of coverage, since "worked on a holiday" is worth surfacing on its own.
   const status = nonBillable
-    ? { label: 'non facturé', class: 'text-violet-600/60 dark:text-violet-400' }
+    ? { label: 'travaillé, offert', class: 'text-violet-600/60 dark:text-violet-400' }
     : coverage > 0
-      ? { label: 'facturé', class: 'text-primary' }
+      ? { label: 'travaillé', class: 'text-primary' }
       : day.isWeekend
         ? { label: 'Week-end', class: 'text-muted' }
         : null

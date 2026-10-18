@@ -23,7 +23,7 @@ Chosen option: "Per-month division", because dividing by a single rate would mis
 invoiced under a different rate than today's. This mirrors the underlying `worked` amount per month
 in `buildProjectBillingEntry()`, which already sums each entry at the rate effective on its own date
 (`getDailyRateForDate()`, see [ADR-0009](0009-rate-and-budget-history-as-dated-maps.md)) rather than
-`days_worked × one rate`, so a rate change taking effect mid-month still bills each day correctly.
+`billable_days × one rate`, so a rate change taking effect mid-month still bills each day correctly.
 
 ### Consequences
 

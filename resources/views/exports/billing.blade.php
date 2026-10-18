@@ -55,11 +55,16 @@
 
     @foreach($projects as $project)
         @php
-            $totalDays = $project['total_days'];
+            $totalDays = $project['total_billable_days'];
+            $totalWorkedDays = $project['total_worked_days'];
+            $totalOfferedDays = round($totalWorkedDays - $totalDays, 2);
             $totalWorked = $project['total_worked'];
             $totalInvoiced = $project['total_invoiced'];
             $toInvoice = $project['to_invoice'];
             $openingToInvoice = $project['opening_to_invoice'];
+            // A fully donated project over the period (only non-billable days, no invoice, nothing carried
+            // over) would otherwise show a block of 0 € lines: its recap keeps only the worked-days count.
+            $hasMoneyFigures = $totalWorkedDays == $totalDays || $totalDays > 0 || $totalInvoiced > 0 || $openingToInvoice !== 0;
         @endphp
 
         <table class="project" style="width: 100%; border-collapse: collapse;">
@@ -98,12 +103,11 @@
                                 $entries = collect($month['entries'] ?? []);
                                 $notedDays = $entries->filter(fn ($entry) => trim($entry['title'] ?? '') !== '' || trim($entry['description'] ?? '') !== '');
                                 // Tracks which cell states actually occur this month, so the legend only lists
-                                // states present in the calendar below (e.g. no "Partielle" swatch if nothing
-                                // was a partial day this month).
-                                $hasFullDay = false;
-                                $hasPartialDay = false;
+                                // states present in the calendar below (e.g. no "Week-ends / fériés" badge if
+                                // every weekend of the month was worked).
                                 $hasOffDay = false;
                                 $hasNonBillable = false;
+                                $monthOfferedDays = round($month['worked_days'] - $month['billable_days'], 2);
                             @endphp
 
                             <section class="month mb-7">
@@ -120,7 +124,7 @@
                                             // A worked day (coverage > 0) whose entry is billable=false gets a
                                             // distinct solid color — it must stay visible on the calendar for
                                             // client transparency, but must read differently from billable days
-                                            // since it's excluded from days_worked/the footer totals below.
+                                            // since it's excluded from billable_days/the money totals below.
                                             $isNonBillable = $coverage > 0 && ! ($entry['billable'] ?? true);
                                             $cellClass = match(true) {
                                                 $isNonBillable => 'bg-violet-100 text-violet-600/60',
@@ -131,8 +135,7 @@
                                             };
                                             match(true) {
                                                 $isNonBillable => $hasNonBillable = true,
-                                                $coverage >= 100 => $hasFullDay = true,
-                                                $coverage > 0 => $hasPartialDay = true,
+                                                $coverage > 0 => null,
                                                 $isOff => $hasOffDay = true,
                                                 default => null,
                                             };
@@ -149,17 +152,18 @@
                                     @endfor
                                 </div>
 
-                                <div class="mb-3 flex items-center gap-3 text-[11px] text-muted">
-                                    @if($hasFullDay || $hasPartialDay)
-                                        <div class="flex items-baseline gap-1"><span class="size-2.5 rounded-sm bg-primary/50"></span><span>Jours facturés</span></div>
-                                    @endif
+                                {{-- Legend and counts merged: each badge reuses its calendar cell style and carries the day count. --}}
+                                <div class="mb-3 flex items-center gap-1.5 text-[11px] text-muted">
                                     @if($hasOffDay)
-                                        <div class="flex items-baseline gap-1"><span class="size-2.5 rounded-sm bg-elevated border border-default"></span><span>Week-ends / fériés</span></div>
+                                        <span class="inline-flex items-center gap-0.5 whitespace-nowrap rounded px-1 py-1 text-[10px] leading-none bg-elevated/80 text-muted">Week-ends / fériés</span>
                                     @endif
-                                    @if($hasNonBillable)
-                                        <div class="flex items-baseline gap-1"><span class="size-2.5 rounded-sm bg-violet-600/50"></span><span>Non facturés</span></div>
+                                    @if($month['worked_days'] > 0)
+                                        <span class="ml-auto inline-flex items-center gap-0.5 whitespace-nowrap rounded px-1 py-1 text-[10px] leading-none bg-primary/10 text-primary"><span class="font-semibold" data-days="{{ $month['worked_days'] }}"></span> {{ $month['worked_days'] <= 1 ? 'travaillé' : 'travaillés' }}</span>
+                                        @if($hasNonBillable)
+                                            <span class="text-[10px]">dont</span>
+                                            <span class="inline-flex items-center gap-0.5 whitespace-nowrap rounded px-1 py-1 text-[10px] leading-none bg-violet-100 text-violet-600/60"><span class="font-semibold" data-days="{{ $monthOfferedDays }}"></span> {{ $monthOfferedDays <= 1 ? 'offert' : 'offerts' }}</span>
+                                        @endif
                                     @endif
-                                    <span class="ml-auto whitespace-nowrap text-default">{{ $month['days_worked'] <= 1 ? 'Jour facturé' : 'Jours facturés' }} : <strong data-days="{{ $month['days_worked'] }}"></strong></span>
                                 </div>
 
                                 @if($notedDays->isNotEmpty())
@@ -168,6 +172,9 @@
                                         @foreach($notedDays as $date => $entry)
                                             <p class="text-[11px] leading-snug">
                                                 <span class="font-medium text-default">{{ \Carbon\Carbon::parse($date)->translatedFormat('d/m') }}</span>
+                                                @if(! ($entry['billable'] ?? true))
+                                                    <span class="ml-0.5 rounded bg-violet-100 px-1 py-px text-[9px] font-medium uppercase tracking-wide text-violet-600">Offert</span>
+                                                @endif
                                                 @if(trim($entry['title'] ?? '') !== '')
                                                     — {{ $entry['title'] }}
                                                 @endif
@@ -239,42 +246,64 @@
                                         <col style="width: 1%;">
                                     </colgroup>
                                     <tbody>
-                                        @if($openingBalance !== 0)
+                                        @if($totalWorkedDays != $totalDays || ! $hasMoneyFigures)
                                             <tr>
-                                                <td class="py-1.5 text-muted">Solde avant la période</td>
-                                                <td class="py-1.5 text-right font-medium text-default">{{ $openingBalance > 0 ? '+' : '−' }}</td>
-                                                <td class="py-1.5 pl-1 text-right font-medium tabular-nums text-default" data-currency-cents="{{ abs($openingBalance) }}"></td>
+                                                <td class="py-1.5 text-muted" colspan="3">
+                                                    <span data-days="{{ $totalWorkedDays }}"></span> {{ $totalWorkedDays <= 1 ? 'travaillé' : 'travaillés' }}
+                                                </td>
                                             </tr>
                                         @endif
-                                        <tr>
-                                            <td class="py-1.5 text-muted">
-                                                <span data-days="{{ $totalDays }}"></span> {{ $totalDays <= 1 ? 'facturé' : 'facturés' }} × <span data-currency-cents="{{ $dailyRate }}"></span>/j
-                                            </td>
-                                            <td class="py-1.5 text-right font-medium text-default">−</td>
-                                            <td class="py-1.5 pl-1 text-right font-medium tabular-nums text-default" data-currency-cents="{{ $totalWorked }}"></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="py-1.5 text-muted" style="vertical-align: top;">
-                                                Montant facturé
-                                                @if(($project['total_discount'] ?? 0) > 0)
-                                                    <span class="text-xs text-muted">(−{{ $totalInvoiced > 0 ? round($project['total_discount'] / $totalInvoiced * 100) : 0 }} %)</span>
-                                                @endif
-                                            </td>
-                                            <td class="py-1.5 text-right font-medium text-default" style="vertical-align: top;">+</td>
-                                            <td class="py-1.5 pl-1 text-right font-medium tabular-nums text-default" style="vertical-align: top;">
-                                                @if(($project['total_discount'] ?? 0) > 0)
-                                                    <span class="font-normal text-muted line-through" data-currency-cents="{{ $totalInvoiced }}"></span>
-                                                    <span data-currency-cents="{{ $totalInvoiced - $project['total_discount'] }}"></span>
-                                                @else
-                                                    <span data-currency-cents="{{ $totalInvoiced }}"></span>
-                                                @endif
-                                            </td>
-                                        </tr>
-                                        <tr style="border-top: 2px solid var(--ui-border);">
-                                            <td class="pt-2 text-sm font-semibold text-default">Solde actuel</td>
-                                            <td class="pt-2 text-right text-base font-bold text-default">{{ match (true) { $currentBalance < 0 => '-', $currentBalance > 0 => '+', default => ''} }}</td>
-                                            <td class="pt-2 pl-1 text-right text-base font-bold tabular-nums text-default" data-currency-cents="{{ abs($currentBalance) }}"></td>
-                                        </tr>
+                                        @if($hasMoneyFigures)
+                                            @if($openingBalance !== 0)
+                                                <tr>
+                                                    <td class="py-1.5 text-muted">{{ $openingBalance < 0 ? 'Reste à facturer' : 'Trop perçu' }} avant la période</td>
+                                                    <td class="py-1.5 text-right font-medium text-default">{{ $openingBalance > 0 ? '+' : '−' }}</td>
+                                                    <td class="py-1.5 pl-1 text-right font-medium tabular-nums text-default" data-currency-cents="{{ abs($openingBalance) }}"></td>
+                                                </tr>
+                                            @endif
+                                            <tr>
+                                                <td class="py-1.5 text-muted">
+                                                    <span data-days="{{ $totalDays }}"></span> × <span data-currency-cents="{{ $dailyRate }}"></span>/j
+                                                </td>
+                                                <td class="py-1.5 text-right font-medium text-default">−</td>
+                                                <td class="py-1.5 pl-1 text-right font-medium tabular-nums text-default" data-currency-cents="{{ $totalWorked }}"></td>
+                                            </tr>
+                                        @endif
+                                        @if($totalOfferedDays > 0)
+                                            {{-- Worked but without an amount: listed so worked days = billed days × rate + offered days. --}}
+                                            <tr>
+                                                <td class="py-1.5 text-muted">
+                                                    <span data-days="{{ $totalOfferedDays }}"></span> {{ $totalOfferedDays <= 1 ? 'offert' : 'offerts' }}
+                                                </td>
+                                                <td class="py-1.5"></td>
+                                                <td class="py-1.5 pl-1 text-right font-medium tabular-nums">@if($hasMoneyFigures)<span data-currency-cents="0"></span>@endif</td>
+                                            </tr>
+                                        @endif
+                                        @if($hasMoneyFigures)
+                                            <tr>
+                                                <td class="py-1.5 text-muted" style="vertical-align: top;">
+                                                    Montant déjà facturé
+                                                    @if(($project['total_discount'] ?? 0) > 0)
+                                                        <span class="text-xs text-muted">(−{{ $totalInvoiced > 0 ? round($project['total_discount'] / $totalInvoiced * 100) : 0 }} %)</span>
+                                                    @endif
+                                                </td>
+                                                <td class="py-1.5 text-right font-medium text-default" style="vertical-align: top;">+</td>
+                                                <td class="py-1.5 pl-1 text-right font-medium tabular-nums text-default" style="vertical-align: top;">
+                                                    @if(($project['total_discount'] ?? 0) > 0)
+                                                        <span class="font-normal text-muted line-through" data-currency-cents="{{ $totalInvoiced }}"></span>
+                                                        <span data-currency-cents="{{ $totalInvoiced - $project['total_discount'] }}"></span>
+                                                    @else
+                                                        <span data-currency-cents="{{ $totalInvoiced }}"></span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                            <tr style="border-top: 2px solid var(--ui-border);">
+                                                {{-- Named by its meaning rather than signed, so the client reads who owes what. --}}
+                                                <td class="pt-2 text-sm font-semibold text-default">{{ match (true) { $currentBalance < 0 => 'Reste à facturer', $currentBalance > 0 => 'Trop perçu', default => 'Solde' } }}</td>
+                                                <td class="pt-2 text-right text-base font-bold text-default"></td>
+                                                <td class="pt-2 pl-1 text-right text-base font-bold tabular-nums text-default" data-currency-cents="{{ abs($currentBalance) }}"></td>
+                                            </tr>
+                                        @endif
                                     </tbody>
                                 </table>
                             </footer>
