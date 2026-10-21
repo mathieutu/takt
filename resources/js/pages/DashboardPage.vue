@@ -21,8 +21,9 @@ import {
 import { computed, type ComputedRef } from 'vue'
 import { Bar } from 'vue-chartjs'
 import ClientAmountTooltip from '@/components/ClientAmountTooltip.vue'
-import { useMonthRangePicker } from '@/composables/useMonthRangePicker'
-import { formatDays } from '@/utils/date.ts'
+import MonthRangePicker from '@/components/MonthRangePicker.vue'
+import { currentPeriodPresets, type MonthRangePreset } from '@/composables/useMonthRangePicker'
+import { formatDays, today, toYearMonth } from '@/utils/date.ts'
 import { formatCurrency } from '@/utils/number.ts'
 import { dashboard, timesheet } from '@/wayfinder/routes'
 import { show as showBilling } from '@/wayfinder/routes/clients/billing'
@@ -127,8 +128,6 @@ const parseYearMonth = (yearMonth: string) => {
   return { year: year!, month: month! }
 }
 
-const toYearMonth = (date: CalendarDate) => date.toString().slice(0, 7)
-
 const periodMonths = computed(() => {
   const { year: fromYear, month: fromMonth } = parseYearMonth(props.from)
   const { year: toYear, month: toMonth } = parseYearMonth(props.to)
@@ -140,17 +139,17 @@ const endMonthDate = computed(() => {
   return new CalendarDate(year, month, 1)
 })
 
-const {
-  pickerOpen,
-  calendarValue,
-  onRangeSelect,
-  formatMonthLabel,
-  periodLabel,
-} = useMonthRangePicker(
-  computed(() => props.from),
-  computed(() => props.to),
-  range => router.visit(dashboard({ mergeQuery: range }), { preserveScroll: true }),
-)
+// Keeps the client/project filter and sort, from props rather than mergeQuery so SSR renders the same hrefs.
+const periodHref = (range: { from?: string, to?: string }) => dashboard({
+  query: {
+    ...range,
+    client_id: props.clientId || undefined,
+    project_id: props.projectId || undefined,
+    sort: props.sort && props.sort !== 'activity_desc' ? props.sort : undefined,
+  },
+})
+
+const clientBillingHref = (clientId: string) => showBilling(clientId, { query: { from: props.from, to: props.to } })
 
 const filterItems = computed(() => {
   const clients = new Map<string, { id: string, name: string }>()
@@ -189,37 +188,17 @@ const toggleSort = (column: string) => {
   router.visit(dashboard({ mergeQuery: { sort: `${column}_${direction}` } }), { preserveState: true, preserveScroll: true, replace: true })
 }
 
-const selectedMonthLabel = computed(() => formatMonthLabel(props.to, 'long'))
-
-const prevPeriod = computed(() => {
-  const { year: fromYear, month: fromMonth } = parseYearMonth(props.from)
-  const { year: toYear, month: toMonth } = parseYearMonth(props.to)
-  return {
-    from: toYearMonth(new CalendarDate(fromYear, fromMonth, 1).subtract({ months: 1 })),
-    to: toYearMonth(new CalendarDate(toYear, toMonth, 1).subtract({ months: 1 })),
-  }
+const selectedMonthLabel = computed(() => {
+  const { year, month } = parseYearMonth(props.to)
+  return new Date(year, month - 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
 })
 
-const nextPeriod = computed(() => {
-  const { year: fromYear, month: fromMonth } = parseYearMonth(props.from)
-  const { year: toYear, month: toMonth } = parseYearMonth(props.to)
-  return {
-    from: toYearMonth(new CalendarDate(fromYear, fromMonth, 1).add({ months: 1 })),
-    to: toYearMonth(new CalendarDate(toYear, toMonth, 1).add({ months: 1 })),
-  }
-})
+const currentMonth = toYearMonth(today)
 
-const currentYear = new Date().getFullYear()
-const currentMonth = new Date().getMonth() + 1
-const quarterStartMonth = Math.floor((currentMonth - 1) / 3) * 3 + 1
-const schoolYearStartYear = currentMonth >= 9 ? currentYear : currentYear - 1
-
-const periodPresets = computed(() => [
+const periodPresets = computed<MonthRangePreset[]>(() => [
   { label: '12 derniers mois', from: undefined, to: undefined },
-  { label: 'Trimestre courant', from: toYearMonth(new CalendarDate(currentYear, quarterStartMonth, 1)), to: toYearMonth(new CalendarDate(currentYear, quarterStartMonth + 2, 1)) },
-  { label: 'Année civile courante', from: toYearMonth(new CalendarDate(currentYear, 1, 1)), to: toYearMonth(new CalendarDate(currentYear, 12, 1)) },
-  { label: 'Année scolaire courante', from: toYearMonth(new CalendarDate(schoolYearStartYear, 9, 1)), to: toYearMonth(new CalendarDate(schoolYearStartYear + 1, 8, 1)) },
-  ...(props.firstEntryMonth ? [{ label: 'Tout depuis le début !', from: props.firstEntryMonth, to: toYearMonth(new CalendarDate(currentYear, currentMonth, 1)) }] : []),
+  ...currentPeriodPresets(),
+  ...(props.firstEntryMonth ? [{ label: 'Tout depuis le début !', from: props.firstEntryMonth, to: currentMonth }] : []),
 ])
 
 // ── Chart colors ──────────────────────────────────────────────────────────────
@@ -523,61 +502,7 @@ const ratioColorClass = (percent: number): string => {
             <h1 class="text-lg font-semibold">Tableau de bord</h1>
             <p class="hidden text-sm text-muted sm:block">Aperçu de votre activité</p>
           </div>
-          <div class="flex items-center gap-1">
-            <UButton
-              icon="i-lucide-chevron-left"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              :href="dashboard({ query: prevPeriod })"
-              preserveScroll
-            />
-            <UPopover v-model:open="pickerOpen">
-              <UButton
-                :label="periodLabel"
-                icon="i-lucide-calendar-days"
-                color="neutral"
-                variant="outline"
-                size="sm"
-                class="w-44 justify-center"
-                :ui="{ label: 'truncate' }"
-              />
-              <template #content>
-                <div class="flex items-center">
-                  <div class="flex flex-col gap-0.5 border-r border-default p-2">
-                    <UButton
-                      v-for="preset in periodPresets"
-                      :key="preset.label"
-                      :label="preset.label"
-                      :href="dashboard({ query: { from: preset.from, to: preset.to } })"
-                      color="neutral"
-                      :variant="preset.from === props.from && preset.to === props.to ? 'soft' : 'ghost'"
-                      size="sm"
-                      class="justify-start"
-                      preserveScroll
-                    />
-                  </div>
-                  <UCalendar
-                    type="month"
-                    range
-                    size="sm"
-                    locale="fr-FR"
-                    :modelValue="calendarValue"
-                    class="p-2"
-                    @update:modelValue="onRangeSelect"
-                  />
-                </div>
-              </template>
-            </UPopover>
-            <UButton
-              icon="i-lucide-chevron-right"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              :href="dashboard({ query: nextPeriod })"
-              preserveScroll
-            />
-          </div>
+          <MonthRangePicker :from="props.from" :to="props.to" :presets="periodPresets" :hrefFor="periodHref" />
         </div>
 
         <!-- KPIs -->
@@ -750,7 +675,7 @@ const ratioColorClass = (percent: number): string => {
                       <UButton
                         v-for="item in unbilledByClient"
                         :key="item.clientName"
-                        :href="showBilling({ id: item.clientId })"
+                        :href="clientBillingHref(item.clientId)"
                         color="neutral"
                         variant="link"
                         class="flex w-full items-center justify-between gap-4 p-0 text-xs font-normal"
@@ -786,7 +711,7 @@ const ratioColorClass = (percent: number): string => {
                       <UButton
                         v-for="(inv, i) in outstandingInvoices"
                         :key="i"
-                        :href="showBilling({ id: inv.clientId })"
+                        :href="clientBillingHref(inv.clientId)"
                         color="neutral"
                         variant="link"
                         class="flex w-full items-center justify-between gap-4 p-0 text-xs font-normal"
@@ -944,7 +869,7 @@ const ratioColorClass = (percent: number): string => {
                   <UBadge v-if="p.unbilled > 0" :color="p.unbilled > 10_000_00 ? 'error' : 'warning'" variant="subtle" size="sm">
                     {{ formatCurrency(p.unbilled) }}
                   </UBadge>
-                  <UButton :href="showBilling({ id: p.clientId })" icon="i-lucide-receipt-text" color="neutral" variant="ghost" size="xs" />
+                  <UButton :href="clientBillingHref(p.clientId)" icon="i-lucide-receipt-text" color="neutral" variant="ghost" size="xs" />
                 </div>
               </div>
             </div>

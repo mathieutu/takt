@@ -43,6 +43,14 @@ export type ProjectWithBilling = {
   to_invoice_days: number,
   to_pay: number,
   to_pay_days: number,
+  // Left to invoice before the selected period, already included in `to_invoice` (its balance at the period end).
+  opening_to_invoice: number,
+  // Budget consumed before the selected period, so cumulative consumption per displayed month stays real.
+  opening_consumed: number,
+  budget_allocated: number | null,
+  consumed: number,
+  unpaid_discount: number,
+  oldest_unpaid_invoice_date: string | null,
   unbilled_since: string | null,
 }
 

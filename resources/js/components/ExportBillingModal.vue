@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { MonthRange } from '@/composables/useMonthRangePicker'
 import type { ProjectWithBilling } from '@/types/billing'
 import { useToast } from '@nuxt/ui/composables'
 import { computed, ref } from 'vue'
@@ -12,6 +13,8 @@ const props = defineProps<{
   clientId?: string,
   shareToken?: string,
   isShared: boolean,
+  // Period selected on the billing page, used as the default export range.
+  period?: MonthRange | null,
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
@@ -47,8 +50,9 @@ const defaultFromMonth = (defaultProjects: ProjectWithBilling[]): string => {
 }
 
 const selectedProjectIds = ref<string[]>(defaultProjectIds())
-const rangeFrom = ref(defaultFromMonth(props.projects.filter(project => selectedProjectIds.value.includes(project.id))))
-const rangeTo = ref(toYearMonth(today))
+const selectedProjects = props.projects.filter(project => selectedProjectIds.value.includes(project.id))
+const rangeFrom = ref(props.period?.from ?? defaultFromMonth(selectedProjects))
+const rangeTo = ref(props.period?.to ?? toYearMonth(today))
 
 // ── Project selection ─────────────────────────────────────────────────────────
 

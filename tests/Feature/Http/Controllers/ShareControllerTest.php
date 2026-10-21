@@ -134,6 +134,21 @@ describe('show', function () {
             ->get(route('shares.show', $this->client->share_token))
             ->assertRedirect(route('clients.billing.show', $this->client));
     });
+
+    it('keeps the period when redirecting the owner to their billing page', function () {
+        $this->actingAs($this->owner)
+            ->get(route('shares.show', [$this->client->share_token, 'from' => '2026-02', 'to' => '2026-03']))
+            ->assertRedirect(route('clients.billing.show', [$this->client, 'from' => '2026-02', 'to' => '2026-03']));
+    });
+
+    it('filters the shared billing page on the period', function () {
+        Project::factory()->for($this->client)->create(['name' => 'Dormant']);
+
+        $this->get(route('shares.show', [$this->client->share_token, 'from' => '2020-01', 'to' => '2020-12']))
+            ->assertInertia(fn ($page) => expect($page->toArray()['props'])
+                ->period->toBe(['from' => '2020-01', 'to' => '2020-12'])
+                ->projects->toBe([]));
+    });
 });
 
 describe('index', function () {

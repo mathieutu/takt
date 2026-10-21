@@ -5,11 +5,12 @@ namespace App\Http\Controllers;
 use App\Actions\UpdateClient;
 use App\Http\Concerns\BuildsProjectBillingEntry;
 use App\Http\Concerns\BuildsProjectsPageProps;
+use App\Http\Requests\BillingPeriodRequest;
 use App\Http\Requests\ExportBillingRequest;
 use App\Models\Client;
-use App\Models\Project;
 use App\Services\HolidayService;
 use App\Services\PdfGenerator;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -83,7 +84,7 @@ class ClientController
         return redirect()->route('projects.index')->with('success', 'Client supprimé avec succès.');
     }
 
-    public function showBilling(Request $request, Client $client, HolidayService $holidays): Response
+    public function showBilling(BillingPeriodRequest $request, Client $client, HolidayService $holidays): Response
     {
         $projects = $client->projects()->orderedByEndDateThenName()->get();
 
@@ -91,12 +92,18 @@ class ClientController
 
         $projects->load(['timesheetEntries', 'invoices']);
 
-        $builtProjects = $projects->map(fn (Project $p) => $this->buildProjectBillingEntryWithTotals($p, $client->name))->values();
+        $period = $request->period();
+        $builtProjects = $this->buildBillingPageProjects($client, $projects, $period);
 
         return Inertia::render('ProjectBillingPage', [
             'projects' => $builtProjects,
+            'client' => $client->export(['id', 'name']),
+            'period' => $period,
             'holidays' => $this->buildHolidaysForPeriod($holidays, $builtProjects),
-            'duplicate_billing_days' => Client::overbookedDays($client->billableCoverageRows()),
+            'duplicate_billing_days' => Client::overbookedDays($client->billableCoverageRows(
+                $period ? "{$period['from']}-01" : null,
+                $period ? CarbonImmutable::createFromFormat('Y-m', $period['to'])->endOfMonth()->toDateString() : null,
+            )),
             'is_shared' => false,
         ]);
     }

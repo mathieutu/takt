@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { DuplicateBillingDay, MonthInvoice, MonthRow, ProjectWithBilling } from '@/types/billing'
 import { Head, useForm, usePage } from '@inertiajs/vue3'
+import { CalendarDate } from '@internationalized/date'
 import {
   type ActiveElement,
   BarController,
@@ -22,16 +23,21 @@ import { Bar } from 'vue-chartjs'
 import BillingMonthCalendar from '@/components/BillingMonthCalendar.vue'
 import DateInput from '@/components/DateInput.vue'
 import ExportBillingModal from '@/components/ExportBillingModal.vue'
-import { formatDate, formatDays, formatDuration, formatMonthName, parseMonth, today } from '@/utils/date'
+import MonthRangePicker from '@/components/MonthRangePicker.vue'
+import { currentPeriodPresets, type MonthRange, type MonthRangePreset } from '@/composables/useMonthRangePicker'
+import { formatDate, formatDays, formatDuration, formatMonthName, parseMonth, today, toYearMonth } from '@/utils/date'
 import { formatCurrency } from '@/utils/number'
 import { login, timesheet } from '@/wayfinder/routes'
 import { edit as editClient } from '@/wayfinder/routes/clients'
+import { show as showClientBilling } from '@/wayfinder/routes/clients/billing'
 import { destroy as destroyInvoice, store as storeInvoice, update as updateInvoice } from '@/wayfinder/routes/invoices'
 import { edit as editProject, index as projectsIndex } from '@/wayfinder/routes/projects'
-import { destroy as destroyShare, store as storeShare } from '@/wayfinder/routes/shares'
+import { destroy as destroyShare, show as showShare, store as storeShare } from '@/wayfinder/routes/shares'
 
 const props = defineProps<{
+  client: { id: string, name: string },
   projects: ProjectWithBilling[],
+  period: MonthRange | null,
   holidays: Record<string, string>,
   duplicate_billing_days?: DuplicateBillingDay[],
   is_shared: boolean,
@@ -72,6 +78,14 @@ const visibleProjects = computed(() =>
 
 const exportModalOpen = ref(false)
 
+// ── Period filter ──────────────────────────────────────────────────────────────
+
+const periodPresets: MonthRangePreset[] = [{ label: 'Tout' }, ...currentPeriodPresets()]
+
+const periodHref = (range: { from?: string, to?: string }) => props.is_shared
+  ? showShare(props.token!, { query: range })
+  : showClientBilling(props.client.id, { query: range })
+
 // ── Expand state ───────────────────────────────────────────────────────────────
 
 const expandedMonths = ref<Set<string>>(new Set())
@@ -90,12 +104,8 @@ const isExpanded = (projectId: string, month: string) => expandedMonths.value.ha
 // ── Totals ─────────────────────────────────────────────────────────────────────
 
 const projectTotals = (project: ProjectWithBilling) => {
-  const totalBudgetAllocated = project.months.at(-1)?.cumulative_budget ?? null
-
-  const unpaidDiscount = project.months
-    .flatMap(m => m.invoices)
-    .filter(inv => !inv.paid_at)
-    .reduce((sum, inv) => sum + inv.discount_amount, 0)
+  // Budget figures and balances are computed server-side over the whole history, even when a period is selected.
+  const totalBudgetAllocated = project.budget_allocated
 
   return {
     totalDays: project.total_worked_days,
@@ -104,14 +114,14 @@ const projectTotals = (project: ProjectWithBilling) => {
     totalInvoiced: project.total_invoiced,
     totalInvoicedDays: project.total_invoiced_days,
     totalDiscount: project.total_discount,
-    unpaidDiscount,
+    unpaidDiscount: project.unpaid_discount,
     totalBudgetAllocated,
     toPay: project.to_pay,
     toPayDays: project.to_pay_days,
     toInvoice: project.to_invoice,
     toInvoiceDays: project.to_invoice_days,
     remainingToConsume: totalBudgetAllocated !== null
-      ? totalBudgetAllocated - (project.total_worked - project.total_discount)
+      ? totalBudgetAllocated - project.consumed
       : null,
   }
 }
@@ -147,15 +157,6 @@ const daysSince = (dateStr: string): number => {
   return Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24))
 }
 
-const oldestUnpaidInvoiceDate = (project: ProjectWithBilling): string | null => {
-  const dates = project.months
-    .flatMap(m => m.invoices)
-    .filter(inv => !inv.paid_at)
-    .map(inv => inv.created_at)
-    .toSorted()
-  return dates[0] ?? null
-}
-
 const getCumulativeWorked = (project: ProjectWithBilling, monthIndex: number): number =>
   project.months
     .slice(0, monthIndex + 1)
@@ -169,7 +170,7 @@ const getCumulativeDiscount = (project: ProjectWithBilling, monthIndex: number):
     .reduce((sum, m) => sum + m.invoices.reduce((s, i) => s + i.discount_amount, 0), 0)
 
 const getCumulativeConsumed = (project: ProjectWithBilling, monthIndex: number): number =>
-  getCumulativeWorked(project, monthIndex) - getCumulativeDiscount(project, monthIndex)
+  project.opening_consumed + getCumulativeWorked(project, monthIndex) - getCumulativeDiscount(project, monthIndex)
 
 const cumulativeBudgetAmount = (project: ProjectWithBilling, monthIndex: number): number | null =>
   project.months[monthIndex]!.cumulative_budget
@@ -192,9 +193,9 @@ const cumulativeConsumptionPercent = (project: ProjectWithBilling, monthIndex: n
 }
 
 const totalConsumptionPercent = (project: ProjectWithBilling): number | null => {
-  const { totalWorked, totalDiscount, totalBudgetAllocated } = projectTotals(project)
+  const { totalBudgetAllocated } = projectTotals(project)
   if (totalBudgetAllocated === null || totalBudgetAllocated === 0) return null
-  return Math.round((totalWorked - totalDiscount) / totalBudgetAllocated * 100)
+  return Math.round(project.consumed / totalBudgetAllocated * 100)
 }
 
 const consumptionColorClass = (percent: number) => {
@@ -236,7 +237,19 @@ const PROJECT_PALETTE = [
 const getCssColor = (varName: string): string =>
   window.getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
 
+// With a period, every month of it is shown, empty ones included, like on the dashboard.
+const periodMonths = (period: MonthRange): string[] => {
+  const { year, month } = parseMonth(period.from)
+  const months: string[] = []
+  for (let date = new CalendarDate(year, month, 1); toYearMonth(date) <= period.to; date = date.add({ months: 1 })) {
+    months.push(toYearMonth(date))
+  }
+  return months
+}
+
 const chartMonths = computed(() => {
+  if (props.period) return periodMonths(props.period)
+
   const months = new Set<string>()
   visibleProjects.value.forEach(p => p.months.forEach(m => months.add(m.month)))
   return [...months].sort()
@@ -544,7 +557,14 @@ const monthLabel = (ym: string): string => {
               size="sm"
             />
           </UTooltip>
-          <div class="ms-auto flex items-center gap-2">
+          <div class="ms-auto flex flex-wrap items-center justify-end gap-2">
+            <MonthRangePicker
+              :from="period?.from ?? null"
+              :to="period?.to ?? null"
+              :presets="periodPresets"
+              :hrefFor="periodHref"
+              emptyLabel="Tout l'historique"
+            />
             <UButton
               v-if="inactiveProjects.length > 0 && inactiveProjects.length < projects.length"
               :label="showInactive ? 'Masquer les inactifs' : 'Afficher les projets inactifs'"
@@ -592,7 +612,7 @@ const monthLabel = (ym: string): string => {
         <UCard v-if="visibleProjects.length > 0">
           <template #header>
             <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-              <p class="text-sm font-semibold">{{ visibleProjects[0]?.client.name }}</p>
+              <p class="text-sm font-semibold">{{ client.name }}</p>
               <div v-if="visibleProjects.length > 1" class="flex flex-wrap gap-x-6 gap-y-1 text-sm">
                 <div>
                   <span class="text-muted">Jours travaillés</span>
@@ -617,6 +637,10 @@ const monthLabel = (ym: string): string => {
             <Bar :data="barChartData" :options="barChartOptions" />
           </div>
         </UCard>
+
+        <p v-if="period && projects.length === 0" class="py-12 text-center text-sm text-muted">
+          Aucune activité sur cette période.
+        </p>
 
         <template v-for="(project, index) in visibleProjects" :key="project.id">
           <div v-if="index > 0" class="border-t-2 border-default" />
@@ -849,6 +873,9 @@ const monthLabel = (ym: string): string => {
                       {{ formatCurrency(projectTotals(project).toInvoice) }}
                       <span v-if="fmtExactDays(projectTotals(project).toInvoiceDays)" class="text-sm font-normal text-muted">({{ fmtExactDays(projectTotals(project).toInvoiceDays) }})</span>
                     </p>
+                    <p v-if="period && project.opening_to_invoice !== 0" class="text-xs text-muted">
+                      dont {{ formatCurrency(project.opening_to_invoice) }} avant la période
+                    </p>
                     <p v-if="project.unbilled_since" class="text-xs mt-0.5" :class="daysSince(project.unbilled_since) > 30 ? 'text-error' : 'text-muted'">
                       Depuis {{ formatDuration(daysSince(project.unbilled_since)) }}
                     </p>
@@ -866,8 +893,8 @@ const monthLabel = (ym: string): string => {
                       − {{ unpaidDiscountPercent(project) }} %
                       de remise sur facture(s) non payée(s)
                     </p>
-                    <p v-if="oldestUnpaidInvoiceDate(project)" class="text-xs mt-0.5" :class="daysSince(oldestUnpaidInvoiceDate(project)!) > 30 ? 'text-error' : 'text-muted'">
-                      Depuis {{ formatDuration(daysSince(oldestUnpaidInvoiceDate(project)!)) }}
+                    <p v-if="project.oldest_unpaid_invoice_date" class="text-xs mt-0.5" :class="daysSince(project.oldest_unpaid_invoice_date!) > 30 ? 'text-error' : 'text-muted'">
+                      Depuis {{ formatDuration(daysSince(project.oldest_unpaid_invoice_date!)) }}
                     </p>
                   </div>
                 </div>
@@ -981,7 +1008,8 @@ const monthLabel = (ym: string): string => {
     <ExportBillingModal
       v-model:open="exportModalOpen"
       :projects="visibleProjects"
-      :clientId="visibleProjects[0]?.client.id"
+      :clientId="client.id"
+      :period="period"
       :shareToken="token"
       :isShared="is_shared"
     />

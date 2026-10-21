@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Concerns\BuildsProjectBillingEntry;
+use App\Http\Requests\BillingPeriodRequest;
 use App\Http\Requests\ExportBillingRequest;
 use App\Models\Client;
-use App\Models\Project;
 use App\Models\SavedShare;
 use App\Services\HolidayService;
 use App\Services\PdfGenerator;
@@ -19,14 +19,15 @@ class ShareController
 {
     use BuildsProjectBillingEntry;
 
-    public function show(string $token, HolidayService $holidays): Response|RedirectResponse
+    public function show(BillingPeriodRequest $request, string $token, HolidayService $holidays): Response|RedirectResponse
     {
         $client = Client::findByShareTokenOrFail($token);
 
         $viewer = auth()->user();
+        $period = $request->period();
 
         if ($viewer?->id === $client->user_id) {
-            return redirect()->route('clients.billing.show', $client);
+            return redirect()->route('clients.billing.show', ['client' => $client, ...($period ?? [])]);
         }
 
         $projects = $client->projects()->orderedByEndDateThenName()->get();
@@ -39,12 +40,14 @@ class ShareController
 
         $existingSavedShare?->update(['token' => $client->share_token]);
 
-        $builtProjects = $projects->map(fn (Project $p) => $this->buildProjectBillingEntryWithTotals($p, $client->name))->values();
+        $builtProjects = $this->buildBillingPageProjects($client, $projects, $period);
 
         return Inertia::render('ProjectBillingPage', [
             'shared_by' => $client->user->name,
             'is_shared' => true,
             'projects' => $builtProjects,
+            'client' => $client->export(['id', 'name']),
+            'period' => $period,
             'holidays' => $this->buildHolidaysForPeriod($holidays, $builtProjects),
             'token' => $token,
             'saved_share_id' => $existingSavedShare?->id,

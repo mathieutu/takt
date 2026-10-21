@@ -103,6 +103,14 @@ trait BuildsProjectBillingEntry
     }
 
     /**
+     * With a `$period`, `months` and the `total_*` figures are restricted to its months. `to_invoice` is
+     * the balance at the end of the period, like the PDF export: what was left to invoice before it
+     * (`opening_to_invoice`) plus the period's own balance. To pay and budget consumption stay computed
+     * over the whole history: an envelope or cash still expected restricted to a period would be
+     * meaningless. `opening_consumed` is the budget consumed before the period, so the cumulative
+     * consumption of each displayed month stays its real value.
+     *
+     * @param  array{from: string, to: string}|null  $period  Y-m months, inclusive
      * @return array{
      *     id: string,
      *     name: string,
@@ -123,29 +131,67 @@ trait BuildsProjectBillingEntry
      *     to_invoice_days: float,
      *     to_pay: int,
      *     to_pay_days: float,
+     *     opening_to_invoice: int,
+     *     opening_consumed: int,
+     *     budget_allocated: ?int,
+     *     consumed: int,
+     *     unpaid_discount: int,
+     *     oldest_unpaid_invoice_date: ?string,
      *     unbilled_since: ?string,
      * }
      */
-    protected function buildProjectBillingEntryWithTotals(Project $project, ?string $clientNameOverride = null): array
+    protected function buildProjectBillingEntryWithTotals(Project $project, ?string $clientNameOverride = null, ?array $period = null): array
     {
         $entry = $this->buildProjectBillingEntry($project, $clientNameOverride);
 
-        $totals = $this->computeTotals(collect($entry['months']));
+        $allMonths = collect($entry['months']);
+        $periodMonths = $period
+            ? $allMonths->filter(fn (array $m) => $m['month'] >= $period['from'] && $m['month'] <= $period['to'])->values()
+            : $allMonths;
+        $priorMonths = $period ? $allMonths->filter(fn (array $m) => $m['month'] < $period['from']) : collect();
+        $monthsThroughPeriodEnd = $period ? $allMonths->filter(fn (array $m) => $m['month'] <= $period['to']) : $allMonths;
+
+        $totals = $this->computeTotals($allMonths);
+        $periodTotals = $this->computeTotals($periodMonths);
+        $priorTotals = $this->computeTotals($priorMonths);
+        $totalsThroughPeriodEnd = $this->computeTotals($monthsThroughPeriodEnd);
+        $unpaidInvoices = $allMonths->flatMap(fn (array $m) => $m['invoices'])->whereNull('paid_at');
 
         return [
             ...$entry,
-            'total_worked_days' => $totals['worked_days'],
-            'total_billable_days' => $totals['billable_days'],
-            'total_worked' => $totals['worked'],
-            'total_invoiced' => $totals['invoiced'],
-            'total_invoiced_days' => $totals['invoiced_days'],
-            'total_discount' => $totals['discount'],
-            'to_invoice' => $totals['to_invoice'],
-            'to_invoice_days' => $totals['to_invoice_days'],
+            'months' => $periodMonths,
+            'total_worked_days' => $periodTotals['worked_days'],
+            'total_billable_days' => $periodTotals['billable_days'],
+            'total_worked' => $periodTotals['worked'],
+            'total_invoiced' => $periodTotals['invoiced'],
+            'total_invoiced_days' => $periodTotals['invoiced_days'],
+            'total_discount' => $periodTotals['discount'],
+            'to_invoice' => $totalsThroughPeriodEnd['to_invoice'],
+            'to_invoice_days' => $totalsThroughPeriodEnd['to_invoice_days'],
             'to_pay' => $totals['to_pay'],
             'to_pay_days' => $totals['to_pay_days'],
+            'opening_to_invoice' => $priorTotals['to_invoice'],
+            'opening_consumed' => $priorTotals['worked'] - $priorTotals['discount'],
+            'budget_allocated' => $allMonths->last()['cumulative_budget'] ?? null,
+            'consumed' => $totals['worked'] - $totals['discount'],
+            'unpaid_discount' => $unpaidInvoices->sum('discount_amount'),
+            'oldest_unpaid_invoice_date' => $unpaidInvoices->min('created_at'),
             'unbilled_since' => $project->unbilledSince()?->toDateString(),
         ];
+    }
+
+    /**
+     * Billing page entries of the client's projects; with a `$period`, projects without any month in it are left out.
+     *
+     * @param  Collection<int, Project>  $projects  With timesheetEntries+invoices loaded
+     * @param  array{from: string, to: string}|null  $period
+     * @return Collection<int, array<string, mixed>>
+     */
+    protected function buildBillingPageProjects(Client $client, Collection $projects, ?array $period): Collection
+    {
+        return $projects->map(fn (Project $p) => $this->buildProjectBillingEntryWithTotals($p, $client->name, $period))
+            ->filter(fn (array $entry) => ! $period || $entry['months']->isNotEmpty())
+            ->values();
     }
 
     /**

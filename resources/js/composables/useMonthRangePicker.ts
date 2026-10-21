@@ -3,9 +3,26 @@ import { CalendarDate } from '@internationalized/date'
 import { computed, type Ref, ref } from 'vue'
 import { parseMonth, toYearMonth } from '@/utils/date'
 
-type MonthRange = { from: string, to: string }
+export type MonthRange = { from: string, to: string }
 
-export const useMonthRangePicker = (from: Ref<string>, to: Ref<string>, onSelect?: (range: MonthRange) => void) => {
+export type MonthRangePreset = { label: string, from?: string, to?: string }
+
+// Presets relative to today, shared by every month range picker (the dashboard adds its own on top).
+export const currentPeriodPresets = (): MonthRangePreset[] => {
+  const currentYear = new Date().getFullYear()
+  const currentMonth = new Date().getMonth() + 1
+  const quarterStartMonth = Math.floor((currentMonth - 1) / 3) * 3 + 1
+  const schoolYearStartYear = currentMonth >= 9 ? currentYear : currentYear - 1
+
+  return [
+    { label: 'Trimestre courant', from: toYearMonth(new CalendarDate(currentYear, quarterStartMonth, 1)), to: toYearMonth(new CalendarDate(currentYear, quarterStartMonth + 2, 1)) },
+    { label: 'Année civile courante', from: toYearMonth(new CalendarDate(currentYear, 1, 1)), to: toYearMonth(new CalendarDate(currentYear, 12, 1)) },
+    { label: 'Année scolaire courante', from: toYearMonth(new CalendarDate(schoolYearStartYear, 9, 1)), to: toYearMonth(new CalendarDate(schoolYearStartYear + 1, 8, 1)) },
+  ]
+}
+
+// `from`/`to` are null when no range is selected (e.g. the unfiltered billing page).
+export const useMonthRangePicker = (from: Ref<string | null>, to: Ref<string | null>, onSelect?: (range: MonthRange) => void) => {
   const pickerOpen = ref(false)
 
   const yearMonthToCalendarDate = (yearMonth: string): CalendarDate => {
@@ -13,10 +30,9 @@ export const useMonthRangePicker = (from: Ref<string>, to: Ref<string>, onSelect
     return new CalendarDate(year, month, 1)
   }
 
-  const calendarValue = computed(() => ({
-    start: yearMonthToCalendarDate(from.value),
-    end: yearMonthToCalendarDate(to.value),
-  }))
+  const calendarValue = computed(() => from.value && to.value
+    ? { start: yearMonthToCalendarDate(from.value), end: yearMonthToCalendarDate(to.value) }
+    : undefined)
 
   const onRangeSelect = (value: { start: DateValue | undefined, end: DateValue | undefined } | null) => {
     if (!value?.start || !value?.end) return
@@ -38,7 +54,9 @@ export const useMonthRangePicker = (from: Ref<string>, to: Ref<string>, onSelect
     return new Date(year, month - 1).toLocaleDateString('fr-FR', { month: style, year: 'numeric' })
   }
 
-  const periodLabel = computed(() => `${formatMonthLabel(from.value)} – ${formatMonthLabel(to.value)}`)
+  const periodLabel = computed(() => from.value && to.value
+    ? `${formatMonthLabel(from.value)} – ${formatMonthLabel(to.value)}`
+    : '')
 
   return { pickerOpen, calendarValue, onRangeSelect, formatMonthLabel, periodLabel }
 }
