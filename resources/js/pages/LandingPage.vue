@@ -42,6 +42,11 @@ const features: Feature[] = [
     description: 'Suivi des factures par projet avec alertes de dépassement de budget mensuel ou cumulé.',
   },
   {
+    icon: 'i-lucide-file-text',
+    title: 'Récap de facturation PDF',
+    description: 'Exportez un récapitulatif PDF par client et par période, prêt à envoyer.',
+  },
+  {
     icon: 'i-lucide-share-2',
     title: 'Partage client',
     description: 'Lien public en lecture seule pour partager un bilan de facturation sans compte requis.',
@@ -51,7 +56,28 @@ const features: Feature[] = [
     title: 'API & automatisation',
     description: 'Synchronisez vos feuilles de temps depuis vos propres scripts via une API REST sécurisée par token.',
   },
+  {
+    icon: 'i-lucide-bot',
+    title: 'Pilotable par agent IA (MCP)',
+    description: 'Gérez vos projets et pilotez votre facturation en langage naturel (synchro directe depuis vos commits !).',
+  },
 ]
+
+// Mai 2026 (1er mai = vendredi) pour le mockup du PDF de facturation : jours travaillés (dont un samedi),
+// les 6 et 13 mai étant déjà facturés sur un autre projet du client et donc volontairement absents.
+const MAY_WORKED = new Set([4, 5, 7, 9, 11, 12, 15, 18, 19, 20, 21, 22, 26, 27, 28, 29])
+const MAY_HOLIDAYS = new Set([1, 8, 14, 25])
+const WEEKDAY_LETTERS = ['D', 'L', 'M', 'M', 'J', 'V', 'S']
+const mayDays = Array.from({ length: 31 }, (_, i) => {
+  const n = i + 1
+  const weekday = new Date(2026, 4, n).getDay()
+  return {
+    n,
+    letter: WEEKDAY_LETTERS[weekday],
+    isWorked: MAY_WORKED.has(n),
+    isOff: weekday === 0 || weekday === 6 || MAY_HOLIDAYS.has(n),
+  }
+})
 
 const stack: StackItem[] = [
   { icon: 'i-simple-icons:laravel', label: 'PHP Laravel', color: 'text-red-500' },
@@ -202,7 +228,7 @@ const stack: StackItem[] = [
             </p>
           </div>
 
-          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div
               v-for="feature in features"
               :key="feature.title"
@@ -242,13 +268,13 @@ const stack: StackItem[] = [
           <div class="mb-10">
             <div class="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-indigo-500 dark:text-indigo-400">
               <div class="h-px w-6 bg-indigo-400" />
-              Interface
+              Expérience utilisateur
             </div>
             <h2 class="text-2xl font-bold tracking-tight sm:text-3xl">
-              Une interface pensée pour aller vite
+              Des interfaces pensées pour aller vite
             </h2>
             <p class="mt-2 text-slate-500 dark:text-slate-400">
-              Vue d'ensemble, saisie rapide, partage en un clic.
+              Vue d'ensemble, saisie rapide, raccourcis claviers, partage en un clic.
             </p>
           </div>
 
@@ -499,6 +525,137 @@ const stack: StackItem[] = [
               </div>
             </div>
           </div>
+
+          <!-- ── Mockup 4 : Agent IA (MCP) + récap PDF ───── -->
+          <div class="mt-5 grid gap-5 lg:grid-cols-2">
+            <div class="flex flex-col overflow-hidden rounded-xl border border-white bg-white shadow-md ring-1 ring-indigo-100/80 dark:border-slate-700 dark:bg-slate-800 dark:ring-slate-700">
+              <div class="flex-1 bg-slate-50 p-3 dark:bg-slate-900/80">
+                <div class="mb-2 flex items-center gap-1">
+                  <div class="size-1.5 rounded-full bg-red-400" /><div class="size-1.5 rounded-full bg-yellow-400" /><div class="size-1.5 rounded-full bg-green-400" />
+                  <span class="ml-1.5 text-[9px] font-medium text-slate-500 dark:text-slate-400">Agent IA</span>
+                </div>
+
+                <div class="space-y-2">
+                  <div class="flex justify-end">
+                    <p class="max-w-[88%] cursor-default rounded-xl rounded-br-sm bg-primary-500 px-2.5 py-1.5 text-[9px] leading-snug text-white transition-colors hover:bg-primary-600">
+                      Ajoute mes journées de mai d'après mes commits et mon calendrier sur « Refonte site ».
+                    </p>
+                  </div>
+
+                  <div class="space-y-1.5">
+                    <div class="flex flex-wrap gap-1.5">
+                      <div class="inline-flex cursor-default items-center gap-1 rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[8px] text-slate-500 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700/60">
+                        <UIcon name="i-lucide-wrench" class="size-2.5" />
+                        git log <span class="text-slate-400 dark:text-slate-500">· mai</span>
+                      </div>
+                      <div class="inline-flex cursor-default items-center gap-1 rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[8px] text-slate-500 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700/60">
+                        <UIcon name="i-lucide-wrench" class="size-2.5" />
+                        calendar.list_events <span class="text-slate-400 dark:text-slate-500">· mai</span>
+                      </div>
+                    </div>
+                    <div class="inline-flex cursor-default items-center gap-1 rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[8px] text-slate-500 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700/60">
+                      <UIcon name="i-lucide-wrench" class="size-2.5" />
+                      upsert_entries <span class="text-slate-400 dark:text-slate-500">· dry_run</span> <span class="text-slate-400 dark:text-slate-500">· 16 créées</span>
+                    </div>
+                    <p class="max-w-[88%] cursor-default rounded-xl rounded-bl-sm border border-slate-200 bg-white px-2.5 py-1.5 text-[9px] leading-snug text-slate-700 transition-all hover:-translate-y-px hover:shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                      J'ai trouvé 18 jours : 15 dans tes commits, 3 réunions client dans ton agenda. Les 6 et 13 mai
+                      sont déjà facturés sur « App mobile » pour le même client.
+                      Je les ignore et j'ajoute les 16 autres ?
+                    </p>
+                  </div>
+
+                  <div class="flex justify-end">
+                    <p class="cursor-default rounded-xl rounded-br-sm bg-primary-500 px-2.5 py-1.5 text-[9px] leading-snug text-white transition-colors hover:bg-primary-600">Oui, vas-y.</p>
+                  </div>
+
+                  <div class="space-y-1.5">
+                    <div class="flex flex-wrap gap-1.5">
+                      <div class="inline-flex cursor-default items-center gap-1 rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[8px] text-slate-500 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700/60">
+                        <UIcon name="i-lucide-wrench" class="size-2.5" />
+                        upsert_entries <span class="text-slate-400 dark:text-slate-500">· 16 créées</span>
+                      </div>
+                      <div class="inline-flex cursor-default items-center gap-1 rounded border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[8px] text-slate-500 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700/60">
+                        <UIcon name="i-lucide-wrench" class="size-2.5" />
+                        billing_recap <span class="text-slate-400 dark:text-slate-500">· 2026-05</span>
+                      </div>
+                    </div>
+                    <p class="max-w-[88%] cursor-default rounded-xl rounded-bl-sm border border-slate-200 bg-white px-2.5 py-1.5 text-[9px] leading-snug text-slate-700 transition-all hover:-translate-y-px hover:shadow-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                      C'est fait. 16 jours ajoutés en mai, 7 500 € restent à facturer.
+                      <span class="mt-1.5 flex w-fit cursor-pointer items-center gap-1 rounded border border-primary-200 bg-primary-50 px-1.5 py-0.5 text-[8px] font-medium text-primary-600 transition-colors hover:bg-primary-100 dark:border-primary-500/30 dark:bg-primary-500/10 dark:text-primary-400 dark:hover:bg-primary-500/20">
+                        <UIcon name="i-lucide-file-text" class="size-2.5" />
+                        Récap de facturation (PDF)
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="border-t border-slate-100 px-4 py-2.5 dark:border-slate-700">
+                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Pilotez Takt depuis votre agent (MCP)</p>
+              </div>
+            </div>
+
+            <!-- PDF de facturation généré, à envoyer au client avec ses factures -->
+            <div class="flex flex-col overflow-hidden rounded-xl border border-white bg-white shadow-md ring-1 ring-indigo-100/80 dark:border-slate-700 dark:bg-slate-800 dark:ring-slate-700">
+              <div class="flex flex-1 items-center justify-center bg-slate-50 p-3 dark:bg-slate-900/80">
+                <div class="w-full rounded bg-white p-4 text-slate-800 shadow-sm ring-1 ring-slate-200 transition-shadow hover:shadow-md dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700">
+                  <!-- En-tête -->
+                  <div class="mb-3 flex items-start justify-between border-b-2 border-primary-200 pb-2 dark:border-primary-500/30">
+                    <div>
+                      <p class="text-[6px] font-medium uppercase tracking-wide text-primary-500">Facturation</p>
+                      <p class="text-[11px] font-semibold">Refonte site</p>
+                      <p class="text-[7px] text-slate-500 dark:text-slate-400">Studio Acme</p>
+                    </div>
+                    <div class="text-right text-[6px] text-slate-500 dark:text-slate-400">
+                      <span class="rounded-full bg-primary-50 px-1.5 py-0.5 text-[7px] font-medium text-primary-500 dark:bg-primary-500/10 dark:text-primary-400">Mai 2026</span>
+                      <p class="mt-1">Votre nom</p>
+                      <p>vous@exemple.fr</p>
+                    </div>
+                  </div>
+
+                  <!-- Calendrier du mois -->
+                  <p class="mb-1 text-[8px] font-semibold">Mai 2026</p>
+                  <div class="mb-1.5 flex flex-wrap gap-px">
+                    <div v-for="day in mayDays" :key="day.n" class="flex w-4 flex-col items-center gap-px">
+                      <span class="text-[4px] leading-none text-slate-400 dark:text-slate-500">{{ day.letter }}</span>
+                      <span class="text-[5px] font-medium leading-none">{{ day.n }}</span>
+                      <div
+                        class="flex h-3 w-3.5 cursor-default items-center justify-center rounded-sm text-[5px] text-primary-500 transition-colors dark:text-primary-400"
+                        :class="day.isWorked ? 'bg-primary-200/70 hover:bg-primary-300/80 dark:bg-primary-500/25 dark:hover:bg-primary-500/40' : day.isOff ? 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-700/40 dark:hover:bg-slate-700/70' : 'hover:bg-slate-100 dark:hover:bg-slate-700/40'"
+                      >
+                        <template v-if="day.isWorked">1</template>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mb-2 flex items-center gap-1 text-[6px] text-slate-400 dark:text-slate-500">
+                    <span class="rounded bg-slate-100 px-1 py-0.5 transition-colors hover:bg-slate-200 dark:bg-slate-700/40 dark:hover:bg-slate-700/70">Week-ends / fériés</span>
+                    <span class="ml-auto rounded bg-primary-50 px-1 py-0.5 text-primary-500 transition-colors hover:bg-primary-100 dark:bg-primary-500/10 dark:text-primary-400 dark:hover:bg-primary-500/20"><b>16 j</b> travaillés</span>
+                  </div>
+
+                  <!-- Factures -->
+                  <div class="mb-2 overflow-hidden rounded border border-slate-200 text-[6px] dark:border-slate-700">
+                    <div class="grid grid-cols-[1.2fr_1fr_1.6fr] border-b border-slate-200 bg-slate-50 px-2 py-0.5 text-slate-400 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-500">
+                      <span>Facture du</span><span class="text-right">Montant</span><span class="pl-2">Statut</span>
+                    </div>
+                    <div class="grid cursor-pointer grid-cols-[1.2fr_1fr_1.6fr] px-2 py-1 transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/20">
+                      <span>12/05/2026</span>
+                      <span class="text-right font-medium tabular-nums text-emerald-500">4 500 €</span>
+                      <span class="pl-2">Payée le 20/05/2026</span>
+                    </div>
+                  </div>
+
+                  <!-- Totaux -->
+                  <div class="rounded border border-slate-200 px-2 py-1.5 text-[6px] dark:border-slate-700">
+                    <div class="flex justify-between rounded px-1 py-0.5 text-slate-500 transition-colors hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-700/20"><span>16 j × 750 €/j</span><span class="tabular-nums text-slate-800 dark:text-slate-100">− 12 000 €</span></div>
+                    <div class="flex justify-between rounded px-1 py-0.5 text-slate-500 transition-colors hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-700/20"><span>Montant déjà facturé</span><span class="tabular-nums text-slate-800 dark:text-slate-100">+ 4 500 €</span></div>
+                    <div class="mt-0.5 flex justify-between rounded border-t-2 border-slate-200 px-1 pt-1 text-[8px] font-bold text-slate-800 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-700/20"><span>Reste à facturer</span><span class="tabular-nums">7 500 €</span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="border-t border-slate-100 px-4 py-2.5 dark:border-slate-700">
+                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Export PDF à envoyer au client</p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -555,6 +712,11 @@ const stack: StackItem[] = [
                   </li>
                 </ul>
 
+                <p class="mb-6 flex items-center gap-1.5 text-xs text-primary-600 dark:text-primary-400">
+                  <UIcon name="i-lucide-heart" class="size-3 shrink-0" />
+                  Gratuit : l'hébergement est pris en charge par Mathieu.
+                </p>
+
                 <div class="flex flex-wrap items-center gap-4">
                   <UButton :href="login()" label="S'inscrire" size="md" icon="i-lucide-arrow-right" trailing />
                   <UButton :href="demo()" label="Essayer avec compte de démo" size="md" variant="link" color="neutral" />
@@ -569,7 +731,7 @@ const stack: StackItem[] = [
               <div class="relative">
                 <div class="mb-4 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400">
                   <UIcon name="i-simple-icons:github" class="size-3" />
-                  Open Source · MIT
+                  Open Source · AGPL-3.0
                 </div>
 
                 <h3 class="mb-2 text-xl font-bold tracking-tight">Hébergez-le vous-même</h3>
