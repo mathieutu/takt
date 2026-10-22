@@ -61,6 +61,10 @@ AUTH_ENABLED=false
 
 The login page exposes a form allowing direct sign-in with any existing user's email — no password required.
 
+## MCP server
+
+Takt exposes an [MCP](https://modelcontextprotocol.io) server at `/mcp` so an AI agent can manage clients, projects, timesheet entries and invoices, and produce billing recaps (JSON plus a signed PDF link). It authenticates with the same API token as the REST API (`Authorization: Bearer <token>`, generated from your profile); the connection commands are shown, pre-filled, on the in-app API documentation page. Design choices are recorded in [ADR-0015](docs/adr/0015-mcp-server-over-http-with-the-existing-api-token.md).
+
 ## Testing
 
 ```bash
